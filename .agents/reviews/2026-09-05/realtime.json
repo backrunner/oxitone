@@ -1,0 +1,65 @@
+{
+  "benchmark": "render/realtime soak (M4 exit)",
+  "date": "2026-09-05",
+  "machine": {
+    "cpu": "Apple M4",
+    "os": "macOS 27.0",
+    "arch": "aarch64",
+    "rustc": "rustc 1.98.0 (88d9e12ae 2026-08-18) (Homebrew)"
+  },
+  "sink": "simulated",
+  "device": {
+    "id": "BuiltInHeadphoneOutputDevice",
+    "name": "外置耳机",
+    "nominalSampleRates": [
+      44100,
+      48000,
+      88200,
+      96000
+    ],
+    "bufferFrameSizeRange": [
+      15,
+      4096
+    ]
+  },
+  "config": {
+    "sampleRate": 48000,
+    "blockSize": 128,
+    "renderAheadBlocks": 4,
+    "latencyMode": "buffered",
+    "tracks": 8,
+    "seed": 7,
+    "seconds": 10,
+    "workerJitter": null
+  },
+  "latency": {
+    "frames": 674,
+    "seconds": 0.014041666666666666,
+    "breakdown": {
+      "ring": 512,
+      "resampler": 0,
+      "deviceBuffer": 128,
+      "safetyOffset": 10,
+      "deviceLatency": 24
+    }
+  },
+  "results": {
+    "blocks": 3744,
+    "xruns": 0,
+    "deadlineMisses": 0,
+    "nanBlocks": 0,
+    "queueDrops": 0,
+    "performanceWarnings": 0,
+    "engineLoadEma": 0.05019046995762255,
+    "engineLoadMax": 0.05019046995762255,
+    "ringOccupancyMaxFrames": 384,
+    "blockTimeNs": {
+      "p50": 131072,
+      "p95": 262144,
+      "p99": 262144,
+      "max": 1048576,
+      "deadline": 2666666
+    },
+    "events": []
+  }
+}

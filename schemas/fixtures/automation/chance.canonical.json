@@ -1,0 +1,11 @@
+{
+  "kind": "chance",
+  "probability": 0.72,
+  "randomPhase": "absolute",
+  "rate": 2,
+  "seed": 17,
+  "smoothBeats": {
+    "denominator": 25,
+    "numerator": 1
+  }
+}

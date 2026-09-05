@@ -1,0 +1,19 @@
+{"beforeRevision":"1","afterRevision":"1","beforeLevel":1,"afterLevel":0.25,"beforePan":0,"afterPan":0.75}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: authoring mutation must bump revision
+    at file:///Volumes/BRData/projects/oxitone/.agents/reviews/2026-09-05/authoring-probe.mjs:19:8
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v26.5.0

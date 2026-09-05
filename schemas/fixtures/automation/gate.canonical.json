@@ -1,0 +1,14 @@
+{
+  "duty": 0.5,
+  "kind": "gate",
+  "off": 0,
+  "on": 1,
+  "periodBeats": {
+    "denominator": 2,
+    "numerator": 1
+  },
+  "phase": {
+    "denominator": 1,
+    "numerator": 0
+  }
+}

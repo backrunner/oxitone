@@ -1,0 +1,11 @@
+[package]
+name = "oxitone-graph"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+oxitone-core = { path = "../core" }
+oxitone-transport = { path = "../transport" }
+oxitone-samples = { path = "../samples" }
+serde_json.workspace = true

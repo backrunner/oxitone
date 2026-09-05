@@ -1,0 +1,10 @@
+{
+  "kind": "wave",
+  "max": 0.9,
+  "min": 0.2,
+  "periodBeats": {
+    "denominator": 1,
+    "numerator": 8
+  },
+  "wave": "sine"
+}

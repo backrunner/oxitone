@@ -1,0 +1,8 @@
+[package]
+name = "oxitone-dsp"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+oxitone-core = { path = "../core" }

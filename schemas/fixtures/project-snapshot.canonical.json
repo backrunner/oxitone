@@ -1,0 +1,383 @@
+{
+  "automation": [
+    {
+      "id": "auto_0001",
+      "lastBeat": {
+        "denominator": 1,
+        "numerator": 64
+      },
+      "source": {
+        "interpolation": "linear",
+        "kind": "curve",
+        "points": [
+          {
+            "beat": {
+              "denominator": 1,
+              "numerator": 0
+            },
+            "value": 0.25
+          },
+          {
+            "beat": {
+              "denominator": 1,
+              "numerator": 32
+            },
+            "value": 0.5
+          }
+        ]
+      },
+      "target": {
+        "entityId": "prj_0001",
+        "parameterId": "tempo"
+      }
+    },
+    {
+      "id": "auto_0002",
+      "source": {
+        "kind": "wave",
+        "max": 0.9,
+        "min": 0.2,
+        "periodBeats": {
+          "denominator": 1,
+          "numerator": 8
+        },
+        "wave": "sine"
+      },
+      "target": {
+        "entityId": "chn_0001",
+        "parameterId": "level"
+      }
+    },
+    {
+      "id": "auto_0003",
+      "source": {
+        "kind": "chance",
+        "probability": 0.72,
+        "randomPhase": "absolute",
+        "rate": 2,
+        "seed": 17,
+        "smoothBeats": {
+          "denominator": 25,
+          "numerator": 1
+        }
+      },
+      "target": {
+        "entityId": "chn_0002",
+        "parameterId": "pan"
+      }
+    },
+    {
+      "id": "auto_0004",
+      "loop": {
+        "count": 2,
+        "lengthBeats": {
+          "denominator": 1,
+          "numerator": 8
+        }
+      },
+      "source": {
+        "duty": 0.5,
+        "kind": "gate",
+        "periodBeats": {
+          "denominator": 2,
+          "numerator": 1
+        }
+      },
+      "target": {
+        "entityId": "mix_0002",
+        "parameterId": "mute"
+      }
+    }
+  ],
+  "blockSize": 128,
+  "channels": [
+    {
+      "effectChain": [
+        {
+          "mix": 1,
+          "parameters": {
+            "band1GainDb": 1.5
+          },
+          "pluginId": "oxitone.eq",
+          "pluginVersion": "1.0.0"
+        }
+      ],
+      "id": "chn_0001",
+      "instrument": {
+        "parameters": {
+          "gainDb": 0,
+          "rootKey": 60
+        },
+        "pluginId": "oxitone.sampler",
+        "pluginVersion": "1.0.0",
+        "resources": {
+          "sample": "smp_0001"
+        }
+      },
+      "level": 1,
+      "mixerChannelId": "mix_0001",
+      "name": "drum-bus",
+      "pan": 0
+    },
+    {
+      "effectChain": [],
+      "id": "chn_0002",
+      "instrument": {
+        "parameters": {
+          "cutoff": 0.65,
+          "resonance": 0.2
+        },
+        "pluginId": "oxitone.wavetable",
+        "pluginVersion": "1.0.0"
+      },
+      "level": 0.8,
+      "mixerChannelId": "mix_0001",
+      "name": "bass",
+      "pan": -0.2,
+      "swing": 0.1
+    }
+  ],
+  "id": "prj_0001",
+  "markers": [
+    {
+      "id": "mrk_0001",
+      "name": "intro",
+      "startBeat": {
+        "denominator": 1,
+        "numerator": 0
+      }
+    },
+    {
+      "id": "mrk_0002",
+      "name": "chorus",
+      "startBeat": {
+        "denominator": 1,
+        "numerator": 16
+      }
+    }
+  ],
+  "mixerChannels": [
+    {
+      "balance": 0,
+      "id": "mix_0001",
+      "inserts": [
+        {
+          "bypass": false,
+          "parameters": {
+            "ratio": 4,
+            "thresholdDb": -12
+          },
+          "pluginId": "oxitone.compressor",
+          "pluginVersion": "1.0.0"
+        }
+      ],
+      "level": 1,
+      "masterSendRatio": 1,
+      "name": "bus",
+      "sends": [
+        {
+          "destinationId": "mix_0002",
+          "preFader": false,
+          "ratio": 0.25,
+          "sidechain": true
+        }
+      ]
+    },
+    {
+      "balance": 0,
+      "id": "mix_0002",
+      "inserts": [
+        {
+          "parameters": {
+            "decaySeconds": 1.8,
+            "mix": 1
+          },
+          "pluginId": "oxitone.reverb",
+          "pluginVersion": "1.0.0"
+        }
+      ],
+      "level": 0.9,
+      "name": "fx",
+      "sends": []
+    }
+  ],
+  "name": "Canonical Demo",
+  "patternClips": [
+    {
+      "id": "pcl_0001",
+      "loopCount": 8,
+      "patternId": "pat_0001",
+      "startBeat": {
+        "denominator": 1,
+        "numerator": 0
+      },
+      "trackId": "trk_0001"
+    }
+  ],
+  "patterns": [
+    {
+      "id": "pat_0001",
+      "lengthBeats": {
+        "denominator": 1,
+        "numerator": 4
+      },
+      "name": "four-floor",
+      "notes": [
+        {
+          "duration": {
+            "denominator": 4,
+            "numerator": 1
+          },
+          "id": "not_0001",
+          "pitch": 36,
+          "start": {
+            "denominator": 1,
+            "numerator": 0
+          },
+          "velocity": 0.9
+        },
+        {
+          "chance": 0.9,
+          "duration": {
+            "denominator": 2,
+            "numerator": 1
+          },
+          "id": "not_0002",
+          "pitch": 38,
+          "start": {
+            "denominator": 1,
+            "numerator": 1
+          },
+          "velocity": 0.8
+        },
+        {
+          "duration": {
+            "denominator": 4,
+            "numerator": 1
+          },
+          "id": "not_0003",
+          "pitch": 42,
+          "start": {
+            "denominator": 2,
+            "numerator": 1
+          },
+          "tags": [
+            "hh"
+          ],
+          "velocity": 0.6
+        }
+      ]
+    }
+  ],
+  "protocolVersion": "1.0",
+  "revision": "7",
+  "sampleClips": [
+    {
+      "durationBeats": {
+        "denominator": 1,
+        "numerator": 16
+      },
+      "gain": 1,
+      "id": "scl_0001",
+      "loop": {
+        "count": 4,
+        "lengthBeats": {
+          "denominator": 1,
+          "numerator": 4
+        }
+      },
+      "sampleId": "smp_0001",
+      "startBeat": {
+        "denominator": 1,
+        "numerator": 0
+      },
+      "stretchAlgorithm": "wsola-v1",
+      "tempoSync": "stretch",
+      "trackId": "trk_0002"
+    }
+  ],
+  "sampleRate": 48000,
+  "samples": [
+    {
+      "assetUri": "assets/bass-loop.wav",
+      "channels": 2,
+      "edits": {
+        "endFrame": "190000",
+        "fadeIn": {
+          "curve": "equalPower",
+          "lengthFrames": "256"
+        },
+        "level": 1,
+        "normalize": {
+          "peakDb": -1
+        },
+        "startFrame": "0"
+      },
+      "format": "wav",
+      "frames": "192000",
+      "id": "smp_0001",
+      "musicalLengthBeats": {
+        "denominator": 1,
+        "numerator": 4
+      },
+      "sampleRate": 48000,
+      "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    }
+  ],
+  "seed": 99,
+  "tempoMap": [
+    {
+      "bpm": 120,
+      "curve": "step",
+      "startBeat": {
+        "denominator": 1,
+        "numerator": 0
+      }
+    },
+    {
+      "bpm": 140,
+      "curve": "linear",
+      "startBeat": {
+        "denominator": 1,
+        "numerator": 16
+      }
+    }
+  ],
+  "timeSignatureMap": [
+    {
+      "denominator": 4,
+      "numerator": 4,
+      "startBar": 1
+    },
+    {
+      "denominator": 4,
+      "numerator": 3,
+      "startBar": 9
+    }
+  ],
+  "tracks": [
+    {
+      "channelIds": [
+        "chn_0001"
+      ],
+      "id": "trk_0001",
+      "midiChannel": 10,
+      "name": "drums",
+      "patternClipIds": [
+        "pcl_0001"
+      ],
+      "sampleClipIds": []
+    },
+    {
+      "channelIds": [
+        "chn_0002"
+      ],
+      "id": "trk_0002",
+      "name": "bass",
+      "patternClipIds": [],
+      "sampleClipIds": [
+        "scl_0001"
+      ]
+    }
+  ]
+}

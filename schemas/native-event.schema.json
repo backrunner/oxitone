@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "protocolVersion": {
+      "type": "string"
+    },
+    "revision": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d{0,19})$"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "compiled",
+        "transport",
+        "meter",
+        "diagnostic",
+        "fault"
+      ]
+    },
+    "payload": {}
+  },
+  "required": [
+    "protocolVersion",
+    "revision",
+    "type",
+    "payload"
+  ],
+  "additionalProperties": false
+}

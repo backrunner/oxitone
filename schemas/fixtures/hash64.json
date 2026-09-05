@@ -1,0 +1,26 @@
+{
+  "algorithm": "hash64-v1",
+  "encoding": "parts as n:<u64 decimal> or s:<utf8>, joined by |; SHA-256; first 8 bytes big-endian",
+  "vectors": [
+    {
+      "hash": "16799635178851736792",
+      "input": "n:99|n:17|s:auto_0003"
+    },
+    {
+      "hash": "15766583078404624265",
+      "input": "n:99|n:17|s:auto_0003|n:3"
+    },
+    {
+      "hash": "14989239469606976600",
+      "input": "n:0"
+    },
+    {
+      "hash": "11992056557105584707",
+      "input": "s:chance"
+    },
+    {
+      "hash": "7180037930557505188",
+      "input": "n:18446744073709551615|s:"
+    }
+  ]
+}

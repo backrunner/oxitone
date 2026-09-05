@@ -1,0 +1,45 @@
+$ pnpm -r --filter './packages/*' run test
+Scope: 5 of 6 workspace projects
+packages/protocol test$ vitest run
+packages/protocol test:  RUN  v3.2.7 /Volumes/BRData/projects/oxitone/packages/protocol
+packages/protocol test:  ✓ test/canonical.test.ts (12 tests) 5ms
+packages/protocol test:  ✓ test/pcg32.test.ts (6 tests) 17ms
+packages/protocol test:  ✓ test/beat.test.ts (8 tests) 6ms
+packages/protocol test:  ✓ test/snapshot.test.ts (11 tests) 20ms
+packages/protocol test:  Test Files  4 passed (4)
+packages/protocol test:       Tests  37 passed (37)
+packages/protocol test:    Start at  17:51:30
+packages/protocol test:    Duration  445ms (transform 267ms, setup 0ms, collect 431ms, tests 48ms, environment 0ms, prepare 257ms)
+packages/protocol test: Done
+packages/native test$ vitest run
+packages/core test$ vitest run
+packages/native test:  RUN  v3.2.7 /Volumes/BRData/projects/oxitone/packages/native
+packages/core test:  RUN  v3.2.7 /Volumes/BRData/projects/oxitone/packages/core
+packages/native test:  ✓ test/smoke.test.ts (5 tests) 52ms
+packages/native test:  Test Files  1 passed (1)
+packages/native test:       Tests  5 passed (5)
+packages/native test:    Start at  17:51:31
+packages/native test:    Duration  769ms (transform 127ms, setup 0ms, collect 231ms, tests 52ms, environment 0ms, prepare 104ms)
+packages/core test:  ✓ test/arp.test.ts (9 tests) 5ms
+packages/core test:  ✓ test/chord.test.ts (13 tests) 6ms
+packages/core test:  ✓ test/track-clip.test.ts (14 tests) 15ms
+packages/core test:  ✓ test/project.test.ts (12 tests) 15ms
+packages/core test:  ✓ test/snapshot.test.ts (8 tests) 42ms
+packages/core test:  ✓ test/automation.test.ts (21 tests) 149ms
+packages/native test: Done
+packages/core test:  ✓ test/e2e.test.ts (5 tests) 943ms
+packages/core test:    ✓ native e2e (real .node) > compiles and renders a deterministic float32 stereo WAV  387ms
+packages/core test:    ✓ native e2e (real .node) > reports real output devices and requires playback for latency  316ms
+packages/core test:  Test Files  7 passed (7)
+packages/core test:       Tests  82 passed (82)
+packages/core test:    Start at  17:51:31
+packages/core test:    Duration  1.74s (transform 424ms, setup 0ms, collect 2.12s, tests 1.17s, environment 1ms, prepare 643ms)
+packages/core test: Done
+packages/midi test$ vitest run
+packages/midi test:  RUN  v3.2.7 /Volumes/BRData/projects/oxitone/packages/midi
+packages/midi test:  ✓ test/export-midi.test.ts (6 tests) 21ms
+packages/midi test:  Test Files  1 passed (1)
+packages/midi test:       Tests  6 passed (6)
+packages/midi test:    Start at  17:51:33
+packages/midi test:    Duration  442ms (transform 102ms, setup 0ms, collect 185ms, tests 21ms, environment 0ms, prepare 49ms)
+packages/midi test: Done

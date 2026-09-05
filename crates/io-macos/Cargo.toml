@@ -1,0 +1,12 @@
+[package]
+name = "oxitone-io-macos"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+coreaudio-sys = { version = "0.2", default-features = false, features = ["core_audio"] }
+oxitone-dsp = { path = "../dsp" }
+
+[dependencies]
+oxitone-core = { path = "../core" }

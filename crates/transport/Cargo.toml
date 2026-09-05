@@ -1,0 +1,9 @@
+[package]
+name = "oxitone-transport"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+oxitone-core = { path = "../core" }
+sha2.workspace = true

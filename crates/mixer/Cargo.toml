@@ -1,0 +1,10 @@
+[package]
+name = "oxitone-mixer"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+oxitone-core = { path = "../core" }
+oxitone-dsp = { path = "../dsp" }
+oxitone-graph = { path = "../graph" }

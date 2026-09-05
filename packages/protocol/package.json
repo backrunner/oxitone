@@ -1,0 +1,30 @@
+{
+  "name": "@oxitone/protocol",
+  "version": "0.1.0",
+  "description": "Versioned wire schemas and codecs for the Oxitone TypeScript/Rust boundary",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint src test",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "generate": "tsc -p tsconfig.build.json && node dist/generate.js"
+  },
+  "dependencies": {
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "vitest": "^3.2.0"
+  }
+}

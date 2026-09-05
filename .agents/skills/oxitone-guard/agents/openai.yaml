@@ -1,0 +1,4 @@
+interface:
+  display_name: "Oxitone Guard"
+  short_description: "Guard Oxitone architecture and realtime audio changes"
+  default_prompt: "Use $oxitone-guard to review this Oxitone change against architecture, realtime audio, API, and benchmark rules."

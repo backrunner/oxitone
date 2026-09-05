@@ -1,0 +1,60 @@
+[package]
+name = "oxitone-bench"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+# The lib carries no benches of its own; keep `cargo bench -p oxitone-bench`
+# flag-passing aimed at the criterion targets only.
+[lib]
+bench = false
+
+[[bin]]
+name = "bench-archive"
+path = "src/bin/bench-archive.rs"
+bench = false
+
+[[bin]]
+name = "realtime-soak"
+path = "src/bin/realtime-soak.rs"
+bench = false
+
+[dependencies]
+oxitone-core = { path = "../core" }
+oxitone-dsp = { path = "../dsp" }
+oxitone-graph = { path = "../graph" }
+oxitone-instruments = { path = "../instruments" }
+oxitone-io-macos = { path = "../io-macos" }
+oxitone-mixer = { path = "../mixer" }
+oxitone-render = { path = "../render" }
+oxitone-transport = { path = "../transport" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "compile_validate"
+harness = false
+
+[[bench]]
+name = "transport_schedule"
+harness = false
+
+[[bench]]
+name = "automation_evaluate"
+harness = false
+
+[[bench]]
+name = "dsp"
+harness = false
+
+[[bench]]
+name = "mixer_routing"
+harness = false
+
+[[bench]]
+name = "render_offline"
+harness = false

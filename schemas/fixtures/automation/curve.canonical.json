@@ -1,0 +1,31 @@
+{
+  "interpolation": "smooth",
+  "kind": "curve",
+  "points": [
+    {
+      "beat": {
+        "denominator": 1,
+        "numerator": 0
+      },
+      "curve": {
+        "in": [
+          0.7,
+          1
+        ],
+        "kind": "bezier",
+        "out": [
+          0.3,
+          0
+        ]
+      },
+      "value": 0
+    },
+    {
+      "beat": {
+        "denominator": 1,
+        "numerator": 2
+      },
+      "value": 1
+    }
+  ]
+}

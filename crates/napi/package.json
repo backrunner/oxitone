@@ -1,0 +1,9 @@
+{
+  "name": "oxitone-napi-crate",
+  "version": "0.1.0",
+  "private": true,
+  "napi": {
+    "binaryName": "oxitone-native",
+    "targets": ["arm64-apple-darwin", "x64-apple-darwin"]
+  }
+}

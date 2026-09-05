@@ -1,0 +1,12 @@
+[package]
+name = "oxitone-instruments"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+oxitone-core = { path = "../core" }
+oxitone-graph = { path = "../graph" }
+oxitone-dsp = { path = "../dsp" }
+oxitone-samples = { path = "../samples" }
+serde_json = { workspace = true }

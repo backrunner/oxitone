@@ -1,0 +1,26 @@
+{
+  "amount": 0.25,
+  "kind": "binary",
+  "left": {
+    "input": {
+      "input": {
+        "kind": "constant",
+        "value": 0.8
+      },
+      "kind": "unary",
+      "op": "invert"
+    },
+    "kind": "map",
+    "max": 0.9,
+    "min": 0.2
+  },
+  "op": "mix",
+  "right": {
+    "kind": "wave",
+    "periodBeats": {
+      "denominator": 1,
+      "numerator": 4
+    },
+    "wave": "saw"
+  }
+}

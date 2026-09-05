@@ -1,0 +1,148 @@
+   Compiling oxitone-render v0.1.0 (/Volumes/BRData/projects/oxitone/crates/render)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.23s
+     Running tests/review_probes.rs (target/debug/deps/review_probes-c63aa7501f848b18)
+
+running 17 tests
+test empty_track_stem_is_silent ... FAILED
+test exclusive_last_beat_clips_note_off ... FAILED
+test extensible_wav_24_valid_bits_in_32_bit_container ... FAILED
+test first_audio_block_does_not_allocate ... FAILED
+test gate_boundary_inside_block_is_sample_accurate ... FAILED
+test inverse_tempo_is_monotone_at_start ... FAILED
+test midi_export_uses_effective_tempo_lane ... FAILED
+test mixer_insert_bypass_is_honored ... FAILED
+test parameter_inside_block_applies_at_target_frame ... FAILED
+test replace_graph_preserves_playback ... FAILED
+test replace_graph_refreshes_tempo_mapping ... FAILED
+test resolved_parameter_insertion_does_not_allocate ... FAILED
+test small_beat_roundtrip ... FAILED
+test track_routed_directly_to_master_has_audible_stem ... FAILED
+test transport_loop_does_not_render_events_past_loop_end ... FAILED
+test valid_deep_restart_chance_does_not_panic ... FAILED
+test zero_note_chance_produces_no_note_events ... FAILED
+
+failures:
+
+---- empty_track_stem_is_silent stdout ----
+
+thread 'empty_track_stem_is_silent' (14081495) panicked at crates/render/tests/review_probes.rs:261:5:
+empty track contains master audio: -8.759155879342648 dBFS
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- exclusive_last_beat_clips_note_off stdout ----
+
+thread 'exclusive_last_beat_clips_note_off' (14081667) panicked at crates/render/tests/review_probes.rs:379:5:
+note-off 96000 is beyond exclusive clip end 24000
+
+---- extensible_wav_24_valid_bits_in_32_bit_container stdout ----
+
+thread 'extensible_wav_24_valid_bits_in_32_bit_container' (14081668) panicked at crates/render/tests/review_probes.rs:330:5:
+assertion `left == right` failed: container width must determine frame stride
+  left: 5
+ right: 4
+
+---- first_audio_block_does_not_allocate stdout ----
+
+thread 'first_audio_block_does_not_allocate' (14081669) panicked at crates/render/tests/review_probes.rs:126:5:
+assertion `left == right` failed: heap allocations in first audio block
+  left: 1
+ right: 0
+
+---- gate_boundary_inside_block_is_sample_accurate stdout ----
+
+thread 'gate_boundary_inside_block_is_sample_accurate' (14081670) panicked at crates/render/tests/review_probes.rs:208:5:
+mute gate did not switch at frame 120
+
+---- inverse_tempo_is_monotone_at_start stdout ----
+
+thread 'inverse_tempo_is_monotone_at_start' (14081671) panicked at crates/render/tests/review_probes.rs:110:9:
+frame 2 beat=0.005333333333333333, frame 3 beat=0.004
+
+---- midi_export_uses_effective_tempo_lane stdout ----
+
+thread 'midi_export_uses_effective_tempo_lane' (14081672) panicked at crates/render/tests/review_probes.rs:356:5:
+assertion `left == right` failed: MIDI must use the same 60 bpm clock as audio
+  left: 500000
+ right: 1000000
+
+---- mixer_insert_bypass_is_honored stdout ----
+
+thread 'mixer_insert_bypass_is_honored' (14081673) panicked at crates/render/tests/review_probes.rs:237:5:
+bypassed polarity insert still inverted the bus
+
+---- parameter_inside_block_applies_at_target_frame stdout ----
+
+thread 'parameter_inside_block_applies_at_target_frame' (14081674) panicked at crates/render/tests/review_probes.rs:185:5:
+assertion `left == right` failed: frame-64 event still queued after rendering frame 127
+  left: 1
+ right: 0
+
+---- replace_graph_preserves_playback stdout ----
+
+thread 'replace_graph_preserves_playback' (14081675) panicked at crates/render/tests/review_probes.rs:157:5:
+assertion `left == right` failed
+  left: Stopped
+ right: Playing
+
+---- replace_graph_refreshes_tempo_mapping stdout ----
+
+thread 'replace_graph_refreshes_tempo_mapping' (14081684) panicked at crates/render/tests/review_probes.rs:168:5:
+assertion `left == right` failed
+  left: 24000
+ right: 48000
+
+---- resolved_parameter_insertion_does_not_allocate stdout ----
+
+thread 'resolved_parameter_insertion_does_not_allocate' (14081736) panicked at crates/render/tests/review_probes.rs:143:5:
+assertion `left == right` failed: heap allocations in audio-thread parameter insertion
+  left: 1
+ right: 0
+
+---- small_beat_roundtrip stdout ----
+
+thread 'small_beat_roundtrip' (14081737) panicked at crates/render/tests/review_probes.rs:98:5:
+one-frame beat: expected 0.000041666666666666665, actual 0.005333333333333333
+
+---- track_routed_directly_to_master_has_audible_stem stdout ----
+
+thread 'track_routed_directly_to_master_has_audible_stem' (14081738) panicked at crates/render/tests/review_probes.rs:285:5:
+audible track stem is silent: -inf dBFS
+
+---- transport_loop_does_not_render_events_past_loop_end stdout ----
+
+thread 'transport_loop_does_not_render_events_past_loop_end' (14081805) panicked at crates/render/tests/review_probes.rs:300:5:
+note at frame 96 sounded outside loop [0,64)
+
+---- valid_deep_restart_chance_does_not_panic stdout ----
+
+thread 'valid_deep_restart_chance_does_not_panic' (14081806) panicked at crates/transport/src/automation/chance.rs:51:8:
+range end index 167 out of range for slice of length 160
+
+---- zero_note_chance_produces_no_note_events stdout ----
+
+thread 'zero_note_chance_produces_no_note_events' (14081807) panicked at crates/render/tests/review_probes.rs:366:5:
+chance=0 note still scheduled
+
+
+failures:
+    empty_track_stem_is_silent
+    exclusive_last_beat_clips_note_off
+    extensible_wav_24_valid_bits_in_32_bit_container
+    first_audio_block_does_not_allocate
+    gate_boundary_inside_block_is_sample_accurate
+    inverse_tempo_is_monotone_at_start
+    midi_export_uses_effective_tempo_lane
+    mixer_insert_bypass_is_honored
+    parameter_inside_block_applies_at_target_frame
+    replace_graph_preserves_playback
+    replace_graph_refreshes_tempo_mapping
+    resolved_parameter_insertion_does_not_allocate
+    small_beat_roundtrip
+    track_routed_directly_to_master_has_audible_stem
+    transport_loop_does_not_render_events_past_loop_end
+    valid_deep_restart_chance_does_not_panic
+    zero_note_chance_produces_no_note_events
+
+test result: FAILED. 0 passed; 17 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.83s
+
+error: test failed, to rerun pass `-p oxitone-render --test review_probes`

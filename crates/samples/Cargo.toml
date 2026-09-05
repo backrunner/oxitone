@@ -1,0 +1,20 @@
+[package]
+name = "oxitone-samples"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+oxitone-core = { path = "../core" }
+oxitone-dsp = { path = "../dsp" }
+serde_json.workspace = true
+sha2.workspace = true
+# Import-time decode of compressed assets (06-format-and-export.md §Sample
+# 导入策略); the realtime path never touches compressed data.
+symphonia = { version = "0.5.5", default-features = false, features = [
+    "aac",
+    "alac",
+    "flac",
+    "isomp4",
+    "mp3",
+] }

@@ -1,0 +1,17 @@
+    Finished `bench` profile [optimized + debuginfo] target(s) in 0.31s
+     Running benches/render_offline.rs (target/release/deps/render_offline-81c86b49a1b3ab7e)
+Gnuplot not found, using plotters backend
+Benchmarking render/offline/render_wav_8tracks_20s
+Benchmarking render/offline/render_wav_8tracks_20s: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 16.2s.
+Benchmarking render/offline/render_wav_8tracks_20s: Collecting 10 samples in estimated 16.224 s (10 iterations)
+Benchmarking render/offline/render_wav_8tracks_20s: Analyzing
+render/offline/render_wav_8tracks_20s
+                        time:   [1.5695 s 2.1091 s 2.7005 s]
+                        thrpt:  [355.49 Kelem/s 455.17 Kelem/s 611.66 Kelem/s]
+                 change:
+                        time:   [+45.233% +88.085% +138.19%] (p = 0.00 < 0.05)
+                        thrpt:  [-58.017% -46.832% -31.145%]
+                        Performance has regressed.
+
