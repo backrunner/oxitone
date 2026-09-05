@@ -16,7 +16,7 @@
 mod bindings;
 mod clips;
 mod clock;
-pub use clock::effective_tempo_table;
+pub use clock::{effective_tempo_table, resolve_beat_duration};
 mod value;
 
 use std::collections::BTreeMap;

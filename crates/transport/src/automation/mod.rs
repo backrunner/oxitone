@@ -11,6 +11,7 @@ mod chance;
 mod compile;
 mod curve;
 mod eval;
+mod lane_time;
 
 use oxitone_core::error::OxitoneError;
 use oxitone_core::wire::AutomationSourceSpec;
@@ -18,8 +19,8 @@ use oxitone_core::wire::AutomationSourceSpec;
 use crate::tempo::CompiledTempoMap;
 
 pub use bake::{
-    bake_tempo_lane, ensure_transport_invariant, find_tempo_lane, normalized_to_bpm,
-    TEMPO_BAKE_GRID_BEAT, TEMPO_BAKE_MAX_SEGMENTS,
+    bake_tempo_lane, bake_tempo_lane_spec, ensure_transport_invariant, find_tempo_lane,
+    normalized_to_bpm, TEMPO_BAKE_GRID_BEAT, TEMPO_BAKE_MAX_SEGMENTS,
 };
 pub use chance::EvalContext;
 

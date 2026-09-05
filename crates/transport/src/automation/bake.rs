@@ -11,6 +11,7 @@ use oxitone_core::beat::Beat;
 use oxitone_core::error::{codes, OxitoneError};
 use oxitone_core::wire::{AutomationLaneSpec, AutomationSourceSpec, TempoCurve, TempoSegment};
 
+use super::lane_time::LaneTime;
 use super::{CompiledAutomation, EvalContext};
 
 /// Fixed bake grid: 1/64 beat (exact in binary floating point).
@@ -91,6 +92,31 @@ pub fn bake_tempo_lane(
     length_beats: f64,
     tail_seconds: f64,
 ) -> Result<Vec<TempoSegment>, OxitoneError> {
+    bake(source, project_seed, length_beats, tail_seconds, None)
+}
+
+pub fn bake_tempo_lane_spec(
+    lane: &AutomationLaneSpec,
+    project_seed: u64,
+    length_beats: f64,
+    tail_seconds: f64,
+) -> Result<Vec<TempoSegment>, OxitoneError> {
+    bake(
+        &lane.source,
+        project_seed,
+        length_beats,
+        tail_seconds,
+        Some(lane),
+    )
+}
+
+fn bake(
+    source: &AutomationSourceSpec,
+    project_seed: u64,
+    length_beats: f64,
+    tail_seconds: f64,
+    lane: Option<&AutomationLaneSpec>,
+) -> Result<Vec<TempoSegment>, OxitoneError> {
     if !length_beats.is_finite() || length_beats < 0.0 {
         return Err(OxitoneError::new(
             codes::INVALID_PROJECT,
@@ -106,11 +132,20 @@ pub fn bake_tempo_lane(
     ensure_transport_invariant(source)?;
     let evaluator = CompiledAutomation::compile(source, project_seed)?;
     let ctx = EvalContext::default();
-    let end_bpm = normalized_to_bpm(evaluator.value_at(length_beats, &ctx));
+    let time = LaneTime::new(lane)?;
+    let value = |beat| evaluator.value_at(time.map(beat), &ctx);
+    let end_bpm = normalized_to_bpm(value(length_beats));
     let end_beat = length_beats + end_bpm * tail_seconds / 60.0;
 
     let mut boundaries: Vec<f64> = Vec::new();
     let grid_slots = (end_beat / TEMPO_BAKE_GRID_BEAT).ceil() as u64;
+    if grid_slots >= TEMPO_BAKE_MAX_SEGMENTS as u64 {
+        return Err(OxitoneError::with_path(
+            codes::TEMPO_MAP_COMPLEXITY,
+            "tempo bake exceeds the segment budget",
+            "$.automation",
+        ));
+    }
     for slot in 0..=grid_slots {
         boundaries.push(slot as f64 * TEMPO_BAKE_GRID_BEAT);
     }
@@ -121,15 +156,12 @@ pub fn bake_tempo_lane(
     // (curve control points on a sloped source) need no probe: their value
     // delta across `ε` is proportional to the slope, not a jump.
     const JUMP_THRESHOLD: f64 = 1e-3;
-    let discontinuities = evaluator.discontinuities(0.0, end_beat, &ctx);
+    let discontinuities = time.boundaries(&evaluator, end_beat, &ctx)?;
     let mut probes: Vec<f64> = Vec::new();
     for &d in &discontinuities {
         boundaries.push(d);
         let probe = d - DISCONTINUITY_EPSILON_BEAT;
-        if probe > 0.0
-            && (evaluator.value_at(d, &ctx) - evaluator.value_at(probe, &ctx)).abs()
-                > JUMP_THRESHOLD
-        {
+        if probe > 0.0 && (value(d) - value(probe)).abs() > JUMP_THRESHOLD {
             boundaries.push(probe);
             probes.push(probe);
         }
@@ -164,7 +196,7 @@ pub fn bake_tempo_lane(
         previous = Some(start_beat);
         segments.push(TempoSegment {
             start_beat,
-            bpm: normalized_to_bpm(evaluator.value_at(*boundary, &ctx)),
+            bpm: normalized_to_bpm(value(*boundary)),
             curve: if index + 1 < boundaries.len() {
                 if probes.contains(&boundary.to_bits()) {
                     Some(TempoCurve::Step)

@@ -235,6 +235,12 @@ impl VarispeedReader {
         self.rate.set_target(rate.clamp(1e-3, self.max_rate) as f32);
     }
 
+    /// Initialize a pre-rolled stream at its known starting rate without a ramp.
+    /// Caller must provide enough history for the target kernel before producing.
+    pub fn snap_rate(&mut self, rate: f64) {
+        self.rate.snap(rate.clamp(1e-3, self.max_rate) as f32);
+    }
+
     pub fn reset(&mut self) {
         self.core.reset();
         self.rate.snap(1.0);

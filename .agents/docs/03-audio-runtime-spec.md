@@ -77,6 +77,13 @@ Sample player 的运行时可自动化参数按 DSP 实现：`tone` 是每 clip 
 
 - `stretch`：WSOLA 类保调拉伸器，所有窗口/缓冲在 prepare 预分配；拉伸比由 beat 域映射推导（内容 beat 长度 ÷ clip beat 长度），tempo 变化时按 control-rate 每 block 从烘焙的 beat↔frame 表重新计算并平滑，不允许逐 sample 突变。拉伸比有效范围 0.25..4，clip 配置超出范围时 compile 报错 `SampleStretchRange`。realtime 与 offline 使用同一算法、同一参数和同一 ratio 序列（offline parity 适用）。
 - `repitch`：复用 varispeed 路径，tempo 因子与 `rate` 参数相乘后经同一 smoother；播放位置仍用 f64 积分。
+  内容帧数按最终 `durationBeats` 分配，block 的有效 rate 为
+  `contentFrames / durationBeats * (beat(endFrame) - beat(startFrame)) / blockFrames`
+  再乘 clip rate 和自动化 rate，因此显式缩短/拉长 clip 会缩放完整内容。启动先以
+  rate 1 预卷足够的零帧，再直接设定已知起始 rate；仅后续改变走 smoother，避免启动
+  ramp 造成固定时间偏移。有效 rate 的既有 varispeed 范围为 0.125..16。
+- WSOLA 的 seek/loop reset 清空流状态和已有缓冲，不重建 stretcher 或释放内存。
+  reset 后继续 render 必须与新实例逐样本一致，分配/释放计数均为 0。
 - tempo lane 烘焙表是所有 tempo 因子的唯一来源，sample player 不得自行查询 BPM 或维护第二份映射。
 
 `Slicer` 的每个 slice 是一个预分配的 varispeed player voice：compile 期把显式 marker/grid/onset 统一解析成 frame 区间的不可变 slice 表（onset 检测在 compile/prepare 执行，不得在 callback 中运行），note-on 按 `triggerNote` 偏移索引 slice；oneshot 忽略 note-off，gate 用 note-off 触发 release。slice 播放的全部参数路径与 Sampler 相同，PDC、平滑和确定性规则不变。

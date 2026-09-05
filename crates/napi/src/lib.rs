@@ -27,8 +27,10 @@ use serde::Serialize;
 
 mod plugins;
 mod samples;
+mod timing;
 pub use plugins::{get_plugin_diagnostics, register_plugin};
 pub use samples::inspect_sample;
+pub use timing::resolve_beat_duration;
 
 struct EngineState {
     plugins: oxitone_graph::PluginRegistry,

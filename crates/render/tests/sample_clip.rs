@@ -11,7 +11,11 @@
 //! the WSOLA hop grid, so its tolerance is one hop (±320 frames) — see the
 //! module docs of `player/stretch.rs`.
 
+#[path = "common/allocations.rs"]
+mod allocations;
 mod common;
+#[path = "sample_clip/fitting.rs"]
+mod fitting;
 
 use common::*;
 use oxitone_core::wire::{LoopSpec, TempoCurve, TempoSegment, TempoSync};

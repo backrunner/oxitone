@@ -29,6 +29,10 @@
   48 kHz stereo 的 1 秒 PCM16 / 10 秒 float32 WAV，固定 440 Hz 正弦。Criterion
   重复读取同一文件，代表 warm filesystem cache；不含 N-API、TS 或 prepare 的 SRC/编辑。
   此场景不使用音频设备、voice 或 callback，p95/p99 callback 与 xruns 记 null。
+- `samples/playback`: 48 kHz/stereo/128 frames，单个 clip reset 后输出首个 block。
+  `repitch_reset_128` 使用 rate 2，`stretch_reset_128` 使用 WSOLA ratio 0.5；样本为
+  440 Hz、幅度 0.5 的一秒正弦，素材与 player 在测量外创建。覆盖启动和 reset 的
+  RT 路径成本，仍不代替真实 callback/worker soak。
 
 `dsp/*` benchmark 必须包含 denormal 语料（衰减中的滤波器/混响尾部），验证 FTZ/DAZ 与 denormal-safe 实现没有性能悬崖。
 

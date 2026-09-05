@@ -122,6 +122,24 @@ describe("Sample and SampleClip authoring", () => {
     expect(clip.fitBars(0.5).durationBeats).toBe(2);
   });
 
+  it("fits content through linear and exponential tempo ramps", () => {
+    const project = new Project();
+    project.setTempo(120, "linear");
+    project.addTempoSegment({ startBeat: 8, bpm: 240 });
+    const { musicalLengthBeats: _, ...unmeasuredSample } = sampleOptions;
+    const sample = project.addSample({ ...unmeasuredSample, frames: 48_000 });
+    const clip = project.addTrack().sample(sample).at({ bar: 1 });
+    expect(clip.fitToContent().durationBeats).toBeCloseTo(8 * Math.expm1(0.25), 6);
+    const exponential = new Project();
+    exponential.setTempo(120, "exponential");
+    exponential.addTempoSegment({ startBeat: 8, bpm: 240 });
+    const exponentialSample = exponential.addSample({ ...unmeasuredSample, frames: 48_000 });
+    const exponentialClip = exponential.addTrack().sample(exponentialSample).at({ bar: 1 });
+    expect(exponentialClip.fitToContent().durationBeats).toBeCloseTo(-8 * Math.log1p(-Math.log(2) / 4) / Math.log(2), 6);
+    const later = exponential.addTrack().sample(exponentialSample).at({ bar: 4 });
+    expect(later.fitToContent().durationBeats).toBeCloseTo(4, 6);
+  });
+
   it("lets a draft retry a failed placement without changing the project snapshot", () => {
     const project = new Project();
     const draft = project.addTrack().sample(project.addSample(sampleOptions));

@@ -73,10 +73,14 @@
 - 目前只提供元数据 descriptor 导入，未实现缓存 WAV 写入或 provenance 持久化；
   继续追踪项目保存/加载、内置音源便捷入口和原表中的其余缺口。
 - `pnpm schemas`、`pnpm build`（release native addon）、`pnpm lint`、`pnpm typecheck`、
-  TS 测试（164 tests）、`cargo fmt --all --check`、`cargo test --workspace`（377 tests）
-  通过。TS 全量测试先通过 162 tests，新增的 native 请求及 AAC 测试随后在各自包中通过。
+  TS 测试（168 tests）、`cargo fmt --all --check`、`cargo test --workspace`（382 tests）
+  通过。新增 timing query、tempo-lane loop 和 sample playback reset 测试也已通过。
 - Apple M4 / macOS 27.0 / Rust 1.98.0，48 kHz stereo，30 samples：1 秒 PCM16
   inspector slope estimate 为 0.835 ms，10 秒 float32 为 10.477 ms。测量包含文件读取、
   hash、完整解码和释放，使用 warm filesystem cache；首次建立该场景基线，无回退结论。
   [基准归档](../../benchmarks/results/2026-09-06-sample-import.json) 记录置信区间、实际
   测量时长和环境；未测设备/callback/xrun 的值为 null，不替代长期实时验收。
+- Apple M4 / macOS 27.0 / Rust 1.98.0，48 kHz stereo / 128 frames：repitch reset +
+  首块输出 97.05 µs，WSOLA reset + 首块输出 311.65 µs；reset/replay 分配计数为 0。
+  [播放基准归档](../../benchmarks/results/2026-09-06-tempo-sample-playback.json) 记录了
+  测量参数和未覆盖的 callback/xrun 限制。

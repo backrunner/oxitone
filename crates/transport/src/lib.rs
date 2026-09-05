@@ -14,8 +14,8 @@ use std::cmp::Ordering;
 use oxitone_core::beat::Beat;
 
 pub use automation::{
-    bake_tempo_lane, ensure_transport_invariant, find_tempo_lane, normalized_to_bpm,
-    CompiledAutomation, EvalContext, MAX_DEPTH as AUTOMATION_MAX_DEPTH,
+    bake_tempo_lane, bake_tempo_lane_spec, ensure_transport_invariant, find_tempo_lane,
+    normalized_to_bpm, CompiledAutomation, EvalContext, MAX_DEPTH as AUTOMATION_MAX_DEPTH,
     MAX_NODES as AUTOMATION_MAX_NODES, TEMPO_BAKE_GRID_BEAT, TEMPO_BAKE_MAX_SEGMENTS,
 };
 pub use event::{EventPayload, EventPriority, ScheduledEvent};

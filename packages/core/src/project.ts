@@ -23,6 +23,7 @@ import { snapshotProject } from "./project-snapshot.js";
 import { Track } from "./track.js";
 import { TempoMap, type TempoCurve, type TempoSegmentInput } from "./tempo-map.js";
 import { TimeSignatureMap, type BarBeatPosition } from "./time-signature.js";
+import { resolveBeatDuration } from "oxitone";
 
 /** Options for {@link Project}. */
 export interface ProjectOptions {
@@ -225,6 +226,11 @@ export class Project extends ProjectPlayback {
       bpm = segment.bpm;
     }
     return bpm;
+  }
+
+  /** Convert a content duration in seconds through the authored tempo map. */
+  beatsForSeconds(startBeat: number, seconds: number): number {
+    return resolveBeatDuration(this.snapshot(), startBeat, seconds);
   }
 
   /** Add a named marker at a beat position; returns the marker. */

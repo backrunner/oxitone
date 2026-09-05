@@ -49,6 +49,9 @@ oxitone/
 
 The first npm package may bundle `@oxitone/core`, `@oxitone/protocol`, and the native resolver for ergonomics. Subpath packages remain separately testable and must not create circular dependencies.
 
+仓库根是私有 `oxitone-workspace`，不能与公开 facade `oxitone` 同名；否则 pnpm
+会混淆 workspace 依赖顺序，首次构建时可能在 native 类型生成前构建 core。
+
 ## Package ownership
 
 | Layer | Owns | Must not own |

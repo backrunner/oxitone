@@ -80,6 +80,20 @@ impl Wsola {
         self.window
     }
 
+    /// Restore initial streaming state without allocating or releasing buffers.
+    pub fn reset(&mut self) {
+        self.ratio = 1.0;
+        self.fifo.clear();
+        self.fifo_base = 0;
+        self.ring.fill(0.0);
+        self.norm.fill(0.0);
+        self.next_in = 0.0;
+        self.next_out = 0.0;
+        self.written_up_to = 0;
+        self.finalized_up_to = 0;
+        self.next_final = 0;
+    }
+
     /// Frames of input consumed internally but not yet reflected in output.
     pub fn latency_frames(&self) -> u64 {
         (self.window + self.search) as u64

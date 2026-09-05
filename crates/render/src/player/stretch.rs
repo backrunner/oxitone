@@ -17,8 +17,6 @@ use super::feeder::ClipFeeder;
 
 pub struct StretchStereo {
     wsola: [Wsola; 2],
-    window: usize,
-    max_block: usize,
     in_l: Vec<f32>,
     in_r: Vec<f32>,
     out_l: Vec<f32>,
@@ -43,8 +41,6 @@ impl StretchStereo {
         let fifo = chunk_out + 2 * max_block;
         Self {
             wsola: [Wsola::new(window, max_block), Wsola::new(window, max_block)],
-            window,
-            max_block,
             in_l: vec![0.0; max_block],
             in_r: vec![0.0; max_block],
             out_l: vec![0.0; chunk_out],
@@ -57,10 +53,14 @@ impl StretchStereo {
         }
     }
 
-    /// Seek flush. `Wsola` has no in-place reset; re-creating it reuses the
-    /// same fixed sizes (control path only — never inside a render block).
+    /// Seek flush on the render thread; retain all preallocated buffers.
     pub fn reset(&mut self) {
-        *self = Self::with_window(self.max_block, self.window);
+        for wsola in &mut self.wsola {
+            wsola.reset();
+        }
+        self.fifo_head = 0;
+        self.fifo_len = 0;
+        self.ratio = 1.0;
     }
 
     /// Per-block ratio from the baked tempo table (0.25..=4; validated at

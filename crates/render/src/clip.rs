@@ -36,7 +36,6 @@ pub struct ClipNode {
     tilt: [[Biquad; 2]; 2],
     tilt_tone: f32,
     pub content_frames: u64,
-    pub content_beats: f64,
     pub duration_beats: f64,
     sample_rate: u32,
     activated: bool,
@@ -83,7 +82,6 @@ impl ClipNode {
             tilt: tilt_coeffs(sr, 0.0),
             tilt_tone: 0.0,
             content_frames: plan.sample.frames(),
-            content_beats: plan.content_beats,
             duration_beats: plan.duration_beats.to_f64(),
             sample_rate,
             activated: false,
@@ -116,7 +114,7 @@ impl ClipNode {
                     tempo.frame_to_beat(win_end).to_f64() - tempo.frame_to_beat(win_start).to_f64();
                 self.static_rate
                     * self.automation_rate
-                    * (self.content_frames.max(1) as f64 / self.content_beats.max(1e-9))
+                    * (self.content_frames.max(1) as f64 / self.duration_beats.max(1e-9))
                     * beats
                     / frames
             }

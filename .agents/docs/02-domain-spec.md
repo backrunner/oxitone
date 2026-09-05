@@ -110,8 +110,10 @@ Sample frames 接受正 safe-integer number 或正 u64 bigint；`options.id` 可
 `musicalLengthBeats` 和显式 clip duration 必须大于 0。失败的添加/放置不注册实体、不增加
 revision，SampleClip draft 可重试；ID 生成器可消耗序号。`fitBars` 始终使用起始拍号，
 不因 clip 的 beat offset 缩短整小节长度。`fitToContent` 优先使用声明的音乐长度，否则
-使用 trim 后帧数；当前 tempo 换算只查询起点所属 segment 的静态 BPM，tempo ramp/lane
-下的有效时钟换算仍待补齐。
+使用 trim 后帧数，并通过 Rust 有效时钟计算
+`endBeat = secondsToBeat(beatToSeconds(startBeat) + contentSeconds)`。该同步只读查询
+覆盖 step/linear/exponential tempo map，以及替代它的 tempo lane（含 loop/lastBeat），
+不读取音频资产、不创建 engine。音乐长度已声明时仍优先使用该长度。
 
 文件导入入口为 `@oxitone/samples` 的同步 `importSample(path, { assetBaseDir? })`。
 它通过版本化 native 命令让 Rust 读取、识别和完整解码源文件，返回可传给 `addSample`

@@ -1,0 +1,32 @@
+{
+  "schema": "oxitone.focused-benchmark.v1",
+  "date": "2026-09-06",
+  "change": "tempo-lane timing queries and allocation-free sample playback reset",
+  "baseCommit": "a131125",
+  "machine": { "cpu": "Apple M4", "os": "macOS 27.0 (26A5425a)", "arch": "aarch64-apple-darwin", "rustc": "1.98.0 (88d9e12ae 2026-08-18)", "llvm": "22.1.8" },
+  "config": {
+    "sampleRate": 48000,
+    "blockSize": 128,
+    "channels": 2,
+    "voices": 0,
+    "input": "deterministic 440 Hz sine, amplitude 0.5",
+    "harness": "criterion 0.5, optimized bench profile",
+    "warmupSeconds": 1,
+    "measurementSeconds": 3,
+    "sampleCount": 30,
+    "device": null,
+    "callbackP95Ns": null,
+    "callbackP99Ns": null,
+    "xruns": null
+  },
+  "command": "cargo bench -p oxitone-bench --bench sample_playback -- --sample-size 30 --warm-up-time 1 --measurement-time 3",
+  "scenarios": [
+    { "id": "samples/playback/repitch_reset_128", "description": "reset + first 128-frame repitch block, rate 2", "slopeNs": 97049.9, "slopeUs": 97.0499, "confidence95Ns": [96944, 97162] },
+    { "id": "samples/playback/stretch_reset_128", "description": "reset + first 128-frame WSOLA block, ratio 0.5", "slopeNs": 311650, "slopeUs": 311.65, "confidence95Ns": [311180, 312070] }
+  ],
+  "notes": [
+    "Player and prepared sample are created outside measurement; reset, rate/ratio assignment and one render block are measured.",
+    "The allocation regression test reports zero alloc/free during WSOLA reset and replay.",
+    "This is a control/render-path microbenchmark, not a CoreAudio callback, worker soak or xrun acceptance run."
+  ]
+}

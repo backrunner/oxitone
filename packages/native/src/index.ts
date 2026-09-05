@@ -22,6 +22,9 @@ import {
   sampleInfoSchema,
   checkProtocolVersion,
   PROTOCOL_VERSION,
+  beatDurationQuerySchema,
+  beatDurationResultSchema,
+  beatToWire,
   type SampleInfo,
   type RegisterPluginOptions,
   type RegisteredPlugin,
@@ -63,6 +66,15 @@ export type {
 export interface EngineHandle {
   readonly id: string;
   readonly protocolVersion: string;
+}
+
+/** Synchronous duration conversion through Rust's effective tempo map; no engine needed. */
+export function resolveBeatDuration(snapshot: ProjectSnapshot, startBeat: number, durationSeconds: number): number {
+  const query = beatDurationQuerySchema.safeParse({ startBeat: beatToWire(startBeat), durationSeconds });
+  if (!query.success) throw new OxitoneError(ErrorCode.InvalidProject, "invalid timing query", { details: { path: "durationSeconds" } });
+  const result = beatDurationResultSchema.parse(JSON.parse(call((binding) => binding.resolveBeatDuration(encodeProjectSnapshot(snapshot), JSON.stringify(query.data)))));
+  checkProtocolVersion(result.protocolVersion);
+  return result.durationBeats.numerator / result.durationBeats.denominator;
 }
 
 /** Synchronous control-thread decode for metadata; never opens an audio device. */

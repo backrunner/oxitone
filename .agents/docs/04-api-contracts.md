@@ -137,7 +137,16 @@ clip.fitBars(2);
 或正 u64 bigint；越界、不精确数字、非法 trim 范围和非正音乐长度报 `InvalidProject`。
 添加失败不注册实体或改变 revision，SampleClip draft 可在放置失败后重试。
 `fitBars` 按起点拍号设置长度；`fitToContent` 未指定音乐长度时按 trim 后内容折算，
-当前只使用起点所属 tempo segment 的静态 BPM，尚未覆盖 tempo ramp/lane。
+通过 Rust 有效 tempo map/lane 的积分和逆变换计算完整内容区间。
+`project.beatsForSeconds(startBeat, durationSeconds)` 提供同一只读查询，返回 beat 长度；
+不增加 revision，不访问资产或设备。参数必须有限且非负，错误为 `InvalidProject`。
+tempo lane 查询的烘焙上界为 `startBeat + durationSeconds * 999 / 60`，超出 65,536 个
+segment 时提前报 `TempoMapComplexity`。查询完成后再调用 fit helper 更新 duration/revision。
+
+Native facade `resolveBeatDuration(snapshot, startBeat, durationSeconds): number` 使用
+版本化 ProjectSnapshot 与 `{startBeat: BeatWire, durationSeconds}` query JSON，返回
+`{protocolVersion, durationBeats: BeatWire}`。复用 Rust 时钟及 tempo source validator；
+版本校验先于查询解析，不要求图完整或资源可读。
 
 Track 的 `enabled` 和 `midiChannel` 支持读写、revision 和快照序列化。`enabled` 默认 true，
 false 会关闭该 Track 的音频调度与 MIDI note track；`midiChannel` 为 1..16，可赋 undefined

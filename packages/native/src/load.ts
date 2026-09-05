@@ -6,6 +6,7 @@ import { ErrorCode, OxitoneError } from "@oxitone/protocol";
 import type * as generated from "@oxitone/native-generated";
 
 export interface NativeBinding {
+  resolveBeatDuration: typeof generated.resolveBeatDuration;
   inspectSample: typeof generated.inspectSample;
   createEngine: typeof generated.createEngine;
   compile: typeof generated.compile;

@@ -1,5 +1,5 @@
 {
-  "name": "oxitone",
+  "name": "oxitone-workspace",
   "version": "0.1.0",
   "private": true,
   "description": "Oxitone: TypeScript authoring SDK backed by a Rust realtime audio engine",

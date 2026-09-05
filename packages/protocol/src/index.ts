@@ -140,6 +140,8 @@ export type {
   MidiExportReport,
 } from "./options.js";
 export { canonicalize, canonicalEncode } from "./canonical.js";
+export { beatDurationQuerySchema, beatDurationResultSchema } from "./timing.js";
+export type { BeatDurationQuery } from "./timing.js";
 export {
   Pcg32,
   PCG32_MULTIPLIER,

@@ -103,6 +103,11 @@ AST 最大深度 64、最大节点数 256。共享 source 在 wire 中默认展�
 - gate、step、square、chance 的不连续点若落在 block 内，compiler 必须生成 segment 边界，使变化落在正确 sample frame。
 - tempo change 只改变 beat/sample 映射，不改变 source 在 beat 域的定义。
 
+Tempo lane 烘焙必须应用 lane 自身的 loop/lastBeat。loop 内按其 region 周期映射
+source beat，结束后保持最终 phase；恰好结束在整周期边界时保持 region 末端值。
+每次循环的 source 跳变和 wrap 都加入烘焙边界，hold 端点同样加入；combine 只能 replace。
+时间网格及循环边界数量在分配前检查预算，不以越界分配来检测 `TempoMapComplexity`。
+
 ## 6. 校验错误码
 
 至少提供以下稳定 code，并附带 source JSON path：
@@ -129,3 +134,7 @@ AST 最大深度 64、最大节点数 256。共享 source 在 wire 中默认展�
 - chance：probability 0/1、固定 seed 的前 16 个 decision、absolute seek 往返一致、restart loop iteration 不同但可复现。
 - composition：嵌套 map/invert/multiply、最终 clamp、depth/node limits。
 - parity：相同 serialized source 在 realtime/offline、不同 block size（64/128/256）下，在同一 sample frame 输出一致。
+- tempo loop golden（`crates/transport/tests/tempo_lane_loop.rs`）：source 在 beat 0/0.5/1
+  为 120/240/60 BPM，loop 长度 1、count 2。beat 0.5/1/1.5/2/3 的累计秒数应为
+  0.25/0.375/0.625/0.75/1.75（烘焙容差 1e-5 s），beat 2 以后保持 60 BPM；
+  另测 lastBeat、非整周期结束与巨大 horizon 的提前拒绝。

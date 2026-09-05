@@ -67,3 +67,7 @@ harness = false
 [[bench]]
 name = "sample_import"
 harness = false
+
+[[bench]]
+name = "sample_playback"
+harness = false

@@ -7,9 +7,9 @@
 //! - **Startup alignment**: the sinc reader is causal; its first output
 //!   frame is centered `taps/2 - 1` input frames into the pushed stream and
 //!   its rate smoother restarts at 1.0. Startup therefore runs at rate 1.0:
-//!   feed [`STARTUP_ZEROS`] zeros, discard the [`STARTUP_DISCARD`] frames
-//!   they produce — the first kept output frame is centered exactly on
-//!   content frame 0.
+//!   feed enough zeros for the starting-rate kernel, discard the preroll,
+//!   then snap to the starting rate. The first kept output frame is centered
+//!   exactly on content frame 0, without a startup rate ramp delaying later notes.
 //! - **Bounded rate ramps**: for `rate > 1` the anti-alias kernel stretches
 //!   to `~64 * rate` taps and the read position must stay ahead of
 //!   `32 * rate - 1` input frames. Increases that would violate this are
@@ -49,6 +49,7 @@ pub struct VarispeedStereo {
     discard_l: Vec<f32>,
     discard_r: Vec<f32>,
     discard_remaining: u64,
+    preroll_started: bool,
     /// Unconsumed input frames carried in `in_l`/`in_r` between calls.
     pending: usize,
     rate: f64,
@@ -70,6 +71,7 @@ impl VarispeedStereo {
             discard_l: vec![0.0; max_block],
             discard_r: vec![0.0; max_block],
             discard_remaining: STARTUP_DISCARD,
+            preroll_started: false,
             pending: 0,
             rate: 1.0,
             target_rate: 1.0,
@@ -85,6 +87,7 @@ impl VarispeedStereo {
             reader.reset();
         }
         self.discard_remaining = STARTUP_DISCARD;
+        self.preroll_started = false;
         self.pending = 0;
         self.rate = 1.0;
         self.rate_initialized = false;
@@ -147,10 +150,15 @@ impl VarispeedStereo {
         out_l: &mut [f32],
         out_r: &mut [f32],
     ) {
+        if !self.preroll_started {
+            let zeros = (SINC_TAPS as f64 * self.target_rate.max(1.0)).ceil() as u64;
+            self.discard_remaining = zeros - (SINC_TAPS as u64 / 2 - 1);
+            self.preroll_started = true;
+        }
         while self.discard_remaining > 0 {
             let n = (self.discard_remaining as usize).min(self.zeros.len());
-            let rl = self.readers[0].process(&self.zeros[..n], &mut self.discard_l);
-            let rr = self.readers[1].process(&self.zeros[..n], &mut self.discard_r);
+            let rl = self.readers[0].process(&self.zeros[..n], &mut self.discard_l[..n]);
+            let rr = self.readers[1].process(&self.zeros[..n], &mut self.discard_r[..n]);
             debug_assert_eq!(rl, rr);
             if rl.produced == 0 {
                 break;
@@ -159,7 +167,10 @@ impl VarispeedStereo {
         }
         if !self.rate_initialized {
             self.rate_initialized = true;
-            self.set_rate(self.target_rate);
+            self.rate = self.target_rate;
+            for reader in &mut self.readers {
+                reader.snap_rate(self.target_rate);
+            }
         }
         let mut produced = 0;
         while produced < frames {

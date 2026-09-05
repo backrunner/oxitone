@@ -126,6 +126,18 @@ conventional commits (`type(scope): description`).
 
 ### Fixed
 
+- Sample fitting now integrates the effective Rust clock across tempo steps, ramps and
+  looped/held tempo lanes. `Project.beatsForSeconds` exposes the same read-only conversion.
+  Content-derived clip lengths account for trim; repitch fits the final duration and
+  pre-rolls at the known initial rate without shifting later onsets. WSOLA resets retain
+  buffers and are checked for zero allocation/deallocation and exact replay.
+- Tempo lane baking applies loop/lastBeat, repeats source discontinuities and rejects
+  excessive grid horizons before allocation. The private workspace root is now named
+  `oxitone-workspace`, fixing native/core dependency ordering on first builds.
+
+- Added timing/playback baselines for the effective tempo query and first sample block:
+  repitch reset 97.05 µs and WSOLA reset 311.65 µs at 48 kHz/128 frames on Apple M4.
+
 - Sample authoring accepts positive u64 bigint frames, rejects unsafe number frames,
   honors explicit IDs, and validates trim relationships and positive musical lengths.
   Failed sample/clip construction does not register an entity or bump revision; drafts

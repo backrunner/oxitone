@@ -154,7 +154,7 @@ export class SampleClip {
     const edits = this.sample.edits;
     const frames = BigInt(edits?.endFrame ?? this.sample.frames) - BigInt(edits?.startFrame ?? "0");
     const beats = this.sample.musicalLengthBeats ??
-      Number(frames) / this.sample.sampleRate * this.project.tempoAt(this.startBeat) / 60;
+      this.project.beatsForSeconds(this.startBeat, Number(frames) / this.sample.sampleRate);
     return this.fitBeats(beats);
   }
 

@@ -60,15 +60,26 @@ pub(crate) fn resolve_duration(
     }
     content_beats_fallback(
         sample.musical_length_beats,
-        sample.frames,
+        sample
+            .edits
+            .as_ref()
+            .and_then(|e| e.end_frame)
+            .unwrap_or(sample.frames)
+            .saturating_sub(
+                sample
+                    .edits
+                    .as_ref()
+                    .and_then(|e| e.start_frame)
+                    .unwrap_or(0),
+            ),
         sample.sample_rate,
         clip.start_beat,
         tempo,
     )
 }
 
-/// Content beats when `musicalLengthBeats` is missing: content seconds at
-/// the BPM of the clip start (02-domain-spec.md §Sample).
+/// Content beats when `musicalLengthBeats` is missing: integrate the effective
+/// clock over the content's full seconds span (02-domain-spec.md §Sample).
 fn content_beats_fallback(
     musical: Option<Beat>,
     frames: u64,
@@ -80,7 +91,10 @@ fn content_beats_fallback(
         return musical.to_f64();
     }
     let seconds = frames as f64 / f64::from(sample_rate.max(1));
-    seconds * tempo.bpm_at_beat(start_beat.to_f64()) / 60.0
+    tempo
+        .seconds_to_beat(tempo.beat_to_seconds(start_beat) + seconds)
+        .to_f64()
+        - start_beat.to_f64()
 }
 
 /// WSOLA output/input duration ratio at `bpm` for this clip
