@@ -24,6 +24,7 @@ import { Track } from "./track.js";
 import { TempoMap, type TempoCurve, type TempoSegmentInput } from "./tempo-map.js";
 import { TimeSignatureMap, type BarBeatPosition } from "./time-signature.js";
 import { resolveBeatDuration } from "oxitone";
+import { saveProject, type SaveProjectOptions } from "./project-files.js";
 
 /** Options for {@link Project}. */
 export interface ProjectOptions {
@@ -365,5 +366,10 @@ export class Project extends ProjectPlayback {
    */
   snapshot(): ProjectSnapshot {
     return snapshotProject(this, [...this.patternsById.values()], this.tempos.toWire());
+  }
+
+  /** Save a canonical manifest and content-addressed assets on the control thread. */
+  async save(directory: string, options: SaveProjectOptions = {}): Promise<void> {
+    await saveProject(this.snapshot(), directory, options);
   }
 }

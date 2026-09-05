@@ -43,6 +43,11 @@
 
 ## 回归策略
 
+`node benchmarks/project-files.mjs` 测项目文件保存/加载：native 先生成 48 kHz stereo
+一秒 float32 音源素材，测量外完成准备；预热 5 次，测量 30 次已有内容寻址资产的
+重复 save 和 load（包含 SHA-256、canonical manifest、fsync）。记录 median/p95/p99
+I/O 耗时；不测 callback 或 xrun，不用于实时验收。
+
 主分支保存每个场景的 JSON baseline。p95/p99 超过 baseline 10%、peak memory 超过 15%、render ratio 下降超过 10% 或出现任何 xrun 时 CI 失败；硬件噪声较大时允许人工批准并记录原因。golden WAV 使用 SHA-256 加上 peak/RMS/true-peak 摘要，浮点比较需声明容差。
 
 ## 诊断

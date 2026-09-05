@@ -1,6 +1,8 @@
 import { z } from "zod";
 import {
   engineOptionsSchema,
+  compileOptionsSchema,
+  projectFileSchema,
   pluginManifestSchema,
   registerPluginOptionsSchema,
   nativeCommandSchema,
@@ -21,6 +23,8 @@ function writeSchema(rel: string, schema: z.ZodType): void {
 
 export function generateSchemas(): void {
   writeSchema("schemas/project-snapshot.schema.json", projectSnapshotSchema);
+  writeSchema("schemas/project-file.schema.json", projectFileSchema);
+  writeSchema("schemas/compile-options.schema.json", compileOptionsSchema);
   writeSchema("schemas/native-command.schema.json", nativeCommandSchema);
   writeSchema("schemas/native-event.schema.json", nativeEventSchema);
   writeSchema("schemas/engine-options.schema.json", engineOptionsSchema);

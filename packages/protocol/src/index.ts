@@ -140,6 +140,8 @@ export type {
   MidiExportReport,
 } from "./options.js";
 export { canonicalize, canonicalEncode } from "./canonical.js";
+export { PROJECT_FORMAT_VERSION, projectFileSchema, type ProjectFile } from "./project-file.js";
+export { compileOptionsSchema, type CompileOptions } from "./options.js";
 export { beatDurationQuerySchema, beatDurationResultSchema } from "./timing.js";
 export type { BeatDurationQuery } from "./timing.js";
 export {

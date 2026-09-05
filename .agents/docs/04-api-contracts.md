@@ -174,7 +174,8 @@ await project.renderWav({ path: '/music/out.wav', assetBaseDir, tailSeconds: 0 }
 默认相对路径基于 cwd，输出绝对 `assetUri`；指定 base 时，相对输入基于 base 解析，
 绝对输入保持原意，输出 URI 相对 base，目录外的词法路径报 `InvalidProject`。路径是
 本地文件系统路径，不接受 file URL。相对 descriptor 用于 render 时必须传入相应的
-`assetBaseDir`；当前 `Project.compile()` 无 base 参数，compile/play 应使用默认绝对 URI。
+`assetBaseDir`。`Project.compile({ assetBaseDir, ...engineOptions })` 已支持相对资源；
+Session.update 和 Session.renderWav 默认沿用它，render options 可显式覆盖 base。
 
 `ImportedSample` 包含 `assetUri`、`sha256`、`format`、`sampleRate`、`channels`、bigint
 `frames`，与 `Project.addSample` 结构兼容；可通过展开对象加入 `edits`/`musicalLengthBeats`。
@@ -408,6 +409,15 @@ loop 仍使用 `{startFrame,endFrame}`，end exclusive。
 Project 再 compile/play 会创建新 Session。上述定位和换图不要求 TS 参与音频 callback。
 
 transport wire 新增可选 `seconds`，与 `frame`/`beat` 互斥；旧命令仍兼容。
+
+native `compile(engine, snapshot, options?: {assetBaseDir?: string})` 在控制线程以该目录
+解析相对 Sample URI，省略时使用 cwd；旧的两个参数调用兼容。N-API 第三个参数是
+可选 compile options JSON，版本仍由 snapshot 先行校验。`assetBaseDir` 必须为非空本地路径。
+
+项目文件入口：`Project.save(directory, options?: {assetBaseDir?: string}): Promise<void>`，
+或 `saveProject(snapshot, directory, options?)`；`loadProject(directory)` 返回
+`Promise<{snapshot: ProjectSnapshot, assetBaseDir: string}>`。格式、原子写入和错误码见
+`06-format-and-export.md`，schema 为 `project-file.schema.json`。不创建播放设备或执行 JS DSP。
 
 - `registerPlugin(engineId, optionsJson)`：返回 `{ pluginId, pluginVersion, sha256 }` JSON；manifest 必填，按 engine 独立注册并用于 compile/renderWav。相同 ID/version/hash 幂等，不同 hash 冲突；完整 ABI、签名与信任边界见 `08-plugin-abi.md`。
 - `getPluginDiagnostics(engineId)`：返回 `{ pluginId, pluginVersion, faults }[]` JSON，累计各实例的故障静音次数；无需启动播放。不是逐节点 deadline watchdog。

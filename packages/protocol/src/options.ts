@@ -17,6 +17,10 @@ export const engineOptionsSchema = z.object({
 });
 export type EngineOptions = z.infer<typeof engineOptionsSchema>;
 
+/** Control-thread asset resolution for native graph compilation. */
+export const compileOptionsSchema = z.object({ assetBaseDir: z.string().min(1).optional() });
+export type CompileOptions = z.infer<typeof compileOptionsSchema>;
+
 /** Render range boundary: exactly one of bar / beat / timecode / marker. */
 export const renderPositionSchema = z.union([
   z.object({ bar: z.number().int().min(1) }),

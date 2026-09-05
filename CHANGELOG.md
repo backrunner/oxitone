@@ -8,6 +8,14 @@ conventional commits (`type(scope): description`).
 
 ### Added
 
+- Atomic portable project save/load through Project.save and snapshot file helpers:
+  versioned canonical manifests, content-addressed source assets, SHA-256 verification,
+  fsync and atomic publication. Directory moves preserve native render output; load
+  returns a snapshot and asset base. Editable builder restoration and compressed WAV
+  caching remain pending.
+- Graph compilation accepts assetBaseDir; Sessions retain it for updates and offline
+  rendering, so saved projects can use relative sample URIs for playback as well.
+
 - `Session.update()` recompiles on the same engine and preserves the previous compiled
   snapshot on rejection. Project.play refreshes changed revisions; Session exports use
   its compiled snapshot. Disposal is idempotent and clears the Project's active session.

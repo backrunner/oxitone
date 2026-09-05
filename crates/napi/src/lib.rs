@@ -167,10 +167,43 @@ fn graph_options(options: Option<&EngineOptions>) -> RenderGraphOptions {
     graph_options
 }
 
-#[napi(js_name = "compile")]
 pub fn compile(engine_id: String, snapshot_json: String) -> napi::Result<String> {
+    compile_with_options(engine_id, snapshot_json, None)
+}
+
+#[napi(js_name = "compile")]
+pub fn compile_with_options(
+    engine_id: String,
+    snapshot_json: String,
+    compile_options_json: Option<String>,
+) -> napi::Result<String> {
     guarded(|| {
         let snapshot = decode_project_snapshot(&snapshot_json)?;
+        #[derive(serde::Deserialize, Default)]
+        #[serde(rename_all = "camelCase")]
+        struct CompileOptions {
+            asset_base_dir: Option<String>,
+        }
+        let compile_options = match compile_options_json {
+            Some(json) => serde_json::from_str::<CompileOptions>(&json).map_err(|e| {
+                OxitoneError::new(
+                    codes::INVALID_PROJECT,
+                    format!("invalid compile options: {e}"),
+                )
+            })?,
+            None => CompileOptions::default(),
+        };
+        if compile_options
+            .asset_base_dir
+            .as_ref()
+            .is_some_and(|path| path.is_empty() || path.contains('\0'))
+        {
+            return Err(OxitoneError::with_path(
+                codes::INVALID_PROJECT,
+                "assetBaseDir must be a nonempty local path",
+                "assetBaseDir",
+            ));
+        }
         let (options, plugins) = {
             let engines = lock_registry();
             let engine = engines
@@ -179,12 +212,12 @@ pub fn compile(engine_id: String, snapshot_json: String) -> napi::Result<String>
             (engine.options.clone(), engine.plugins.clone())
         };
         // Compile outside the registry lock; the graph is heavy and other
-        // engines must stay usable. Relative sample asset URIs resolve
-        // against the process working directory (SampleStore::new(None)).
+        // engines must stay usable. Relative sample assets resolve against
+        // the explicit project root, or the process working directory.
         let mut graph = RenderGraph::compile(
             &snapshot,
             &plugins,
-            &SampleStore::new(None),
+            &SampleStore::new(compile_options.asset_base_dir.map(PathBuf::from)),
             &graph_options(options.as_ref()),
         )?;
         let mut engines = lock_registry();

@@ -8,6 +8,7 @@ import {
   type MidiExportReport,
   type OutputLatency,
   type ProjectSnapshot,
+  type CompileOptions,
   type RenderOptions,
   type RenderReport,
   type TransportCommand,
@@ -45,6 +46,7 @@ export class Session {
     private readonly engine: EngineHandle,
     private readonly snapshotProvider: () => ProjectSnapshot,
     private compiledSnapshot: ProjectSnapshot,
+    private readonly compileOptions: CompileOptions = {},
   ) {}
 
   get engineId(): string {
@@ -61,7 +63,7 @@ export class Session {
   /** Compile the current authoring snapshot on the same engine; rejection preserves the previous graph. */
   async update(): Promise<this> {
     this.assertActive();
-    const snapshot = nativeCompile(this.engine, this.snapshotProvider());
+    const snapshot = nativeCompile(this.engine, this.snapshotProvider(), this.compileOptions);
     this.compiledSnapshot = snapshot;
     return this;
   }
@@ -134,7 +136,7 @@ export class Session {
   /** Offline WAV export of the last successfully compiled snapshot. */
   async renderWav(options: RenderOptions): Promise<RenderReport> {
     this.assertActive();
-    return nativeRenderWav(this.engine, this.compiledSnapshot, options);
+    return nativeRenderWav(this.engine, this.compiledSnapshot, { assetBaseDir: this.compileOptions.assetBaseDir, ...options });
   }
 
   /** SMF Type 1 export of the last successfully compiled snapshot. */

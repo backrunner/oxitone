@@ -24,6 +24,25 @@ Canonical JSON 的字节级规则（`@oxitone/protocol` 与 `oxitone-core` 的�
 
 未知字段读取时忽略但保留在 round-trip metadata（若实现支持）；未知 major version 拒绝。写入采用 temp file + fsync + rename，避免中断产生半个项目。
 
+已实现 `project.save(directory, { assetBaseDir? })` 与 `@oxitone/core` 的
+`saveProject(snapshot, directory, options?)` / `loadProject(directory)`。manifest 使用
+上述快照字段，并附加 `formatVersion: '1.0'`、`projectId`（必须与 snapshot.id 相同）。
+加载返回 `{ snapshot, assetBaseDir }`；snapshot 保留相对 URI，可直接传给 native
+`compile(engine, snapshot, { assetBaseDir })` 或 renderWav。当前返回 wire snapshot，
+重建可编辑的 Project/Track builders 尚未提供；未知字段目前丢弃，未实现扩展 metadata 回写。
+
+保存对所有 Sample 源字节验证 SHA-256 后，以 `assets/<sha256>.<format>` 发布不可变
+资源；文件先写临时路径并 fsync，通过 link 发布且不覆盖已存在内容，已有文件必须
+hash 相符。资产目录 fsync 完成后，manifest 才 temp+fsync+rename，再 fsync 项目目录。
+rename 前失败保留旧 manifest；rename 后目录 fsync 失败仍会报告文件系统错误。
+已发布但未引用的资产可能在失败保存后留下，不自动删除。原始文件、内存 snapshot 和
+revision 不变。压缩格式此步骤复制原字节，不是导入阶段的标准化 WAV 转码。
+
+加载校验 format/protocol 版本、manifest 字段、资源引用和所有 asset hash；拒绝绝对
+URI、`..`、反斜杠和经 symlink 逃出项目目录的资源。资源缺失/hash 错误和 I/O 失败报
+`AssetUnavailable`，结构/路径错误报 `InvalidProject`，版本错误报
+`ProtocolVersionUnsupported`。DSP 图完整性与插件参数仍由 Rust compile 校验。
+
 ## Sample 导入策略
 
 导入阶段识别 WAV、AIFF、FLAC 和 MP3/MP4 音频轨。压缩格式解码成规范化缓存 WAV：PCM source、sample rate、channel layout、decoder name/version、original hash 都写入 sample metadata。不能静默覆盖用户原文件；失败时给出 asset path、format 和稳定错误码：容器/编码/位深/声道布局无法表示时报 `SampleFormatUnsupported`，content hash 不匹配或资产不可读时报 `AssetUnavailable`。
@@ -38,10 +57,9 @@ WAV/AIFF decoder 标识为 `oxitone-wav-v1`/`oxitone-aiff-v1`，压缩格式沿�
 `symphonia 0.5/<codec>`。文件系统路径支持 Unicode 和空格。
 
 此入口不写原文件或缓存 WAV；每次调用暂存完整解码 PCM 后释放，prepare 会再次解码。
-`provenance` 返回给调用方，但当前项目 `SampleRef` 不保留该字段。上文的规范化缓存
-落盘、provenance 持久化和原子项目保存仍未交付。默认绝对 URI 适合内存项目；显式
-`assetBaseDir` 可返回该目录内的相对路径，并在 render 时以相应 base 解析，尚不等同于
-项目目录的完整保存/加载。
+`provenance` 返回给调用方，但当前项目 `SampleRef` 不保留该字段。规范化 WAV 缓存
+落盘与 provenance 持久化仍未交付。原子项目保存/加载现由上文入口提供；它保留源
+编码字节，不替代标准化导入。显式 `assetBaseDir` 可用于 compile、Session.update 和 render。
 
 ## WAV 导出
 

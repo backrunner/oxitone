@@ -1,0 +1,40 @@
+{
+  "schema": "oxitone.project-file-benchmark.v1",
+  "date": "2026-09-05T19:33:40.923Z",
+  "machine": {
+    "cpu": "Apple M4",
+    "osRelease": "27.0.0",
+    "arch": "arm64",
+    "node": "v26.5.0",
+    "tempRoot": "/Volumes/BRData/projects/oxitone/node_modules/.cache/oxitone-tmp"
+  },
+  "config": {
+    "sampleRate": 48000,
+    "blockSize": 128,
+    "channels": 2,
+    "assets": 1,
+    "frames": 48000,
+    "bitDepth": "float32",
+    "warmupIterations": 5,
+    "measurementIterations": 30
+  },
+  "save": {
+    "medianMs": 53.99852049999936,
+    "p95Ms": 175.73975000000064,
+    "p99Ms": 199.70950000000084
+  },
+  "load": {
+    "medianMs": 5.591083000001163,
+    "p95Ms": 45.39454199999818,
+    "p99Ms": 133.2132079999974
+  },
+  "callbackP95Ns": null,
+  "callbackP99Ns": null,
+  "xruns": null,
+  "notes": [
+    "Warm filesystem cache; save revalidates an already-published asset and atomically replaces the manifest, including fsync.",
+    "Fixture rendering and decoding occur outside measurements. Load validates manifest and source hashes without decoding audio.",
+    "Control-thread I/O measurement, not realtime callback/worker performance acceptance.",
+    "Initial system-volume attempt failed with ENOSPC; completed run uses the BRData volume. Concurrent host workload and TS tests remained active; this is an initial I/O baseline, not regression acceptance."
+  ]
+}

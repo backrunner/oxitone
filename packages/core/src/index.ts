@@ -1,5 +1,6 @@
 export { Project } from "./project.js";
 export type { Marker, ProjectOptions } from "./project.js";
+export type { ProjectCompileOptions } from "./project-playback.js";
 export { Session } from "./session.js";
 export type { TransportPosition, LoopRegion } from "./session.js";
 export { Track, SampleClipDraft } from "./track.js";
@@ -22,6 +23,8 @@ export { TempoMap } from "./tempo-map.js";
 export type { TempoCurve, TempoSegmentInput } from "./tempo-map.js";
 export { TimeSignatureMap } from "./time-signature.js";
 export type { BarBeatPosition } from "./time-signature.js";
+export { loadProject, saveProject } from "./project-files.js";
+export type { LoadedProject, SaveProjectOptions } from "./project-files.js";
 export {
   AutomationSource,
   AUTOMATION_MAX_DEPTH,

@@ -15,8 +15,8 @@
 | M6 Preview | `09-preview-app.md` 规格 | runner/watch、IPC、GPUI viewer、CLI preview 和分发均未建立 |
 | M7 稳定性/发布 | 定向回归、插件 conformance、基准 harness | fuzz/sanitizer、持续负载 endurance、故障注入/资源上限、SBOM/签名公证和自动发布门禁 |
 
-规格中的项目目录保存/读取（formatVersion、资产相对路径、原子写入）与 preset
-也尚无公共实现；canonical snapshot 编解码本身不能替代这些功能。
+规格中的项目目录保存/读取（formatVersion、资产相对路径、原子写入）已在后续阶段提供，
+详见下文；preset 仍未提供。canonical snapshot 编解码本身不能替代这些功能。
 
 ## 审查与性能记录的解释
 
@@ -110,3 +110,19 @@
   Rust worker/direct 的换图、游标、队列和回收测试。SDK play 转发用 spy，不视为设备 soak。
 - [控制线程基准](../../benchmarks/results/2026-09-06-session-update.json)：16 tracks /
   32 lanes 编译计划 2.843 ms（95% CI 2.789..2.898），未测 native 往返、换图延迟或 callback。
+
+## 项目目录与资源迁移（2026-09-06）
+
+- `Project.save`、`saveProject`、`loadProject` 提供 formatVersion/projectId、canonical
+  manifest、内容寻址资产、hash 校验与 temp/fsync/原子发布。目录移动且源素材删除后，
+  native compile 和 WAV 输出保持可用；二次保存的 manifest 与音频逐字节一致。
+- compile、Project.compile、Session.update/renderWav 支持或保留 assetBaseDir。加载
+  拒绝路径逃逸及损坏资源；保存失败保留已发布 manifest。TS 不解码 PCM，不改变 callback。
+- release native build、schemas、lint、typecheck、fmt、Rust 385 tests 与 TS 178 tests
+  通过。首轮 TS 有 6 项默认 5 秒超时；单 worker / 30 秒重跑全部 core/native 通过。
+  其后系统临时卷 ENOSPC 阻止 MIDI suite 启动，迁到 BRData 临时目录后其余 suites 通过。
+- [文件 I/O 基准](../../benchmarks/results/2026-09-06-project-files.json)：1 秒 stereo
+  float32 资源、5 次预热、30 次测量，保存 median/p95 为 54.00/175.74 ms，加载为
+  5.59/45.39 ms。BRData 卷、并发主机负载；首次基线，不代表回退或 realtime 验收。
+- 当前 load 返回 snapshot 和资源目录；可编辑 builder 恢复、预设、标准化 WAV 缓存及
+  provenance 持久化继续推进。原表的 Preview、分发、长时设备与发布门禁仍未完成。

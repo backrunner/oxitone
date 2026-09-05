@@ -3,6 +3,8 @@ import {
   encodeProjectSnapshot,
   engineDiagnosticsSchema,
   engineOptionsSchema,
+  compileOptionsSchema,
+  type CompileOptions,
   ErrorCode,
   frameToWire,
   registerPluginOptionsSchema,
@@ -139,9 +141,11 @@ export function getPluginDiagnostics(engine: EngineHandle): PluginDiagnostics[] 
 export function compile(
   engine: EngineHandle,
   snapshot: ProjectSnapshot | string,
+  options?: CompileOptions,
 ): ProjectSnapshot {
   const json = typeof snapshot === "string" ? snapshot : encodeProjectSnapshot(snapshot);
-  const echo = call((binding) => binding.compile(engine.id, json));
+  const compiledOptions = compileOptionsSchema.parse(options ?? {});
+  const echo = call((binding) => binding.compile(engine.id, json, JSON.stringify(compiledOptions)));
   return decodeProjectSnapshot(echo);
 }
 

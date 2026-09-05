@@ -2,6 +2,7 @@ import {
   ErrorCode,
   OxitoneError,
   type EngineOptions,
+  type CompileOptions,
   type MidiExportOptions,
   type MidiExportReport,
   type ProjectSnapshot,
@@ -19,6 +20,8 @@ import { Session, withTempEngine, type TransportPosition, type LoopRegion } from
 import type { BarBeatPosition } from "./time-signature.js";
 
 /** Native session lifecycle, separate from project authoring state. */
+export type ProjectCompileOptions = EngineOptions & CompileOptions;
+
 export abstract class ProjectPlayback {
   private activeSession?: Session;
 
@@ -30,17 +33,17 @@ export abstract class ProjectPlayback {
    * session holds the `engineId` for transport, `setParameter`, offline
    * render and MIDI export. Replaces (and disposes) any previous session.
    */
-  async compile(options?: EngineOptions): Promise<Session> {
+  async compile(options?: ProjectCompileOptions): Promise<Session> {
     const engine = createEngine(options);
     let snapshot: ProjectSnapshot;
     try {
-      snapshot = nativeCompile(engine, this.snapshot());
+      snapshot = nativeCompile(engine, this.snapshot(), { assetBaseDir: options?.assetBaseDir });
     } catch (error) {
       nativeDispose(engine);
       throw error;
     }
     const previous = this.activeSession;
-    this.activeSession = new Session(engine, () => this.snapshot(), snapshot);
+    this.activeSession = new Session(engine, () => this.snapshot(), snapshot, { assetBaseDir: options?.assetBaseDir });
     if (previous !== undefined) {
       await previous.dispose();
     }
