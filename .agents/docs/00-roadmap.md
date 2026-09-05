@@ -1,5 +1,8 @@
 # Oxitone 实现路线图
 
+当前落地状态与缺口见 [实现核对](10-implementation-status.md)。下文是目标与出口条件，
+不能仅根据某一层已有代码推定整个里程碑完成。
+
 ## 产品边界
 
 Oxitone Phase 1 是 macOS 优先的编程化 DAW SDK，不是图形编辑器，也不承诺读取 MIDI 或加载 VST3。用户用 TypeScript 创建项目，Rust 编译并执行音频图，npm 提供安装、类型和原生二进制分发。
