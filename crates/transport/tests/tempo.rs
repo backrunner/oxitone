@@ -5,6 +5,19 @@ use oxitone_transport::TempoMap;
 
 const SR: u32 = 48_000;
 
+#[test]
+fn seconds_timecode_rounds_at_project_rate_and_rejects_unrepresentable_positions() {
+    let tempo = TempoMap::compile(&[seg(0, 1, 120.0, None)], 24000).unwrap();
+    assert_eq!(tempo.seconds_to_frame(1.25).unwrap(), 30000);
+    assert_eq!(tempo.seconds_to_frame(0.5 / 24000.0).unwrap(), 1);
+    for value in [f64::NAN, f64::INFINITY, -1.0, 1e30] {
+        assert_eq!(
+            tempo.seconds_to_frame(value).unwrap_err().code,
+            codes::INVALID_PROJECT
+        );
+    }
+}
+
 fn beat(n: i64, d: u32) -> Beat {
     Beat::new(n, d).unwrap()
 }

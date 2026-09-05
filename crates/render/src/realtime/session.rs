@@ -547,6 +547,14 @@ impl RealtimeSession {
         self.tempo.lock().expect("tempo mutex").beat_to_frame(beat)
     }
 
+    /// Resolve timecode on the control thread at the compiled project rate.
+    pub fn seconds_to_frame(&self, seconds: f64) -> Result<u64, OxitoneError> {
+        self.tempo
+            .lock()
+            .expect("tempo mutex")
+            .seconds_to_frame(seconds)
+    }
+
     /// Output latency breakdown in project-rate frames plus seconds.
     pub fn output_latency(&self) -> Result<OutputLatencyReport, OxitoneError> {
         let sink = self.shared.sink.lock().expect("sink mutex");

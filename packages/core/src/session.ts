@@ -1,5 +1,6 @@
 import {
-  beatToWire,
+  ErrorCode,
+  OxitoneError,
   frameToWire,
   type EngineDiagnostics,
   type EntityId,
@@ -14,6 +15,7 @@ import {
 } from "@oxitone/protocol";
 import {
   createEngine,
+  compile as nativeCompile,
   dispose as nativeDispose,
   enqueueTransport,
   exportMidi as nativeExportMidi,
@@ -23,9 +25,9 @@ import {
   setParameter as nativeSetParameter,
   type EngineHandle,
 } from "oxitone";
+import { positionFields, type TransportPosition } from "./transport-position.js";
+export type { TransportPosition } from "./transport-position.js";
 
-/** Transport position: a bar (1-based), an absolute beat, or a sample frame. */
-export type TransportPosition = { bar: number } | { beat: number } | { frame: bigint | number };
 /** Absolute sample-frame loop region. End is exclusive. */
 export type LoopRegion = { startFrame: bigint | number; endFrame: bigint | number };
 
@@ -37,28 +39,31 @@ export type LoopRegion = { startFrame: bigint | number; endFrame: bigint | numbe
  * the transport advances offline state only (used by `renderWav`).
  */
 export class Session {
+  private disposedValue = false;
   /** @internal Use `Project.compile()` instead. */
   constructor(
     private readonly engine: EngineHandle,
     private readonly snapshotProvider: () => ProjectSnapshot,
-    private readonly barToBeats: (bar: number) => number,
+    private compiledSnapshot: ProjectSnapshot,
   ) {}
 
   get engineId(): string {
     return this.engine.id;
   }
 
-  private positionFields(position?: TransportPosition): Pick<TransportCommand, "frame" | "beat"> {
-    if (position === undefined) {
-      return {};
-    }
-    if ("frame" in position) {
-      return { frame: frameToWire(position.frame) };
-    }
-    if ("beat" in position) {
-      return { beat: beatToWire(position.beat) };
-    }
-    return { beat: beatToWire(this.barToBeats(position.bar)) };
+  get disposed(): boolean { return this.disposedValue; }
+  get revision(): bigint { return BigInt(this.compiledSnapshot.revision); }
+
+  private assertActive(): void {
+    if (this.disposedValue) throw new OxitoneError(ErrorCode.InvalidProject, "session has been disposed");
+  }
+
+  /** Compile the current authoring snapshot on the same engine; rejection preserves the previous graph. */
+  async update(): Promise<this> {
+    this.assertActive();
+    const snapshot = nativeCompile(this.engine, this.snapshotProvider());
+    this.compiledSnapshot = snapshot;
+    return this;
   }
 
   private async transport(
@@ -66,11 +71,12 @@ export class Session {
     position?: TransportPosition,
     loop?: LoopRegion,
   ): Promise<TransportState> {
+    this.assertActive();
     const loopRegion = loop === undefined ? undefined : {
       startFrame: frameToWire(loop.startFrame),
       endFrame: frameToWire(loop.endFrame),
     };
-    return enqueueTransport(this.engine, { command, ...this.positionFields(position), loopRegion });
+    return enqueueTransport(this.engine, { command, ...positionFields(position, this.compiledSnapshot), loopRegion });
   }
 
   /** Start playback (optionally from a position). The first call opens the
@@ -97,6 +103,7 @@ export class Session {
    * seconds). Requires an active realtime session (call `play()` first).
    */
   async outputLatency(): Promise<OutputLatency> {
+    this.assertActive();
     return nativeGetOutputLatency(this.engine);
   }
 
@@ -106,6 +113,7 @@ export class Session {
    * Requires an active realtime session.
    */
   async diagnostics(): Promise<EngineDiagnostics> {
+    this.assertActive();
     return nativeGetDiagnostics(this.engine);
   }
 
@@ -119,22 +127,27 @@ export class Session {
     value: number,
     atFrame?: bigint | number,
   ): Promise<void> {
+    this.assertActive();
     nativeSetParameter(this.engine, entityId, parameterId, value, atFrame);
   }
 
-  /** Offline WAV export of the current project snapshot. */
+  /** Offline WAV export of the last successfully compiled snapshot. */
   async renderWav(options: RenderOptions): Promise<RenderReport> {
-    return nativeRenderWav(this.engine, this.snapshotProvider(), options);
+    this.assertActive();
+    return nativeRenderWav(this.engine, this.compiledSnapshot, options);
   }
 
-  /** SMF Type 1 export of the current project snapshot. */
+  /** SMF Type 1 export of the last successfully compiled snapshot. */
   async exportMidi(options: MidiExportOptions): Promise<MidiExportReport> {
-    return nativeExportMidi(this.engine, this.snapshotProvider(), options);
+    this.assertActive();
+    return nativeExportMidi(this.engine, this.compiledSnapshot, options);
   }
 
   /** Release the native engine. Further calls fail with `InvalidProject`. */
   async dispose(): Promise<void> {
+    if (this.disposedValue) return;
     nativeDispose(this.engine);
+    this.disposedValue = true;
   }
 }
 

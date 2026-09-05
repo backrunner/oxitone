@@ -42,6 +42,8 @@ pub enum NativeCommand {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         beat: Option<Beat>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
+        seconds: Option<f64>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
         loop_region: Option<LoopRegion>,
     },
     SetParameter {

@@ -1,7 +1,7 @@
 export { Project } from "./project.js";
 export type { Marker, ProjectOptions } from "./project.js";
 export { Session } from "./session.js";
-export type { TransportPosition } from "./session.js";
+export type { TransportPosition, LoopRegion } from "./session.js";
 export { Track, SampleClipDraft } from "./track.js";
 export { PatternClip, PatternClipDraft } from "./pattern-clip.js";
 export { Pattern } from "./pattern.js";

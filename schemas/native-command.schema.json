@@ -1319,6 +1319,10 @@
           ],
           "additionalProperties": false
         },
+        "seconds": {
+          "type": "number",
+          "minimum": 0
+        },
         "loopRegion": {
           "type": "object",
           "properties": {

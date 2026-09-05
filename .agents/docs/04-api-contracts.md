@@ -380,7 +380,7 @@ const project = new Project({ id, sampleRate: 48_000 });
 const track = project.addTrack('drums').use(channel);
 track.add(pattern).at({ bar: 1 }).loop(8);
 await project.compile();
-const session = await project.play({ from: { bar: 1 } });
+const session = await project.play({ bar: 1 });
 await session.renderWav({ path, tailSeconds: 2 });
 await project.exportMidi({ path });
 ```
@@ -388,6 +388,26 @@ await project.exportMidi({ path });
 Native facade 的最小命令：`createEngine(options?: EngineOptions)`、`registerPlugin(engine, { libraryPath, manifest, expectedHash? })`、`getPluginDiagnostics(engine)`、`compile(snapshot)`、`enqueueTransport(command)`、`renderWav(options)`、`exportMidi(engine, snapshot, options)`（返回 `MidiExportReport`；`MidiChannelLimit` 错误的 `details.unassignedTrackIds` 列出全部未分配 track ID）、`listOutputDevices`、`getOutputLatency(engine)`（返回 ring horizon + 设备延迟的 frame/秒双表示；frame 以**项目采样率**计）、`getDiagnostics(engine)`、`dispose`。所有异步方法在控制线程执行；`registerPlugin` 的 dlopen/校验和 `enqueueTransport` 的 queue 复制都不许进入 audio callback。
 
 ### 已实现的命令语义（M4）
+
+`Session.update(): Promise<Session>` 在同一 engine 编译当前 authoring snapshot，成功后
+更新 `session.revision: bigint`。失败保留旧图、revision 和 Session 导出快照。实时更新
+保留 cursor/state/loop 并在 block boundary 生效；首次 play 前的更新同样保留 frame
+cursor/state/loop。`Project.play(position?, loop?)` 自动更新有新 revision 的已有 Session；
+直接 `Session.play` 播放已编译版本。`Project.compile(options?)` 仍显式新建引擎并释放旧 Session。
+
+`Session.play/seek` 与 Project 转发入口接受 `{bar, beat?}`（bar 1-based、beat 0-based）、
+绝对 `{beat}`、`{marker: markerId}`、`{seconds}`、`{frame}` 或 `{frames}`。frame(s) 可为
+safe integer number 或 u64 bigint；秒数由 Rust 按实际编译采样率 round-half-up 换算。
+marker ID 和小节表来自最后一次成功编译的快照，未提交的 authoring 改动不影响定位。
+一次只能使用一种位置形式（bar+beat 例外）；无效/越界位置报 `InvalidProject`，不移动游标。
+loop 仍使用 `{startFrame,endFrame}`，end exclusive。
+
+`Session.renderWav/exportMidi` 使用最后一次成功编译的 snapshot；要导出当前 authoring
+可先 update，或调用 Project 上的导出入口。`Session.dispose()` 幂等；`session.disposed`
+变为 true，Project.session 返回 undefined，后续 Session 操作报 `InvalidProject`。
+Project 再 compile/play 会创建新 Session。上述定位和换图不要求 TS 参与音频 callback。
+
+transport wire 新增可选 `seconds`，与 `frame`/`beat` 互斥；旧命令仍兼容。
 
 - `registerPlugin(engineId, optionsJson)`：返回 `{ pluginId, pluginVersion, sha256 }` JSON；manifest 必填，按 engine 独立注册并用于 compile/renderWav。相同 ID/version/hash 幂等，不同 hash 冲突；完整 ABI、签名与信任边界见 `08-plugin-abi.md`。
 - `getPluginDiagnostics(engineId)`：返回 `{ pluginId, pluginVersion, faults }[]` JSON，累计各实例的故障静音次数；无需启动播放。不是逐节点 deadline watchdog。

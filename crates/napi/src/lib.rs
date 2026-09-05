@@ -181,7 +181,7 @@ pub fn compile(engine_id: String, snapshot_json: String) -> napi::Result<String>
         // Compile outside the registry lock; the graph is heavy and other
         // engines must stay usable. Relative sample asset URIs resolve
         // against the process working directory (SampleStore::new(None)).
-        let graph = RenderGraph::compile(
+        let mut graph = RenderGraph::compile(
             &snapshot,
             &plugins,
             &SampleStore::new(None),
@@ -196,6 +196,11 @@ pub fn compile(engine_id: String, snapshot_json: String) -> napi::Result<String>
             session.replace_graph(Box::new(graph))?;
             engine.graph = None;
         } else {
+            if let Some(previous) = engine.graph.as_ref() {
+                graph.seek(previous.transport().cursor);
+                graph.transport_mut().state = previous.transport().state;
+                graph.transport_mut().loop_region = previous.transport().loop_region;
+            }
             engine.graph = Some(graph);
         }
         engine.last_revision = Some(snapshot.revision);
@@ -475,6 +480,7 @@ pub fn enqueue_transport(engine_id: String, command_json: String) -> napi::Resul
             command,
             frame,
             beat,
+            seconds,
             loop_region,
         } = command
         else {
@@ -483,10 +489,10 @@ pub fn enqueue_transport(engine_id: String, command_json: String) -> napi::Resul
                 "enqueueTransport expects a {type:'transport'} command",
             ));
         };
-        if frame.is_some() && beat.is_some() {
+        if u8::from(frame.is_some()) + u8::from(beat.is_some()) + u8::from(seconds.is_some()) > 1 {
             return Err(OxitoneError::new(
                 codes::INVALID_PROJECT,
-                "transport command takes frame or beat, not both",
+                "transport command takes exactly one of frame, beat or seconds",
             ));
         }
         let mut engines = lock_registry();
@@ -494,6 +500,23 @@ pub fn enqueue_transport(engine_id: String, command_json: String) -> napi::Resul
             .get_mut(&engine_id)
             .ok_or_else(|| unknown_engine(&engine_id))?;
         use oxitone_core::wire::TransportCommandKind as Kind;
+        // Resolve seconds before taking ownership of the graph: invalid
+        // timecodes must preserve the compiled engine for subsequent calls.
+        let frame = if let Some(seconds) = seconds {
+            Some(if let Some(session) = engine.session.as_ref() {
+                session.seconds_to_frame(seconds)?
+            } else {
+                engine
+                    .graph
+                    .as_ref()
+                    .ok_or_else(|| not_compiled(&engine_id))?
+                    .plan()
+                    .tempo
+                    .seconds_to_frame(seconds)?
+            })
+        } else {
+            frame
+        };
 
         // Realtime path: the session owns the graph once playback has
         // started on a device.

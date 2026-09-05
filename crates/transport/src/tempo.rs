@@ -165,6 +165,20 @@ impl CompiledTempoMap {
         self.sample_rate
     }
 
+    /// Absolute timecode to project-rate frames, with representability checked
+    /// before the float-to-integer conversion. Control-thread query only.
+    pub fn seconds_to_frame(&self, seconds: f64) -> Result<u64, OxitoneError> {
+        let frames = seconds * f64::from(self.sample_rate);
+        if !seconds.is_finite() || seconds < 0.0 || frames >= u64::MAX as f64 {
+            return Err(OxitoneError::with_path(
+                codes::INVALID_PROJECT,
+                "seconds must be non-negative and representable as sample frames",
+                "seconds",
+            ));
+        }
+        Ok((frames + 0.5).floor() as u64)
+    }
+
     /// Closed-form beat to seconds conversion.
     pub fn beat_to_seconds(&self, beat: Beat) -> f64 {
         self.beat_f64_to_seconds(beat.to_f64())

@@ -8,6 +8,13 @@ conventional commits (`type(scope): description`).
 
 ### Added
 
+- `Session.update()` recompiles on the same engine and preserves the previous compiled
+  snapshot on rejection. Project.play refreshes changed revisions; Session exports use
+  its compiled snapshot. Disposal is idempotent and clears the Project's active session.
+- Session/Project transport supports bar+beat, stable marker IDs, seconds and frame(s).
+  Rust resolves timecodes at the actual engine rate; pre-play graph updates preserve the
+  transport cursor and state. Invalid/conflicting positions leave the graph usable.
+
 - Independent Track tempo authoring with a shared Rust local-to-project clock for
   pattern scheduling, MIDI ticks, sample windows and timeline bounds. Sample repitch
   and stretch follow the local BPM; fitToContent respects the same static override.

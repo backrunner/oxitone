@@ -15,7 +15,7 @@ import {
   renderWav as nativeRenderWav,
   exportMidi as nativeExportMidi,
 } from "oxitone";
-import { Session, withTempEngine, type TransportPosition } from "./session.js";
+import { Session, withTempEngine, type TransportPosition, type LoopRegion } from "./session.js";
 import type { BarBeatPosition } from "./time-signature.js";
 
 /** Native session lifecycle, separate from project authoring state. */
@@ -32,16 +32,15 @@ export abstract class ProjectPlayback {
    */
   async compile(options?: EngineOptions): Promise<Session> {
     const engine = createEngine(options);
+    let snapshot: ProjectSnapshot;
     try {
-      nativeCompile(engine, this.snapshot());
+      snapshot = nativeCompile(engine, this.snapshot());
     } catch (error) {
       nativeDispose(engine);
       throw error;
     }
     const previous = this.activeSession;
-    this.activeSession = new Session(engine, () => this.snapshot(), (bar) =>
-      this.barBeatToBeats({ bar }),
-    );
+    this.activeSession = new Session(engine, () => this.snapshot(), snapshot);
     if (previous !== undefined) {
       await previous.dispose();
     }
@@ -50,17 +49,18 @@ export abstract class ProjectPlayback {
 
   /** The session from the last `compile()`/`play()`, if still active. */
   get session(): Session | undefined {
-    return this.activeSession;
+    return this.activeSession?.disposed ? undefined : this.activeSession;
   }
 
   private requireSession(): Session {
-    if (this.activeSession === undefined) {
+    const session = this.session;
+    if (session === undefined) {
       throw new OxitoneError(
         ErrorCode.InvalidProject,
         "no active session; call compile() or play() first",
       );
     }
-    return this.activeSession;
+    return session;
   }
 
   /** One-shot offline WAV export on a temporary engine (04 §RenderOptions). */
@@ -75,10 +75,11 @@ export abstract class ProjectPlayback {
     return withTempEngine((engine) => nativeExportMidi(engine, snapshot, options));
   }
 
-  /** Compile (if needed) and start playback; returns the active session. */
-  async play(position?: TransportPosition): Promise<Session> {
-    const session = this.activeSession ?? (await this.compile());
-    await session.play(position);
+  /** Compile/update the authored revision and start playback; returns the active session. */
+  async play(position?: TransportPosition, loop?: LoopRegion): Promise<Session> {
+    const session = this.session ?? (await this.compile());
+    if (session.revision !== BigInt(this.snapshot().revision)) await session.update();
+    await session.play(position, loop);
     return session;
   }
 

@@ -56,6 +56,11 @@ shutdown 使用独立 atomic 标志，不依赖队列空位。实时 session 内
 sampleRate/blockSize；新图通过 seek 对齐游标并保留 automation origin/loop iteration。
 旧图的尾音不会跨换图延续。
 
+N-API compile 在首次 play 前也保留旧图的 frame cursor、state 和 loop；Session 已开始
+实时播放时沿用 worker 换图路径。timecode seconds 在控制线程按实际编译采样率转换，
+必须先检查有限、非负和 u64 frame 可表示范围，再进行 round-half-up；无效输入不取走
+engine 持有的图、不启动设备。新查询不增加 callback 工作。
+
 Graph 节点包括 instrument、sample player、effect、mixer bus、meter 和 output sink。节点不通过全局单例互相查找，依赖在编译时以索引/句柄解析。
 
 ## DSP 处理顺序

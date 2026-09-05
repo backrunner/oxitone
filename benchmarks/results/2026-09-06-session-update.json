@@ -1,0 +1,15 @@
+{
+  "schema": "oxitone.focused-benchmark.v1",
+  "date": "2026-09-06",
+  "baseCommit": "607ce1d",
+  "change": "Session graph update and transport positions (control thread only)",
+  "machine": { "cpu": "Apple M4", "os": "macOS 27.0 (26A5425a)", "arch": "aarch64-apple-darwin", "rustc": "1.98.0", "llvm": "22.1.8" },
+  "config": { "sampleRate": 48000, "blockSize": 128, "channels": 16, "tracks": 16, "arrangementBeats": 256, "automationLanes": 32, "inserts": "one EQ per channel plus shared FX bus", "warmupSeconds": 1, "measurementSeconds": 3, "sampleCount": 30, "device": null, "callbackP95Ns": null, "callbackP99Ns": null, "cpuUtilization": null, "xruns": null },
+  "command": "cargo bench -p oxitone-bench --bench compile_validate -- compile_plan --sample-size 30 --warm-up-time 1 --measurement-time 3",
+  "scenarios": [ { "id": "compile/validate/compile_plan_16tracks_32lanes", "slopeNs": 2843437.894870439, "confidence95Ns": [2789494.556058793, 2897793.318071272] } ],
+  "notes": [
+    "Compile-plan microbenchmark includes validation and schedule/lane compilation, not plugin instance preparation, native JSON overhead or live graph-swap latency.",
+    "Criterion reports +5.44% against its local previous measurement. Host has concurrent activity; this is not controlled performance acceptance.",
+    "Session changes add control-thread queries and reuse the existing realtime graph-swap queue; no callback path was changed."
+  ]
+}

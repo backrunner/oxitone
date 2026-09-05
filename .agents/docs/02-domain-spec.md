@@ -20,6 +20,10 @@
 
 ## Track、Pattern、PatternClip
 
+编译后的 Session 保留独立快照：authoring 修改通过 `session.update()` 换入，失败时
+保留旧图。Project.play 自动提交新 revision；Session 直接 play/export 则使用当前编译
+版本。bar+beat/marker 位置按该编译版本解析，seconds/frame 在 Rust  transport 边界转换。
+
 Track 是编排容器，不直接产生声音。它绑定一个或多个 `Channel`，允许多个 Track 指向同一 Channel（用于 layering），但一个 `PatternClip` 只能属于一个 Track。
 
 TS Track 已暴露 `enabled`（默认 true）和 `midiChannel`（可选的 1..16 整数）；setter

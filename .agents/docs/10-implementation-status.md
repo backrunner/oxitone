@@ -97,3 +97,16 @@
   同二进制复测仍高于早期基线；回归验收暂不下结论，需受控环境复测。未测 callback/xrun。
 - M1 原表中 Track 三个 authoring 属性缺口均已关闭，M2 的缓存导入、内置音源便捷入口，
   M3 insert automation 与 M4 Session 等其余能力仍按推进顺序执行。
+
+## Session 更新与位置（2026-09-06）
+
+- `Session.update` 保留 engine ID；编译拒绝保留旧版本和导出。Project.play 自动更新
+  authoring revision，Session 直接操作使用编译版本。释放幂等且 Project 不再复用已释放 Session。
+- bar+beat、marker ID、seconds、frame(s) 起播/seek 均已暴露，位置按编译快照解析；
+  Rust 按实际 engine sample rate 转换秒数，检查越界/互斥，失败保留游标。首次 play 前
+  重编译现在也保留 transport 状态。真实设备切换和持续负载验收仍是独立缺口。
+- release native build、TS 175 tests、Rust 385 tests、lint、typecheck、fmt 通过。
+  4 个 Session 测试与 native smoke 覆盖快照隔离、失败更新、位置和生命周期；复用
+  Rust worker/direct 的换图、游标、队列和回收测试。SDK play 转发用 spy，不视为设备 soak。
+- [控制线程基准](../../benchmarks/results/2026-09-06-session-update.json)：16 tracks /
+  32 lanes 编译计划 2.843 ms（95% CI 2.789..2.898），未测 native 往返、换图延迟或 callback。
