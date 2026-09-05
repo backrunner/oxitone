@@ -144,6 +144,58 @@ false 会关闭该 Track 的音频调度与 MIDI note track；`midiChannel` 为 
 恢复自动分配。非法值或跨 Project 的 `use(channel)` 报 `InvalidProject`，且不改变 revision。
 Track `tempo` 的执行语义仍待实现，当前不暴露 authoring setter。
 
+### 文件采样导入（已实现）
+
+```ts
+import { Project } from '@oxitone/core';
+import { importSample } from '@oxitone/samples';
+
+const project = new Project();
+const assetBaseDir = '/music/song';
+const imported = importSample('assets/loop.wav', { assetBaseDir });
+const sample = project.addSample({ ...imported, musicalLengthBeats: 8 });
+const track = project.addTrack('audio').use(project.addChannel());
+track.sample(sample).at({ bar: 1 }).fitBeats(8);
+await project.renderWav({ path: '/music/out.wav', assetBaseDir, tailSeconds: 0 });
+```
+
+`importSample(path, options?: { assetBaseDir?: string }): ImportedSample` 同步执行。
+默认相对路径基于 cwd，输出绝对 `assetUri`；指定 base 时，相对输入基于 base 解析，
+绝对输入保持原意，输出 URI 相对 base，目录外的词法路径报 `InvalidProject`。路径是
+本地文件系统路径，不接受 file URL。相对 descriptor 用于 render 时必须传入相应的
+`assetBaseDir`；当前 `Project.compile()` 无 base 参数，compile/play 应使用默认绝对 URI。
+
+`ImportedSample` 包含 `assetUri`、`sha256`、`format`、`sampleRate`、`channels`、bigint
+`frames`，与 `Project.addSample` 结构兼容；可通过展开对象加入 `edits`/`musicalLengthBeats`。
+附加 `provenance: { sourceChannels, sourceBitDepth?, decoder, channelLayoutAction }`
+只在返回 descriptor 中，当前 `SampleRef` 快照不会保存该字段。导入只读取并解码，
+不复制、转码到磁盘或复用 prepare 缓存；这些功能由后续项目持久化阶段补齐。
+
+`oxitone` 和 `@oxitone/samples` 均导出同步 `inspectSample(path): SampleInfo`，不需要 engine。
+底层 N-API 为 `inspectSample(requestJson): responseJson`：
+
+```ts
+interface InspectSampleRequest { protocolVersion: string; path: string; }
+interface SampleInfo {
+  protocolVersion: string;
+  sha256: string;
+  format: 'wav'|'aiff'|'flac'|'mp3'|'mp4'|'m4a';
+  sampleRate: number;
+  channels: 1|2;             // 解码后维度，>2 个源声道会降混
+  frames: string;           // wire u64 十进制字符串；importSample 转为 bigint
+  sourceChannels: number;
+  sourceBitDepth?: number;  // compressed decoder 不一定提供
+  decoder: string;
+  channelLayoutAction: 'kept'|'downmixed-to-stereo';
+}
+```
+
+请求与响应均使用协议 1.0，新增独立命令不改变 ProjectSnapshot。先检查版本，再读文件。
+空/NUL 路径或错误请求结构报 `InvalidProject`；文件不可读报 `AssetUnavailable`；
+未知容器、无法解码或零帧音频报 `SampleFormatUnsupported`，文件相关错误带 `details.path`。
+prepare 仍按原始文件 hash 校验，源文件修改后必须重新导入。PCM 始终留在 Rust 控制线程，
+不进入 JSON，也不触发 audio callback。
+
 `@oxitone/core` 的混音 builder 复用以下协议 1.0 wire contracts：
 
 ```ts

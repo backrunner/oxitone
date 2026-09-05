@@ -25,6 +25,8 @@ export {
   ID_PREFIXES,
 } from "./primitives.js";
 export type { EntityId, Pitch, FrameWire, Timecode } from "./primitives.js";
+export { inspectSampleRequestSchema, sampleInfoSchema } from "./sample-info.js";
+export type { InspectSampleRequest, SampleInfo } from "./sample-info.js";
 export { curveSchema, automationPointSchema, CURVE_KINDS } from "./curve.js";
 export type { Curve, CurveKind, AutomationPoint } from "./curve.js";
 export { parameterSpecSchema } from "./parameter.js";

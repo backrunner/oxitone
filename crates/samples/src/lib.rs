@@ -14,8 +14,10 @@
 pub mod cache;
 mod decode;
 mod edit;
+mod inspect;
 pub mod resample;
 mod types;
+pub use inspect::inspect_sample;
 
 #[cfg(test)]
 mod fixtures;

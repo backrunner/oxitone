@@ -18,6 +18,11 @@ import {
   transportCommandSchema,
   transportStateSchema,
   entityIdSchema,
+  inspectSampleRequestSchema,
+  sampleInfoSchema,
+  checkProtocolVersion,
+  PROTOCOL_VERSION,
+  type SampleInfo,
   type RegisterPluginOptions,
   type RegisteredPlugin,
   type PluginDiagnostics,
@@ -37,6 +42,7 @@ import { toOxitoneError } from "./errors.js";
 import { loadNativeBinding, type NativeBinding } from "./load.js";
 
 export type {
+  SampleInfo,
   RegisterPluginOptions,
   RegisteredPlugin,
   PluginManifest,
@@ -57,6 +63,18 @@ export type {
 export interface EngineHandle {
   readonly id: string;
   readonly protocolVersion: string;
+}
+
+/** Synchronous control-thread decode for metadata; never opens an audio device. */
+export function inspectSample(path: string): SampleInfo {
+  const request = inspectSampleRequestSchema.safeParse({ protocolVersion: PROTOCOL_VERSION, path });
+  if (!request.success) {
+    throw new OxitoneError(ErrorCode.InvalidProject, "invalid sample path", { details: { path: "path" } });
+  }
+  const response = call((binding) => binding.inspectSample(JSON.stringify(request.data)));
+  const info = sampleInfoSchema.parse(JSON.parse(response));
+  checkProtocolVersion(info.protocolVersion);
+  return info;
 }
 
 let cachedBinding: NativeBinding | undefined;

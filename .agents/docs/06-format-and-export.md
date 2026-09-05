@@ -30,6 +30,19 @@ Canonical JSON 的字节级规则（`@oxitone/protocol` 与 `oxitone-core` 的�
 
 编辑只写 `SampleEditSpec`，保持原始资源不可变。`normalize`、fade、crossfade、trim 等在 prepare/offline cache 阶段应用；实时播放引用已经准备好的 PCM segment。
 
+当前交付的是只读导入入口：`@oxitone/samples#importSample` 调用 Rust `inspectSample`，
+按文件签名识别 WAV/AIFF/FLAC/MP3/MP4/M4A，完整解码后报告源文件 SHA-256、解码维度、
+decoder 名称及声道转换。PCM 的采样率保持原值，SRC/trim 在 prepare 应用；大于 2 个
+声道按既有降混规则输出 stereo，帧数表示解码结果（压缩格式可包含 codec padding）。
+WAV/AIFF decoder 标识为 `oxitone-wav-v1`/`oxitone-aiff-v1`，压缩格式沿用
+`symphonia 0.5/<codec>`。文件系统路径支持 Unicode 和空格。
+
+此入口不写原文件或缓存 WAV；每次调用暂存完整解码 PCM 后释放，prepare 会再次解码。
+`provenance` 返回给调用方，但当前项目 `SampleRef` 不保留该字段。上文的规范化缓存
+落盘、provenance 持久化和原子项目保存仍未交付。默认绝对 URI 适合内存项目；显式
+`assetBaseDir` 可返回该目录内的相对路径，并在 render 时以相应 base 解析，尚不等同于
+项目目录的完整保存/加载。
+
 ## WAV 导出
 
 `renderWav` 默认 32-bit float little-endian WAV，支持 16-bit PCM 和 24-bit PCM。写入 RIFF/WAVE header、fmt、data；文件大小超过 RIFF 限制时返回 `WavTooLarge`，Phase 1 不隐式切 RF64。render options 中的 start/end 用 bar/beat/timecode/marker 之一，不能混用；`tailSeconds` 明确是否渲染效果尾音。

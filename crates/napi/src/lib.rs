@@ -26,7 +26,9 @@ use oxitone_render::{
 use serde::Serialize;
 
 mod plugins;
+mod samples;
 pub use plugins::{get_plugin_diagnostics, register_plugin};
+pub use samples::inspect_sample;
 
 struct EngineState {
     plugins: oxitone_graph::PluginRegistry,

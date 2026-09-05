@@ -106,6 +106,25 @@ importers:
         specifier: ^3.2.0
         version: 3.2.7(@types/node@22.20.1)
 
+  packages/samples:
+    dependencies:
+      '@oxitone/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+      oxitone:
+        specifier: workspace:*
+        version: link:../native
+    devDependencies:
+      '@oxitone/core':
+        specifier: workspace:*
+        version: link:../core
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.0
+        version: 3.2.7(@types/node@22.20.1)
+
 packages:
 
   '@emnapi/core@1.11.2':

@@ -32,7 +32,7 @@
 1. **本轮已完成（2026-09-06）**：TS mixer/Channel insert authoring，覆盖快照隔离、
    revision、非法路由和实际 native WAV 输出；复用现有协议 1.0，不改变 DSP callback。
 2. **进行中（2026-09-06）**：Sample/SampleClip 与 fit helpers 已补齐 TypeScript
-   authoring 和 snapshot 连接；Track `enabled`/`midiChannel` 已完成，导入 facade 仍在推进。
+   authoring 和 snapshot 连接；Track `enabled`/`midiChannel` 与只读文件导入 facade 已完成。
    Track `tempo` 只有 wire 校验，独立时钟换算尚未执行，继续列为缺口。
 3. 完成 insert 参数自动化、Session 换图/播放位置、项目持久化与预设。
 4. 建立 macOS CI、npm 平台包和用户示例；跑持续有声负载性能与设备验收。
@@ -65,3 +65,18 @@
   draft 可重试。`fitBars` 使用起始拍号且保留完整长度，`fitToContent` 使用 trim 后帧数。
 - fit helpers 尚不能据此视为完整验收：`fitToContent` 的 tempo ramp/lane 换算待实现；
   `repitch` 使用内容音乐长度作为分母，显式 duration 的缩放语义仍需补齐并做音频验证。
+
+- 新增 `@oxitone/samples#importSample` 和无 engine 的版本化 `inspectSample` 命令。
+  Rust 返回源 hash、格式、解码维度与 provenance，JS 不持有 PCM。完成 WAV/AIFF 识别、
+  6 声道降混、AAC/M4A 真文件、24→48 kHz SRC/trim、相对目录迁移、文件变更/缺失、
+  损坏容器及 native 协议错误测试；两次有声 WAV 渲染逐字节一致。
+- 目前只提供元数据 descriptor 导入，未实现缓存 WAV 写入或 provenance 持久化；
+  继续追踪项目保存/加载、内置音源便捷入口和原表中的其余缺口。
+- `pnpm schemas`、`pnpm build`（release native addon）、`pnpm lint`、`pnpm typecheck`、
+  TS 测试（164 tests）、`cargo fmt --all --check`、`cargo test --workspace`（377 tests）
+  通过。TS 全量测试先通过 162 tests，新增的 native 请求及 AAC 测试随后在各自包中通过。
+- Apple M4 / macOS 27.0 / Rust 1.98.0，48 kHz stereo，30 samples：1 秒 PCM16
+  inspector slope estimate 为 0.835 ms，10 秒 float32 为 10.477 ms。测量包含文件读取、
+  hash、完整解码和释放，使用 warm filesystem cache；首次建立该场景基线，无回退结论。
+  [基准归档](../../benchmarks/results/2026-09-06-sample-import.json) 记录置信区间、实际
+  测量时长和环境；未测设备/callback/xrun 的值为 null，不替代长期实时验收。

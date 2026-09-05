@@ -113,6 +113,13 @@ revision，SampleClip draft 可重试；ID 生成器可消耗序号。`fitBars` 
 使用 trim 后帧数；当前 tempo 换算只查询起点所属 segment 的静态 BPM，tempo ramp/lane
 下的有效时钟换算仍待补齐。
 
+文件导入入口为 `@oxitone/samples` 的同步 `importSample(path, { assetBaseDir? })`。
+它通过版本化 native 命令让 Rust 读取、识别和完整解码源文件，返回可传给 `addSample`
+的 descriptor（frames 为 bigint），附带独立的 source/decoder provenance。默认 URI 是
+绝对本地路径；指定 base 时输入相对该目录解析，并返回目录内的相对 URI。导入不创建
+engine、不打开音频设备、不写文件，也不保留 PCM；prepare 再次校验 hash 并解码。
+压缩资源落盘缓存和 provenance 的项目格式持久化仍待实现。
+
 ## Mixer 与 routing
 
 TS authoring 已提供 `project.master`、`project.addMixerChannel(options)`、

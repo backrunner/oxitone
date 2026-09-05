@@ -25,6 +25,10 @@
 - `render/offline`: render ratio、WAV writer throughput、peak memory。
 - `plugin/c_abi_gain`: 真实 C 动态库在 48 kHz、64/128/256 frames 的实例适配成本，包含参数事件转换和非有限输出检查；不代替 realtime soak。
 - `napi/command`: compile/transport command 往返延迟，不能用于 callback。
+- `samples/inspect`: 控制线程的文件读取、SHA-256、解码、降混和 PCM 释放耗时；使用
+  48 kHz stereo 的 1 秒 PCM16 / 10 秒 float32 WAV，固定 440 Hz 正弦。Criterion
+  重复读取同一文件，代表 warm filesystem cache；不含 N-API、TS 或 prepare 的 SRC/编辑。
+  此场景不使用音频设备、voice 或 callback，p95/p99 callback 与 xruns 记 null。
 
 `dsp/*` benchmark 必须包含 denormal 语料（衰减中的滤波器/混响尾部），验证 FTZ/DAZ 与 denormal-safe 实现没有性能悬崖。
 

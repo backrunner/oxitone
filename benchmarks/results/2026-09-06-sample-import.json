@@ -1,0 +1,64 @@
+{
+  "schema": "oxitone.focused-benchmark.v1",
+  "date": "2026-09-06",
+  "change": "Rust-backed sample inspection and @oxitone/samples import facade",
+  "baseCommit": "db2bcc1",
+  "machine": {
+    "cpu": "Apple M4",
+    "os": "macOS 27.0 (26A5425a)",
+    "arch": "aarch64-apple-darwin",
+    "rustc": "1.98.0 (88d9e12ae 2026-08-18)",
+    "llvm": "22.1.8"
+  },
+  "config": {
+    "sampleRate": 48000,
+    "channels": 2,
+    "blockSize": null,
+    "fixtureWriteBlockSize": 128,
+    "voices": 0,
+    "plugins": [],
+    "input": "deterministic 440 Hz sine WAV, amplitude 0.5",
+    "harness": "criterion 0.5, optimized bench profile",
+    "warmupSeconds": 1,
+    "measurementSeconds": 3,
+    "sampleCount": 30,
+    "filesystem": "warm cache",
+    "device": null,
+    "cpuUtilization": null,
+    "callbackP95Ns": null,
+    "callbackP99Ns": null,
+    "xruns": null
+  },
+  "command": "cargo bench -p oxitone-bench --bench sample_import -- --sample-size 30 --warm-up-time 1 --measurement-time 3",
+  "scenarios": [
+    {
+      "id": "samples/inspect/stereo_pcm16_1s",
+      "file": "48 kHz stereo PCM16 WAV, 1 s",
+      "frames": 48000,
+      "sourceBytes": 192044,
+      "measuredSeconds": 3.699525252,
+      "iterations": 4650,
+      "slopeNs": 834675.1849814913,
+      "slopeMs": 0.8346751849814913,
+      "confidence95Ns": [760359.7055347875, 902817.7880882031]
+    },
+    {
+      "id": "samples/inspect/stereo_float32_10s",
+      "file": "48 kHz stereo float32 WAV, 10 s",
+      "frames": 480000,
+      "sourceBytes": 3840044,
+      "measuredSeconds": 4.94712883,
+      "iterations": 465,
+      "slopeNs": 10476526.652141724,
+      "slopeMs": 10.476526652141724,
+      "confidence95Ns": [9787532.720286284, 11263880.313778898]
+    }
+  ],
+  "notes": [
+    "Measurements include file read, SHA-256, complete decode, channel handling and PCM disposal.",
+    "They exclude N-API, TypeScript validation, prepare-time SRC/edit baking and audio callback work.",
+    "The 3-second measurement target was extended by Criterion to collect all 30 samples; measuredSeconds sums the sample durations.",
+    "Inspection decodes the entire file without a render block size; the fixture writer uses 128-frame blocks outside measurement.",
+    "This is the first baseline for the control-thread inspector; it is not a realtime or device acceptance run."
+  ]
+}

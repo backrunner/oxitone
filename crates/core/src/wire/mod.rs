@@ -9,8 +9,10 @@ mod basic;
 mod commands;
 mod plugin;
 pub use plugin::*;
+mod sample_info;
 mod serde_util;
 mod snapshot;
+pub use sample_info::*;
 
 pub use authoring::*;
 pub use automation::*;

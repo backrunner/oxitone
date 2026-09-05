@@ -28,6 +28,7 @@ oxitone-instruments = { path = "../instruments" }
 oxitone-io-macos = { path = "../io-macos" }
 oxitone-mixer = { path = "../mixer" }
 oxitone-render = { path = "../render" }
+oxitone-samples = { path = "../samples" }
 oxitone-transport = { path = "../transport" }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -61,4 +62,8 @@ harness = false
 
 [[bench]]
 name = "plugin_process"
+harness = false
+
+[[bench]]
+name = "sample_import"
 harness = false

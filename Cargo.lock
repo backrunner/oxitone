@@ -651,6 +651,7 @@ dependencies = [
  "oxitone-io-macos",
  "oxitone-mixer",
  "oxitone-render",
+ "oxitone-samples",
  "oxitone-transport",
  "serde",
  "serde_json",
@@ -723,6 +724,7 @@ dependencies = [
  "oxitone-graph",
  "oxitone-io-macos",
  "oxitone-render",
+ "oxitone-samples",
  "serde",
  "serde_json",
 ]

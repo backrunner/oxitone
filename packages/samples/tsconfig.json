@@ -1,0 +1,6 @@
+{
+  "$schema": "https://schemastore.org/tsconfig",
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": { "noEmit": true, "rootDir": "." },
+  "include": ["src", "test"]
+}

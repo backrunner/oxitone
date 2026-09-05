@@ -15,6 +15,7 @@ serde.workspace = true
 serde_json.workspace = true
 oxitone-core = { path = "../core" }
 oxitone-render = { path = "../render" }
+oxitone-samples = { path = "../samples" }
 oxitone-io-macos = { path = "../io-macos" }
 
 [build-dependencies]

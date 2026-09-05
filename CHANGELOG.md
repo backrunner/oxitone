@@ -8,6 +8,13 @@ conventional commits (`type(scope): description`).
 
 ### Added
 
+- `@oxitone/samples#importSample` and the versioned native `inspectSample` command:
+  Rust reads, identifies, hashes and decodes local audio on the control thread, returning
+  lossless dimensions and source/decoder provenance without exposing PCM. Descriptors
+  work with `Project.addSample`, absolute paths or explicit relative asset bases. Tests
+  cover audible deterministic WAV, SRC/trim, downmix, AAC/M4A and changed/missing assets.
+  Import is synchronous and read-only; disk cache and project persistence remain pending.
+
 - Track authoring exposes validated `enabled` and `midiChannel`, with native MIDI
   export coverage and rejection of Channel objects owned by another Project.
 
@@ -126,6 +133,10 @@ conventional commits (`type(scope): description`).
   `fitToContent` uses trimmed frames when no musical length is declared.
 
 ### Performance
+
+- Added a focused file inspection benchmark (read/hash/decode/disposal): 48 kHz stereo
+  PCM16 1 s and float32 10 s. Apple M4 measurements and limitations are archived in
+  `benchmarks/results/2026-09-06-sample-import.json`; no audio callback code changed.
 
 - M4 realtime validation (Apple M4, 48 kHz/128, 8-track synth + FX
   workload, release build): 10-minute device soak with 0 xruns and worker

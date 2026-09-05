@@ -7,6 +7,8 @@ import {
   nativeEventSchema,
   projectSnapshotSchema,
   renderOptionsSchema,
+  inspectSampleRequestSchema,
+  sampleInfoSchema,
 } from "../index.js";
 import { write } from "./output.js";
 
@@ -21,6 +23,8 @@ export function generateSchemas(): void {
   writeSchema("schemas/native-event.schema.json", nativeEventSchema);
   writeSchema("schemas/engine-options.schema.json", engineOptionsSchema);
   writeSchema("schemas/render-options.schema.json", renderOptionsSchema);
+  writeSchema("schemas/inspect-sample-request.schema.json", inspectSampleRequestSchema);
+  writeSchema("schemas/sample-info.schema.json", sampleInfoSchema);
   writeSchema("schemas/plugin-manifest.schema.json", pluginManifestSchema);
   writeSchema("schemas/register-plugin-options.schema.json", registerPluginOptionsSchema);
 
