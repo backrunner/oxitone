@@ -130,7 +130,10 @@ fn main() {
         .map_err(|failure| failure.error)
         .unwrap();
     let latency = session.output_latency().unwrap();
-    let (state, _) = session.transport(TransportCmd::Play { from: None });
+    let (state, _) = session.transport(TransportCmd::Play {
+        from: None,
+        loop_region: None,
+    });
     assert_eq!(state, oxitone_render::TransportState::Playing);
 
     let started = Instant::now();

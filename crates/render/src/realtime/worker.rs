@@ -29,10 +29,15 @@ use crate::transport::TransportState;
 /// horizon (03 §线程模型: 命令在 ring horizon 生效).
 #[derive(Debug)]
 pub enum TransportCmd {
-    Play { from: Option<u64> },
+    Play {
+        from: Option<u64>,
+        loop_region: Option<(u64, u64)>,
+    },
     Pause,
     Stop,
-    Seek { frame: u64 },
+    Seek {
+        frame: u64,
+    },
 }
 
 impl TransportCmd {
@@ -118,12 +123,12 @@ pub(crate) fn apply_transport(
     mirror: &TransportMirror,
 ) {
     match cmd {
-        TransportCmd::Play { from } => {
+        TransportCmd::Play { from, loop_region } => {
             if let Some(frame) = from {
                 graph.seek(*frame);
             }
             let cursor = graph.transport().cursor;
-            graph.transport_mut().play_from(cursor, None);
+            graph.transport_mut().play_from(cursor, *loop_region);
         }
         TransportCmd::Pause => graph.transport_mut().pause(),
         TransportCmd::Stop => {

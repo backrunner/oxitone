@@ -59,6 +59,9 @@ Oxitone Phase 1 是 macOS 优先的编程化 DAW SDK，不是图形编辑器，�
 - CLI foundation is implemented in `@oxitone/cli` (`render`, `export-midi`,
   `doctor`). Platform native package resolution remains compatible with the
   reserved `@oxitone/native-<platform>-<arch>` naming scheme.
+- Realtime transport loop regions are exposed through the versioned transport
+  command and `Session.play(..., { startFrame, endFrame })`; the end is
+  exclusive and applied at block boundaries without rendering past it.
 - `oxitone` facade、平台包（`@oxitone/native-darwin-arm64` 等）、postinstall 选择器和 ABI 检查。
 - 第三方插件动态加载：控制线程 `dlopen`、ABI/manifest 校验、watchdog 故障归因、插件平台包格式与签名策略。
 - 项目诊断、结构化错误、日志级别和最小 CLI（render、export-midi、doctor）。

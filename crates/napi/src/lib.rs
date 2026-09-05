@@ -464,6 +464,7 @@ pub fn enqueue_transport(engine_id: String, command_json: String) -> napi::Resul
             command,
             frame,
             beat,
+            loop_region,
         } = command
         else {
             return Err(OxitoneError::new(
@@ -499,7 +500,11 @@ pub fn enqueue_transport(engine_id: String, command_json: String) -> napi::Resul
             let config = realtime_config(engine.options.as_ref());
             return match RealtimeSession::start(Box::new(graph), config) {
                 Ok(session) => {
-                    let (state, cursor) = session.transport(TransportCmd::Play { from: position });
+                    let loop_region = loop_region.map(|r| (r.start_frame, r.end_frame));
+                    let (state, cursor) = session.transport(TransportCmd::Play {
+                        from: position,
+                        loop_region,
+                    });
                     engine.session = Some(session);
                     Ok(transport_state_json_parts(state, cursor))
                 }
@@ -522,7 +527,10 @@ pub fn enqueue_transport(engine_id: String, command_json: String) -> napi::Resul
                 (Some(_), Some(_)) => unreachable!("checked above"),
             };
             let cmd = match command {
-                Kind::Play => TransportCmd::Play { from: position },
+                Kind::Play => TransportCmd::Play {
+                    from: position,
+                    loop_region: loop_region.map(|r| (r.start_frame, r.end_frame)),
+                },
                 Kind::Pause => TransportCmd::Pause,
                 Kind::Stop => TransportCmd::Stop,
                 Kind::Seek => TransportCmd::Seek {

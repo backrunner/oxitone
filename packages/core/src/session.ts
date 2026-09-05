@@ -26,6 +26,8 @@ import {
 
 /** Transport position: a bar (1-based), an absolute beat, or a sample frame. */
 export type TransportPosition = { bar: number } | { beat: number } | { frame: bigint | number };
+/** Absolute sample-frame loop region. End is exclusive. */
+export type LoopRegion = { startFrame: bigint | number; endFrame: bigint | number };
 
 /**
  * Live engine session holding an `engineId` (04-api-contracts.md §Facade 与
@@ -62,14 +64,19 @@ export class Session {
   private async transport(
     command: TransportCommand["command"],
     position?: TransportPosition,
+    loop?: LoopRegion,
   ): Promise<TransportState> {
-    return enqueueTransport(this.engine, { command, ...this.positionFields(position) });
+    const loopRegion = loop === undefined ? undefined : {
+      startFrame: frameToWire(loop.startFrame),
+      endFrame: frameToWire(loop.endFrame),
+    };
+    return enqueueTransport(this.engine, { command, ...this.positionFields(position), loopRegion });
   }
 
   /** Start playback (optionally from a position). The first call opens the
    * output device and starts realtime audio. */
-  async play(position?: TransportPosition): Promise<TransportState> {
-    return this.transport("play", position);
+  async play(position?: TransportPosition, loop?: LoopRegion): Promise<TransportState> {
+    return this.transport("play", position, loop);
   }
 
   async pause(): Promise<TransportState> {

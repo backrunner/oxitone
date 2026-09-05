@@ -15,6 +15,7 @@ export const nativeCommandSchema = z.union([
     command: z.enum(["play", "pause", "stop", "seek"]),
     frame: frameWireSchema.optional(),
     beat: beatWireSchema.optional(),
+    loopRegion: z.object({ startFrame: frameWireSchema, endFrame: frameWireSchema }).optional(),
   }),
   z.object({
     type: z.literal("setParameter"),
@@ -32,6 +33,7 @@ export const transportCommandSchema = z.object({
   command: z.enum(["play", "pause", "stop", "seek"]),
   frame: frameWireSchema.optional(),
   beat: beatWireSchema.optional(),
+  loopRegion: z.object({ startFrame: frameWireSchema, endFrame: frameWireSchema }).optional(),
 });
 export type TransportCommand = z.infer<typeof transportCommandSchema>;
 

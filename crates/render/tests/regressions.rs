@@ -150,7 +150,10 @@ fn resolved_parameter_insertion_does_not_allocate() {
 fn replace_graph_preserves_playback() {
     let s = snapshot();
     let live = session(&s);
-    live.transport(TransportCmd::Play { from: None });
+    live.transport(TransportCmd::Play {
+        from: None,
+        loop_region: None,
+    });
     wait(|| live.cursor() > 2048);
     live.replace_graph(Box::new(graph(&s)));
     std::thread::sleep(Duration::from_millis(100));

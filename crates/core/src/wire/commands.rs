@@ -41,6 +41,8 @@ pub enum NativeCommand {
         frame: Option<u64>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         beat: Option<Beat>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        loop_region: Option<LoopRegion>,
     },
     SetParameter {
         entity_id: EntityId,
@@ -53,6 +55,15 @@ pub enum NativeCommand {
         )]
         at_frame: Option<u64>,
     },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LoopRegion {
+    #[serde(with = "u64_string")]
+    pub start_frame: u64,
+    #[serde(with = "u64_string")]
+    pub end_frame: u64,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

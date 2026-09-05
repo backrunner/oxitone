@@ -482,7 +482,9 @@ impl RealtimeSession {
     pub fn transport(&self, cmd: TransportCmd) -> (TransportState, u64) {
         let mut predicted = self.predicted.lock().expect("predicted mutex");
         let next = match &cmd {
-            TransportCmd::Play { from } => (TransportState::Playing, from.unwrap_or(predicted.1)),
+            TransportCmd::Play { from, .. } => {
+                (TransportState::Playing, from.unwrap_or(predicted.1))
+            }
             TransportCmd::Pause => (TransportState::Paused, predicted.1),
             TransportCmd::Stop => (TransportState::Stopped, 0),
             TransportCmd::Seek { frame } => (predicted.0, *frame),
