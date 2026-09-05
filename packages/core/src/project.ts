@@ -7,7 +7,7 @@ import {
   type TimeSignatureSegment,
 } from "@oxitone/protocol";
 import { Channel, type ChannelOptions } from "./channel.js";
-import { Sample, type SampleOptions } from "./sample.js";
+import { Sample, SampleClip, type SampleClipOptions, type SampleOptions } from "./sample.js";
 import { IdGenerator } from "./ids.js";
 import { MixerChannel, type MixerChannelOptions } from "./mixer-channel.js";
 import {
@@ -127,13 +127,26 @@ export class Project extends ProjectPlayback {
     return bus;
   }
 
-  /** @internal Allocate and register a project entity ID for clip builders. */
-  nextEntityId(prefix: string): EntityId { return this.claimId(prefix); }
+  /** @internal Validate before registering or attaching a sample clip. */
+  createSampleClip(track: Track, sample: Sample, position: BarBeatPosition, options: SampleClipOptions): SampleClip {
+    const clip = new SampleClip(this, track, sample, this.ids.next("scl_"), position, options);
+    this.entityIds.add(clip.id);
+    track.attachSampleClip(clip);
+    this.touch();
+    return clip;
+  }
 
   /** Register an immutable sample asset reference; decoding occurs in Rust prepare. */
   addSample(options: SampleOptions): Sample {
-    const sample = new Sample(this.claimId(ID_PREFIXES.sample), options);
+    const id = options.id ?? this.ids.next(ID_PREFIXES.sample);
+    if (this.entityIds.has(id) || this.patternsById.has(id)) {
+      throw new OxitoneError(ErrorCode.InvalidProject, `duplicate sample id: ${id}`, {
+        details: { path: "sample.id" },
+      });
+    }
+    const sample = new Sample(id, options);
     this.sampleList.push(sample);
+    this.entityIds.add(sample.id);
     this.touch();
     return sample;
   }

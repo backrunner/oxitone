@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ErrorCode, type SampleEditSpec } from "@oxitone/protocol";
-import { Pattern, Project } from "../src/index.js";
+import { createAutomationNamespace, Pattern, Project } from "../src/index.js";
 
 const sampleOptions = {
   assetUri: "assets/kick.wav",
@@ -82,5 +82,54 @@ describe("Sample and SampleClip authoring", () => {
     expect(() => second.addTrack().sample(sample)).toThrowError(
       expect.objectContaining({ code: ErrorCode.InvalidProject }),
     );
+  });
+
+  it("accepts bigint frames through u64 and rejects imprecise numbers without registering an asset", () => {
+    const project = new Project();
+    const frames = 0xffff_ffff_ffff_ffffn;
+    const sample = project.addSample({ ...sampleOptions, id: "smp_imported", frames });
+    expect(sample.id).toBe("smp_imported");
+    expect(sample.frames).toBe(frames);
+    expect(sample.toSpec().frames).toBe(frames.toString());
+    expect(() => project.addSample({ ...sampleOptions, id: sample.id })).toThrowError(expect.objectContaining({ code: ErrorCode.InvalidProject }));
+    const snapshot = project.snapshot();
+    for (const invalid of [Number.MAX_SAFE_INTEGER + 1, 1.5, NaN, Infinity, 0n, -1n, frames + 1n]) {
+      expect(() => project.addSample({ ...sampleOptions, id: "smp_failed", frames: invalid })).toThrowError(expect.objectContaining({ code: ErrorCode.InvalidProject }));
+      expect(project.snapshot()).toEqual(snapshot);
+    }
+    expect(() => project.addAutomationLane({ entityId: "smp_failed", parameterId: "level" }, createAutomationNamespace().constant(0.5)))
+      .toThrowError(expect.objectContaining({ code: ErrorCode.AutomationTargetInvalid }));
+  });
+
+  it("validates trim relationships and fits the edited content", () => {
+    const project = new Project();
+    for (const edits of [{ startFrame: "100", endFrame: "100" }, { endFrame: "48001" }, { startFrame: "48000" }]) {
+      expect(() => project.addSample({ ...sampleOptions, edits })).toThrowError(expect.objectContaining({ code: ErrorCode.InvalidProject }));
+    }
+    expect(() => project.addSample({ ...sampleOptions, musicalLengthBeats: 0 })).toThrowError(expect.objectContaining({ code: ErrorCode.InvalidProject }));
+    const { musicalLengthBeats: _, ...withoutMusicalLength } = sampleOptions;
+    const sample = project.addSample({ ...withoutMusicalLength, edits: { startFrame: "12000", endFrame: "36000" } });
+    const clip = project.addTrack().sample(sample).at({ bar: 1 });
+    clip.fitToContent();
+    expect(clip.durationBeats).toBe(1);
+  });
+
+  it("uses the starting signature for full and fractional bars at nonzero beat offsets", () => {
+    const project = new Project();
+    project.addTimeSignature({ startBar: 3, numerator: 3, denominator: 4 });
+    const clip = project.addTrack().sample(project.addSample(sampleOptions)).at({ bar: 2, beat: 1 });
+    expect(clip.fitBars(2).durationBeats).toBe(8);
+    expect(clip.fitBars(0.5).durationBeats).toBe(2);
+  });
+
+  it("lets a draft retry a failed placement without changing the project snapshot", () => {
+    const project = new Project();
+    const draft = project.addTrack().sample(project.addSample(sampleOptions));
+    const snapshot = project.snapshot();
+    expect(() => draft.at({ bar: 1 }, { durationBeats: 0 })).toThrowError(expect.objectContaining({ code: ErrorCode.InvalidProject }));
+    expect(project.snapshot()).toEqual(snapshot);
+    expect(draft.at({ bar: 1 }, { durationBeats: 1 }).durationBeats).toBe(1);
+    expect(project.sampleClips).toHaveLength(1);
+    expect(() => draft.at({ bar: 2 })).toThrowError(expect.objectContaining({ code: ErrorCode.InvalidProject }));
   });
 });

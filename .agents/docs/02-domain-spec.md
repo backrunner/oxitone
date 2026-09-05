@@ -22,6 +22,11 @@
 
 Track 是编排容器，不直接产生声音。它绑定一个或多个 `Channel`，允许多个 Track 指向同一 Channel（用于 layering），但一个 `PatternClip` 只能属于一个 Track。
 
+TS Track 已暴露 `enabled`（默认 true）和 `midiChannel`（可选的 1..16 整数）；setter
+先校验再增加 revision。disabled Track 保留编排数据，但不参与音频调度和 MIDI note track
+分配。`use(channel)` 只接受同 Project 的 Channel 对象。Track `tempo` 当前只有 wire
+字段及校验，独立 tempo 的换算执行仍待实现，尚未作为 TS setter 暴露。
+
 ```ts
 track.pattern(pattern).at({ bar: 1, beat: 0 }).loop(4).last({ bar: 17 })
 ```
@@ -99,6 +104,14 @@ TS authoring 提供 `project.addSample(options)` 和 `track.sample(sample).at(po
 Sample 只保存资源 URI/hash/格式/帧数/编辑描述；SampleClip 保存 beat 位置、gain/pan/rate、
 `tempoSync`、loop 和 enabled。`fitBeats`、`fitBars`、`fitToContent` 只写入 beat-domain
 `durationBeats`；Rust 仍负责资源 hash 验证、解码、编辑烘焙、SRC 和实时播放。
+
+Sample frames 接受正 safe-integer number 或正 u64 bigint；`options.id` 可指定稳定 ID，
+已占用 ID 报 `InvalidProject`。trim 必须满足 `0 <= startFrame < endFrame <= frames`，
+`musicalLengthBeats` 和显式 clip duration 必须大于 0。失败的添加/放置不注册实体、不增加
+revision，SampleClip draft 可重试；ID 生成器可消耗序号。`fitBars` 始终使用起始拍号，
+不因 clip 的 beat offset 缩短整小节长度。`fitToContent` 优先使用声明的音乐长度，否则
+使用 trim 后帧数；当前 tempo 换算只查询起点所属 segment 的静态 BPM，tempo ramp/lane
+下的有效时钟换算仍待补齐。
 
 ## Mixer 与 routing
 

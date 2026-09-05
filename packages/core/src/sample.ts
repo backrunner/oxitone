@@ -34,17 +34,31 @@ export class Sample {
 
   constructor(id: EntityId, options: SampleOptions) {
     this.id = id;
-    if (!Number.isInteger(options.frames) || options.frames <= 0) {
-      throw new OxitoneError(ErrorCode.InvalidProject, "sample frames must be an integer > 0", { details: { path: "sample.frames" } });
+    const frames = typeof options.frames === "bigint" ? options.frames :
+      (Number.isSafeInteger(options.frames) ? BigInt(options.frames) : undefined);
+    if (frames === undefined || frames <= 0n || frames > 0xffff_ffff_ffff_ffffn) {
+      throw new OxitoneError(ErrorCode.InvalidProject, "sample frames must be a positive u64 (use bigint above Number.MAX_SAFE_INTEGER)", { details: { path: "sample.frames" } });
     }
     this.spec = parseAuthoring(sampleRefSchema, {
       ...options,
       id,
-      frames: frameToWire(options.frames),
+      frames: frameToWire(frames),
       ...(options.musicalLengthBeats === undefined
         ? {}
         : { musicalLengthBeats: beatToWire(options.musicalLengthBeats) }),
     }, "sample");
+    const start = BigInt(this.spec.edits?.startFrame ?? "0");
+    const end = BigInt(this.spec.edits?.endFrame ?? frames);
+    if (start >= end || end > frames) {
+      throw new OxitoneError(ErrorCode.InvalidProject, "sample trim must satisfy 0 <= startFrame < endFrame <= frames", {
+        details: { path: "sample.edits" },
+      });
+    }
+    if (options.musicalLengthBeats !== undefined && options.musicalLengthBeats <= 0) {
+      throw new OxitoneError(ErrorCode.InvalidProject, "musicalLengthBeats must be positive", {
+        details: { path: "sample.musicalLengthBeats" },
+      });
+    }
   }
 
   get assetUri(): string { return this.spec.assetUri; }
@@ -53,9 +67,14 @@ export class Sample {
   get frames(): bigint { return BigInt(this.spec.frames); }
   get format(): SampleRef["format"] { return this.spec.format; }
   get musicalLengthBeats(): number | undefined {
-    return this.spec.musicalLengthBeats === undefined ? undefined : Number(this.spec.musicalLengthBeats.numerator) / Number(this.spec.musicalLengthBeats.denominator);
+    return this.spec.musicalLengthBeats === undefined
+      ? undefined
+      : Number(this.spec.musicalLengthBeats.numerator) /
+        Number(this.spec.musicalLengthBeats.denominator);
   }
-  get edits(): SampleEditSpec | undefined { return this.spec.edits === undefined ? undefined : structuredClone(this.spec.edits); }
+  get edits(): SampleEditSpec | undefined {
+    return this.spec.edits === undefined ? undefined : structuredClone(this.spec.edits);
+  }
   toSpec(): SampleRef { return structuredClone(this.spec); }
 }
 
@@ -83,6 +102,7 @@ export class SampleClip {
     options: SampleClipOptions = {},
   ) {
     this.startBar = start.bar;
+    if (options.durationBeats !== undefined) this.ensurePositive(options.durationBeats, "sampleClip.durationBeats");
     if (options.loop !== undefined && options.loop.count !== undefined && options.loop.lastBeat !== undefined) {
       throw new OxitoneError(ErrorCode.InvalidProject, "loop count and lastBeat are mutually exclusive", { details: { path: "sampleClip.loop" } });
     }
@@ -98,8 +118,13 @@ export class SampleClip {
   }
 
   get id(): EntityId { return this.spec.id; }
-  get startBeat(): number { return Number(this.spec.startBeat.numerator) / Number(this.spec.startBeat.denominator); }
-  get durationBeats(): number | undefined { const b = this.spec.durationBeats; return b === undefined ? undefined : Number(b.numerator) / Number(b.denominator); }
+  get startBeat(): number {
+    return Number(this.spec.startBeat.numerator) / Number(this.spec.startBeat.denominator);
+  }
+  get durationBeats(): number | undefined {
+    const b = this.spec.durationBeats;
+    return b === undefined ? undefined : Number(b.numerator) / Number(b.denominator);
+  }
   get gain(): number { return this.spec.gain ?? 1; }
   set gain(value: number) { this.update({ gain: value }); }
   get pan(): number { return this.spec.pan ?? 0; }
@@ -110,7 +135,9 @@ export class SampleClip {
   set tempoSync(value: "off" | "stretch" | "repitch") { this.update({ tempoSync: value }); }
   get enabled(): boolean { return this.spec.enabled !== false; }
   set enabled(value: boolean) { this.update({ enabled: value }); }
-  get loop(): SampleClipSpec["loop"] { return this.spec.loop === undefined ? undefined : structuredClone(this.spec.loop); }
+  get loop(): SampleClipSpec["loop"] {
+    return this.spec.loop === undefined ? undefined : structuredClone(this.spec.loop);
+  }
 
   fitBeats(beats: number): this {
     this.ensurePositive(beats, "sampleClip.durationBeats");
@@ -120,15 +147,14 @@ export class SampleClip {
 
   fitBars(bars: number): this {
     this.ensurePositive(bars, "sampleClip.fitBars");
-    const whole = Number.isInteger(bars);
-    const end = whole
-      ? this.project.barBeatToBeats({ bar: this.startBar + bars })
-      : this.startBeat + bars * this.project.beatsPerBarAt(this.startBar);
-    return this.fitBeats(end - this.startBeat);
+    return this.fitBeats(bars * this.project.beatsPerBarAt(this.startBar));
   }
 
   fitToContent(): this {
-    const beats = this.sample.musicalLengthBeats ?? Number(this.sample.frames) / this.sample.sampleRate * this.project.tempoAt(this.startBeat) / 60;
+    const edits = this.sample.edits;
+    const frames = BigInt(edits?.endFrame ?? this.sample.frames) - BigInt(edits?.startFrame ?? "0");
+    const beats = this.sample.musicalLengthBeats ??
+      Number(frames) / this.sample.sampleRate * this.project.tempoAt(this.startBeat) / 60;
     return this.fitBeats(beats);
   }
 

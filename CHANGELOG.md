@@ -8,6 +8,9 @@ conventional commits (`type(scope): description`).
 
 ### Added
 
+- Track authoring exposes validated `enabled` and `midiChannel`, with native MIDI
+  export coverage and rejection of Channel objects owned by another Project.
+
 - M2 TypeScript sample authoring: immutable `Sample` references, `SampleClip`
   placement with `off`/`stretch`/`repitch`, loop/gain/pan/rate controls, and
   `fitBeats`/`fitBars`/`fitToContent` helpers wired into validated snapshots.
@@ -113,6 +116,14 @@ conventional commits (`type(scope): description`).
   safetyOffset/deviceLatency breakdown (project-rate frames + seconds).
 - M4: `Session.outputLatency()`/`Session.diagnostics()` in `@oxitone/core`;
   `EngineDiagnostics` wire schema in `@oxitone/protocol`.
+
+### Fixed
+
+- Sample authoring accepts positive u64 bigint frames, rejects unsafe number frames,
+  honors explicit IDs, and validates trim relationships and positive musical lengths.
+  Failed sample/clip construction does not register an entity or bump revision; drafts
+  can retry. `fitBars` retains the full starting-signature length at nonzero beat offsets;
+  `fitToContent` uses trimmed frames when no musical length is declared.
 
 ### Performance
 

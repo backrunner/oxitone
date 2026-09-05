@@ -32,7 +32,8 @@
 1. **本轮已完成（2026-09-06）**：TS mixer/Channel insert authoring，覆盖快照隔离、
    revision、非法路由和实际 native WAV 输出；复用现有协议 1.0，不改变 DSP callback。
 2. **进行中（2026-09-06）**：Sample/SampleClip 与 fit helpers 已补齐 TypeScript
-   authoring 和 snapshot 连接；导入 facade、Track 剩余配置仍待完成。
+   authoring 和 snapshot 连接；Track `enabled`/`midiChannel` 已完成，导入 facade 仍在推进。
+   Track `tempo` 只有 wire 校验，独立时钟换算尚未执行，继续列为缺口。
 3. 完成 insert 参数自动化、Session 换图/播放位置、项目持久化与预设。
 4. 建立 macOS CI、npm 平台包和用户示例；跑持续有声负载性能与设备验收。
 5. 实现 Preview，完成 fuzz/endurance/发布门禁。各项出口分别记录证据。
@@ -55,3 +56,12 @@
   p95/p99、设备与 xrun 未在微基准中测量，记录为 null，不视为 0。
 - 表格仍保留起始基线的缺口以便对照；M3 的 TS mixer/Channel insert 空入口在本轮
   关闭，其余列出的缺口继续追踪。下一步优先 Sample/SampleClip authoring 与导入 facade。
+
+## Sample/Track 后续推进（2026-09-06）
+
+- 已提供 Track `enabled`/`midiChannel`，用真实 native MIDI 导出验证禁用 Track 和显式
+  channel 分配；跨项目同 ID 的 Channel 不再能被误绑定。
+- 修复 Sample bigint 帧数、显式 ID、trim 范围及音乐长度校验，失败构造不注册实体；
+  draft 可重试。`fitBars` 使用起始拍号且保留完整长度，`fitToContent` 使用 trim 后帧数。
+- fit helpers 尚不能据此视为完整验收：`fitToContent` 的 tempo ramp/lane 换算待实现；
+  `repitch` 使用内容音乐长度作为分母，显式 duration 的缩放语义仍需补齐并做音频验证。

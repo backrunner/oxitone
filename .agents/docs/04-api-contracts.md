@@ -133,6 +133,17 @@ clip.fitBars(2);
 `Sample` 的 getter 和 `SampleClip.toSpec()` 返回副本；`fitBeats`、`fitBars`、`fitToContent`
 仅更新 beat 长度并增加项目 revision。资源不存在或 hash 不匹配由 Rust 返回 `AssetUnavailable`。
 
+`addSample` 接受可选稳定 `id`，并拒绝已占用 ID。`frames` 可传正 safe-integer number
+或正 u64 bigint；越界、不精确数字、非法 trim 范围和非正音乐长度报 `InvalidProject`。
+添加失败不注册实体或改变 revision，SampleClip draft 可在放置失败后重试。
+`fitBars` 按起点拍号设置长度；`fitToContent` 未指定音乐长度时按 trim 后内容折算，
+当前只使用起点所属 tempo segment 的静态 BPM，尚未覆盖 tempo ramp/lane。
+
+Track 的 `enabled` 和 `midiChannel` 支持读写、revision 和快照序列化。`enabled` 默认 true，
+false 会关闭该 Track 的音频调度与 MIDI note track；`midiChannel` 为 1..16，可赋 undefined
+恢复自动分配。非法值或跨 Project 的 `use(channel)` 报 `InvalidProject`，且不改变 revision。
+Track `tempo` 的执行语义仍待实现，当前不暴露 authoring setter。
+
 `@oxitone/core` 的混音 builder 复用以下协议 1.0 wire contracts：
 
 ```ts

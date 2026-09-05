@@ -17,6 +17,8 @@ export class Track {
   private readonly channelIdList: string[] = [];
   private readonly clipList: PatternClip[] = [];
   private readonly sampleClipList: SampleClip[] = [];
+  private enabledValue = true;
+  private midiChannelValue: number | undefined;
 
   /** @internal Use `project.addTrack(...)` instead. */
   constructor(project: Project, id: string, name?: string) {
@@ -29,6 +31,29 @@ export class Track {
 
   get name(): string | undefined {
     return this.trackName;
+  }
+
+  get enabled(): boolean { return this.enabledValue; }
+  set enabled(value: boolean) {
+    if (typeof value !== "boolean") {
+      throw new OxitoneError(ErrorCode.InvalidProject, "track enabled must be a boolean", {
+        details: { path: "track.enabled" },
+      });
+    }
+    this.enabledValue = value;
+    this.project.touch();
+  }
+
+  /** Explicit MIDI channel (1..16); omitted means deterministic auto allocation. */
+  get midiChannel(): number | undefined { return this.midiChannelValue; }
+  set midiChannel(value: number | undefined) {
+    if (value !== undefined && (!Number.isInteger(value) || value < 1 || value > 16)) {
+      throw new OxitoneError(ErrorCode.InvalidProject, `midiChannel must be an integer in 1..16, got ${value}`, {
+        details: { path: "track.midiChannel" },
+      });
+    }
+    this.midiChannelValue = value;
+    this.project.touch();
   }
 
   /** IDs of the bound channels, in binding order. */
@@ -58,6 +83,11 @@ export class Track {
 
   /** Bind a channel to this track (idempotent; layering is allowed). */
   use(channel: Channel): this {
+    if (!this.project.channels.includes(channel)) {
+      throw new OxitoneError(ErrorCode.InvalidProject, "channel must belong to this project", {
+        details: { path: "track.channelIds" },
+      });
+    }
     if (!this.channelIdList.includes(channel.id)) {
       this.channelIdList.push(channel.id);
       this.project.touch();
@@ -91,6 +121,8 @@ export class Track {
     if (this.trackName !== undefined) {
       spec.name = this.trackName;
     }
+    if (!this.enabledValue) spec.enabled = false;
+    if (this.midiChannelValue !== undefined) spec.midiChannel = this.midiChannelValue;
     return spec;
   }
 }
@@ -101,10 +133,8 @@ export class SampleClipDraft {
   constructor(private readonly project: Project, private readonly track: Track, private readonly sampleValue: Sample) {}
   at(position: BarBeatPosition, options: SampleClipOptions = {}): SampleClip {
     if (this.placed) throw new OxitoneError(ErrorCode.InvalidProject, "sample clip draft is already placed");
+    const clip = this.project.createSampleClip(this.track, this.sampleValue, position, options);
     this.placed = true;
-    const clip = new SampleClip(this.project, this.track, this.sampleValue, this.project.nextEntityId("scl_"), position, options);
-    this.track.attachSampleClip(clip);
-    this.project.touch();
     return clip;
   }
 }
