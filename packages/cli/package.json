@@ -1,0 +1,21 @@
+{
+  "name": "@oxitone/cli",
+  "version": "0.1.0",
+  "description": "Command line tools for Oxitone rendering and diagnostics",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": { "oxitone": "dist/index.js" },
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "files": ["dist"],
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@oxitone/protocol": "workspace:*",
+    "oxitone": "workspace:*"
+  },
+  "devDependencies": { "typescript": "^5.7.0" }
+}

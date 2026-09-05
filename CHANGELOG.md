@@ -8,6 +8,9 @@ conventional commits (`type(scope): description`).
 
 ### Added
 
+- M5 foundation: `@oxitone/cli` provides `render`, `export-midi`, and
+  `doctor` commands using the same validated native facade as applications.
+
 - M0 engineering baseline: pnpm + Cargo workspaces, versioned protocol
   (`protocolVersion` 1.0), stable ID rules, error codes, N-API smoke test.
 - M0 protocol contract layer: `@oxitone/protocol` (zod wire schemas, canonical
