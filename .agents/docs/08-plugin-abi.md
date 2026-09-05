@@ -28,6 +28,14 @@
 
 ## ABI v1
 
+Rust `oxitone-graph::abi_c` now defines the `#[repr(C)]` descriptor and
+parameter records used at the dynamic boundary. Descriptor conversion is
+control-thread-only and rejects incompatible ABI majors, null tables,
+invalid enum values, malformed UTF-8, channel layouts, and parameter ranges
+before a plugin can enter compilation. Instance loading and callback adapter
+remain the next M5 increment; no dynamic library is touched from realtime
+code.
+
 ABI 是 C ABI，不是 Rust ABI：所有跨边界类型 `#[repr(C)]`，不暴露 Rust trait object、String、Vec 或泛型。插件可用任意语言实现，只要导出约定符号。
 
 ```c

@@ -12,6 +12,8 @@ conventional commits (`type(scope): description`).
   `doctor` commands using the same validated native facade as applications.
 - M4 transport loop regions are now part of the versioned transport command
   and TypeScript `Session.play` API, using exclusive sample-frame bounds.
+- M5 ABI foundation: added the repr(C) plugin descriptor/parameter boundary
+  with ABI-major and manifest validation tests.
 
 - M0 engineering baseline: pnpm + Cargo workspaces, versioned protocol
   (`protocolVersion` 1.0), stable ID rules, error codes, N-API smoke test.
