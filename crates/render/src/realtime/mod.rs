@@ -5,6 +5,8 @@
 pub mod diagnostics;
 mod direct;
 pub mod layout;
+#[cfg(test)]
+mod retirement_tests;
 pub mod ring;
 mod session;
 mod sink;

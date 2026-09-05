@@ -53,12 +53,11 @@ pub const SLICER_PLUGIN_ID: &str = "oxitone.slicer";
 /// State schema of the built-in Slicer slice table (04-api-contracts.md).
 pub const SLICER_STATE_SCHEMA_ID: StateSchemaId = StateSchemaId("oxitone.slicer.slices@1");
 
-/// Static metadata every plugin exposes. Built at plugin init and shared for
-/// the process lifetime, so `Plugin::descriptor` can return `&'static`.
+/// Immutable metadata owned by a plugin factory and borrowed by the registry.
 #[derive(Debug, Clone)]
 pub struct PluginDescriptor {
-    pub plugin_id: &'static str,
-    pub plugin_version: &'static str,
+    pub plugin_id: String,
+    pub plugin_version: String,
     pub kind: PluginKind,
     /// Effect input layout; must be `None` for instruments.
     pub input_layout: ChannelLayout,

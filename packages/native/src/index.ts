@@ -5,6 +5,9 @@ import {
   engineOptionsSchema,
   ErrorCode,
   frameToWire,
+  registerPluginOptionsSchema,
+  registeredPluginSchema,
+  pluginDiagnosticsSchema,
   midiExportOptionsSchema,
   midiExportReportSchema,
   outputDeviceInfoSchema,
@@ -15,6 +18,9 @@ import {
   transportCommandSchema,
   transportStateSchema,
   entityIdSchema,
+  type RegisterPluginOptions,
+  type RegisteredPlugin,
+  type PluginDiagnostics,
   type EngineDiagnostics,
   type EngineOptions,
   type MidiExportOptions,
@@ -31,6 +37,10 @@ import { toOxitoneError } from "./errors.js";
 import { loadNativeBinding, type NativeBinding } from "./load.js";
 
 export type {
+  RegisterPluginOptions,
+  RegisteredPlugin,
+  PluginManifest,
+  PluginDiagnostics,
   EngineDiagnostics,
   EngineOptions,
   MidiExportOptions,
@@ -78,6 +88,22 @@ export function createEngine(options?: EngineOptions): EngineHandle {
     throw new OxitoneError(ErrorCode.RealtimeFault, "malformed createEngine response");
   }
   return { id: engineId, protocolVersion };
+}
+
+/**
+ * Load explicitly trusted native plugin code on the control thread.
+ * The supplied manifest must match the library's C descriptor exactly.
+ */
+export function registerPlugin(engine: EngineHandle, options: RegisterPluginOptions): RegisteredPlugin {
+  const validated = registerPluginOptionsSchema.parse(options);
+  const result = call((binding) => binding.registerPlugin(engine.id, JSON.stringify(validated)));
+  return registeredPluginSchema.parse(JSON.parse(result));
+}
+
+/** Fault counts per registered plugin; available before and during playback. */
+export function getPluginDiagnostics(engine: EngineHandle): PluginDiagnostics[] {
+  const result = call((binding) => binding.getPluginDiagnostics(engine.id));
+  return pluginDiagnosticsSchema.array().parse(JSON.parse(result));
 }
 
 export function compile(

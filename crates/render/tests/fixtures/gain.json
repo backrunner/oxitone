@@ -1,0 +1,18 @@
+{
+  "pluginId": "fixture.gain",
+  "pluginVersion": "1.0.0",
+  "abiMajor": 1,
+  "abiMinor": 0,
+  "minHostVersion": "0.1.0",
+  "kind": "effect",
+  "inputLayout": "stereo",
+  "outputLayout": "stereo",
+  "parameters": [{
+    "id": "gain", "label": "Gain", "unit": "normalized",
+    "min": 0, "max": 2, "default": 1,
+    "smoothing": "none", "rate": "audio", "automation": true,
+    "mapping": "linear"
+  }],
+  "sidechainInput": true,
+  "reportsTail": true
+}

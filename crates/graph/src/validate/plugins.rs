@@ -10,12 +10,12 @@ use oxitone_core::wire::{EffectRef, InstrumentRef, ProjectSnapshot};
 use crate::descriptor::{PluginDescriptor, PluginKind};
 use crate::registry::PluginRegistry;
 
-fn resolve(
-    registry: &PluginRegistry,
+fn resolve<'a>(
+    registry: &'a PluginRegistry,
     path: &str,
     plugin_id: &str,
     plugin_version: &str,
-) -> Result<&'static PluginDescriptor, OxitoneError> {
+) -> Result<&'a PluginDescriptor, OxitoneError> {
     registry
         .lookup_descriptor(plugin_id, plugin_version)
         .ok_or_else(|| {
@@ -63,11 +63,11 @@ fn check_parameters(
     Ok(())
 }
 
-fn check_instrument(
-    registry: &PluginRegistry,
+fn check_instrument<'a>(
+    registry: &'a PluginRegistry,
     path: &str,
     instrument: &InstrumentRef,
-) -> Result<&'static PluginDescriptor, OxitoneError> {
+) -> Result<&'a PluginDescriptor, OxitoneError> {
     let descriptor = resolve(
         registry,
         path,

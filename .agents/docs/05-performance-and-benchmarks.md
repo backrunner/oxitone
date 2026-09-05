@@ -23,11 +23,12 @@
 - `render/realtime`: callback wall time 分布（p50/p95/p99/max）、miss count、xrun count。
 - `render/worker`: render worker 单 block 耗时分布、ring 深度扫描（2/4/8 blocks）、注入人工调度抖动（模拟抢占）时平均负载 < 70% 预算下 underrun 必须为 0。
 - `render/offline`: render ratio、WAV writer throughput、peak memory。
+- `plugin/c_abi_gain`: 真实 C 动态库在 48 kHz、64/128/256 frames 的实例适配成本，包含参数事件转换和非有限输出检查；不代替 realtime soak。
 - `napi/command`: compile/transport command 往返延迟，不能用于 callback。
 
 `dsp/*` benchmark 必须包含 denormal 语料（衰减中的滤波器/混响尾部），验证 FTZ/DAZ 与 denormal-safe 实现没有性能悬崖。
 
-使用 Criterion 或等价 Rust harness；microbench 固定 seed 与输入 buffer，并包含 warmup。Realtime benchmark 采用独立高优先级线程、真实 block size 和预热后的 graph，禁止用仅测函数调用的 microbench 代替。
+使用 Criterion 或等价 Rust harness；microbench 固定 seed 与输入 buffer，并包含 warmup。Realtime benchmark 采用独立高优先级线程、真实 block size 和预热后的 graph，禁止用仅测函数调用的 microbench 代替。realtime-soak 会循环完整 timeline，避免长测试在内容结束后只测静音；可用 `--plugin PATH --plugin-manifest PATH` 给每个 channel 添加已信任的动态效果器，并记录 hash 与 fault 数。
 
 ## 回归策略
 

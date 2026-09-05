@@ -26,6 +26,7 @@ pub(crate) struct DirectCore {
     graph: Option<Box<RenderGraph>>,
     return_slot: ReturnSlot,
     commands: Arc<SpscQueue<WorkerMsg>>,
+    retired: Arc<SpscQueue<WorkerMsg>>,
     events: Arc<SpscQueue<DiagnosticEvent>>,
     counters: Arc<RtCounters>,
     mirror: Arc<TransportMirror>,
@@ -42,6 +43,7 @@ impl DirectCore {
         graph: Box<RenderGraph>,
         return_slot: ReturnSlot,
         commands: Arc<SpscQueue<WorkerMsg>>,
+        retired: Arc<SpscQueue<WorkerMsg>>,
         events: Arc<SpscQueue<DiagnosticEvent>>,
         counters: Arc<RtCounters>,
         mirror: Arc<TransportMirror>,
@@ -52,6 +54,7 @@ impl DirectCore {
             graph: Some(graph),
             return_slot,
             commands,
+            retired,
             events,
             counters,
             mirror,
@@ -78,28 +81,36 @@ impl DirectCore {
             WorkerMsg::ReplaceGraph(mut graph) => {
                 if let Some(old) = self.graph.as_ref() {
                     graph.transport.state = old.transport.state;
-                    graph.transport.cursor = old.transport.cursor;
+                    graph.seek(old.transport.cursor);
+                    graph.eval_ctx = old.eval_ctx;
                     graph.transport.loop_region = old.transport.loop_region;
                 }
-                self.block_size = graph.block_size();
-                self.block_left.resize(self.block_size, 0.0);
-                self.block_right.resize(self.block_size, 0.0);
                 self.fault_latched = false;
                 let state = graph.state();
                 let cursor = graph.transport().cursor;
-                self.graph = Some(graph);
+                if let Some(old) = self.graph.replace(graph) {
+                    let _ = self.retired.push(WorkerMsg::ReplaceGraph(old));
+                }
                 self.mirror.store(state, cursor);
             }
             // Device rebuilds are handled by the monitor thread tearing
             // the stream down; nothing for the callback to do.
-            WorkerMsg::Reconfigure(_) | WorkerMsg::Shutdown => {}
+            WorkerMsg::Reconfigure(config) => {
+                let _ = self.retired.push(WorkerMsg::Reconfigure(config));
+            }
         }
     }
 
     /// Callback body: drain commands, render one block, interleave to the
     /// device layout. RT-safe (no allocation, locks, or clock reads).
     pub(crate) fn pull(&mut self, out: &mut [f32]) {
-        while let Some(msg) = self.commands.pop() {
+        for _ in 0..256 {
+            if self.retired.is_full() {
+                break;
+            }
+            let Some(msg) = self.commands.pop() else {
+                break;
+            };
             self.handle(msg);
         }
         let Some(graph) = self.graph.as_mut() else {

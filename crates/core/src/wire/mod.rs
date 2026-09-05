@@ -7,6 +7,8 @@ mod authoring;
 mod automation;
 mod basic;
 mod commands;
+mod plugin;
+pub use plugin::*;
 mod serde_util;
 mod snapshot;
 

@@ -35,8 +35,8 @@ pub fn instrument_descriptor(
     parameters: Vec<ParameterSpec>,
 ) -> PluginDescriptor {
     PluginDescriptor {
-        plugin_id,
-        plugin_version,
+        plugin_id: plugin_id.into(),
+        plugin_version: plugin_version.into(),
         kind: PluginKind::Instrument,
         input_layout: ChannelLayout::None,
         output_layout: ChannelLayout::Stereo,
@@ -53,8 +53,8 @@ pub fn effect_descriptor(
     parameters: Vec<ParameterSpec>,
 ) -> PluginDescriptor {
     PluginDescriptor {
-        plugin_id,
-        plugin_version,
+        plugin_id: plugin_id.into(),
+        plugin_version: plugin_version.into(),
         kind: PluginKind::Effect,
         input_layout: ChannelLayout::Stereo,
         output_layout: ChannelLayout::Stereo,

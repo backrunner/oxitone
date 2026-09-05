@@ -37,8 +37,8 @@ pub fn parameters() -> Vec<ParameterSpec> {
 
 pub fn descriptor() -> PluginDescriptor {
     PluginDescriptor {
-        plugin_id: crate::SLICER_PLUGIN_ID,
-        plugin_version: crate::BUILTIN_PLUGIN_VERSION,
+        plugin_id: crate::SLICER_PLUGIN_ID.into(),
+        plugin_version: crate::BUILTIN_PLUGIN_VERSION.into(),
         kind: oxitone_graph::PluginKind::Instrument,
         input_layout: oxitone_graph::ChannelLayout::None,
         output_layout: oxitone_graph::ChannelLayout::Stereo,

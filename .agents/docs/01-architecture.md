@@ -71,15 +71,15 @@ Instruments and effects implement the same conceptual lifecycle in Rust and adve
 1. `descriptor()` is static metadata: stable plugin ID, version, channel layout, parameter specs, tail policy.
 2. `prepare(PrepareContext)` runs off the audio thread when sample rate/block size changes.
 3. `process(ProcessContext)` runs per block and is realtime-safe.
-4. `reset()` and `dispose()` run off the audio thread.
+4. `reset()` is a realtime-safe flush used by seek/loop; `dispose()` runs on the control thread.
 
-Phase 1 plugins implement the stable C ABI in `08-plugin-abi.md` and ship in two forms: statically linked Rust crates registered at build time, or dynamically loaded `.dylib` distributed through npm platform packages. Built-in instruments/effects are statically linked ABI plugins, so built-in and third-party code share one contract. The TS manifest is the compatibility seam for future WASM/VST3 adapters; the ABI and manifest must not expose Rust-specific types.
+Phase 1 plugins implement the stable C ABI in `08-plugin-abi.md` and ship in two forms: statically linked Rust crates registered at build time, or dynamically loaded `.dylib` distributed through npm platform packages. Built-in instruments/effects use Rust traits with the same descriptor/lifecycle contract; third-party libraries use the C entry table and an owned adapter. The TS manifest is the compatibility seam for future WASM/VST3 adapters; the ABI and manifest must not expose Rust-specific types.
 
 第三方 npm 分发（对应产品目标"用户按标准自行开发音源/效果器并经 npm 分发"）在 Phase 1 的落地方式：
 
 - 插件作者发布 TS manifest 包（`ParameterSpec[]`、元数据、`pluginPath()`）加平台 dylib 包（如 `@acme/oxitone-osc-darwin-arm64`）。
-- 用户 `npm install` 后调用 `engine.registerPlugin({ libraryPath: plugin.pluginPath() })`；加载、ABI 校验、descriptor 比对和 prepare 都在控制线程完成，callback 永不触发加载。
-- 动态插件与内置插件遵守同一 realtime contract；engine 无法强制第三方代码，提供 watchdog 归因与 mute-node 故障策略，详见 `08-plugin-abi.md`。
+- 用户 `npm install` 后调用 `registerPlugin(engine, { libraryPath: plugin.pluginPath(), manifest: plugin.manifest })`；加载、ABI 校验、descriptor 比对和 prepare 都在控制线程完成，callback 永不触发加载。
+- 动态插件与内置插件遵守同一 realtime contract；engine 无法强制第三方代码，提供返回码/非有限值/latency 变化的 mute-node 与插件 fault 计数；逐节点 deadline watchdog 尚待实现，详见 `08-plugin-abi.md`。
 - 对稳定性要求最高的应用可以只用静态链接插件；动态加载由 engine option 控制。
 
 任何插件不得在 descriptor 之外接收未声明参数；跨版本参数迁移由插件自身在 `prepare` 前声明。

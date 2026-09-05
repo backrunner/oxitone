@@ -134,8 +134,8 @@ impl MixerEngine {
                             )
                         })?;
                     let descriptor = plugin.descriptor();
-                    let mut instance = plugin.create(&host);
-                    instance.prepare(sample_rate, max_block_size);
+                    let mut instance = plugin.try_create(&host)?;
+                    instance.try_prepare(sample_rate, max_block_size)?;
                     let param_ids: Vec<String> =
                         descriptor.parameters.iter().map(|p| p.id.clone()).collect();
                     let mut pending = Vec::with_capacity(MAX_PENDING_EVENTS);

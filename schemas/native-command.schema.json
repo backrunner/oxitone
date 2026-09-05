@@ -1318,6 +1318,24 @@
             "denominator"
           ],
           "additionalProperties": false
+        },
+        "loopRegion": {
+          "type": "object",
+          "properties": {
+            "startFrame": {
+              "type": "string",
+              "pattern": "^(0|[1-9]\\d{0,19})$"
+            },
+            "endFrame": {
+              "type": "string",
+              "pattern": "^(0|[1-9]\\d{0,19})$"
+            }
+          },
+          "required": [
+            "startFrame",
+            "endFrame"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [

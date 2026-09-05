@@ -1,6 +1,6 @@
 //! Static plugin registry (08-plugin-abi.md §加载模型). Built-ins register
 //! from `crates/instruments` / `crates/mixer`; third-party dylib plugins will
-//! register through the same API after dlopen validation (M5). Registering
+//! register through the same API after dlopen validation. Registering
 //! the same `plugin_id + plugin_version` twice is idempotent and keeps the
 //! first registration.
 
@@ -11,7 +11,7 @@ use crate::abi::Plugin;
 use crate::descriptor::PluginDescriptor;
 
 /// Process-wide catalog of available plugins, keyed by (id, version).
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct PluginRegistry {
     plugins: BTreeMap<(String, String), Arc<dyn Plugin>>,
 }
@@ -63,7 +63,7 @@ impl PluginRegistry {
         &self,
         plugin_id: &str,
         plugin_version: &str,
-    ) -> Option<&'static PluginDescriptor> {
+    ) -> Option<&PluginDescriptor> {
         self.plugins
             .get(&(plugin_id.to_string(), plugin_version.to_string()))
             .map(|plugin| plugin.descriptor())

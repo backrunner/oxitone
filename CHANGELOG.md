@@ -8,6 +8,17 @@ conventional commits (`type(scope): description`).
 
 ### Added
 
+- M5 dynamic plugins: typed per-engine registration, SHA-256/signature and
+  manifest validation, owned C ABI instances, mono/stereo adaptation, fault
+  muting and diagnostics. Includes the public C header, C/Rust conformance
+  fixtures, native WAV integration tests and a focused adapter benchmark.
+- Realtime graph/device-chain replacement now defers destruction to the
+  control thread. Full command queues return errors, shutdown is independent
+  of queue capacity, and incompatible live graph configurations are rejected.
+- Rust plugin descriptors now own ID/version strings and borrow metadata
+  from factories; dynamic metadata no longer requires leaking allocations.
+  Reset is explicitly realtime-safe; create/prepare expose fallible methods.
+
 - M5 foundation: `@oxitone/cli` provides `render`, `export-midi`, and
   `doctor` commands using the same validated native facade as applications.
 - M4 transport loop regions are now part of the versioned transport command
@@ -115,6 +126,10 @@ conventional commits (`type(scope): description`).
 
 ### Known gaps (tracked for later milestones)
 
-- Third-party plugin loading (dlopen/watchdog), npm platform packages and
-  the CLI are M5; transport loop regions are supported by the engine
-  transport but not yet exposed on the wire.
+- Per-node plugin deadline watchdog, native platform publication, release
+  signing/notarization, GPUI preview and full release endurance gates remain.
+  In-process native plugins are trusted code, with no crash/hang isolation.
+- The historical M4 soak used a finite timeline without looping; its long
+  idle portion does not establish sustained active-DSP performance. The
+  harness now loops content, and fresh sustained-load release evidence is
+  still required.

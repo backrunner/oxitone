@@ -1,6 +1,8 @@
 import { z } from "zod";
 import {
   engineOptionsSchema,
+  pluginManifestSchema,
+  registerPluginOptionsSchema,
   nativeCommandSchema,
   nativeEventSchema,
   projectSnapshotSchema,
@@ -19,6 +21,8 @@ export function generateSchemas(): void {
   writeSchema("schemas/native-event.schema.json", nativeEventSchema);
   writeSchema("schemas/engine-options.schema.json", engineOptionsSchema);
   writeSchema("schemas/render-options.schema.json", renderOptionsSchema);
+  writeSchema("schemas/plugin-manifest.schema.json", pluginManifestSchema);
+  writeSchema("schemas/register-plugin-options.schema.json", registerPluginOptionsSchema);
 
   // The recursive automation source is hand-maintained: zod cannot emit a
   // self-referential JSON Schema from the lazy union.

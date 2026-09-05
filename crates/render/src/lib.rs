@@ -25,6 +25,7 @@ pub mod metronome;
 pub mod midi;
 pub mod params;
 pub mod player;
+pub mod plugins;
 pub mod realtime;
 pub mod render_wav;
 pub mod transport;

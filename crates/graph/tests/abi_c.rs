@@ -4,13 +4,13 @@ use oxitone_graph::abi_c::{descriptor_from_c, OxiParamSpecV1, OxiPluginDescripto
 
 #[test]
 fn valid_c_descriptor_converts_and_validates() {
-    let id = CString::new("gain").unwrap().into_raw();
-    let label = CString::new("Gain").unwrap().into_raw();
-    let plugin_id = CString::new("example.effect").unwrap().into_raw();
-    let version = CString::new("1.0.0").unwrap().into_raw();
+    let id = CString::new("gain").unwrap();
+    let label = CString::new("Gain").unwrap();
+    let plugin_id = CString::new("example.effect").unwrap();
+    let version = CString::new("1.0.0").unwrap();
     let param = OxiParamSpecV1 {
-        id,
-        label,
+        id: id.as_ptr(),
+        label: label.as_ptr(),
         unit: 0,
         min: 0.0,
         max: 1.0,
@@ -23,8 +23,8 @@ fn valid_c_descriptor_converts_and_validates() {
     let raw = OxiPluginDescriptorV1 {
         abi_major: ABI_MAJOR,
         abi_minor: 0,
-        plugin_id,
-        plugin_version: version,
+        plugin_id: plugin_id.as_ptr(),
+        plugin_version: version.as_ptr(),
         kind: 1,
         input_layout: 2,
         output_layout: 2,
@@ -33,7 +33,7 @@ fn valid_c_descriptor_converts_and_validates() {
         param_count: 1,
         max_polyphony: 0,
     };
-    let descriptor = descriptor_from_c(&raw).unwrap();
+    let descriptor = unsafe { descriptor_from_c(&raw) }.unwrap();
     assert_eq!(descriptor.plugin_id, "example.effect");
     assert_eq!(descriptor.parameters[0].id, "gain");
 }
@@ -53,6 +53,6 @@ fn incompatible_major_is_rejected_before_pointer_access() {
         param_count: 0,
         max_polyphony: 0,
     };
-    let error = descriptor_from_c(&raw).unwrap_err();
+    let error = unsafe { descriptor_from_c(&raw) }.unwrap_err();
     assert_eq!(error.code, oxitone_core::error::codes::PLUGIN_ABI_MISMATCH);
 }

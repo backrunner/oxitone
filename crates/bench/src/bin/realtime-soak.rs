@@ -31,6 +31,8 @@ struct Args {
     simulated: bool,
     jitter: Option<JitterConfig>,
     out: Option<PathBuf>,
+    plugin: Option<PathBuf>,
+    plugin_manifest: Option<PathBuf>,
 }
 
 fn parse_args() -> Args {
@@ -40,6 +42,8 @@ fn parse_args() -> Args {
         simulated: false,
         jitter: None,
         out: None,
+        plugin: None,
+        plugin_manifest: None,
     };
     let mut argv = std::env::args().skip(1);
     while let Some(arg) = argv.next() {
@@ -59,6 +63,11 @@ fn parse_args() -> Args {
                     max_extra_periods: parts[1].parse().unwrap(),
                     seed: parts[2].parse().unwrap(),
                 });
+            }
+            "--plugin" => args.plugin = Some(PathBuf::from(argv.next().expect("--plugin path"))),
+            "--plugin-manifest" => {
+                args.plugin_manifest =
+                    Some(PathBuf::from(argv.next().expect("--plugin-manifest path")))
             }
             "--out" => args.out = Some(PathBuf::from(argv.next().expect("--out value"))),
             other => panic!("unknown argument {other}"),
@@ -119,21 +128,57 @@ fn main() {
     for channel in &mut snapshot.channels {
         channel.level = 0.05;
     }
-    let registry = builtin_registry().unwrap();
+    let mut registry = builtin_registry().unwrap();
+    let plugin = match (&args.plugin, &args.plugin_manifest) {
+        (Some(path), Some(manifest)) => {
+            let options = oxitone_core::wire::RegisterPluginOptions {
+                library_path: path.display().to_string(),
+                expected_hash: None,
+                manifest: serde_json::from_slice(&std::fs::read(manifest).unwrap()).unwrap(),
+            };
+            let plugin = unsafe {
+                oxitone_render::plugins::load_plugin(
+                    &options,
+                    oxitone_core::wire::AllowPlugins::Any,
+                )
+            }
+            .unwrap();
+            for channel in &mut snapshot.channels {
+                channel.effect_chain.push(oxitone_core::wire::EffectRef {
+                    plugin_id: plugin.registration.plugin_id.clone(),
+                    plugin_version: plugin.registration.plugin_version.clone(),
+                    parameters: Default::default(),
+                    resources: None,
+                    mix: None,
+                    bypass: None,
+                });
+            }
+            registry.register(plugin.clone()).unwrap();
+            Some(plugin)
+        }
+        (None, None) => None,
+        _ => panic!("--plugin and --plugin-manifest must be supplied together"),
+    };
     let store = SampleStore::new(None);
     let graph = Box::new(
         RenderGraph::compile(&snapshot, &registry, &store, &RenderGraphOptions::default())
             .expect("workload compiles"),
     );
 
+    let loop_end = graph
+        .plan()
+        .tempo
+        .beat_to_frame(graph.plan().content_end_beat);
     let session = start_session(graph, RealtimeConfig::default(), &args)
         .map_err(|failure| failure.error)
         .unwrap();
     let latency = session.output_latency().unwrap();
-    let (state, _) = session.transport(TransportCmd::Play {
-        from: None,
-        loop_region: None,
-    });
+    let (state, _) = session
+        .transport(TransportCmd::Play {
+            from: None,
+            loop_region: Some((0, loop_end)),
+        })
+        .unwrap();
     assert_eq!(state, oxitone_render::TransportState::Playing);
 
     let started = Instant::now();
@@ -155,7 +200,7 @@ fn main() {
         }
     }
     let diagnostics = session.snapshot_diagnostics();
-    session.transport(TransportCmd::Stop);
+    session.transport(TransportCmd::Stop).unwrap();
 
     let devices = oxitone_io_macos::list_output_devices().unwrap_or_default();
     let default_device = devices.iter().find(|d| d.is_default);
@@ -168,7 +213,9 @@ fn main() {
         .unwrap_or_else(|| "unknown-date".into());
     let host = sysctl("kern.hostname");
     let report = json!({
-        "benchmark": "render/realtime soak (M4 exit)",
+        "benchmark": "render/realtime soak",
+        "plugin": plugin.as_ref().map(|p| &p.registration),
+        "pluginFaults": plugin.as_ref().map(|p| p.fault_count()),
         "date": date,
         "machine": machine_info(),
         "sink": if args.simulated { "simulated" } else { "coreaudio" },
@@ -186,6 +233,7 @@ fn main() {
             "tracks": args.tracks,
             "seed": SEED,
             "seconds": args.seconds,
+            "loopEndFrame": loop_end,
             "workerJitter": args.jitter.map(|j| json!({
                 "probability": j.probability,
                 "maxExtraPeriods": j.max_extra_periods,
@@ -241,5 +289,6 @@ fn main() {
         diagnostics.block_time_p99_ns,
         diagnostics.engine_load
     );
+    drop(session);
     std::process::exit(if diagnostics.xruns == 0 { 0 } else { 1 });
 }

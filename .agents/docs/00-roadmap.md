@@ -63,7 +63,7 @@ Oxitone Phase 1 是 macOS 优先的编程化 DAW SDK，不是图形编辑器，�
   command and `Session.play(..., { startFrame, endFrame })`; the end is
   exclusive and applied at block boundaries without rendering past it.
 - `oxitone` facade、平台包（`@oxitone/native-darwin-arm64` 等）、postinstall 选择器和 ABI 检查。
-- 第三方插件动态加载：控制线程 `dlopen`、ABI/manifest 校验、watchdog 故障归因、插件平台包格式与签名策略。
+- 第三方插件动态加载已实现：显式 registerPlugin、控制线程加载、SHA-256/签名/ABI/manifest 校验、C 实例适配、插件 fault 计数和实时延迟回收。纯 C 静态/动态 parity、Rust cdylib 和 N-API WAV 测试覆盖。逐节点 deadline watchdog、发布平台包与公证流水线仍待完成。
 - 项目诊断、结构化错误、日志级别和最小 CLI（render、export-midi、doctor）。
 - 示例项目、API reference、版本迁移说明。
 - 出口：干净 npm 项目可以只安装 `oxitone`，无需 Rust 工具链即可播放/渲染。

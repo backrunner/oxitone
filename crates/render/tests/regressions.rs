@@ -153,9 +153,10 @@ fn replace_graph_preserves_playback() {
     live.transport(TransportCmd::Play {
         from: None,
         loop_region: None,
-    });
+    })
+    .unwrap();
     wait(|| live.cursor() > 2048);
-    live.replace_graph(Box::new(graph(&s)));
+    live.replace_graph(Box::new(graph(&s))).unwrap();
     std::thread::sleep(Duration::from_millis(100));
     assert_eq!(live.transport_state(), TransportState::Playing);
     assert!(live.cursor() > 2048);
@@ -166,7 +167,7 @@ fn replace_graph_refreshes_tempo_mapping() {
     let mut s = snapshot();
     let live = session(&s);
     s.tempo_map[0].bpm = 60.0;
-    live.replace_graph(Box::new(graph(&s)));
+    live.replace_graph(Box::new(graph(&s))).unwrap();
     std::thread::sleep(Duration::from_millis(100));
     assert_eq!(live.beat_to_frame(beat(1, 1)), 48_000);
 }

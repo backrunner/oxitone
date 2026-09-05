@@ -146,3 +146,5 @@ export {
   hash64Input,
 } from "./pcg32.js";
 export type { Hash64Part } from "./pcg32.js";
+export { pluginManifestSchema, registerPluginOptionsSchema, registeredPluginSchema, pluginDiagnosticsSchema } from "./plugin.js";
+export type { PluginManifest, RegisterPluginOptions, RegisteredPlugin, PluginDiagnostics } from "./plugin.js";

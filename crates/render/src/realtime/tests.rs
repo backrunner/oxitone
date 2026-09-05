@@ -109,7 +109,7 @@ fn playable_snapshot() -> ProjectSnapshot {
     }
 }
 
-fn compile_graph() -> Box<RenderGraph> {
+pub(super) fn compile_graph() -> Box<RenderGraph> {
     let mut graph = Box::new(
         RenderGraph::compile(
             &playable_snapshot(),
@@ -131,7 +131,7 @@ type TestQueues = (
     Arc<TransportMirror>,
 );
 
-fn fresh_queues() -> TestQueues {
+pub(super) fn fresh_queues() -> TestQueues {
     (
         Arc::new(SpscQueue::new(16)),
         Arc::new(SpscQueue::new(16)),
@@ -168,6 +168,7 @@ fn direct_and_buffered_modes_are_sample_accurate() {
         compile_graph(),
         return_slot,
         commands,
+        Arc::new(SpscQueue::new(256)),
         worker_events,
         counters,
         mirror,
@@ -190,6 +191,8 @@ fn direct_and_buffered_modes_are_sample_accurate() {
         ring.clone(),
         None,
         commands,
+        Arc::new(SpscQueue::new(256)),
+        Arc::new(std::sync::atomic::AtomicBool::new(false)),
         worker_events,
         counters.clone(),
         mirror.clone(),

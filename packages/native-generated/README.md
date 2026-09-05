@@ -31,7 +31,7 @@ searches in this order:
 1. `OXITONE_NATIVE_PATH` — absolute path to a `.node` file (override for
    debugging / CI).
 2. This package's directory — `oxitone-native.<platform>-<arch>.node`
-   placed here by the build above. (M5 will additionally resolve optional
+   placed here by the build above. (Published releases additionally resolve optional
    platform packages such as `@oxitone/native-darwin-arm64`; the interface
    is stubbed in `packages/native/src/load.ts`.)
 3. Development build outputs, relative to the repo root:

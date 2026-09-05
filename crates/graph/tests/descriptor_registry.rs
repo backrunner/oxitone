@@ -133,7 +133,7 @@ fn layout_and_polyphony_rules() {
     expect_manifest_err(&bad);
 
     let mut bad = synth_descriptor();
-    bad.plugin_version = "";
+    bad.plugin_version = "".into();
     expect_manifest_err(&bad);
 }
 

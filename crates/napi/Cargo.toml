@@ -8,6 +8,7 @@ license.workspace = true
 crate-type = ["cdylib"]
 
 [dependencies]
+oxitone-graph = { path = "../graph" }
 napi = "3"
 napi-derive = "3"
 serde.workspace = true

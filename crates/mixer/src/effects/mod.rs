@@ -95,8 +95,8 @@ pub(crate) fn descriptor(
     capabilities: PluginCapabilities,
 ) -> PluginDescriptor {
     PluginDescriptor {
-        plugin_id,
-        plugin_version: "1.0.0",
+        plugin_id: plugin_id.into(),
+        plugin_version: "1.0.0".into(),
         kind: PluginKind::Effect,
         input_layout: ChannelLayout::Stereo,
         output_layout: ChannelLayout::Stereo,

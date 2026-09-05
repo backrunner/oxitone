@@ -119,9 +119,9 @@ pub(super) fn create_instrument(
             };
             initial.push((index, *value));
         }
-        plugin.create(host)
+        plugin.try_create(host)?
     };
-    instance.prepare(sample_rate, max_block);
+    instance.try_prepare(sample_rate, max_block)?;
     Ok((instance, param_ids, param_specs, initial))
 }
 
@@ -156,8 +156,8 @@ pub(super) fn create_insert(
         .map(|p| (p.id.clone(), p.unit))
         .collect();
     let (initial, beats) = split_effect_params(&param_ids, &units, &effect.parameters, &path)?;
-    let mut instance = plugin.create(host);
-    instance.prepare(sample_rate, max_block);
+    let mut instance = plugin.try_create(host)?;
+    instance.try_prepare(sample_rate, max_block)?;
     let mut mix = oxitone_dsp::gain_pan::OnePoleSmoother::new(sample_rate, 20.0);
     mix.snap(effect.mix.unwrap_or(1.0) as f32);
     let latency = instance.latency_frames() as usize;

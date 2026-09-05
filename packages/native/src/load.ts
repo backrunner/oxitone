@@ -8,6 +8,8 @@ import type * as generated from "@oxitone/native-generated";
 export interface NativeBinding {
   createEngine: typeof generated.createEngine;
   compile: typeof generated.compile;
+  registerPlugin: typeof generated.registerPlugin;
+  getPluginDiagnostics: typeof generated.getPluginDiagnostics;
   dispose: typeof generated.dispose;
   enqueueTransport: typeof generated.enqueueTransport;
   exportMidi: typeof generated.exportMidi;
@@ -38,10 +40,9 @@ function nativeGeneratedBinary(): string | undefined {
 }
 
 function platformPackageBinary(): string | undefined {
-  // TODO(M5): formalize resolution of the optional platform packages
-  // (`@oxitone/native-darwin-arm64`, `@oxitone/native-darwin-x64`, ...) once
-  // they are published; the search order and the binary name above are the
-  // reserved interface. Until M5 the local build outputs below win.
+  // Optional platform packages use the reserved
+  // `@oxitone/native-<platform>-<arch>` name; local build outputs remain a
+  // development fallback until those packages are published.
   return siblingBinary(
     `@oxitone/native-${process.platform}-${process.arch}/package.json`,
   );

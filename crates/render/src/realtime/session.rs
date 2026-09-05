@@ -138,6 +138,8 @@ impl Prepared {
 /// Everything shared between the session, worker, callback and monitor.
 struct Shared {
     commands: Arc<SpscQueue<WorkerMsg>>,
+    retired: Arc<SpscQueue<WorkerMsg>>,
+    worker_stop: Arc<AtomicBool>,
     worker_events: Arc<SpscQueue<DiagnosticEvent>>,
     callback_events: Arc<SpscQueue<DiagnosticEvent>>,
     counters: Arc<RtCounters>,
@@ -169,11 +171,16 @@ impl Shared {
         }
     }
 
-    fn send(&self, msg: WorkerMsg) {
-        if self.commands.push(msg).is_err() {
+    fn send(&self, msg: WorkerMsg) -> Result<(), OxitoneError> {
+        self.commands.push(msg).map_err(|_| {
             self.counters.queue_drops.fetch_add(1, Ordering::Relaxed);
-        }
+            OxitoneError::new(
+                codes::REALTIME_FAULT,
+                "realtime command queue is full; retry on the control thread",
+            )
+        })?;
         self.unpark_worker();
+        Ok(())
     }
 }
 
@@ -182,6 +189,7 @@ impl Shared {
 pub struct RealtimeSession {
     shared: Arc<Shared>,
     project_sample_rate: f64,
+    block_size: usize,
     tempo: Mutex<CompiledTempoMap>,
     channel_ids: Vec<String>,
     /// Kept alive so device listeners can always send.
@@ -270,6 +278,8 @@ fn spawn_worker(
         ring,
         resampler,
         shared.commands.clone(),
+        shared.retired.clone(),
+        shared.worker_stop.clone(),
         shared.worker_events.clone(),
         shared.counters.clone(),
         shared.mirror.clone(),
@@ -287,7 +297,8 @@ fn spawn_worker(
 
 /// Stop the worker (if any) and recover the graph it parked.
 fn stop_worker_and_recover(shared: &Arc<Shared>) -> Option<Box<RenderGraph>> {
-    shared.send(WorkerMsg::Shutdown);
+    shared.worker_stop.store(true, Ordering::Release);
+    shared.unpark_worker();
     let join = shared.worker.lock().expect("worker mutex").take();
     if let Some(join) = join {
         let _ = join.join();
@@ -362,6 +373,8 @@ impl RealtimeSession {
 
         let shared = Arc::new(Shared {
             commands: Arc::new(SpscQueue::new(COMMAND_QUEUE_CAPACITY)),
+            retired: Arc::new(SpscQueue::new(COMMAND_QUEUE_CAPACITY)),
+            worker_stop: Arc::new(AtomicBool::new(false)),
             worker_events: Arc::new(SpscQueue::new(EVENT_QUEUE_CAPACITY)),
             callback_events: Arc::new(SpscQueue::new(EVENT_QUEUE_CAPACITY)),
             counters: Arc::new(RtCounters::new()),
@@ -433,6 +446,7 @@ impl RealtimeSession {
                     graph.take().expect("graph present"),
                     shared.return_slot.clone(),
                     shared.commands.clone(),
+                    shared.retired.clone(),
                     shared.worker_events.clone(),
                     shared.counters.clone(),
                     shared.mirror.clone(),
@@ -469,6 +483,7 @@ impl RealtimeSession {
         Ok(Self {
             shared,
             project_sample_rate,
+            block_size,
             tempo: Mutex::new(tempo),
             channel_ids,
             _device_event_tx: device_event_tx,
@@ -479,7 +494,7 @@ impl RealtimeSession {
 
     /// Send a transport command; takes effect at the ring horizon. The
     /// returned state is the predicted post-command state.
-    pub fn transport(&self, cmd: TransportCmd) -> (TransportState, u64) {
+    pub fn transport(&self, cmd: TransportCmd) -> Result<(TransportState, u64), OxitoneError> {
         let mut predicted = self.predicted.lock().expect("predicted mutex");
         let next = match &cmd {
             TransportCmd::Play { from, .. } => {
@@ -489,23 +504,33 @@ impl RealtimeSession {
             TransportCmd::Stop => (TransportState::Stopped, 0),
             TransportCmd::Seek { frame } => (predicted.0, *frame),
         };
+        self.shared.send(WorkerMsg::Transport(cmd))?;
         *predicted = next;
-        self.shared.send(WorkerMsg::Transport(cmd));
-        next
+        Ok(next)
     }
 
     /// Enqueue a pre-resolved parameter event (resolved against the
     /// session's `ParamTargetIndex` by the caller).
-    pub fn enqueue_parameter(&self, event: crate::params::QueuedParameterEvent) {
-        self.shared.send(WorkerMsg::Param(event));
+    pub fn enqueue_parameter(
+        &self,
+        event: crate::params::QueuedParameterEvent,
+    ) -> Result<(), OxitoneError> {
+        self.shared.send(WorkerMsg::Param(event))
     }
 
     /// Swap the compiled graph at the next block boundary.
-    pub fn replace_graph(&self, graph: Box<RenderGraph>) {
-        if let Ok(mut tempo) = self.tempo.lock() {
-            *tempo = graph.plan().tempo.clone();
+    pub fn replace_graph(&self, graph: Box<RenderGraph>) -> Result<(), OxitoneError> {
+        if graph.sample_rate() != self.project_sample_rate || graph.block_size() != self.block_size
+        {
+            return Err(OxitoneError::new(
+                codes::INVALID_PROJECT,
+                "sample rate and block size cannot change during a realtime session",
+            ));
         }
-        self.shared.send(WorkerMsg::ReplaceGraph(graph));
+        let next_tempo = graph.plan().tempo.clone();
+        self.shared.send(WorkerMsg::ReplaceGraph(graph))?;
+        *self.tempo.lock().expect("tempo mutex") = next_tempo;
+        Ok(())
     }
 
     /// Current cursor as the render thread reports it.
@@ -634,6 +659,7 @@ struct MonitorCtx {
 impl MonitorCtx {
     fn run(&mut self) {
         while !self.shared.monitor_stop.load(Ordering::Relaxed) {
+            while self.shared.retired.pop().is_some() {}
             match self.device_rx.recv_timeout(Duration::from_millis(100)) {
                 Ok(event) => self.handle(event),
                 Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {}
@@ -656,7 +682,7 @@ impl MonitorCtx {
                 self.shared.mirror.load().1,
                 "output device changed; transport paused (deviceChangePolicy: 'pause')",
             ));
-            self.shared.send(WorkerMsg::Transport(TransportCmd::Pause));
+            let _ = self.shared.send(WorkerMsg::Transport(TransportCmd::Pause));
             return;
         }
         self.rebuild();
@@ -736,13 +762,18 @@ impl MonitorCtx {
                         .to_bits(),
                     Ordering::Relaxed,
                 );
-                self.shared.send(WorkerMsg::Reconfigure(Box::new(Reconfig {
+                let sent = self.shared.send(WorkerMsg::Reconfigure(Box::new(Reconfig {
                     ring: ring.clone(),
                     resampler,
                     dev_block_frames: dev_block,
                     channels: info.channels as usize,
                     convert_buf: vec![0.0; dev_block * info.channels as usize],
+                    resample_buf: vec![0.0; (dev_block + 8) * info.channels as usize],
                 })));
+                if sent.is_err() {
+                    self.device_unavailable("device reconfiguration queue is full");
+                    return;
+                }
                 prime_ring(&ring, ring.capacity_frames() / 2);
                 make_buffered_pull(
                     ring,
@@ -801,6 +832,7 @@ impl MonitorCtx {
                         graph,
                         self.shared.return_slot.clone(),
                         self.shared.commands.clone(),
+                        self.shared.retired.clone(),
                         self.shared.worker_events.clone(),
                         self.shared.counters.clone(),
                         self.shared.mirror.clone(),
@@ -836,7 +868,7 @@ impl MonitorCtx {
             0,
             message,
         ));
-        self.shared.send(WorkerMsg::Transport(TransportCmd::Pause));
+        let _ = self.shared.send(WorkerMsg::Transport(TransportCmd::Pause));
     }
 }
 
@@ -846,7 +878,8 @@ impl Drop for RealtimeSession {
         if let Some(monitor) = self.monitor.take() {
             let _ = monitor.join();
         }
-        self.shared.send(WorkerMsg::Shutdown);
+        self.shared.worker_stop.store(true, Ordering::Release);
+        self.shared.unpark_worker();
         let worker = self.shared.worker.lock().expect("worker mutex").take();
         if let Some(worker) = worker {
             let _ = worker.join();

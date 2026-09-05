@@ -1,8 +1,7 @@
 //! Plugin ABI v1 as Rust traits (08-plugin-abi.md). Statically linked plugins
 //! implement [`Plugin`]; built-in instruments/effects and future dynamically
 //! loaded `.dylib` plugins share this exact contract — there is no private
-//! built-in path. Dynamic loading (dlopen, manifest comparison) is M5 and
-//! builds on the same semantics through the C ABI described in the doc.
+//! built-in path. Dynamic loading uses the same semantics through the C ABI.
 
 use crate::descriptor::PluginDescriptor;
 
@@ -17,6 +16,7 @@ pub struct HostContext {
 
 /// Note event kind; velocity is meaningful for both (off-velocity on `NoteOff`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u32)]
 pub enum NoteEventKind {
     NoteOn,
     NoteOff,
@@ -24,6 +24,7 @@ pub enum NoteEventKind {
 
 /// Sample-accurate note event inside one block.
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[repr(C)]
 pub struct NoteEvent {
     /// Frame offset within the block, `< ProcessContext::frames`.
     pub frame_offset: u32,
@@ -65,26 +66,42 @@ pub struct ProcessContext<'a> {
 }
 
 /// A statically registered plugin factory. Implementations must be cheap to
-/// query: `descriptor` returns process-lifetime static metadata.
+/// query: `descriptor` borrows immutable metadata from the factory.
 pub trait Plugin: Send + Sync {
     /// Static metadata; identical across calls and instances.
-    fn descriptor(&self) -> &'static PluginDescriptor;
+    fn descriptor(&self) -> &PluginDescriptor;
 
     /// Create an instance. Runs on the control thread; may allocate.
     fn create(&self, host: &HostContext) -> Box<dyn PluginInstance>;
+
+    fn try_create(
+        &self,
+        host: &HostContext,
+    ) -> Result<Box<dyn PluginInstance>, oxitone_core::OxitoneError> {
+        Ok(self.create(host))
+    }
 }
 
 /// One running plugin instance.
 ///
 /// Threading contract (01-architecture.md §Plugin model, 08-plugin-abi.md):
-/// `prepare`, `reset`, and destruction run on the control thread; `process`,
-/// `tail_frames`, and `latency_frames` run on the audio thread.
+/// `prepare` and destruction run on the control thread; `process`, `reset`,
+/// `tail_frames`, and `latency_frames` must be realtime-safe.
 pub trait PluginInstance: Send {
     /// (Re)configure for a new sample rate / maximum block size. Control
     /// thread only; may allocate. All latency changes happen here — changing
     /// `latency_frames` during `process` is a fault. Always called before the
     /// first `process` and after any host configuration change.
     fn prepare(&mut self, sample_rate: f64, max_block_size: u32);
+
+    fn try_prepare(
+        &mut self,
+        sample_rate: f64,
+        max_block_size: u32,
+    ) -> Result<(), oxitone_core::OxitoneError> {
+        self.prepare(sample_rate, max_block_size);
+        Ok(())
+    }
 
     /// Render one block. Runs on the audio thread and is hard realtime:
     /// **no allocation, no locks, no blocking I/O, no logging, no clocks, no
@@ -93,8 +110,8 @@ pub trait PluginInstance: Send {
     /// written for `frames` samples every call (silence included).
     fn process(&mut self, ctx: &mut ProcessContext<'_>);
 
-    /// Return to the initial state, clearing voices and delay lines. Control
-    /// thread; may reuse allocations made in `prepare`.
+    /// Clear voices and delay lines on seek/loop. Realtime-safe: reuse only
+    /// preallocated state, with no allocation, deallocation, locks, or I/O.
     fn reset(&mut self);
 
     /// Remaining tail length in frames; used by offline render and graph

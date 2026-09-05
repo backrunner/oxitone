@@ -82,30 +82,36 @@ fn session_play_pause_seek_via_simulated_sink() {
     .map_err(|e| e.error)
     .unwrap();
 
-    let (state, _) = session.transport(TransportCmd::Play {
-        from: None,
-        loop_region: None,
-    });
+    let (state, _) = session
+        .transport(TransportCmd::Play {
+            from: None,
+            loop_region: None,
+        })
+        .unwrap();
     assert_eq!(state, oxitone_render::TransportState::Playing);
     assert!(wait_until(Duration::from_secs(3), || session.cursor() > 4800));
     let diag = session.snapshot_diagnostics();
     assert!(diag.blocks > 0);
     assert_eq!(diag.xruns, 0);
 
-    session.transport(TransportCmd::Pause);
+    session.transport(TransportCmd::Pause).unwrap();
     std::thread::sleep(Duration::from_millis(200));
     let cursor_a = session.cursor();
     std::thread::sleep(Duration::from_millis(200));
     assert_eq!(session.cursor(), cursor_a, "paused cursor must not advance");
 
-    session.transport(TransportCmd::Seek { frame: 24_000 });
-    session.transport(TransportCmd::Play {
-        from: None,
-        loop_region: None,
-    });
+    session
+        .transport(TransportCmd::Seek { frame: 24_000 })
+        .unwrap();
+    session
+        .transport(TransportCmd::Play {
+            from: None,
+            loop_region: None,
+        })
+        .unwrap();
     assert!(wait_until(Duration::from_secs(3), || session.cursor() > 26_000));
 
-    session.transport(TransportCmd::Stop);
+    session.transport(TransportCmd::Stop).unwrap();
     std::thread::sleep(Duration::from_millis(200));
     assert_eq!(session.cursor(), 0);
 }
@@ -126,10 +132,12 @@ fn jitter_within_horizon_causes_no_underrun() {
     )
     .map_err(|e| e.error)
     .unwrap();
-    session.transport(TransportCmd::Play {
-        from: None,
-        loop_region: None,
-    });
+    session
+        .transport(TransportCmd::Play {
+            from: None,
+            loop_region: None,
+        })
+        .unwrap();
     std::thread::sleep(Duration::from_secs(3));
     let diag = session.snapshot_diagnostics();
     assert_eq!(diag.xruns, 0, "ring must absorb injected jitter");
@@ -153,10 +161,12 @@ fn extreme_jitter_underruns_but_transport_continues() {
     )
     .map_err(|e| e.error)
     .unwrap();
-    session.transport(TransportCmd::Play {
-        from: None,
-        loop_region: None,
-    });
+    session
+        .transport(TransportCmd::Play {
+            from: None,
+            loop_region: None,
+        })
+        .unwrap();
     let mut events = Vec::new();
     let underran = wait_until(Duration::from_secs(10), || {
         let diag = session.snapshot_diagnostics();
@@ -212,10 +222,12 @@ fn direct_mode_reports_zero_ring() {
     .unwrap();
     let latency = session.output_latency().unwrap();
     assert_eq!(latency.ring, 0);
-    session.transport(TransportCmd::Play {
-        from: None,
-        loop_region: None,
-    });
+    session
+        .transport(TransportCmd::Play {
+            from: None,
+            loop_region: None,
+        })
+        .unwrap();
     assert!(wait_until(Duration::from_secs(3), || session.cursor() > 4800));
 }
 
@@ -237,10 +249,12 @@ fn resample_mode_runs_against_lower_device_rate() {
     .unwrap();
     let latency = session.output_latency().unwrap();
     assert!(latency.resampler > 0, "resampler group delay is reported");
-    session.transport(TransportCmd::Play {
-        from: None,
-        loop_region: None,
-    });
+    session
+        .transport(TransportCmd::Play {
+            from: None,
+            loop_region: None,
+        })
+        .unwrap();
     assert!(wait_until(Duration::from_secs(3), || session.cursor() > 4800));
     std::thread::sleep(Duration::from_millis(300));
     assert_eq!(session.snapshot_diagnostics().xruns, 0);

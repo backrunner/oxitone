@@ -10,7 +10,7 @@
 //! Timing instrumentation (`Instant::now`, block-time histogram,
 //! `engineLoad` EMA) lives here and never in the HAL callback.
 
-use std::sync::atomic::{AtomicU64, AtomicU8, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, AtomicU8, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
@@ -59,7 +59,6 @@ pub enum WorkerMsg {
     ReplaceGraph(Box<RenderGraph>),
     /// New device chain after a hot-swap rebuild (buffered mode).
     Reconfigure(Box<Reconfig>),
-    Shutdown,
 }
 
 /// Deterministic worker-preemption injection for tests and the jitter
@@ -82,6 +81,7 @@ pub struct Reconfig {
     pub dev_block_frames: usize,
     pub channels: usize,
     pub convert_buf: Vec<f32>,
+    pub resample_buf: Vec<f32>,
 }
 
 /// Control-thread mirror of the render-thread transport, sampled for
@@ -203,6 +203,8 @@ pub(crate) struct WorkerCore {
     ring: Arc<SpscRing>,
     resampler: Option<Box<ResamplerPair>>,
     commands: Arc<SpscQueue<WorkerMsg>>,
+    retired: Arc<SpscQueue<WorkerMsg>>,
+    shutdown: Arc<AtomicBool>,
     events: Arc<SpscQueue<DiagnosticEvent>>,
     counters: Arc<RtCounters>,
     mirror: Arc<TransportMirror>,
@@ -227,6 +229,8 @@ impl WorkerCore {
         ring: Arc<SpscRing>,
         resampler: Option<Box<ResamplerPair>>,
         commands: Arc<SpscQueue<WorkerMsg>>,
+        retired: Arc<SpscQueue<WorkerMsg>>,
+        shutdown: Arc<AtomicBool>,
         events: Arc<SpscQueue<DiagnosticEvent>>,
         counters: Arc<RtCounters>,
         mirror: Arc<TransportMirror>,
@@ -241,6 +245,8 @@ impl WorkerCore {
             ring,
             resampler,
             commands,
+            retired,
+            shutdown,
             events,
             counters,
             mirror,
@@ -264,10 +270,8 @@ impl WorkerCore {
         self.jitter = jitter;
     }
 
-    /// Returns true when the worker should exit.
-    fn handle(&mut self, msg: WorkerMsg) -> bool {
+    fn handle(&mut self, msg: WorkerMsg) {
         match msg {
-            WorkerMsg::Shutdown => return true,
             WorkerMsg::Transport(cmd) => {
                 if let Some(graph) = self.graph.as_mut() {
                     apply_transport(graph, &cmd, &self.mirror);
@@ -281,37 +285,29 @@ impl WorkerCore {
             WorkerMsg::ReplaceGraph(mut graph) => {
                 if let Some(old) = self.graph.as_ref() {
                     graph.transport.state = old.transport.state;
-                    graph.transport.cursor = old.transport.cursor;
+                    graph.seek(old.transport.cursor);
+                    graph.eval_ctx = old.eval_ctx;
                     graph.transport.loop_region = old.transport.loop_region;
                 }
-                self.block_size = graph.block_size();
-                self.block_left.resize(self.block_size, 0.0);
-                self.block_right.resize(self.block_size, 0.0);
-                self.deadline =
-                    Duration::from_secs_f64(self.block_size as f64 / graph.sample_rate());
                 self.fault_latched = false;
                 let state = graph.state();
                 let cursor = graph.transport().cursor;
-                self.graph = Some(graph);
+                if let Some(old) = self.graph.replace(graph) {
+                    // The sole producer checked capacity before taking this command.
+                    let _ = self.retired.push(WorkerMsg::ReplaceGraph(old));
+                }
                 self.mirror.store(state, cursor);
             }
-            WorkerMsg::Reconfigure(reconfig) => {
-                let Reconfig {
-                    ring,
-                    resampler,
-                    dev_block_frames,
-                    channels,
-                    convert_buf,
-                } = *reconfig;
-                self.ring = ring;
-                self.resampler = resampler;
-                self.dev_block_frames = dev_block_frames;
-                self.channels = channels;
-                self.convert_buf = convert_buf;
-                self.resample_buf = vec![0.0; (dev_block_frames + 8) * channels];
+            WorkerMsg::Reconfigure(mut reconfig) => {
+                std::mem::swap(&mut self.ring, &mut reconfig.ring);
+                std::mem::swap(&mut self.resampler, &mut reconfig.resampler);
+                std::mem::swap(&mut self.dev_block_frames, &mut reconfig.dev_block_frames);
+                std::mem::swap(&mut self.channels, &mut reconfig.channels);
+                std::mem::swap(&mut self.convert_buf, &mut reconfig.convert_buf);
+                std::mem::swap(&mut self.resample_buf, &mut reconfig.resample_buf);
+                let _ = self.retired.push(WorkerMsg::Reconfigure(reconfig));
             }
         }
-        false
     }
 
     pub(crate) fn render_block(&mut self) {
@@ -407,6 +403,18 @@ impl WorkerCore {
         }
     }
 
+    pub(super) fn drain_commands(&mut self) {
+        for _ in 0..256 {
+            if self.retired.is_full() {
+                break;
+            }
+            let Some(msg) = self.commands.pop() else {
+                break;
+            };
+            self.handle(msg);
+        }
+    }
+
     /// Worker thread body. Sets FTZ/DAZ and a time-constraint scheduling
     /// policy before entering the loop (03 §CPU 尖峰防线, §线程模型).
     pub(crate) fn run(mut self) {
@@ -419,12 +427,11 @@ impl WorkerCore {
         let mut jitter_state = self.jitter.map(|j| j.seed.max(1));
         let mut stalled_last = false;
         loop {
-            while let Some(msg) = self.commands.pop() {
-                if self.handle(msg) {
-                    self.park_graph();
-                    return;
-                }
+            if self.shutdown.load(Ordering::Acquire) {
+                self.park_graph();
+                return;
             }
+            self.drain_commands();
             // The resampler can overshoot one block's nominal frame count
             // by a few frames; require the slack up front so the ring
             // write never truncates a block.

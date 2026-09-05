@@ -45,6 +45,12 @@ Rust 可用 `#[deny(unsafe_op_in_unsafe_fn)]` 和 clippy lint 约束；任何 `u
 4. 新图在 block boundary 原子发布；旧图进入 deferred reclamation，直到没有 callback 使用。
 5. compile error 不替换当前可播放图；返回稳定 error code/path。
 
+当前实现：换图和设备链替换使用预分配的回收队列；只有控制线程销毁旧实例、
+缓冲和库。回收队列满时实时端延后消费命令，控制命令队列满报 RealtimeFault。
+shutdown 使用独立 atomic 标志，不依赖队列空位。实时 session 内禁止改变
+sampleRate/blockSize；新图通过 seek 对齐游标并保留 automation origin/loop iteration。
+旧图的尾音不会跨换图延续。
+
 Graph 节点包括 instrument、sample player、effect、mixer bus、meter 和 output sink。节点不通过全局单例互相查找，依赖在编译时以索引/句柄解析。
 
 ## DSP 处理顺序
@@ -63,7 +69,7 @@ compiler 依据各 plugin 上报的 `latencyFrames` 执行全图 PDC（plugin de
 - bit depth 降低只发生在导出边界：16/24-bit WAV export 默认加 1 LSB TPDF dither（可用 render option 关闭）；32-bit float 导出与实时设备输出不 dither。
 - Meter：每个 MixerChannel 提供 peak/RMS，Master 额外提供 4x oversampled true-peak 估计；meter 在音频线程只写 atomic/ring，展示层自行节流。
 
-默认内部格式为 non-interleaved `f32`，headroom 至少 6 dB。NaN/Inf 检测只在 debug/diagnostic 或低频 meter 路径执行，不能扫描每个 sample 造成不可接受开销。
+默认内部格式为 non-interleaved `f32`，headroom 至少 6 dB。动态 C 插件边界逐样本检查 NaN/Inf，故障只静音该实例并累计插件 fault；该额外开销必须由插件适配层 benchmark 验证。其余数值检查的开销同样需要符合 block 预算。
 
 Sample player 的运行时可自动化参数按 DSP 实现：`tone` 是每 clip 预分配的 tilt filter，`level`/`gain`/`pan` 是平滑增益级，`rate` 是 varispeed（resampler 质量遵循 ≥100 dB SNR 规范，rate 变化经 smoother，播放位置用 f64 逐 sample 积分）。`startFrame`/`endFrame`/`normalize`/fade 在 prepare 阶段烘焙，运行时不可变；对它们发起 automation 绑定在 validation 阶段拒绝。
 

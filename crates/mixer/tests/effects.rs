@@ -80,7 +80,10 @@ fn render(
 fn descriptors_are_valid_and_complete() {
     let plugins = builtin_effect_plugins();
     assert_eq!(plugins.len(), 12);
-    let mut ids: Vec<&str> = plugins.iter().map(|p| p.descriptor().plugin_id).collect();
+    let mut ids: Vec<&str> = plugins
+        .iter()
+        .map(|p| p.descriptor().plugin_id.as_str())
+        .collect();
     ids.sort_unstable();
     let mut expected: Vec<&str> = EXPECTED.iter().map(|(id, _)| *id).collect();
     expected.sort_unstable();
@@ -126,7 +129,7 @@ fn descriptors_are_valid_and_complete() {
 #[test]
 fn every_effect_smoke_and_deterministic() {
     for plugin in builtin_effect_plugins() {
-        let id = plugin.descriptor().plugin_id;
+        let id = plugin.descriptor().plugin_id.as_str();
         let mut instance = plugin.create(&host());
         instance.prepare(SR, BLOCK);
         assert_eq!(

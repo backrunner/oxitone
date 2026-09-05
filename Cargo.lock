@@ -720,6 +720,7 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "oxitone-core",
+ "oxitone-graph",
  "oxitone-io-macos",
  "oxitone-render",
  "serde",
@@ -731,6 +732,7 @@ name = "oxitone-render"
 version = "0.1.0"
 dependencies = [
  "crossbeam-queue",
+ "libloading 0.8.9",
  "oxitone-core",
  "oxitone-dsp",
  "oxitone-graph",
@@ -739,6 +741,7 @@ dependencies = [
  "oxitone-mixer",
  "oxitone-samples",
  "oxitone-transport",
+ "semver",
  "serde",
  "serde_json",
  "sha2",

@@ -25,7 +25,15 @@ use oxitone_render::{
 };
 use serde::Serialize;
 
+mod plugins;
+pub use plugins::{get_plugin_diagnostics, register_plugin};
+
 struct EngineState {
+    plugins: oxitone_graph::PluginRegistry,
+    dynamic_plugins: std::collections::BTreeMap<
+        (String, String),
+        std::sync::Arc<oxitone_render::plugins::CPlugin>,
+    >,
     options: Option<EngineOptions>,
     last_revision: Option<u64>,
     /// Graph compiled by `compile`; transport and `setParameter` act on it.
@@ -107,6 +115,8 @@ pub fn create_engine(options_json: Option<String>) -> napi::Result<String> {
         lock_registry().insert(
             id.clone(),
             EngineState {
+                plugins: builtin_registry()?,
+                dynamic_plugins: Default::default(),
                 options,
                 last_revision: None,
                 graph: None,
@@ -157,19 +167,19 @@ fn graph_options(options: Option<&EngineOptions>) -> RenderGraphOptions {
 pub fn compile(engine_id: String, snapshot_json: String) -> napi::Result<String> {
     guarded(|| {
         let snapshot = decode_project_snapshot(&snapshot_json)?;
-        let options = {
+        let (options, plugins) = {
             let engines = lock_registry();
             let engine = engines
                 .get(&engine_id)
                 .ok_or_else(|| unknown_engine(&engine_id))?;
-            engine.options.clone()
+            (engine.options.clone(), engine.plugins.clone())
         };
         // Compile outside the registry lock; the graph is heavy and other
         // engines must stay usable. Relative sample asset URIs resolve
         // against the process working directory (SampleStore::new(None)).
         let graph = RenderGraph::compile(
             &snapshot,
-            &builtin_registry()?,
+            &plugins,
             &SampleStore::new(None),
             &graph_options(options.as_ref()),
         )?;
@@ -177,18 +187,15 @@ pub fn compile(engine_id: String, snapshot_json: String) -> napi::Result<String>
         let engine = engines
             .get_mut(&engine_id)
             .ok_or_else(|| unknown_engine(&engine_id))?;
-        engine.last_revision = Some(snapshot.revision);
-        engine.param_index = Some(ParamTargetIndex::from_graph(&graph));
-        match engine.session.take() {
-            // Realtime session running: swap the graph at the next block
-            // boundary instead of replacing the offline handle.
-            Some(session) => {
-                session.replace_graph(Box::new(graph));
-                engine.graph = None;
-                engine.session = Some(session);
-            }
-            None => engine.graph = Some(graph),
+        let param_index = ParamTargetIndex::from_graph(&graph);
+        if let Some(session) = engine.session.as_ref() {
+            session.replace_graph(Box::new(graph))?;
+            engine.graph = None;
+        } else {
+            engine.graph = Some(graph);
         }
+        engine.last_revision = Some(snapshot.revision);
+        engine.param_index = Some(param_index);
         engine.parameter_events.clear();
         encode_project_snapshot(&snapshot)
     })
@@ -353,12 +360,12 @@ pub fn render_wav_command(
     guarded(|| {
         let snapshot = decode_project_snapshot(&snapshot_json)?;
         let options = parse_render_options(&options_json)?;
-        let parameter_events = {
+        let (parameter_events, plugins) = {
             let engines = lock_registry();
             let engine = engines
                 .get(&engine_id)
                 .ok_or_else(|| unknown_engine(&engine_id))?;
-            engine.parameter_events.clone()
+            (engine.parameter_events.clone(), engine.plugins.clone())
         };
         let mut render_options = oxitone_render::RenderOptions::new(PathBuf::from(&options.path));
         render_options.start = options.start.as_ref().map(to_range_point);
@@ -388,7 +395,7 @@ pub fn render_wav_command(
         render_options.parameter_events = parameter_events;
 
         let store = SampleStore::new(options.asset_base_dir.map(PathBuf::from));
-        let report = render_wav(&snapshot, &builtin_registry()?, &store, &render_options)?;
+        let report = render_wav(&snapshot, &plugins, &store, &render_options)?;
         let wire_report = oxitone_core::wire::RenderReport {
             files: report
                 .files
@@ -504,7 +511,7 @@ pub fn enqueue_transport(engine_id: String, command_json: String) -> napi::Resul
                     let (state, cursor) = session.transport(TransportCmd::Play {
                         from: position,
                         loop_region,
-                    });
+                    })?;
                     engine.session = Some(session);
                     Ok(transport_state_json_parts(state, cursor))
                 }
@@ -542,7 +549,7 @@ pub fn enqueue_transport(engine_id: String, command_json: String) -> napi::Resul
                     })?,
                 },
             };
-            let (state, cursor) = session.transport(cmd);
+            let (state, cursor) = session.transport(cmd)?;
             return Ok(transport_state_json_parts(state, cursor));
         }
 
@@ -616,7 +623,7 @@ pub fn set_parameter(
                 .as_ref()
                 .ok_or_else(|| not_compiled(&engine_id))?;
             let resolved = resolve_parameter_event(index, &event, session.cursor())?;
-            session.enqueue_parameter(resolved);
+            session.enqueue_parameter(resolved)?;
             engine.parameter_events.push(event);
             return Ok(());
         }

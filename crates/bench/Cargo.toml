@@ -58,3 +58,7 @@ harness = false
 [[bench]]
 name = "render_offline"
 harness = false
+
+[[bench]]
+name = "plugin_process"
+harness = false

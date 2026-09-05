@@ -6,6 +6,8 @@
 //! `ProcessContext` remains the Rust-owned contract.
 
 use std::ffi::CStr;
+mod runtime;
+pub use runtime::*;
 use std::os::raw::c_char;
 
 use oxitone_core::error::{codes, OxitoneError};
@@ -46,7 +48,11 @@ pub struct OxiPluginDescriptorV1 {
     pub max_polyphony: u32,
 }
 
-fn cstr(ptr: *const c_char, field: &str) -> Result<&'static str, OxitoneError> {
+/// Copy a plugin string on the control thread.
+///
+/// # Safety
+/// A non-null pointer must remain readable through its NUL terminator.
+pub unsafe fn cstr(ptr: *const c_char, field: &str) -> Result<String, OxitoneError> {
     if ptr.is_null() {
         return Err(OxitoneError::new(
             codes::PLUGIN_MANIFEST_MISMATCH,
@@ -60,7 +66,7 @@ fn cstr(ptr: *const c_char, field: &str) -> Result<&'static str, OxitoneError> {
             format!("{field} is not UTF-8"),
         )
     })?;
-    Ok(Box::leak(value.to_owned().into_boxed_str()))
+    Ok(value.to_owned())
 }
 
 fn layout(value: u32) -> Result<ChannelLayout, OxitoneError> {
@@ -76,7 +82,14 @@ fn layout(value: u32) -> Result<ChannelLayout, OxitoneError> {
 }
 
 /// Convert and validate a C descriptor on the control thread.
-pub fn descriptor_from_c(raw: &OxiPluginDescriptorV1) -> Result<PluginDescriptor, OxitoneError> {
+///
+/// # Safety
+/// Every non-null string pointer must reference a readable NUL-terminated string.
+/// `params` must be aligned and readable for `param_count` entries; all nested
+/// pointers must satisfy the same requirement until this call returns.
+pub unsafe fn descriptor_from_c(
+    raw: &OxiPluginDescriptorV1,
+) -> Result<PluginDescriptor, OxitoneError> {
     if raw.abi_major != ABI_MAJOR {
         return Err(OxitoneError::new(
             codes::PLUGIN_ABI_MISMATCH,
@@ -84,6 +97,12 @@ pub fn descriptor_from_c(raw: &OxiPluginDescriptorV1) -> Result<PluginDescriptor
                 "plugin ABI major {} is incompatible with host {ABI_MAJOR}",
                 raw.abi_major
             ),
+        ));
+    }
+    if raw.capabilities & !3 != 0 {
+        return Err(OxitoneError::new(
+            codes::PLUGIN_MANIFEST_MISMATCH,
+            "unknown capability bits",
         ));
     }
     let kind = match raw.kind {
@@ -98,7 +117,15 @@ pub fn descriptor_from_c(raw: &OxiPluginDescriptorV1) -> Result<PluginDescriptor
     };
     let input_layout = layout(raw.input_layout)?;
     let output_layout = layout(raw.output_layout)?;
-    if raw.param_count > 4096 || (raw.param_count != 0 && raw.params.is_null()) {
+    if kind == PluginKind::Effect && raw.max_polyphony != 0 {
+        return Err(OxitoneError::new(
+            codes::PLUGIN_MANIFEST_MISMATCH,
+            "effects must not declare max_polyphony",
+        ));
+    }
+    if raw.param_count > 256
+        || (raw.param_count != 0 && (raw.params.is_null() || !raw.params.is_aligned()))
+    {
         return Err(OxitoneError::new(
             codes::PLUGIN_MANIFEST_MISMATCH,
             "invalid parameter table",
@@ -108,9 +135,15 @@ pub fn descriptor_from_c(raw: &OxiPluginDescriptorV1) -> Result<PluginDescriptor
     for i in 0..raw.param_count as usize {
         // SAFETY: the table is owned by the plugin and param_count bounds it.
         let p = unsafe { *raw.params.add(i) };
+        if p.automation > 1 {
+            return Err(OxitoneError::new(
+                codes::PLUGIN_MANIFEST_MISMATCH,
+                "automation must be 0 or 1",
+            ));
+        }
         parameters.push(ParameterSpec {
-            id: cstr(p.id, "parameter id")?.to_owned(),
-            label: cstr(p.label, "parameter label")?.to_owned(),
+            id: unsafe { cstr(p.id, "parameter id")? },
+            label: unsafe { cstr(p.label, "parameter label")? },
             unit: match p.unit {
                 0 => ParameterUnit::Normalized,
                 1 => ParameterUnit::Db,
@@ -150,7 +183,7 @@ pub fn descriptor_from_c(raw: &OxiPluginDescriptorV1) -> Result<PluginDescriptor
                     ))
                 }
             },
-            automation: (p.automation != 0).then_some(true),
+            automation: Some(p.automation != 0),
             mapping: match p.mapping {
                 0 => None,
                 1 => Some(oxitone_core::wire::ParameterMapping::Linear),
@@ -167,8 +200,8 @@ pub fn descriptor_from_c(raw: &OxiPluginDescriptorV1) -> Result<PluginDescriptor
         });
     }
     let descriptor = PluginDescriptor {
-        plugin_id: cstr(raw.plugin_id, "plugin id")?,
-        plugin_version: cstr(raw.plugin_version, "plugin version")?,
+        plugin_id: unsafe { cstr(raw.plugin_id, "plugin id")? },
+        plugin_version: unsafe { cstr(raw.plugin_version, "plugin version")? },
         kind,
         input_layout,
         output_layout,

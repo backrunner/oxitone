@@ -144,17 +144,16 @@ describe("native e2e (real .node)", () => {
     await session.dispose();
   });
 
-  it("renders mixer-channel stems as master + bus files", async () => {
+  it("exports Master once when the project has no other mixer buses", async () => {
     const dir = mkdtempSync(join(tmpdir(), "oxitone-e2e-stems-"));
     const { project } = buildProject();
 
     // One-shot project-level render (temporary engine).
     const report = await project.renderWav({ path: dir, stems: "mixer-channels" });
-    expect(report.files.length).toBeGreaterThanOrEqual(2);
+    expect(report.files).toHaveLength(1);
     expect(report.files[0]!.stem).toBeUndefined();
     expect(report.files[0]!.path).toBe(join(dir, "master.wav"));
-    const bus = report.files.find((file) => file.stem === project.masterMixerChannelId);
-    expect(bus).toBeDefined();
+    expect(report.files.some((file) => file.stem === project.masterMixerChannelId)).toBe(false);
     for (const file of report.files) {
       expect(existsSync(file.path)).toBe(true);
       const wav = parseWav(file.path);
