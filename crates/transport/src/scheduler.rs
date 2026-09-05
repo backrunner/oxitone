@@ -29,6 +29,7 @@ pub struct ClipSource<'a> {
     pub pattern: &'a PatternSpec,
     pub channel_id: &'a EntityId,
     pub swing: f64,
+    pub track_tempo: Option<f64>,
 }
 
 /// Precompiled event scheduler. The event array is sorted by
@@ -97,6 +98,7 @@ fn expand_source(
         return Ok(());
     }
     let path = |field: &str| format!("$.patternClips[{}].{field}", clip.id);
+    let clock = crate::TrackClock::new(tempo, source.track_tempo)?;
 
     let scale = clip.velocity_scale.unwrap_or(1.0);
     if !scale.is_finite() || !(0.0..=2.0).contains(&scale) {
@@ -236,15 +238,21 @@ fn expand_source(
                     continue;
                 }
             }
-            let shift = swing_shift(on_beat, source.swing);
-            let on_frame = tempo.beat_f64_to_frame(on_beat.to_f64() + shift);
             let off_beat = on_beat.checked_add(note.duration)?;
             let off_beat = if beat_cmp(off_beat, end).is_gt() {
                 end
             } else {
                 off_beat
             };
-            let off_frame = tempo.beat_f64_to_frame(off_beat.to_f64() + shift);
+            let shift = swing_shift(clock.project_beat(on_beat), source.swing);
+            let (on_frame, off_frame) = if shift == 0.0 {
+                (clock.frame(on_beat), clock.frame(off_beat))
+            } else {
+                (
+                    tempo.beat_f64_to_frame(clock.project_beat(on_beat).to_f64() + shift),
+                    tempo.beat_f64_to_frame(clock.project_beat(off_beat).to_f64() + shift),
+                )
+            };
             let pitch = (i32::from(note.pitch) + transpose) as u8;
             let on_velocity = (note.velocity * scale).clamp(0.0, 1.0);
             let off_velocity = (note.off_velocity.unwrap_or(note.velocity) * scale).clamp(0.0, 1.0);

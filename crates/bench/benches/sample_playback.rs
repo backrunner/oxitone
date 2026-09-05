@@ -33,7 +33,8 @@ fn playback(c: &mut Criterion) {
         ("repitch_reset_128", TempoSync::Repitch),
         ("stretch_reset_128", TempoSync::Stretch),
     ] {
-        let plan = SampleClipPlan {
+        let mut plan = SampleClipPlan {
+            track_tempo: None,
             id: "scl_bench".into(),
             channels: vec![0],
             sample: sample.clone(),
@@ -58,6 +59,24 @@ fn playback(c: &mut Criterion) {
                 player.set_rate(black_box(2.0));
                 player.set_ratio(black_box(0.5));
                 player.render(128, &mut left, &mut right);
+                black_box((&left, &right));
+            })
+        });
+        plan.track_tempo = Some(120.0);
+        let tempo = oxitone_transport::TempoMap::compile(
+            &[oxitone_core::wire::TempoSegment {
+                start_beat: Beat::ZERO,
+                bpm: 240.0,
+                curve: None,
+            }],
+            48000,
+        )
+        .unwrap();
+        let mut node = oxitone_render::clip::ClipNode::new(&plan, 48000, 128);
+        group.bench_function(format!("track_{name}"), |b| {
+            b.iter(|| {
+                node.reset();
+                node.render(0, 128, &tempo, &mut left, &mut right);
                 black_box((&left, &right));
             })
         });

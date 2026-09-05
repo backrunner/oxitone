@@ -8,6 +8,12 @@ conventional commits (`type(scope): description`).
 
 ### Added
 
+- Independent Track tempo authoring with a shared Rust local-to-project clock for
+  pattern scheduling, MIDI ticks, sample windows and timeline bounds. Sample repitch
+  and stretch follow the local BPM; fitToContent respects the same static override.
+  Golden tests cover tempo steps/ramps/lanes, loop/last clipping, actual MIDI replay
+  timing and allocation-free sample reset/seek. Default Track clocks remain unchanged.
+
 - `@oxitone/samples#importSample` and the versioned native `inspectSample` command:
   Rust reads, identifies, hashes and decodes local audio on the control thread, returning
   lossless dimensions and source/decoder provenance without exposing PCM. Descriptors
@@ -135,7 +141,7 @@ conventional commits (`type(scope): description`).
   excessive grid horizons before allocation. The private workspace root is now named
   `oxitone-workspace`, fixing native/core dependency ordering on first builds.
 
-- Added timing/playback baselines for the effective tempo query and first sample block:
+- Added playback baselines for reset and the first sample block:
   repitch reset 97.05 µs and WSOLA reset 311.65 µs at 48 kHz/128 frames on Apple M4.
 
 - Sample authoring accepts positive u64 bigint frames, rejects unsafe number frames,

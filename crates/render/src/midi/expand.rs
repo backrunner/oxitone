@@ -35,6 +35,7 @@ pub(crate) fn expand_track(
     ppq: u16,
     seed: u64,
     sequence: &mut u64,
+    clock: oxitone_transport::TrackClock<'_>,
 ) -> Result<Vec<ExpandedNote>, OxitoneError> {
     let mut notes = Vec::new();
     for clip in clips {
@@ -44,7 +45,7 @@ pub(crate) fn expand_track(
                 format!("$.patternClips[{}].patternId", clip.id),
             )
         })?;
-        expand_clip(clip, pattern, ppq, seed, sequence, &mut notes)?;
+        expand_clip(clip, pattern, ppq, seed, sequence, &mut notes, clock)?;
     }
     Ok(notes)
 }
@@ -56,6 +57,7 @@ fn expand_clip(
     seed: u64,
     sequence: &mut u64,
     out: &mut Vec<ExpandedNote>,
+    clock: oxitone_transport::TrackClock<'_>,
 ) -> Result<(), OxitoneError> {
     if clip.enabled == Some(false) {
         return Ok(());
@@ -208,8 +210,8 @@ fn expand_clip(
             let on_velocity = (note.velocity * scale).clamp(0.0, 1.0);
             let off_velocity = (note.off_velocity.unwrap_or(note.velocity) * scale).clamp(0.0, 1.0);
             out.push(ExpandedNote {
-                tick_on: beat_to_ticks(on_beat, u32::from(ppq)),
-                tick_off: beat_to_ticks(off_beat, u32::from(ppq)),
+                tick_on: beat_to_ticks(clock.project_beat(on_beat), u32::from(ppq)),
+                tick_off: beat_to_ticks(clock.project_beat(off_beat), u32::from(ppq)),
                 pitch,
                 on_velocity: velocity_to_midi(on_velocity),
                 off_velocity: velocity_to_midi(off_velocity),

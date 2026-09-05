@@ -39,6 +39,7 @@ fn scheduler_for(tempo: &oxitone_transport::CompiledTempoMap, beats: i64) -> Sch
         pattern: &pattern,
         channel_id: &channel_id,
         swing: 0.0,
+        track_tempo: None,
     }];
     Scheduler::compile(&sources, tempo, SEED).unwrap()
 }

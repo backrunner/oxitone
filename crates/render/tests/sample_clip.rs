@@ -16,6 +16,8 @@ mod allocations;
 mod common;
 #[path = "sample_clip/fitting.rs"]
 mod fitting;
+#[path = "sample_clip/track_tempo.rs"]
+mod track_tempo;
 
 use common::*;
 use oxitone_core::wire::{LoopSpec, TempoCurve, TempoSegment, TempoSync};

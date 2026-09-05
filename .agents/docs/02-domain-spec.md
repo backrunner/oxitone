@@ -24,8 +24,14 @@ Track 是编排容器，不直接产生声音。它绑定一个或多个 `Channe
 
 TS Track 已暴露 `enabled`（默认 true）和 `midiChannel`（可选的 1..16 整数）；setter
 先校验再增加 revision。disabled Track 保留编排数据，但不参与音频调度和 MIDI note track
-分配。`use(channel)` 只接受同 Project 的 Channel 对象。Track `tempo` 当前只有 wire
-字段及校验，独立 tempo 的换算执行仍待实现，尚未作为 TS setter 暴露。
+分配。`use(channel)` 只接受同 Project 的 Channel 对象。Track `tempo` 支持 20..999
+静态 BPM，赋 undefined 恢复 Project 时钟。局部拍位以项目时间零点为锚点，先按
+`seconds = localBeat * 60 / trackTempo` 换算，再用 Rust 有效时钟逆变换为 Project beat。
+bar/beat、duration、loop/last 均先在局部编排域解释，保留原 clip ID 和概率 seed。
+time signature 仍取 Project 的小节表；映射后的 swing 和全部 automation 使用 Project beats。
+SampleClip 的 off 窗口、repitch 速率和 stretch 比例均使用局部静态时钟；效果器和
+音源的 beat-synced 参数仍使用共享 Project 时钟（同一 Channel 可以绑定多个 Track）。
+`fitToContent` 无音乐长度时按 Track BPM 折算局部长度。
 
 ```ts
 track.pattern(pattern).at({ bar: 1, beat: 0 }).loop(4).last({ bar: 17 })

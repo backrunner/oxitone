@@ -60,6 +60,11 @@ WAV/AIFF decoder 标识为 `oxitone-wav-v1`/`oxitone-aiff-v1`，压缩格式沿�
 
 MIDI 只有 16 个 channel，分配规则如下：
 
+独立 Track tempo 不写成第二条 conductor 时钟：每个局部 note-on/off 先按静态 BPM
+换算为秒，再经全局有效 tempo map/lane 逆变换成 Project beat，最后转 tick。
+未指定 override 的 Track 仍直接用原有有理 beat。两者共用 conductor；连续 tempo
+的 MIDI 重放仍受 PPQ 和 tempoEventResolutionTicks 的阶梯近似误差影响。
+
 - 含 note 的 Track 数不超过 16 时，按稳定 ID 顺序自动分配 channel 1..16；Track 显式 `midiChannel`（1..16，可共享）优先，自动分配取未被显式占用的最小编号。
 - 超过 16 个时导出失败，错误码 `MidiChannelLimit`，错误详情列出全部未分配的 track ID。用户必须在 Track 上显式设置 `midiChannel`（1..16，允许多个 Track 显式共享同一 channel）后重试；只要存在未分配的 note Track 或 distinct channel 数超过 16，导出同样以 `MidiChannelLimit` 失败。
 - channel 10 仅按 GM 惯例建议用于打击乐，engine 不强制，也不在自动分配中特殊处理。

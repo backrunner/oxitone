@@ -1,0 +1,21 @@
+{
+  "schema": "oxitone.focused-benchmark.v1",
+  "date": "2026-09-06",
+  "baseCommit": "ab36241",
+  "change": "independent Track tempo, SampleClip window and playback factors",
+  "machine": { "cpu": "Apple M4", "os": "macOS 27.0 (26A5425a)", "arch": "aarch64-apple-darwin", "rustc": "1.98.0", "llvm": "22.1.8" },
+  "config": { "sampleRate": 48000, "blockSize": 128, "channels": 2, "voices": 0, "input": "440 Hz sine, amplitude 0.5, 1 second", "warmupSeconds": 3, "measurementSeconds": 3, "sampleCount": 30, "device": null, "callbackP95Ns": null, "callbackP99Ns": null, "cpuUtilization": null, "xruns": null },
+  "command": "target/release/deps/sample_playback-60030e8fdde9e72f --bench --sample-size 30 --warm-up-time 3 --measurement-time 3",
+  "scenarios": [
+    { "id": "samples/playback/repitch_reset_128", "slopeNs": 199368.03063499165, "confidence95Ns": [191361.47738592298, 207604.671776006] },
+    { "id": "samples/playback/track_repitch_reset_128", "slopeNs": 173274.06880117944, "confidence95Ns": [163101.5529349198, 186481.56790607446] },
+    { "id": "samples/playback/stretch_reset_128", "slopeNs": 435598.995781877, "confidence95Ns": [420101.3257740116, 450154.84196066693] },
+    { "id": "samples/playback/track_stretch_reset_128", "slopeNs": 447150.71043098887, "confidence95Ns": [427714.4433163349, 466950.80480744125] }
+  ],
+  "notes": [
+    "First run (10 samples, 1 s warmup/measurement) had slopes 4.2604/1.1412/6.9085/8.0107 ms respectively; repeated with the same binary after local builds finished.",
+    "Other projects and applications remained active with high CPU and memory pressure. The repeat is still above the earlier archived player baseline; performance regression acceptance is inconclusive and requires a controlled rerun.",
+    "Track cases measure ClipNode reset and first block including local BPM 120, project BPM 240 and duration 1 local beat; ordinary cases measure the player at rate 2 or ratio 0.5. Assets and nodes are constructed outside measurement.",
+    "All three sample modes have zero allocation/free during node reset and a mid-clip seek/render. This microbenchmark does not establish device callback, worker soak or xrun acceptance."
+  ]
+}

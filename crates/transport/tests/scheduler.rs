@@ -72,6 +72,7 @@ fn source<'a>(clip: &'a PatternClipSpec, pattern: &'a PatternSpec, swing: f64) -
         pattern,
         channel_id: chan1(),
         swing,
+        track_tempo: None,
     }
 }
 

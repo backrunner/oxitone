@@ -14,6 +14,9 @@ use oxitone_core::{codes, PROTOCOL_VERSION};
 use oxitone_render::midi::{export_midi, ChannelSource, MidiExportOptions, DEFAULT_PPQ};
 use sha2::{Digest, Sha256};
 
+#[path = "midi_export/track_tempo.rs"]
+mod track_tempo;
+
 fn beat(n: i64, d: u32) -> Beat {
     Beat::new(n, d).unwrap()
 }

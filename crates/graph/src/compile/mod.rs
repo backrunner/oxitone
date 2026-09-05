@@ -204,6 +204,7 @@ pub fn compile_plan(
                     pattern,
                     channel_id: &channel.id,
                     swing: 0.0,
+                    track_tempo: track.tempo,
                 });
             }
         }
@@ -226,7 +227,17 @@ pub fn compile_plan(
         } else {
             Vec::new()
         };
-        clip_plans.push(clips::plan_sample_clip(clip, prepared, channels, &tempo)?);
+        let track_tempo = tracks
+            .iter()
+            .find(|t| t.id == clip.track_id)
+            .and_then(|t| t.tempo);
+        clip_plans.push(clips::plan_sample_clip(
+            clip,
+            prepared,
+            channels,
+            &tempo,
+            track_tempo,
+        )?);
     }
     let clip_index: BTreeMap<&str, usize> = sample_clips
         .iter()

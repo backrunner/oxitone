@@ -33,6 +33,9 @@
   `repitch_reset_128` 使用 rate 2，`stretch_reset_128` 使用 WSOLA ratio 0.5；样本为
   440 Hz、幅度 0.5 的一秒正弦，素材与 player 在测量外创建。覆盖启动和 reset 的
   RT 路径成本，仍不代替真实 callback/worker soak。
+  `track_repitch_reset_128` / `track_stretch_reset_128` 在相同素材上测完整 ClipNode
+  reset + 首块，Track BPM 120、全局 BPM 240、局部 duration 1 beat；包含窗口门控、
+  局部 tempo 因子计算和 player 输出。未测真实设备 callback、CPU 利用率或 xrun。
 
 `dsp/*` benchmark 必须包含 denormal 语料（衰减中的滤波器/混响尾部），验证 FTZ/DAZ 与 denormal-safe 实现没有性能悬崖。
 

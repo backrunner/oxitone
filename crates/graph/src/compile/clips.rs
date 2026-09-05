@@ -10,6 +10,7 @@ use oxitone_core::error::{codes, OxitoneError};
 use oxitone_core::wire::{SampleClipSpec, SampleRef, TempoSync};
 use oxitone_samples::PreparedSample;
 use oxitone_transport::tempo::CompiledTempoMap;
+use oxitone_transport::TrackClock;
 
 /// The only Phase 1 stretch algorithm (02-domain-spec.md §tempoSync).
 pub const WSOLA_V1: &str = "wsola-v1";
@@ -44,6 +45,8 @@ pub struct SampleClipPlan {
     pub pan: f32,
     pub rate: f64,
     pub tempo_sync: TempoSync,
+    /// Static local Track BPM; beat fields remain in that Track's domain.
+    pub track_tempo: Option<f64>,
     pub loop_region: Option<ClipLoop>,
     pub enabled: bool,
 }
@@ -53,7 +56,7 @@ pub struct SampleClipPlan {
 pub(crate) fn resolve_duration(
     clip: &SampleClipSpec,
     sample: &SampleRef,
-    tempo: &CompiledTempoMap,
+    clock: TrackClock<'_>,
 ) -> f64 {
     if let Some(duration) = clip.duration_beats {
         return duration.to_f64();
@@ -74,7 +77,7 @@ pub(crate) fn resolve_duration(
             ),
         sample.sample_rate,
         clip.start_beat,
-        tempo,
+        clock,
     )
 }
 
@@ -85,16 +88,13 @@ fn content_beats_fallback(
     frames: u64,
     sample_rate: u32,
     start_beat: Beat,
-    tempo: &CompiledTempoMap,
+    clock: TrackClock<'_>,
 ) -> f64 {
     if let Some(musical) = musical {
         return musical.to_f64();
     }
     let seconds = frames as f64 / f64::from(sample_rate.max(1));
-    tempo
-        .seconds_to_beat(tempo.beat_to_seconds(start_beat) + seconds)
-        .to_f64()
-        - start_beat.to_f64()
+    clock.duration_beats(start_beat, seconds)
 }
 
 /// WSOLA output/input duration ratio at `bpm` for this clip
@@ -117,7 +117,9 @@ pub(crate) fn plan_sample_clip(
     sample: Arc<PreparedSample>,
     channels: Vec<usize>,
     tempo: &CompiledTempoMap,
+    track_tempo: Option<f64>,
 ) -> Result<SampleClipPlan, OxitoneError> {
+    let clock = TrackClock::new(tempo, track_tempo)?;
     let path = |field: &str| format!("$.sampleClips[{}].{field}", clip.id);
     let tempo_sync = clip.tempo_sync.unwrap_or(TempoSync::Off);
     if tempo_sync == TempoSync::Stretch
@@ -139,14 +141,14 @@ pub(crate) fn plan_sample_clip(
         content_frames,
         sample.sample_rate,
         clip.start_beat,
-        tempo,
+        clock,
     );
     let duration = clip
         .duration_beats
         .unwrap_or(Beat::from_f64(content_beats)?);
-    let start_frame = tempo.beat_to_frame(clip.start_beat);
+    let start_frame = clock.frame(clip.start_beat);
     let end_beat = clip.start_beat.checked_add(duration)?;
-    let end_frame = tempo.beat_to_frame(end_beat);
+    let end_frame = clock.frame(end_beat);
 
     if tempo_sync == TempoSync::Stretch {
         if content_frames == 0 {
@@ -156,7 +158,7 @@ pub(crate) fn plan_sample_clip(
                 path("sampleId"),
             ));
         }
-        let (lo, hi) = tempo.bpm_range(clip.start_beat.to_f64(), end_beat.to_f64());
+        let (lo, hi) = clock.bpm_range(clip.start_beat, end_beat);
         let min_ratio = stretch_ratio(
             duration.to_f64(),
             content_frames,
@@ -210,8 +212,8 @@ pub(crate) fn plan_sample_clip(
                 _ => f64::INFINITY,
             };
             let until_frame = if until_beat.is_finite() {
-                tempo
-                    .beat_to_frame(Beat::from_f64(until_beat.max(0.0))?)
+                clock
+                    .frame(Beat::from_f64(until_beat.max(0.0))?)
                     .min(end_frame)
             } else {
                 end_frame
@@ -238,6 +240,7 @@ pub(crate) fn plan_sample_clip(
         pan: clip.pan.unwrap_or(0.0) as f32,
         rate: clip.rate.unwrap_or(1.0),
         tempo_sync,
+        track_tempo,
         loop_region,
         enabled: clip.enabled != Some(false),
     })

@@ -17,7 +17,7 @@
 //! - A "note track" is an enabled track with at least one expanded note;
 //!   only note tracks get an SMF track or consume a channel.
 //! - Note ticks are `round_half_up(beat * PPQ)` computed in exact rational
-//!   arithmetic; the tempo map only shapes the conductor track.
+//!   arithmetic after any independent Track clock is mapped to Project beats.
 
 mod channel;
 mod expand;
@@ -179,6 +179,15 @@ pub fn export_midi(
     let mut note_tracks: Vec<(&oxitone_core::wire::TrackSpec, Vec<expand::ExpandedNote>)> =
         Vec::new();
     let mut sequence = 0_u64;
+    let clock = oxitone_transport::TempoMap::compile(
+        &oxitone_graph::compile::effective_tempo_table(
+            snapshot,
+            snapshot.sample_rate.max(1),
+            snapshot.seed,
+            0.0,
+        )?,
+        snapshot.sample_rate.max(1),
+    )?;
     for track in tracks {
         let mut track_clips = Vec::with_capacity(track.pattern_clip_ids.len());
         let mut clip_ids: Vec<&str> = track.pattern_clip_ids.iter().map(String::as_str).collect();
@@ -193,8 +202,14 @@ pub fn export_midi(
             })?;
             track_clips.push(*clip);
         }
-        let notes =
-            expand::expand_track(&track_clips, &patterns, ppq, snapshot.seed, &mut sequence)?;
+        let notes = expand::expand_track(
+            &track_clips,
+            &patterns,
+            ppq,
+            snapshot.seed,
+            &mut sequence,
+            oxitone_transport::TrackClock::new(&clock, track.tempo)?,
+        )?;
         if !notes.is_empty() {
             note_tracks.push((track, notes));
         }

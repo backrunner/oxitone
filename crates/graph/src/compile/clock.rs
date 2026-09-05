@@ -6,6 +6,7 @@ use oxitone_core::{
     Beat,
 };
 use oxitone_transport::tempo::{CompiledTempoMap, TempoMap};
+use oxitone_transport::TrackClock;
 use oxitone_transport::{bake_tempo_lane_spec, find_tempo_lane};
 use std::collections::BTreeMap;
 
@@ -21,9 +22,9 @@ fn estimate_end(snapshot: &ProjectSnapshot, tempo: &CompiledTempoMap) -> Result<
             .iter()
             .any(|t| t.id == id && t.enabled != Some(false))
     };
-    let mut end = pattern_content_end(snapshot)?;
+    let mut end = pattern_content_end(snapshot, tempo)?;
     for clip in &snapshot.sample_clips {
-        if !track_enabled(&clip.track_id) {
+        if clip.enabled == Some(false) || !track_enabled(&clip.track_id) {
             continue;
         }
         let sample = sample_refs.get(clip.sample_id.as_str()).ok_or_else(|| {
@@ -33,8 +34,18 @@ fn estimate_end(snapshot: &ProjectSnapshot, tempo: &CompiledTempoMap) -> Result<
                 format!("$.sampleClips[{}].sampleId", clip.id),
             )
         })?;
-        let duration = clips::resolve_duration(clip, sample, tempo);
-        end = end.max(clip.start_beat.to_f64() + duration);
+        let bpm = snapshot
+            .tracks
+            .iter()
+            .find(|t| t.id == clip.track_id)
+            .and_then(|t| t.tempo);
+        let clock = TrackClock::new(tempo, bpm)?;
+        let duration = clips::resolve_duration(clip, sample, clock);
+        end = end.max(
+            clock
+                .project_beat(clip.start_beat.checked_add(Beat::from_f64(duration)?)?)
+                .to_f64(),
+        );
     }
     for lane in &snapshot.automation {
         if let Some(last) = lane.last_beat {
@@ -53,31 +64,19 @@ pub fn effective_tempo_table(
     seed: u64,
     tail_seconds: f64,
 ) -> Result<Vec<TempoSegment>, OxitoneError> {
-    let tempo = TempoMap::compile(&snapshot.tempo_map, sample_rate)?;
+    TempoMap::compile(&snapshot.tempo_map, sample_rate)?;
     if let Some(lane) = find_tempo_lane(&snapshot.automation, &snapshot.id)? {
-        let mut horizon = estimate_end(snapshot, &tempo)?;
-        for clip in &snapshot.sample_clips {
-            if clip.enabled == Some(false) || clip.duration_beats.is_some() {
-                continue;
-            }
-            if let Some(sample) = snapshot.samples.iter().find(|s| s.id == clip.sample_id) {
-                if sample.musical_length_beats.is_none() {
-                    let start = sample
-                        .edits
-                        .as_ref()
-                        .and_then(|e| e.start_frame)
-                        .unwrap_or(0);
-                    let end = sample
-                        .edits
-                        .as_ref()
-                        .and_then(|e| e.end_frame)
-                        .unwrap_or(sample.frames);
-                    let seconds =
-                        end.saturating_sub(start) as f64 / f64::from(sample.sample_rate.max(1));
-                    horizon = horizon.max(clip.start_beat.to_f64() + seconds * 999.0 / 60.0);
-                }
-            }
-        }
+        // The fastest legal project clock bounds local Track seconds and
+        // implicit sample durations before baking the actual tempo lane.
+        let upper_clock = TempoMap::compile(
+            &[TempoSegment {
+                start_beat: Beat::ZERO,
+                bpm: 999.0,
+                curve: None,
+            }],
+            sample_rate,
+        )?;
+        let horizon = estimate_end(snapshot, &upper_clock)?;
         bake_tempo_lane_spec(lane, seed, horizon, tail_seconds)
     } else {
         Ok(snapshot.tempo_map.clone())

@@ -38,6 +38,7 @@ pub struct ClipNode {
     pub content_frames: u64,
     pub duration_beats: f64,
     sample_rate: u32,
+    track_tempo: Option<f64>,
     activated: bool,
 }
 
@@ -84,6 +85,7 @@ impl ClipNode {
             content_frames: plan.sample.frames(),
             duration_beats: plan.duration_beats.to_f64(),
             sample_rate,
+            track_tempo: plan.track_tempo,
             activated: false,
         }
     }
@@ -110,8 +112,13 @@ impl ClipNode {
         match self.tempo_sync {
             TempoSync::Repitch => {
                 let frames = (win_end - win_start).max(1) as f64;
-                let beats =
-                    tempo.frame_to_beat(win_end).to_f64() - tempo.frame_to_beat(win_start).to_f64();
+                let beats = self.track_tempo.map_or_else(
+                    || {
+                        tempo.frame_to_beat(win_end).to_f64()
+                            - tempo.frame_to_beat(win_start).to_f64()
+                    },
+                    |bpm| frames * bpm / (60.0 * f64::from(self.sample_rate)),
+                );
                 self.static_rate
                     * self.automation_rate
                     * (self.content_frames.max(1) as f64 / self.duration_beats.max(1e-9))
@@ -124,6 +131,7 @@ impl ClipNode {
 
     /// WSOLA ratio at `bpm` (03-audio-runtime-spec.md §tempoSync stretch).
     fn stretch_ratio(&self, bpm: f64) -> f64 {
+        let bpm = self.track_tempo.unwrap_or(bpm);
         self.duration_beats * 60.0 * f64::from(self.sample_rate)
             / (self.content_frames.max(1) as f64 * bpm.max(1e-9))
     }

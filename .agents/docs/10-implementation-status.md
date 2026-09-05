@@ -33,7 +33,7 @@
    revision、非法路由和实际 native WAV 输出；复用现有协议 1.0，不改变 DSP callback。
 2. **进行中（2026-09-06）**：Sample/SampleClip 与 fit helpers 已补齐 TypeScript
    authoring 和 snapshot 连接；Track `enabled`/`midiChannel` 与只读文件导入 facade 已完成。
-   Track `tempo` 只有 wire 校验，独立时钟换算尚未执行，继续列为缺口。
+   Track `tempo` 的 authoring、独立时钟换算及音频/MIDI 验证已于后续阶段补齐。
 3. 完成 insert 参数自动化、Session 换图/播放位置、项目持久化与预设。
 4. 建立 macOS CI、npm 平台包和用户示例；跑持续有声负载性能与设备验收。
 5. 实现 Preview，完成 fuzz/endurance/发布门禁。各项出口分别记录证据。
@@ -63,8 +63,8 @@
   channel 分配；跨项目同 ID 的 Channel 不再能被误绑定。
 - 修复 Sample bigint 帧数、显式 ID、trim 范围及音乐长度校验，失败构造不注册实体；
   draft 可重试。`fitBars` 使用起始拍号且保留完整长度，`fitToContent` 使用 trim 后帧数。
-- fit helpers 尚不能据此视为完整验收：`fitToContent` 的 tempo ramp/lane 换算待实现；
-  `repitch` 使用内容音乐长度作为分母，显式 duration 的缩放语义仍需补齐并做音频验证。
+- 此阶段最初遗留的 `fitToContent` tempo ramp/lane 换算和 repitch 显式 duration
+  缩放，已在 `ab36241` 关闭，并添加有效时钟、onset 和 WSOLA reset 验证。
 
 - 新增 `@oxitone/samples#importSample` 和无 engine 的版本化 `inspectSample` 命令。
   Rust 返回源 hash、格式、解码维度与 provenance，JS 不持有 PCM。完成 WAV/AIFF 识别、
@@ -84,3 +84,16 @@
   首块输出 97.05 µs，WSOLA reset + 首块输出 311.65 µs；reset/replay 分配计数为 0。
   [播放基准归档](../../benchmarks/results/2026-09-06-tempo-sample-playback.json) 记录了
   测量参数和未覆盖的 callback/xrun 限制。
+
+## Track 独立 tempo（2026-09-06）
+
+- Track setter、Rust 局部时钟、Pattern scheduler/MIDI 映射、SampleClip 三种播放模式、
+  fitToContent、loop 截止点与 timeline end 已接通。step/linear/exponential/tempo lane
+  下的 MIDI conductor 实际重放时间与音频事件以明确容差对拍；全局斜坡改变时局部
+  SampleClip 音频逐样本一致。callback reset/seek 的分配和释放均为 0。
+- native release build、lint、typecheck、TS 170 tests、Rust 384 tests、fmt 通过。
+- [基准记录](../../benchmarks/results/2026-09-06-track-tempo.json)：30 samples，Track
+  repitch reset/首块 173.27 µs、stretch 447.15 µs。首次测量受并发负载显著影响，
+  同二进制复测仍高于早期基线；回归验收暂不下结论，需受控环境复测。未测 callback/xrun。
+- M1 原表中 Track 三个 authoring 属性缺口均已关闭，M2 的缓存导入、内置音源便捷入口，
+  M3 insert automation 与 M4 Session 等其余能力仍按推进顺序执行。

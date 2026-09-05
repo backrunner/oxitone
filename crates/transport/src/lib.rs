@@ -8,6 +8,7 @@ pub mod event;
 pub mod scheduler;
 pub mod tempo;
 pub mod timesig;
+pub mod track_clock;
 
 use std::cmp::Ordering;
 
@@ -22,6 +23,7 @@ pub use event::{EventPayload, EventPriority, ScheduledEvent};
 pub use scheduler::{ClipSource, Scheduler};
 pub use tempo::{CompiledTempoMap, TempoMap};
 pub use timesig::{CompiledTimeSignatureMap, TimeSignatureMap};
+pub use track_clock::TrackClock;
 
 pub(crate) fn beat_cmp(a: Beat, b: Beat) -> Ordering {
     (a.numerator() as i128 * b.denominator() as i128)

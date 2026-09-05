@@ -153,8 +153,10 @@ export class SampleClip {
   fitToContent(): this {
     const edits = this.sample.edits;
     const frames = BigInt(edits?.endFrame ?? this.sample.frames) - BigInt(edits?.startFrame ?? "0");
+    const seconds = Number(frames) / this.sample.sampleRate;
     const beats = this.sample.musicalLengthBeats ??
-      this.project.beatsForSeconds(this.startBeat, Number(frames) / this.sample.sampleRate);
+      (this.track.tempo === undefined ? this.project.beatsForSeconds(this.startBeat, seconds) :
+        seconds * this.track.tempo / 60);
     return this.fitBeats(beats);
   }
 

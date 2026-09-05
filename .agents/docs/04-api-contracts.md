@@ -151,7 +151,9 @@ Native facade `resolveBeatDuration(snapshot, startBeat, durationSeconds): number
 Track 的 `enabled` 和 `midiChannel` 支持读写、revision 和快照序列化。`enabled` 默认 true，
 false 会关闭该 Track 的音频调度与 MIDI note track；`midiChannel` 为 1..16，可赋 undefined
 恢复自动分配。非法值或跨 Project 的 `use(channel)` 报 `InvalidProject`，且不改变 revision。
-Track `tempo` 的执行语义仍待实现，当前不暴露 authoring setter。
+Track `tempo?: number` 支持读写、revision 和序列化；有效范围 20..999，非法值报
+`TempoRange` 且不增加 revision。undefined 恢复 Project 时钟。局部拍位从项目零点按
+固定 BPM 换算，音频和 MIDI 使用同一 Rust 有效时钟；不修改其他 Track 的节奏。
 
 ### 文件采样导入（已实现）
 

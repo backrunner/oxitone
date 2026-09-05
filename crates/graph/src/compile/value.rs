@@ -11,7 +11,10 @@ use oxitone_transport::EvalContext;
 use super::bindings::{AutomationBinding, CompiledLane};
 
 /// Maximum beat reached by pattern clips (beat-domain only).
-pub(crate) fn pattern_content_end(snapshot: &ProjectSnapshot) -> Result<f64, OxitoneError> {
+pub(crate) fn pattern_content_end(
+    snapshot: &ProjectSnapshot,
+    tempo: &oxitone_transport::CompiledTempoMap,
+) -> Result<f64, OxitoneError> {
     let patterns: BTreeMap<&str, Beat> = snapshot
         .patterns
         .iter()
@@ -24,10 +27,11 @@ pub(crate) fn pattern_content_end(snapshot: &ProjectSnapshot) -> Result<f64, Oxi
         .collect();
     let mut end = 0.0f64;
     for clip in &snapshot.pattern_clips {
-        if !track_enabled
-            .get(clip.track_id.as_str())
-            .copied()
-            .unwrap_or(false)
+        if clip.enabled == Some(false)
+            || !track_enabled
+                .get(clip.track_id.as_str())
+                .copied()
+                .unwrap_or(false)
         {
             continue;
         }
@@ -43,7 +47,16 @@ pub(crate) fn pattern_content_end(snapshot: &ProjectSnapshot) -> Result<f64, Oxi
             (None, None, Some(last)) => last,
             _ => clip.start_beat.checked_add(pattern_len)?,
         };
-        end = end.max(clip_end.to_f64());
+        let bpm = snapshot
+            .tracks
+            .iter()
+            .find(|t| t.id == clip.track_id)
+            .and_then(|t| t.tempo);
+        end = end.max(
+            oxitone_transport::TrackClock::new(tempo, bpm)?
+                .project_beat(clip_end)
+                .to_f64(),
+        );
     }
     Ok(end)
 }

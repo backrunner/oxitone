@@ -19,6 +19,7 @@ export class Track {
   private readonly sampleClipList: SampleClip[] = [];
   private enabledValue = true;
   private midiChannelValue: number | undefined;
+  private tempoValue: number | undefined;
 
   /** @internal Use `project.addTrack(...)` instead. */
   constructor(project: Project, id: string, name?: string) {
@@ -34,6 +35,17 @@ export class Track {
   }
 
   get enabled(): boolean { return this.enabledValue; }
+  /** Static local BPM (20..999); undefined follows the project clock. */
+  get tempo(): number | undefined { return this.tempoValue; }
+  set tempo(value: number | undefined) {
+    if (value !== undefined && (!Number.isFinite(value) || value < 20 || value > 999)) {
+      throw new OxitoneError(ErrorCode.TempoRange, "track tempo must be finite and in 20..999", {
+        details: { path: "track.tempo" },
+      });
+    }
+    this.tempoValue = value;
+    this.project.touch();
+  }
   set enabled(value: boolean) {
     if (typeof value !== "boolean") {
       throw new OxitoneError(ErrorCode.InvalidProject, "track enabled must be a boolean", {
@@ -122,6 +134,7 @@ export class Track {
       spec.name = this.trackName;
     }
     if (!this.enabledValue) spec.enabled = false;
+    if (this.tempoValue !== undefined) spec.tempo = this.tempoValue;
     if (this.midiChannelValue !== undefined) spec.midiChannel = this.midiChannelValue;
     return spec;
   }

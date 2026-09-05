@@ -27,6 +27,11 @@ Automation source AST 在 compile 阶段转换为固定 evaluator。`gate`、wav
 
 ## Realtime callback 不变量
 
+Track 静态 tempo 由 Rust `TrackClock` 在控制线程解析：局部拍位转换为绝对秒，
+音频 round-half-up 到 frame，MIDI 经有效 Project clock 逆变换到 beat/tick。
+loop/last 先在局部拍域裁剪；图的 content end 转换到 Project beat。tempo lane 的
+烘焙范围按最高合法 BPM 999 对局部时长作保守上界估计，仍执行 segment 数量上限。
+
 `process_block` 及其所有直接调用必须：
 
 - 不分配/释放 heap，不获取 mutex/RwLock，不等待条件变量，不进行文件、网络、系统调用或 N-API。
@@ -84,7 +89,10 @@ Sample player 的运行时可自动化参数按 DSP 实现：`tone` 是每 clip 
   ramp 造成固定时间偏移。有效 rate 的既有 varispeed 范围为 0.125..16。
 - WSOLA 的 seek/loop reset 清空流状态和已有缓冲，不重建 stretcher 或释放内存。
   reset 后继续 render 必须与新实例逐样本一致，分配/释放计数均为 0。
-- tempo lane 烘焙表是所有 tempo 因子的唯一来源，sample player 不得自行查询 BPM 或维护第二份映射。
+- 默认 tempo 因子来自有效 Project tempo 表。独立 Track 的 SampleClip plan 保存静态
+  BPM 和局部 duration；repitch 的每 block beat 增量为 `frames * BPM / (60 * sampleRate)`，
+  stretch 使用该 BPM。所有窗口和 loop 截止点在编译期转换为绝对 frame；callback
+  只做标量运算，不创建第二份 tempo map，不分配/释放。
 
 `Slicer` 的每个 slice 是一个预分配的 varispeed player voice：compile 期把显式 marker/grid/onset 统一解析成 frame 区间的不可变 slice 表（onset 检测在 compile/prepare 执行，不得在 callback 中运行），note-on 按 `triggerNote` 偏移索引 slice；oneshot 忽略 note-off，gate 用 note-off 触发 release。slice 播放的全部参数路径与 Sampler 相同，PDC、平滑和确定性规则不变。
 
