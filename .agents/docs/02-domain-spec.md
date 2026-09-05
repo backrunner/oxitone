@@ -97,6 +97,14 @@ WAV/AIFF 可以直接解码。MP3（以及包含音频轨的 MP4/M4A）在导入
 
 ## Mixer 与 routing
 
+TS authoring 已提供 `project.master`、`project.addMixerChannel(options)`、
+`channel.mixerChannelId` 路由 setter 和 `bus.send(destination, options)`。
+Master 与其他 bus 的 level/balance/mute/solo/inserts 可编辑；Channel 暴露
+effectChain/swing/mute/solo。所有 setter 先校验，再替换内部值并增加 revision；
+输入的嵌套参数、getter 和快照均与内部状态隔离。send 对同一 destination 为替换语义，
+跨 Project 对象与 Master 发送立即报 `InvalidProject`，完整 audio/detector 环在 Rust
+compile 阶段报 `InvalidProject` 并提供 cycle path。
+
 Mixer 总是包含不可删除的 `Master`。MixerChannel 有输入布局、insert chain、level、balance（-1..1）、mute/solo、meter 和 sends。Send 字段：`source`、`destination`、`ratio`（0..1）、`preFader`、可选 `sidechain` 标记。
 
 - 每个 MixerChannel 有独立的 `masterSendRatio`（默认 1，post-fader）控制发送到 Master 的音量；到 Master 的路由不占用 `sends`，`sends` 的 destination 不得为 Master。

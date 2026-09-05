@@ -1,0 +1,229 @@
+{
+  "schema": "oxitone.focused-benchmark.v1",
+  "date": "2026-09-06",
+  "change": "TypeScript mixer and Channel insert authoring",
+  "baseCommit": "5cd914f",
+  "machine": {
+    "cpu": "Apple M4",
+    "os": "macOS 27.0 (26A5425a)",
+    "arch": "aarch64-apple-darwin",
+    "rustc": "1.98.0 (88d9e12ae 2026-08-18)",
+    "llvm": "22.1.8"
+  },
+  "config": {
+    "sampleRate": 48000,
+    "blockSize": 128,
+    "channels": 2,
+    "seed": 7,
+    "contentBuses": 8,
+    "additionalBuses": [
+      "FX",
+      "Master"
+    ],
+    "voices": 0,
+    "input": "fixed-seed noise",
+    "harness": "criterion 0.5, optimized bench profile",
+    "warmupSeconds": 1,
+    "measurementSeconds": 3,
+    "sampleCount": 30,
+    "device": null,
+    "cpuUtilization": null,
+    "callbackP95Ns": null,
+    "callbackP99Ns": null,
+    "xruns": null
+  },
+  "command": "cargo bench -p oxitone-bench --bench mixer_routing -- 'mixer/routing/(buses/8|sidechain_detector_8buses/true|inserts_per_bus_8buses/4)$' --sample-size 30 --warm-up-time 1 --measurement-time 3",
+  "scenarios": [
+    {
+      "id": "mixer/routing/buses/8",
+      "sendsPerBus": 0,
+      "insertsPerBus": 0
+    },
+    {
+      "id": "mixer/routing/sidechain_detector_8buses/true",
+      "sendsPerBus": 1,
+      "sendRatio": 0.2,
+      "sidechain": true,
+      "fxInsert": {
+        "pluginId": "oxitone.compressor",
+        "parameters": {
+          "thresholdDb": -18,
+          "ratio": 4
+        }
+      }
+    },
+    {
+      "id": "mixer/routing/inserts_per_bus_8buses/4",
+      "sendsPerBus": 0,
+      "insertsPerBus": 4,
+      "pluginId": "oxitone.eq",
+      "parametersPerInsert": [
+        {
+          "band2.freqHz": 400
+        },
+        {
+          "band2.freqHz": 500
+        },
+        {
+          "band2.freqHz": 600
+        },
+        {
+          "band2.freqHz": 700
+        }
+      ]
+    }
+  ],
+  "estimatesNs": [
+    {
+      "id": "mixer/routing/buses/8",
+      "mean": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 9924.928608702912,
+          "upper_bound": 9998.450338377143
+        },
+        "point_estimate": 9960.841020047124,
+        "standard_error": 18.749311627382276
+      },
+      "median": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 9895.236874117822,
+          "upper_bound": 9994.794539781591
+        },
+        "point_estimate": 9938.366527994454,
+        "standard_error": 25.80318278526969
+      },
+      "median_abs_dev": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 61.795166190870376,
+          "upper_bound": 162.8698859661378
+        },
+        "point_estimate": 120.91935004134102,
+        "standard_error": 26.70715099255014
+      },
+      "slope": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 9959.192770920592,
+          "upper_bound": 10059.548715363191
+        },
+        "point_estimate": 10011.28035550613,
+        "standard_error": 25.521702521533484
+      },
+      "std_dev": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 79.59230215663426,
+          "upper_bound": 122.24492523935149
+        },
+        "point_estimate": 105.05078044773418,
+        "standard_error": 10.899288438484781
+      }
+    },
+    {
+      "id": "mixer/routing/sidechain_detector_8buses/true",
+      "mean": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 14622.544238381879,
+          "upper_bound": 14776.642095451674
+        },
+        "point_estimate": 14687.03959321195,
+        "standard_error": 40.16968688509759
+      },
+      "median": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 14602.040880661756,
+          "upper_bound": 14694.00626450116
+        },
+        "point_estimate": 14648.55924090089,
+        "standard_error": 24.176440746072327
+      },
+      "median_abs_dev": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 66.29080213991723,
+          "upper_bound": 172.62076817561453
+        },
+        "point_estimate": 121.42969197233711,
+        "standard_error": 27.73647153374857
+      },
+      "slope": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 14620.54044181723,
+          "upper_bound": 14768.269657760353
+        },
+        "point_estimate": 14689.394541981126,
+        "standard_error": 37.524531441947794
+      },
+      "std_dev": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 86.60388838366595,
+          "upper_bound": 348.98712877167713
+        },
+        "point_estimate": 222.77934473358897,
+        "standard_error": 82.99097432113525
+      }
+    },
+    {
+      "id": "mixer/routing/inserts_per_bus_8buses/4",
+      "mean": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 155313.5995318474,
+          "upper_bound": 161955.92029176292
+        },
+        "point_estimate": 157719.03315937018,
+        "standard_error": 1921.5447408330683
+      },
+      "median": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 154792.51871980677,
+          "upper_bound": 155669.80019459708
+        },
+        "point_estimate": 155150.34669252316,
+        "standard_error": 216.14635450975862
+      },
+      "median_abs_dev": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 488.6750553097862,
+          "upper_bound": 1634.413110217813
+        },
+        "point_estimate": 972.1419058660474,
+        "standard_error": 299.52075138901563
+      },
+      "slope": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 155759.29278284125,
+          "upper_bound": 164963.57147931634
+        },
+        "point_estimate": 159236.55048978873,
+        "standard_error": 2485.7579085356
+      },
+      "std_dev": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 1202.9771901860486,
+          "upper_bound": 17806.07576349801
+        },
+        "point_estimate": 10716.699165239028,
+        "standard_error": 5706.497068570245
+      }
+    }
+  ],
+  "notes": [
+    "No Rust DSP or realtime code changed. This is a mixer microbenchmark, not a callback or worker timing run.",
+    "Rig::run includes control-side input Vec construction; measurements include harness overhead.",
+    "Device, CPU utilization, callback percentiles and xruns are not measured and are null, not zero.",
+    "Criterion reported improved buses/8, sidechain within noise threshold, and no detected change for four inserts versus its existing local baseline.",
+    "Does not establish sustained-load, hot-switch, clean-install or release acceptance."
+  ]
+}

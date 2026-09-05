@@ -9,6 +9,8 @@ export type { PatternOptions } from "./pattern.js";
 export type { NoteInput } from "./note.js";
 export { Channel, DEFAULT_INSTRUMENT } from "./channel.js";
 export type { ChannelOptions } from "./channel.js";
+export { MixerChannel } from "./mixer-channel.js";
+export type { MixerChannelOptions, SendOptions } from "./mixer-channel.js";
 export { chord } from "./chord.js";
 export type { ChordOptions, ChordQuality, ChordVoicing } from "./chord.js";
 export { arp } from "./arp.js";

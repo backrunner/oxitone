@@ -1,0 +1,45 @@
+import {
+  beatToWire,
+  PROTOCOL_VERSION,
+  projectSnapshotSchema,
+  type MarkerSpec,
+  type ProjectSnapshot,
+  type TempoSegment,
+} from "@oxitone/protocol";
+import type { Pattern } from "./pattern.js";
+import type { Project } from "./project.js";
+
+/** Detached, canonically ordered wire state; native compile validates graph semantics. */
+export function snapshotProject(
+  project: Project, patterns: readonly Pattern[], tempoMap: TempoSegment[],
+): ProjectSnapshot {
+  const byId = <T extends { id: string }>(items: readonly T[]): T[] =>
+    [...items].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const clips = byId(project.tracks.flatMap((track) => track.clips));
+  const markers: MarkerSpec[] = byId(project.markers).map((marker) => ({
+    id: marker.id,
+    name: marker.name,
+    startBeat: beatToWire(marker.startBeat),
+  }));
+  const snapshot = {
+    protocolVersion: PROTOCOL_VERSION,
+    revision: String(project.revision),
+    id: project.id,
+    ...(project.name !== undefined ? { name: project.name } : {}),
+    sampleRate: project.sampleRate,
+    blockSize: project.blockSize,
+    seed: project.seed,
+    tempoMap,
+    timeSignatureMap: [...project.timeSignatureMap],
+    markers,
+    tracks: byId(project.tracks).map((track) => track.toSpec()),
+    patterns: byId(patterns).map((pattern) => pattern.toSpec()),
+    patternClips: clips.map((clip) => clip.toSpec()),
+    sampleClips: [],
+    samples: [],
+    channels: byId(project.channels).map((channel) => channel.toSpec()),
+    automation: byId(project.automationLanes).map((lane) => lane.toSpec()),
+    mixerChannels: byId(project.mixerChannels).map((bus) => bus.toSpec()),
+  };
+  return projectSnapshotSchema.parse(snapshot);
+}

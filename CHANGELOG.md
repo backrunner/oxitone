@@ -8,6 +8,11 @@ conventional commits (`type(scope): description`).
 
 ### Added
 
+- TypeScript mixer authoring: editable Master and mixer buses, channel routing,
+  pre/post-fader and sidechain sends, bus/send automation, Channel insert chains,
+  swing/mute/solo, and defensive snapshots with revision-aware setters. Existing
+  protocol 1.0 and Rust DSP are reused; native WAV tests cover inserts and routing.
+
 - M5 dynamic plugins: typed per-engine registration, SHA-256/signature and
   manifest validation, owned C ABI instances, mono/stereo adaptation, fault
   muting and diagnostics. Includes the public C header, C/Rust conformance

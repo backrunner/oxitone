@@ -121,6 +121,33 @@ export interface EffectRef {
 
 ## Authoring interfaces
 
+`@oxitone/core` 的混音 builder 复用以下协议 1.0 wire contracts：
+
+```ts
+const project = new Project();
+const keys = project.addMixerChannel({ name: 'Keys', level: 0.8 });
+const fx = project.addMixerChannel({ name: 'Reverb', inserts: [reverbRef] });
+const channel = project.addChannel({ mixerChannelId: keys.id, effectChain: [eqRef] });
+keys.send(fx, { ratio: 0.25, preFader: false });
+keys.automate(`send.${fx.id}.ratio`, automation.sine({ periodBeats: 8 }));
+project.master.addEffect(limiterRef);
+channel.swing = 0.2;
+```
+
+- `MixerChannelOptions`：name、level（0..2）、balance（-1..1）、masterSendRatio（0..1）、
+  mute、solo、inserts（有序 EffectRef 数组）。`project.mixerChannels` 包含 Master。
+- `bus.send(destination, { ratio = 1, preFader?, sidechain? })` 添加或完整替换该 destination
+  的 send；`removeSend(destination)` 删除。Master 无 outgoing route，不能设置
+  masterSendRatio（getter 返回 undefined），也不能作为 send source/destination。
+- Channel 的 effectChain 与 bus 的 inserts 可整体替换，`addEffect(ref)` 追加；getter
+  返回副本，编辑后必须重新赋值。Channel 另支持 level/pan/swing/mute/solo 与路由 setter。
+- 所有成功变更更新 revision，范围错误或未知路由以 `InvalidProject` 拒绝且不改变快照。
+  插件 descriptor/参数范围与完整 DAG 由 Rust compile 校验。修改 authoring 后需要重新编译
+  才影响当前 session；离线导出读取当前快照。
+- `bus.automate` 支持 bus 参数及 `send.<destinationId>.ratio`；Channel 支持既有
+  `insert.<index>.mix/bypass`。Mixer/Master insert 和 effect 插件参数的完整自动化 binding
+  仍待实现，不能从静态 EffectRef 支持推定这些路径可自动化。
+
 ```ts
 export interface NoteSpec {
   id?: EntityId; pitch: Pitch; start: Beat; duration: Beat;

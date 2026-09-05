@@ -1,19 +1,18 @@
 import {
+  channelSpecSchema,
   ErrorCode,
   OxitoneError,
   type ChannelSpec,
+  type EffectRef,
   type EntityId,
   type InstrumentRef,
 } from "@oxitone/protocol";
+import { parseAuthoring } from "./authoring-validation.js";
 import type { AutomationLane, AutomationLaneOptions } from "./automation/lane.js";
 import type { AutomationSource } from "./automation/source.js";
 import type { Project } from "./project.js";
 
-/**
- * Placeholder instrument used when a channel is created without an explicit
- * ref. M1 keeps channels structural; full instrument authoring lands in M2
- * through {@link ChannelOptions.instrument}.
- */
+/** Built-in wavetable instrument used when no explicit instrument is supplied. */
 export const DEFAULT_INSTRUMENT: InstrumentRef = {
   pluginId: "oxitone.wavetable",
   pluginVersion: "1.0.0",
@@ -24,110 +23,121 @@ export const DEFAULT_INSTRUMENT: InstrumentRef = {
 export interface ChannelOptions {
   name?: string;
   instrument?: InstrumentRef;
+  effectChain?: readonly EffectRef[];
   level?: number;
   pan?: number;
+  swing?: number;
+  mute?: boolean;
+  solo?: boolean;
   mixerChannelId?: EntityId;
 }
 
-/**
- * Host for sound generation and (in M2) insert effects. M1 carries the
- * structural fields needed for a complete snapshot: id, name, instrument
- * ref, level, pan, and mixer routing.
- */
+/** Instrument and ordered insert effects routed to a project mixer bus. */
 export class Channel {
-  readonly id: string;
-  private readonly instrumentValue: InstrumentRef;
-  readonly mixerChannelId: string;
-  private readonly project: Project | undefined;
-  private readonly channelName?: string;
-  private levelValue: number;
-  private panValue: number;
+  private spec: ChannelSpec;
 
   /** @internal Use `project.addChannel(...)` instead. */
-  constructor(id: string, options: ChannelOptions, mixerChannelId: string, project?: Project) {
-    this.id = id;
-    this.instrumentValue = structuredClone(options.instrument ?? DEFAULT_INSTRUMENT);
-    this.mixerChannelId = options.mixerChannelId ?? mixerChannelId;
-    this.levelValue = options.level ?? 1;
-    this.panValue = options.pan ?? 0;
-    if (options.name !== undefined) {
-      this.channelName = options.name;
-    }
-    this.level = this.levelValue;
-    this.pan = this.panValue;
-    this.project = project;
+  constructor(
+    id: string,
+    options: ChannelOptions,
+    mixerChannelId: string,
+    private readonly project?: Project,
+  ) {
+    this.spec = parseAuthoring(channelSpecSchema, {
+      ...options, id, instrument: options.instrument ?? DEFAULT_INSTRUMENT,
+      effectChain: options.effectChain ?? [], level: options.level ?? 1, pan: options.pan ?? 0,
+      mixerChannelId: options.mixerChannelId ?? mixerChannelId,
+    }, "channel");
+    this.project?.requireMixerChannel(this.spec.mixerChannelId);
   }
 
-  get instrument(): InstrumentRef {
-    return structuredClone(this.instrumentValue);
+  get id(): EntityId {
+    return this.spec.id;
   }
-
   get name(): string | undefined {
-    return this.channelName;
+    return this.spec.name;
+  }
+  get instrument(): InstrumentRef {
+    return structuredClone(this.spec.instrument);
   }
 
-  /**
-   * Convenience for `project.addAutomationLane(...)` bound to this channel
-   * (e.g. `channel.automate('level', automation.sine({ periodBeats: 8 }))`).
-   */
+  get mixerChannelId(): EntityId {
+    return this.spec.mixerChannelId;
+  }
+  set mixerChannelId(value: EntityId) {
+    this.project?.requireMixerChannel(value);
+    this.update({ mixerChannelId: value });
+  }
+
+  /** Linear gain in 0..2. */
+  get level(): number {
+    return this.spec.level;
+  }
+  set level(value: number) {
+    this.update({ level: value });
+  }
+
+  /** Stereo position in -1..1. */
+  get pan(): number {
+    return this.spec.pan;
+  }
+  set pan(value: number) {
+    this.update({ pan: value });
+  }
+
+  get swing(): number {
+    return this.spec.swing ?? 0;
+  }
+  set swing(value: number) {
+    this.update({ swing: value });
+  }
+
+  get mute(): boolean {
+    return this.spec.mute ?? false;
+  }
+  set mute(value: boolean) {
+    this.update({ mute: value });
+  }
+
+  get solo(): boolean {
+    return this.spec.solo ?? false;
+  }
+  set solo(value: boolean) {
+    this.update({ solo: value });
+  }
+
+  /** Ordered inserts; replacing the array also supports edits/removal. */
+  get effectChain(): EffectRef[] {
+    return structuredClone(this.spec.effectChain);
+  }
+  set effectChain(value: readonly EffectRef[]) {
+    this.update({ effectChain: [...value] });
+  }
+
+  addEffect(effect: EffectRef): this {
+    this.effectChain = [...this.spec.effectChain, effect];
+    return this;
+  }
+
   automate(
     parameterId: string,
     source: AutomationSource,
     options: AutomationLaneOptions = {},
   ): AutomationLane {
     if (this.project === undefined) {
-      throw new OxitoneError(
-        ErrorCode.InvalidProject,
-        "channel is not attached to a project; use project.addAutomationLane",
-        { details: { path: "automation.target.entityId" } },
-      );
+      throw new OxitoneError(ErrorCode.InvalidProject, "channel is not attached to a project", {
+        details: { path: "automation.target.entityId" },
+      });
     }
     return this.project.addAutomationLane({ entityId: this.id, parameterId }, source, options);
   }
 
-  /** Linear gain in 0..2. */
-  get level(): number {
-    return this.levelValue;
-  }
-
-  set level(value: number) {
-    if (!Number.isFinite(value) || value < 0 || value > 2) {
-      throw new OxitoneError(ErrorCode.InvalidProject, `channel level must be in 0..2, got ${value}`, {
-        details: { path: "channel.level" },
-      });
-    }
-    this.levelValue = value;
-    this.project?.touch();
-  }
-
-  /** Stereo position in -1..1. */
-  get pan(): number {
-    return this.panValue;
-  }
-
-  set pan(value: number) {
-    if (!Number.isFinite(value) || value < -1 || value > 1) {
-      throw new OxitoneError(ErrorCode.InvalidProject, `channel pan must be in -1..1, got ${value}`, {
-        details: { path: "channel.pan" },
-      });
-    }
-    this.panValue = value;
-    this.project?.touch();
-  }
-
-  /** Wire form; `effectChain` stays empty until M2 effect authoring. */
   toSpec(): ChannelSpec {
-    const spec: ChannelSpec = {
-      id: this.id,
-      instrument: this.instrument,
-      effectChain: [],
-      level: this.levelValue,
-      pan: this.panValue,
-      mixerChannelId: this.mixerChannelId,
-    };
-    if (this.channelName !== undefined) {
-      spec.name = this.channelName;
-    }
-    return spec;
+    return structuredClone(this.spec);
+  }
+
+  private update(patch: Partial<ChannelSpec>): void {
+    this.spec = parseAuthoring(channelSpecSchema, { ...this.spec, ...patch }, "channel");
+    this.project?.touch();
   }
 }

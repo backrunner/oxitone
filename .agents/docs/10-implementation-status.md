@@ -29,9 +29,28 @@
 
 ## 推进顺序
 
-1. 补齐 TS mixer/Channel insert authoring，验证快照隔离、revision、非法路由和
-   实际 native WAV 输出；复用现有协议 1.0，不改变 DSP callback。
+1. **本轮已完成（2026-09-06）**：TS mixer/Channel insert authoring，覆盖快照隔离、
+   revision、非法路由和实际 native WAV 输出；复用现有协议 1.0，不改变 DSP callback。
 2. 补齐 Sample/SampleClip 与导入 facade、fit helpers、Track 剩余配置。
 3. 完成 insert 参数自动化、Session 换图/播放位置、项目持久化与预设。
 4. 建立 macOS CI、npm 平台包和用户示例；跑持续有声负载性能与设备验收。
 5. 实现 Preview，完成 fuzz/endurance/发布门禁。各项出口分别记录证据。
+
+## 本轮落地与验证（2026-09-06）
+
+- 已新增可编辑的 `project.master`、`addMixerChannel`、Channel 路由/效果链、
+  pre/post-fader send、sidechain send、bus/send automation 和 swing/mute/solo。
+  Master 与跨项目引用规则在 authoring 边界校验，完整反馈环由 Rust compiler 拒绝。
+- 新增 5 个 authoring 测试和 5 个真实 native WAV/compile 集成测试；后者验证极性效果、
+  dry/wet 与 bypass、发送增益、pre/post-fader、detector 不混入音频、send 自动化、
+  stems、cycle path 和无效插件参数。具体 API 见 `04-api-contracts.md`。
+- `pnpm build`（含 release native addon）、`pnpm lint`、`pnpm typecheck`、
+  `pnpm test`（142 tests）、`cargo fmt --all --check`、`cargo test --workspace`
+  （372 tests）通过。性能敏感 DSP/实时路径未修改；混音微基准不替代长期设备验收。
+- Apple M4 / macOS 27.0 / Rust 1.98.0，48 kHz / 128 frames：8 bus、sidechain、
+  每 bus 4 EQ 的 Criterion slope estimate 分别为 10.01 / 14.69 / 159.24 μs；
+  warmup 1 s、measurement 3 s、30 samples，各场景未检测到显著回退。
+  详见 [基准归档](../../benchmarks/results/2026-09-06-mixer-authoring.json)。callback
+  p95/p99、设备与 xrun 未在微基准中测量，记录为 null，不视为 0。
+- 表格仍保留起始基线的缺口以便对照；M3 的 TS mixer/Channel insert 空入口在本轮
+  关闭，其余列出的缺口继续追踪。下一步优先 Sample/SampleClip authoring 与导入 facade。
