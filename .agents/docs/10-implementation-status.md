@@ -31,7 +31,8 @@
 
 1. **本轮已完成（2026-09-06）**：TS mixer/Channel insert authoring，覆盖快照隔离、
    revision、非法路由和实际 native WAV 输出；复用现有协议 1.0，不改变 DSP callback。
-2. 补齐 Sample/SampleClip 与导入 facade、fit helpers、Track 剩余配置。
+2. **进行中（2026-09-06）**：Sample/SampleClip 与 fit helpers 已补齐 TypeScript
+   authoring 和 snapshot 连接；导入 facade、Track 剩余配置仍待完成。
 3. 完成 insert 参数自动化、Session 换图/播放位置、项目持久化与预设。
 4. 建立 macOS CI、npm 平台包和用户示例；跑持续有声负载性能与设备验收。
 5. 实现 Preview，完成 fuzz/endurance/发布门禁。各项出口分别记录证据。

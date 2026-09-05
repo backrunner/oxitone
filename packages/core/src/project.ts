@@ -7,6 +7,7 @@ import {
   type TimeSignatureSegment,
 } from "@oxitone/protocol";
 import { Channel, type ChannelOptions } from "./channel.js";
+import { Sample, type SampleOptions } from "./sample.js";
 import { IdGenerator } from "./ids.js";
 import { MixerChannel, type MixerChannelOptions } from "./mixer-channel.js";
 import {
@@ -72,6 +73,7 @@ export class Project extends ProjectPlayback {
   private readonly trackList: Track[] = [];
   private readonly channelList: Channel[] = [];
   private readonly mixerChannelList: MixerChannel[] = [];
+  private readonly sampleList: Sample[] = [];
   private readonly automationLaneList: AutomationLane[] = [];
   private readonly patternsById = new Map<string, Pattern>();
   private readonly entityIds = new Set<string>();
@@ -124,6 +126,20 @@ export class Project extends ProjectPlayback {
     this.touch();
     return bus;
   }
+
+  /** @internal Allocate and register a project entity ID for clip builders. */
+  nextEntityId(prefix: string): EntityId { return this.claimId(prefix); }
+
+  /** Register an immutable sample asset reference; decoding occurs in Rust prepare. */
+  addSample(options: SampleOptions): Sample {
+    const sample = new Sample(this.claimId(ID_PREFIXES.sample), options);
+    this.sampleList.push(sample);
+    this.touch();
+    return sample;
+  }
+
+  get samples(): readonly Sample[] { return [...this.sampleList]; }
+  get sampleClips() { return this.trackList.flatMap((track) => track.sampleClips); }
 
   /** @internal Resolve routing IDs against buses owned by this project. */
   requireMixerChannel(id: EntityId): MixerChannel {
@@ -182,6 +198,20 @@ export class Project extends ProjectPlayback {
   /** Convert a bar/beat position to absolute project beats. */
   barBeatToBeats(position: BarBeatPosition): number {
     return this.signatures.toBeats(position);
+  }
+
+  /** Beats contained in one bar at a given bar. */
+  beatsPerBarAt(bar: number): number { return this.signatures.beatsPerBarAt(bar); }
+
+  /** Static tempo at a beat, used only for authoring fit helpers. */
+  tempoAt(beat: number): number {
+    const segments = this.tempos.list();
+    let bpm = segments[0]?.bpm ?? 120;
+    for (const segment of segments) {
+      if (segment.startBeat > beat) break;
+      bpm = segment.bpm;
+    }
+    return bpm;
   }
 
   /** Add a named marker at a beat position; returns the marker. */

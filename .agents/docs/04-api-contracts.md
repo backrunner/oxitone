@@ -121,6 +121,18 @@ export interface EffectRef {
 
 ## Authoring interfaces
 
+Sample authoring 同样只产生 wire descriptors：
+
+```ts
+const sample = project.addSample({ assetUri: 'assets/loop.wav', sha256, format: 'wav',
+  sampleRate: 48000, channels: 2, frames: 96000, musicalLengthBeats: 8 });
+const clip = track.sample(sample).at({ bar: 1 }, { tempoSync: 'stretch' });
+clip.fitBars(2);
+```
+
+`Sample` 的 getter 和 `SampleClip.toSpec()` 返回副本；`fitBeats`、`fitBars`、`fitToContent`
+仅更新 beat 长度并增加项目 revision。资源不存在或 hash 不匹配由 Rust 返回 `AssetUnavailable`。
+
 `@oxitone/core` 的混音 builder 复用以下协议 1.0 wire contracts：
 
 ```ts

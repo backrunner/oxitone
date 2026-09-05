@@ -8,6 +8,10 @@ conventional commits (`type(scope): description`).
 
 ### Added
 
+- M2 TypeScript sample authoring: immutable `Sample` references, `SampleClip`
+  placement with `off`/`stretch`/`repitch`, loop/gain/pan/rate controls, and
+  `fitBeats`/`fitBars`/`fitToContent` helpers wired into validated snapshots.
+
 - TypeScript mixer authoring: editable Master and mixer buses, channel routing,
   pre/post-fader and sidechain sends, bus/send automation, Channel insert chains,
   swing/mute/solo, and defensive snapshots with revision-aware setters. Existing

@@ -95,6 +95,11 @@ clip.fitToContent()    // 反向：按内容原始长度折算 beat 长度
 
 WAV/AIFF 可以直接解码。MP3（以及包含音频轨的 MP4/M4A）在导入/prepare 阶段转换成缓存 WAV/PCM，并记录原始 hash 与 decoder 版本；实时 callback 不读压缩数据。
 
+TS authoring 提供 `project.addSample(options)` 和 `track.sample(sample).at(position, options)`。
+Sample 只保存资源 URI/hash/格式/帧数/编辑描述；SampleClip 保存 beat 位置、gain/pan/rate、
+`tempoSync`、loop 和 enabled。`fitBeats`、`fitBars`、`fitToContent` 只写入 beat-domain
+`durationBeats`；Rust 仍负责资源 hash 验证、解码、编辑烘焙、SRC 和实时播放。
+
 ## Mixer 与 routing
 
 TS authoring 已提供 `project.master`、`project.addMixerChannel(options)`、

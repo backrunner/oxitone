@@ -87,6 +87,11 @@ export class TimeSignatureMap {
     return { ...current };
   }
 
+  /** Beats in one bar at `bar`, used by fractional fit helpers. */
+  beatsPerBarAt(bar: number): number {
+    return beatsPerBar(this.atBar(bar));
+  }
+
   /** Defensive copy of the segments, as stored on the wire. */
   list(): TimeSignatureSegment[] {
     return this.segments.map((segment) => ({ ...segment }));
