@@ -231,9 +231,15 @@ channel.swing = 0.2;
 - 所有成功变更更新 revision，范围错误或未知路由以 `InvalidProject` 拒绝且不改变快照。
   插件 descriptor/参数范围与完整 DAG 由 Rust compile 校验。修改 authoring 后需要重新编译
   才影响当前 session；离线导出读取当前快照。
-- `bus.automate` 支持 bus 参数及 `send.<destinationId>.ratio`；Channel 支持既有
-  `insert.<index>.mix/bypass`。Mixer/Master insert 和 effect 插件参数的完整自动化 binding
-  仍待实现，不能从静态 EffectRef 支持推定这些路径可自动化。
+- `bus.automate` 支持 bus 参数及 `send.<destinationId>.ratio`；Channel、MixerChannel
+  和 Master 的 insert 支持 `insert.<index>.mix/bypass` 以及
+  `insert.<index>.parameter.<pluginParameterId>`。
+  这些路径统一用于 Channel、MixerChannel 和 Master 的 `automate`/`setParameter`；
+  index 为从 0 开始、无前置零的十进制整数，插件参数 ID 可含点号。未知 insert/参数报
+  `AutomationTargetInvalid`，插件参数绑定要求 descriptor 声明 `automation: true`。
+  `setParameter` 接收物理值并按 descriptor 范围校验（`AutomationRange`）。
+  effect 的 `<name>Beats` 参数在存在 `<name>Seconds` 时按有效 BPM 换算；
+  显式设置 seconds 切换为秒值，设置 beats 恢复跟随 tempo。
 
 ```ts
 export interface NoteSpec {

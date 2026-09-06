@@ -71,3 +71,7 @@ harness = false
 [[bench]]
 name = "sample_playback"
 harness = false
+
+[[bench]]
+name = "insert_automation"
+harness = false

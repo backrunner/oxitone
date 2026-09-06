@@ -89,6 +89,11 @@ process/reset/tail/latency 不得分配或释放 heap、加锁、阻塞、I/O、
 - create/prepare 必须建立 descriptor 默认参数，缺省参数不会另发事件。
   v1 C ABI 不传递 sample resources 或 structured state；这些能力需要后续 ABI 扩展。
 
+Channel/Mixer/Master insert 的初始参数、host events 和 automation 在每个 render
+segment 内按参数索引合并，最后的值生效。暂存空间在 compile 时按 descriptor
+参数数预分配；ABI 事件借用的参数 ID 仅在 process 调用期间有效。Rust trait 的
+320 参数队列测试不改变 C ABI v1 的 256 参数上限。
+
 ## 故障与信任边界
 
 `getPluginDiagnostics(engine)` 返回按 ID/version 排序的

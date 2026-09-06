@@ -103,6 +103,11 @@ AST 最大深度 64、最大节点数 256。共享 source 在 wire 中默认展�
 - gate、step、square、chance 的不连续点若落在 block 内，compiler 必须生成 segment 边界，使变化落在正确 sample frame。
 - tempo change 只改变 beat/sample 映射，不改变 source 在 beat 域的定义。
 
+Insert targets 使用 04 中的统一路径；初始值 → host event → automation 的同帧
+优先级对 Channel/Mixer/Master 一致。beat-unit effect 参数在物理映射后按
+`seconds = beats * 60 / effectiveBpm` 转换，未显式设置的拍数参数只有在收到
+beats automation/host event 后才启用同步。源 evaluator 与既有 golden 不变。
+
 Tempo lane 烘焙必须应用 lane 自身的 loop/lastBeat。loop 内按其 region 周期映射
 source beat，结束后保持最终 phase；恰好结束在整周期边界时保持 region 末端值。
 每次循环的 source 跳变和 wrap 都加入烘焙边界，hold 端点同样加入；combine 只能 replace。

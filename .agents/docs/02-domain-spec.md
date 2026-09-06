@@ -63,6 +63,12 @@ Note 最小字段为 `pitch`（MIDI 0..127 或明确的频率模式，Phase 1 �
 
 ## Instrument 与 Channel
 
+Channel、MixerChannel 和 Master 的有序 insert 均暴露 `insert.<index>.mix`、
+`insert.<index>.bypass` 与 `insert.<index>.parameter.<pluginParameterId>`。
+初始参数先应用，随后同帧 host 参数按入队顺序应用，最后由该帧求值的 automation
+覆盖。beat-unit effect 参数保留拍数，在调度路径按有效 BPM 换算为 seconds；
+索引与参数描述在 compile 期解析，实时端只使用整数索引和预分配事件缓冲。
+
 `Channel` 是声音生成和效果链的宿主。每个 Channel 绑定一个 `Instrument`，可绑定多个 insert effects；它有 `level`（线性 gain，0..2）、`pan`（-1..1）、`swing`（0..1，默认 0）、`mute`、`solo`、`mixerChannelId`。
 
 标准音源必须声明：`id`、`version`、单/多声道布局、最大 polyphony、参数 specs（stable parameter ID、unit、range、default、smoothing）、是否接受 MIDI note/automation，以及 tail 行为。处理链按声明顺序执行，instrument 输出先经过 inserts 再发送到 mixer bus。

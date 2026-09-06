@@ -3,9 +3,9 @@
 //! `MixerEngine::build`.
 
 use oxitone_dsp::gain_pan::equal_power_gains;
-use oxitone_graph::abi::{ParameterEvent, ProcessContext};
+use oxitone_graph::abi::ProcessContext;
 
-use super::{Bus, ChannelInput, MixerEngine, MAX_PENDING_EVENTS};
+use super::{Bus, ChannelInput, MixerEngine};
 
 impl MixerEngine {
     /// Render one block. `inputs` are summed into their buses first (in
@@ -84,20 +84,6 @@ fn process_bus(
         let bus = &mut buses[i];
         let mut in_sum = true;
         for slot in &mut bus.inserts {
-            let mut events = [ParameterEvent {
-                frame_offset: 0,
-                parameter_id: "",
-                value: 0.0,
-            }; MAX_PENDING_EVENTS];
-            let count = slot.pending.len().min(MAX_PENDING_EVENTS);
-            for (event, (index, value)) in events.iter_mut().zip(slot.pending.drain(..count)) {
-                *event = ParameterEvent {
-                    frame_offset: 0,
-                    parameter_id: slot.param_ids[index].as_str(),
-                    value,
-                };
-            }
-            slot.pending.clear();
             let (input_l, input_r, output_l, output_r) = if in_sum {
                 (&bus.sum_l, &bus.sum_r, &mut bus.work_l, &mut bus.work_r)
             } else {
@@ -108,18 +94,21 @@ fn process_bus(
             } else {
                 None
             };
-            let inputs: [&[f32]; 2] = [&input_l[..frames], &input_r[..frames]];
-            let mut outputs: [&mut [f32]; 2] = [&mut output_l[..frames], &mut output_r[..frames]];
-            let mut ctx = ProcessContext {
-                frames,
-                sample_rate,
-                inputs: &inputs,
-                outputs: &mut outputs,
-                note_events: &[],
-                parameter_events: &events[..count],
-                sidechain: sidechain.as_ref().map(|sc| &sc[..]),
-            };
-            slot.instance.process(&mut ctx);
+            slot.pending.with_events(|events| {
+                let inputs: [&[f32]; 2] = [&input_l[..frames], &input_r[..frames]];
+                let mut outputs: [&mut [f32]; 2] =
+                    [&mut output_l[..frames], &mut output_r[..frames]];
+                let mut ctx = ProcessContext {
+                    frames,
+                    sample_rate,
+                    inputs: &inputs,
+                    outputs: &mut outputs,
+                    note_events: &[],
+                    parameter_events: events,
+                    sidechain: sidechain.as_ref().map(|sc| &sc[..]),
+                };
+                slot.instance.process(&mut ctx);
+            });
             slot.dry_l[..frames].fill(0.0);
             slot.dry_r[..frames].fill(0.0);
             slot.dry_delay.process_add(

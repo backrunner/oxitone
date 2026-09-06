@@ -43,6 +43,14 @@
 
 ## 回归策略
 
+`cargo bench -p oxitone-bench --bench insert_automation` 覆盖 insert 参数路径：
+48 kHz / 128 frames，1 wavetable Track，3 mixer buses（含 Master），4 utility
+inserts 和 4 条 polarity gate lanes（period 0.01 beat、duty 0.5、seed 7）。
+分别测整图 compile/销毁、Master insert 参数解析、持续循环 [0,96000) frame
+的内存 block render（含 Master limiter）。首个归档使用 1 s 预热、每场景 3 s
+测量、30 个 Criterion samples。设备、CPU 使用率、callback p95/p99 和 xrun
+未测，记 null；此 microbench 不代替 worker/callback soak。
+
 `node benchmarks/project-files.mjs` 测项目文件保存/加载：native 先生成 48 kHz stereo
 一秒 float32 音源素材，测量外完成准备；预热 5 次，测量 30 次已有内容寻址资产的
 重复 save 和 load（包含 SHA-256、canonical manifest、fsync）。记录 median/p95/p99

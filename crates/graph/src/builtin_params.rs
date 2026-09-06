@@ -194,14 +194,13 @@ pub fn insert_parameter_id(index: usize, param: InsertParam) -> String {
 
 /// Parse `insert.<index>.<param>`, returning the insert index and parameter.
 pub fn parse_insert_parameter(parameter_id: &str) -> Option<(usize, InsertParam)> {
-    let rest = parameter_id.strip_prefix(INSERT_PREFIX)?;
-    let (index, param) = rest.split_once('.')?;
-    let param = match param {
-        "mix" => InsertParam::Mix,
-        "bypass" => InsertParam::Bypass,
-        _ => return None,
+    let (index, parameter) = crate::insert_params::parse(parameter_id)?;
+    let param = match parameter {
+        crate::insert_params::InsertParameter::Mix => InsertParam::Mix,
+        crate::insert_params::InsertParameter::Bypass => InsertParam::Bypass,
+        crate::insert_params::InsertParameter::Plugin(_) => return None,
     };
-    index.parse::<usize>().ok().map(|i| (i, param))
+    Some((index, param))
 }
 
 /// Spec of one built-in insert parameter (same definitions as

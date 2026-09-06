@@ -1,10 +1,9 @@
 //! Channel runtime node: instrument instance, insert chain with built-in
 //! `mix`/`bypass` (02-domain-spec.md §Mixer: 每个 insert 节点暴露内建
-//! mix/bypass; the mixer crate does not implement insert-level mix/bypass,
-//! so channel inserts realize them here), fader/pan, PDC compensation
+//! mix/bypass), fader/pan, PDC compensation
 //! delay, and per-block event staging. All buffers are preallocated; the
 //! per-block path performs no heap allocation (parameter events use
-//! fixed-capacity stack arrays like the mixer engine).
+//! preallocated descriptor-sized storage for insert events).
 
 use std::sync::Arc;
 
@@ -45,76 +44,7 @@ pub fn event_buf<'a>() -> [ParameterEvent<'a>; MAX_PARAM_EVENTS] {
     }; MAX_PARAM_EVENTS]
 }
 
-/// Beat-unit (`unit: 'beats'`) effect parameter converted by the host
-/// (02-domain-spec.md §Mixer: 时间类效果参数经 tempo map 换算). The authoring
-/// value stays in beats; the DSP-facing `<name>Seconds` event is recomputed
-/// per block from the effective tempo and pushed only when it changes.
-pub struct BeatParam {
-    /// Authoring value in beats (static; automation of beat-unit parameters
-    /// is not part of the Phase 1 target set).
-    pub beats: f64,
-    /// Index of the seconds parameter in the instance's `param_ids`.
-    pub seconds_index: usize,
-    pub last_sent: f64,
-}
-
-impl BeatParam {
-    /// Seconds value at `bpm`; returns `Some` once per change.
-    pub fn poll(&mut self, bpm: f64) -> Option<(usize, f64)> {
-        let seconds = self.beats * 60.0 / bpm.max(1e-9);
-        if (seconds - self.last_sent).abs() < 1e-12 {
-            None
-        } else {
-            self.last_sent = seconds;
-            Some((self.seconds_index, seconds))
-        }
-    }
-}
-
-/// One channel insert: effect instance plus host-side mix/bypass state.
-pub struct InsertNode {
-    pub instance: Box<dyn PluginInstance>,
-    pub param_ids: Arc<Vec<String>>,
-    /// Initial parameter events (physical values), applied on the first
-    /// block after compile/reset.
-    pub initial: Vec<(usize, f64)>,
-    pub mix: OnePoleSmoother,
-    pub bypass: bool,
-    pub beat_params: Vec<BeatParam>,
-    /// Staged events for the current block: (frame_offset, param index, value).
-    pub staged: Vec<(u32, usize, f64)>,
-    pub first_block: bool,
-    pub dry_delay: DelayLine,
-    pub delayed_l: Vec<f32>,
-    pub delayed_r: Vec<f32>,
-}
-
-impl InsertNode {
-    /// Stage initial values and beat-unit conversions for the block.
-    pub fn stage_control(&mut self, bpm: f64) {
-        if self.first_block {
-            let initial = std::mem::take(&mut self.initial);
-            for &(index, value) in &initial {
-                self.push(0, index, value);
-            }
-            self.initial = initial;
-            self.first_block = false;
-        }
-        for i in 0..self.beat_params.len() {
-            if let Some((index, seconds)) = self.beat_params[i].poll(bpm) {
-                self.push(0, index, seconds);
-            }
-        }
-    }
-
-    pub fn push(&mut self, offset: u32, index: usize, value: f64) {
-        if self.staged.len() < MAX_PARAM_EVENTS {
-            self.staged.push((offset, index, value));
-        } else if let Some(last) = self.staged.last_mut() {
-            *last = (offset, index, value);
-        }
-    }
-}
+pub use crate::insert::{BeatParam, InsertNode};
 
 /// One arrangement channel with its instrument and insert chain.
 pub struct ChannelNode {
@@ -159,7 +89,7 @@ pub struct ChannelNode {
 
 impl ChannelNode {
     /// Stage initial instrument values and insert control-rate events.
-    pub fn stage_control(&mut self, bpm: f64) {
+    pub fn stage_initial(&mut self) {
         if self.first_block {
             for &(index, value) in &self.instrument_initial {
                 if self.instrument_staged.len() < MAX_PARAM_EVENTS {
@@ -169,7 +99,7 @@ impl ChannelNode {
             self.first_block = false;
         }
         for insert in &mut self.inserts {
-            insert.stage_control(bpm);
+            insert.stage_initial();
         }
     }
 
@@ -207,22 +137,21 @@ impl ChannelNode {
         for insert in &mut self.inserts {
             {
                 {
-                    let ids = insert.param_ids.clone();
-                    let mut buf = event_buf();
-                    let events = build_events(&insert.staged, &ids, &mut buf);
-                    let inputs: [&[f32]; 2] = [&self.dry_l[..frames], &self.dry_r[..frames]];
-                    let mut outputs: [&mut [f32]; 2] =
-                        [&mut self.wet_l[..frames], &mut self.wet_r[..frames]];
-                    let mut ctx = ProcessContext {
-                        frames,
-                        sample_rate,
-                        inputs: &inputs,
-                        outputs: &mut outputs,
-                        note_events: &[],
-                        parameter_events: events,
-                        sidechain: None,
-                    };
-                    insert.instance.process(&mut ctx);
+                    insert.staged.with_events(|events| {
+                        let inputs: [&[f32]; 2] = [&self.dry_l[..frames], &self.dry_r[..frames]];
+                        let mut outputs: [&mut [f32]; 2] =
+                            [&mut self.wet_l[..frames], &mut self.wet_r[..frames]];
+                        let mut ctx = ProcessContext {
+                            frames,
+                            sample_rate,
+                            inputs: &inputs,
+                            outputs: &mut outputs,
+                            note_events: &[],
+                            parameter_events: events,
+                            sidechain: None,
+                        };
+                        insert.instance.process(&mut ctx);
+                    });
                 }
                 insert.delayed_l[..frames].fill(0.0);
                 insert.delayed_r[..frames].fill(0.0);
@@ -241,7 +170,6 @@ impl ChannelNode {
                     self.dry_r[n] = insert.delayed_r[n] * (1.0 - mix) + self.wet_r[n] * mix;
                 }
             }
-            insert.staged.clear();
         }
 
         // Fader: smoothed level, smoothed equal-power pan, mute/solo gate.

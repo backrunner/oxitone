@@ -55,6 +55,22 @@ const invert = (options: Partial<EffectRef> = {}): EffectRef => ({
 });
 
 describe("mixer builders through the native WAV facade", () => {
+  it("automates insert parameters and bypass on Channel, bus and Master", async () => {
+    for (const kind of ["channel", "bus", "master"] as const) {
+      const { project, bus, channel } = rig();
+      const owner = kind === "channel" ? channel : kind === "bus" ? bus : project.master;
+      const reference = await render(project);
+      owner.addEffect(invert());
+      owner.automate("insert.0.parameter.polarity", createAutomationNamespace().constant(0));
+      scaled(await render(project), reference, 1);
+      owner.automate("insert.0.bypass", createAutomationNamespace().constant(1));
+      scaled(await render(project), reference, 1);
+      // Plugin validation belongs to Rust and survives the public TS/native boundary.
+      owner.automate("insert.9.parameter.polarity", createAutomationNamespace().constant(0));
+      await expect(project.compile()).rejects.toMatchObject({ code: ErrorCode.AutomationTargetInvalid });
+    }
+  });
+
   it("applies Channel, bus and Master inserts, including mix and bypass", async () => {
     const { project, bus, channel } = rig();
     const reference = await render(project);

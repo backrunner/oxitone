@@ -10,18 +10,17 @@
 //! dispatch reads the immutable plan value, so a runtime override could not
 //! take effect and is rejected instead of silently dropped.
 
-use std::collections::{BTreeMap, BTreeSet};
-
 use oxitone_core::error::{codes, OxitoneError};
 use oxitone_core::wire::ParameterSpec;
 use oxitone_graph::builtin_params::{
-    find_parameter, insert_parameter, parse_insert_parameter, parse_send_ratio_parameter,
-    send_ratio_parameter, BuiltinEntityKind, InsertParam,
+    find_parameter, parse_send_ratio_parameter, send_ratio_parameter, BuiltinEntityKind,
 };
 use oxitone_graph::topology::MASTER_MIXER_CHANNEL_ID;
 
 use crate::bindings::RtTarget;
 use crate::graph::RenderGraph;
+use crate::param_index::ParamGraphView;
+pub use crate::param_index::ParamTargetIndex;
 
 /// One host parameter change (physical value; `at_frame` = absolute
 /// transport frame, `None` applies at the next processed block).
@@ -44,140 +43,6 @@ fn target_invalid(message: impl Into<String>) -> OxitoneError {
     OxitoneError::new(codes::AUTOMATION_TARGET_INVALID, message)
 }
 
-/// Everything parameter resolution needs from the graph, abstracted so the
-/// realtime session can resolve against an immutable snapshot
-/// ([`ParamTargetIndex`]) while the compiled graph lives on the render
-/// worker thread.
-pub(crate) trait ParamGraphView {
-    fn channel_index(&self, entity: &str) -> Option<usize>;
-    fn channel_id(&self, channel: usize) -> &str;
-    fn channel_insert_count(&self, channel: usize) -> usize;
-    fn instrument_param_ids(&self, channel: usize) -> &[String];
-    fn instrument_specs(&self, channel: usize) -> &[ParameterSpec];
-    fn has_mixer_bus(&self, id: &str) -> bool;
-    fn has_send_route(&self, route: &(String, String)) -> bool;
-    fn clip_index(&self, entity: &str) -> Option<usize>;
-}
-
-/// Immutable snapshot of every resolvable parameter target, built at
-/// compile/session start (control thread). Lets `setParameter` keep its
-/// synchronous validation while the graph itself is owned by the realtime
-/// worker.
-pub struct ParamTargetIndex {
-    channels: BTreeMap<String, usize>,
-    channel_ids: Vec<String>,
-    insert_counts: Vec<usize>,
-    instrument_param_ids: Vec<std::sync::Arc<Vec<String>>>,
-    instrument_specs: Vec<std::sync::Arc<Vec<ParameterSpec>>>,
-    mixer_buses: BTreeSet<String>,
-    mixer_sends: BTreeSet<(String, String)>,
-    clip_ids: BTreeMap<String, usize>,
-}
-
-impl ParamTargetIndex {
-    pub fn from_graph(graph: &RenderGraph) -> Self {
-        let mut channels = BTreeMap::new();
-        let mut channel_ids = Vec::new();
-        let mut insert_counts = Vec::new();
-        let mut instrument_param_ids = Vec::new();
-        let mut instrument_specs = Vec::new();
-        for (index, channel) in graph.channels.iter().enumerate() {
-            channels.insert(channel.id.clone(), index);
-            channel_ids.push(channel.id.clone());
-            insert_counts.push(channel.inserts.len());
-            instrument_param_ids.push(channel.instrument_param_ids.clone());
-            instrument_specs.push(channel.instrument_specs.clone());
-        }
-        Self {
-            channels,
-            channel_ids,
-            insert_counts,
-            instrument_param_ids,
-            instrument_specs,
-            mixer_buses: graph.mixer.bus_order().into_iter().collect(),
-            mixer_sends: graph.mixer_sends.clone(),
-            clip_ids: graph
-                .plan
-                .sample_clips
-                .iter()
-                .enumerate()
-                .map(|(index, clip)| (clip.id.clone(), index))
-                .collect(),
-        }
-    }
-}
-
-impl ParamGraphView for ParamTargetIndex {
-    fn channel_index(&self, entity: &str) -> Option<usize> {
-        self.channels.get(entity).copied()
-    }
-
-    fn channel_id(&self, channel: usize) -> &str {
-        &self.channel_ids[channel]
-    }
-
-    fn channel_insert_count(&self, channel: usize) -> usize {
-        self.insert_counts[channel]
-    }
-
-    fn instrument_param_ids(&self, channel: usize) -> &[String] {
-        &self.instrument_param_ids[channel]
-    }
-
-    fn instrument_specs(&self, channel: usize) -> &[ParameterSpec] {
-        &self.instrument_specs[channel]
-    }
-
-    fn has_mixer_bus(&self, id: &str) -> bool {
-        self.mixer_buses.contains(id)
-    }
-
-    fn has_send_route(&self, route: &(String, String)) -> bool {
-        self.mixer_sends.contains(route)
-    }
-
-    fn clip_index(&self, entity: &str) -> Option<usize> {
-        self.clip_ids.get(entity).copied()
-    }
-}
-
-impl ParamGraphView for RenderGraph {
-    fn channel_index(&self, entity: &str) -> Option<usize> {
-        self.channel_index.get(entity).copied()
-    }
-
-    fn channel_id(&self, channel: usize) -> &str {
-        &self.channels[channel].id
-    }
-
-    fn channel_insert_count(&self, channel: usize) -> usize {
-        self.channels[channel].inserts.len()
-    }
-
-    fn instrument_param_ids(&self, channel: usize) -> &[String] {
-        &self.channels[channel].instrument_param_ids
-    }
-
-    fn instrument_specs(&self, channel: usize) -> &[ParameterSpec] {
-        &self.channels[channel].instrument_specs
-    }
-
-    fn has_mixer_bus(&self, id: &str) -> bool {
-        self.mixer.bus_order().iter().any(|bus| bus == id)
-    }
-
-    fn has_send_route(&self, route: &(String, String)) -> bool {
-        self.mixer_sends.contains(route)
-    }
-
-    fn clip_index(&self, entity: &str) -> Option<usize> {
-        self.plan
-            .sample_clips
-            .iter()
-            .position(|clip| clip.id == entity)
-    }
-}
-
 fn resolve_channel(
     view: &dyn ParamGraphView,
     channel: usize,
@@ -195,25 +60,6 @@ fn resolve_channel(
             }
         };
         return Ok((target, spec));
-    }
-    if let Some((index, param)) = parse_insert_parameter(parameter_id) {
-        if index >= view.channel_insert_count(channel) {
-            return Err(target_invalid(format!(
-                "channel {:?} has no insert #{index}",
-                view.channel_id(channel)
-            )));
-        }
-        let target = match param {
-            InsertParam::Mix => RtTarget::InsertMix {
-                channel,
-                insert: index,
-            },
-            InsertParam::Bypass => RtTarget::InsertBypass {
-                channel,
-                insert: index,
-            },
-        };
-        return Ok((target, insert_parameter(param)));
     }
     let index = view
         .instrument_param_ids(channel)
@@ -236,6 +82,21 @@ fn resolve_mixer(
     entity_id: &str,
     parameter_id: &str,
 ) -> Result<(RtTarget, ParameterSpec), OxitoneError> {
+    if let Some(destination) = parse_send_ratio_parameter(parameter_id) {
+        let route = (entity_id.to_string(), destination.to_string());
+        if !view.has_send_route(&route) {
+            return Err(target_invalid(format!(
+                "no send from {entity_id:?} to {destination:?}"
+            )));
+        }
+        return Ok((
+            RtTarget::MixerSendRatio {
+                bus: entity_id.to_string(),
+                destination: destination.to_string(),
+            },
+            send_ratio_parameter(destination),
+        ));
+    }
     if let Some(spec) = find_parameter(BuiltinEntityKind::MixerChannel, parameter_id) {
         let target = match parameter_id {
             "level" => RtTarget::MixerLevel(entity_id.to_string()),
@@ -257,21 +118,9 @@ fn resolve_mixer(
         };
         return Ok((target, spec));
     }
-    let destination = parse_send_ratio_parameter(parameter_id)
-        .ok_or_else(|| target_invalid(format!("mixer bus has no parameter {parameter_id:?}")))?;
-    let route = (entity_id.to_string(), destination.to_string());
-    if !view.has_send_route(&route) {
-        return Err(target_invalid(format!(
-            "no send from {entity_id:?} to {destination:?}"
-        )));
-    }
-    Ok((
-        RtTarget::MixerSendRatio {
-            bus: entity_id.to_string(),
-            destination: destination.to_string(),
-        },
-        send_ratio_parameter(destination),
-    ))
+    Err(target_invalid(format!(
+        "mixer bus has no parameter {parameter_id:?}"
+    )))
 }
 
 fn resolve_clip(
@@ -300,6 +149,9 @@ fn resolve_target(
     entity_id: &str,
     parameter_id: &str,
 ) -> Result<(RtTarget, ParameterSpec), OxitoneError> {
+    if parameter_id.starts_with("insert.") {
+        return view.effect_targets().resolve(entity_id, parameter_id);
+    }
     if let Some(channel) = view.channel_index(entity_id) {
         return resolve_channel(view, channel, parameter_id);
     }

@@ -11,6 +11,7 @@ use crate::graph::RenderGraph;
 /// Binding target resolved to runtime indices.
 #[derive(Debug, Clone)]
 pub enum RtTarget {
+    EffectInsert(crate::effect_targets::EffectTarget),
     ChannelLevel(usize),
     ChannelPan(usize),
     ChannelMute(usize),
@@ -42,6 +43,16 @@ pub(crate) fn resolve_bindings(graph: &RenderGraph) -> Vec<RtBinding> {
     let mut out = Vec::new();
     for (index, binding) in graph.plan.bindings.iter().enumerate() {
         let target = match &binding.target {
+            BindingTarget::EffectInsert {
+                entity_id,
+                parameter_id,
+            } => {
+                graph
+                    .effect_targets
+                    .resolve(entity_id, parameter_id)
+                    .expect("validated insert target")
+                    .0
+            }
             BindingTarget::ChannelLevel(c) => RtTarget::ChannelLevel(*c),
             BindingTarget::ChannelPan(c) => RtTarget::ChannelPan(*c),
             BindingTarget::ChannelMute(c) => RtTarget::ChannelMute(*c),
@@ -122,6 +133,13 @@ pub(crate) fn apply_bindings(graph: &mut RenderGraph, beat: f64, first: bool) {
         // `&graph.rt_bindings` iteration borrow can coexist with the
         // disjoint field mutations (RT path, no per-block clones).
         match &binding.target {
+            RtTarget::EffectInsert(target) => crate::effect_targets::apply(
+                &mut graph.channels,
+                &mut graph.mixer,
+                &mut graph.mixer_beat_params,
+                *target,
+                physical,
+            ),
             RtTarget::ChannelLevel(c) => graph.channels[*c].level.set_target(physical as f32),
             RtTarget::ChannelPan(c) => graph.channels[*c].pan.set_target(physical as f32),
             RtTarget::ChannelMute(c) => graph.channels[*c].mute = physical >= 0.5,
@@ -166,6 +184,13 @@ pub(crate) fn apply_bindings(graph: &mut RenderGraph, beat: f64, first: bool) {
 /// path keeps an inline copy in `apply_bindings` for borrow reasons.
 pub(crate) fn apply_rt_target(graph: &mut RenderGraph, target: &RtTarget, physical: f64) {
     match target {
+        RtTarget::EffectInsert(target) => crate::effect_targets::apply(
+            &mut graph.channels,
+            &mut graph.mixer,
+            &mut graph.mixer_beat_params,
+            *target,
+            physical,
+        ),
         RtTarget::ChannelLevel(c) => graph.channels[*c].level.set_target(physical as f32),
         RtTarget::ChannelPan(c) => graph.channels[*c].pan.set_target(physical as f32),
         RtTarget::ChannelMute(c) => graph.channels[*c].mute = physical >= 0.5,

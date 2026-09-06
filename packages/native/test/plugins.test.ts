@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
 import { beatToWire, pluginManifestSchema, type ProjectSnapshot } from "@oxitone/protocol";
-import { compile, createEngine, dispose, getPluginDiagnostics, registerPlugin, renderWav } from "../src/index.js";
+import { compile, createEngine, dispose, getPluginDiagnostics, registerPlugin, renderWav, setParameter } from "../src/index.js";
 
 const root = fileURLToPath(new URL("../../../", import.meta.url));
 const dir = mkdtempSync(join(tmpdir(), "oxitone-plugins-"));
@@ -41,6 +41,34 @@ function snapshot(gain?: number): ProjectSnapshot {
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
 describe("dynamic plugins through the native facade", () => {
+  it("applies insert automation and queued host parameters to dynamic effects", () => {
+    const engine = createEngine({ allowPlugins: "any" });
+    try {
+      registerPlugin(engine, { libraryPath: build("automated-gain"), manifest });
+      for (const owner of ["chn_plugin", "mix_master"]) {
+        const input = snapshot(1);
+        if (owner === "mix_master") {
+          input.mixerChannels.push({ id: owner, level: 1, balance: 0,
+            inserts: input.channels[0]!.effectChain, sends: [] });
+          input.channels[0]!.effectChain = [];
+        }
+        compile(engine, input);
+        const reference = renderWav(engine, input, { path: join(dir, `${owner}-reference.wav`) });
+        setParameter(engine, owner, "insert.0.parameter.gain", 0.5);
+        const host = renderWav(engine, input, { path: join(dir, `${owner}-host.wav`) });
+        expect(reference.files[0]!.peakDbfs - host.files[0]!.peakDbfs).toBeCloseTo(6.0206, 3);
+        input.automation.push({ id: "auto_gain", target: { entityId: owner, parameterId: "insert.0.parameter.gain" },
+          source: { kind: "constant", value: 0.25 } }); // descriptor gain is 0..2; physical = 0.5
+        compile(engine, input); // Clear host events so this render exercises the lane alone.
+        const automated = renderWav(engine, input, { path: join(dir, `${owner}-automation.wav`) });
+        expect(readFileSync(automated.files[0]!.path)).toEqual(readFileSync(host.files[0]!.path));
+      }
+      expect(getPluginDiagnostics(engine)[0]!.faults).toBe(0);
+    } finally {
+      dispose(engine);
+    }
+  });
+
   it("registers per engine, compiles and renders the C effect with deterministic gain", () => {
     const libraryPath = build("gain");
     const expectedHash = createHash("sha256").update(readFileSync(libraryPath)).digest("hex");

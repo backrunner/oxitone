@@ -17,7 +17,7 @@ fn invalid(message: impl Into<String>, path: impl Into<String>) -> OxitoneError 
 }
 
 /// Plain initial events plus beat-unit conversions of one effect.
-type SplitParams = (Vec<(usize, f64)>, Vec<(f64, String)>);
+type SplitParams = (Vec<(usize, f64)>, Vec<BeatParam>);
 
 /// Instrument instance plus its parameter table, specs and initial events.
 type CreatedInstrument = (
@@ -37,24 +37,35 @@ pub(super) fn split_effect_params(
 ) -> Result<SplitParams, OxitoneError> {
     let mut initial = Vec::new();
     let mut beat_params = Vec::new();
-    for (id, value) in parameters {
-        let Some(index) = param_ids.iter().position(|p| p == id) else {
-            return Err(invalid(
-                format!("unknown parameter {id:?}"),
-                format!("{path}.{id}"),
-            ));
-        };
+    for (index, id) in param_ids.iter().enumerate() {
+        let value = parameters.get(id).copied();
         if units.get(id) == Some(&ParameterUnit::Beats) {
             if let Some(seconds_id) = id
                 .strip_suffix("Beats")
                 .map(|stem| format!("{stem}Seconds"))
                 .filter(|candidate| param_ids.iter().any(|p| p == candidate))
             {
-                beat_params.push((*value, seconds_id));
+                beat_params.push(BeatParam {
+                    beats: value.unwrap_or(0.0),
+                    parameter_index: index,
+                    seconds_index: param_ids.iter().position(|p| p == &seconds_id).unwrap(),
+                    active: value.is_some(),
+                    last_sent: f64::NAN,
+                });
                 continue;
             }
         }
-        initial.push((index, *value));
+        if let Some(value) = value {
+            initial.push((index, value));
+        }
+    }
+    for id in parameters.keys() {
+        if !param_ids.contains(id) {
+            return Err(invalid(
+                format!("unknown parameter {id:?}"),
+                format!("{path}.{id}"),
+            ));
+        }
     }
     Ok((initial, beat_params))
 }
@@ -169,18 +180,12 @@ pub(super) fn create_insert(
         delayed_r: vec![0.0; max_block as usize],
         instance,
         param_ids: param_ids.clone(),
+        specs: Arc::new(descriptor.parameters.clone()),
         initial,
         mix,
         bypass: effect.bypass.unwrap_or(false),
-        beat_params: beats
-            .into_iter()
-            .map(|(value, seconds_id)| BeatParam {
-                beats: value,
-                seconds_index: param_ids.iter().position(|p| p == &seconds_id).unwrap_or(0),
-                last_sent: f64::NAN,
-            })
-            .collect(),
-        staged: Vec::with_capacity(crate::channel::MAX_PARAM_EVENTS),
+        beat_params: beats,
+        staged: oxitone_mixer::parameter_queue::ParameterQueue::new(&descriptor.parameters),
         first_block: true,
     })
 }
@@ -213,8 +218,8 @@ pub(super) fn preprocess_mixer_channel(
             .collect();
         let mut removals = Vec::new();
         let mut additions = Vec::new();
-        for (id, value) in &effect.parameters {
-            if units.get(id.as_str()) != Some(&ParameterUnit::Beats) {
+        for (parameter_index, id) in param_ids.iter().enumerate() {
+            if units.get(id) != Some(&ParameterUnit::Beats) {
                 continue;
             }
             let Some(seconds_id) = id
@@ -224,16 +229,21 @@ pub(super) fn preprocess_mixer_channel(
             else {
                 continue;
             };
-            removals.push(id.clone());
-            let seconds = value * 60.0 / bpm.max(1e-9);
-            additions.push((seconds_id.clone(), seconds));
+            let value = effect.parameters.get(*id).copied();
+            let seconds = value.unwrap_or(0.0) * 60.0 / bpm.max(1e-9);
+            if value.is_some() {
+                removals.push(id.to_string());
+                additions.push((seconds_id.clone(), seconds));
+            }
             beat_params.push(MixerBeatParam {
                 bus: spec.id.clone(),
+                bus_index: 0, // Resolved after the mixer's topological sort.
                 insert: index,
-                seconds_id,
                 state: BeatParam {
-                    beats: *value,
-                    seconds_index: 0,
+                    beats: value.unwrap_or(0.0),
+                    parameter_index,
+                    active: value.is_some(),
+                    seconds_index: param_ids.iter().position(|p| *p == seconds_id).unwrap(),
                     last_sent: seconds,
                 },
             });

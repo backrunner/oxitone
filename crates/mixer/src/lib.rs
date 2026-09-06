@@ -9,6 +9,7 @@
 pub mod bus;
 pub mod effects;
 pub mod meter;
+pub mod parameter_queue;
 pub mod pdc;
 
 pub use bus::{ChannelInput, MixerEngine};

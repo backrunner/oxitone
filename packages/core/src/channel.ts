@@ -119,6 +119,7 @@ export class Channel {
     return this;
   }
 
+  /** Bind a channel, instrument, or `insert.<index>.parameter.<id>` parameter. */
   automate(
     parameterId: string,
     source: AutomationSource,

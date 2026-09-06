@@ -139,7 +139,7 @@ export class MixerChannel {
     return this;
   }
 
-  /** Bind a bus or `send.<destinationId>.ratio` parameter to an automation source. */
+  /** Bind a bus, send ratio, or `insert.<index>.mix/bypass/parameter.<id>` target. */
   automate(
     parameterId: string,
     source: AutomationSource,

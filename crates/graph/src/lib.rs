@@ -10,6 +10,7 @@ pub mod abi_c;
 pub mod builtin_params;
 pub mod compile;
 pub mod descriptor;
+pub mod insert_params;
 pub mod registry;
 pub mod topology;
 pub mod validate;

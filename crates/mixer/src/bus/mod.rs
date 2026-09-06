@@ -10,6 +10,7 @@
 
 use std::collections::BTreeMap;
 
+mod parameters;
 mod process;
 
 use oxitone_core::error::{codes, OxitoneError};
@@ -21,9 +22,6 @@ use oxitone_graph::topology::{build_mixer_routing, MASTER_MIXER_CHANNEL_ID};
 
 use crate::meter::{BusMeter, TruePeakMeter};
 use crate::pdc::{plan_pdc, DelayLine, PdcPlan};
-
-/// Max block-boundary parameter events applied per insert per block.
-const MAX_PENDING_EVENTS: usize = 256;
 
 /// Stereo input of one source channel summed into a bus for one block.
 /// The caller (compiler) fixes the slice order — it is part of the
@@ -38,7 +36,8 @@ struct InsertSlot {
     instance: Box<dyn PluginInstance>,
     accepts_sidechain: bool,
     param_ids: Vec<String>,
-    pending: Vec<(usize, f64)>,
+    specs: std::sync::Arc<Vec<oxitone_core::wire::ParameterSpec>>,
+    pending: crate::parameter_queue::ParameterQueue,
     mix: OnePoleSmoother,
     bypass: bool,
     dry_delay: DelayLine,
@@ -138,7 +137,8 @@ impl MixerEngine {
                     instance.try_prepare(sample_rate, max_block_size)?;
                     let param_ids: Vec<String> =
                         descriptor.parameters.iter().map(|p| p.id.clone()).collect();
-                    let mut pending = Vec::with_capacity(MAX_PENDING_EVENTS);
+                    let mut pending =
+                        crate::parameter_queue::ParameterQueue::new(&descriptor.parameters);
                     for (param_id, value) in &effect.parameters {
                         let index =
                             param_ids
@@ -154,7 +154,7 @@ impl MixerEngine {
                                         format!("$.mixerChannels.{id}.inserts"),
                                     )
                                 })?;
-                        pending.push((index, *value));
+                        pending.set(index, *value);
                     }
                     latency += instance.latency_frames();
                     let mut mix = OnePoleSmoother::new(sample_rate, 20.0);
@@ -171,6 +171,7 @@ impl MixerEngine {
                         instance,
                         accepts_sidechain: descriptor.capabilities.sidechain_input,
                         param_ids,
+                        specs: std::sync::Arc::new(descriptor.parameters.clone()),
                         pending,
                     });
                 }
@@ -342,8 +343,8 @@ impl MixerEngine {
     }
 
     /// Queue a block-boundary parameter event for one insert. Control
-    /// thread. Unknown parameter IDs are rejected; when the pending queue
-    /// is full the latest value for the same parameter wins.
+    /// thread. Unknown parameter IDs are rejected; the latest value for the
+    /// same parameter wins within a render segment.
     pub fn set_insert_parameter(
         &mut self,
         bus_id: &str,
@@ -368,11 +369,7 @@ impl MixerEngine {
                     format!("unknown parameter {parameter_id:?} on bus {bus_id:?}"),
                 )
             })?;
-        if let Some(entry) = slot.pending.iter_mut().find(|(i, _)| *i == index) {
-            entry.1 = value;
-        } else if slot.pending.len() < MAX_PENDING_EVENTS {
-            slot.pending.push((index, value));
-        }
+        slot.pending.set(index, value);
         Ok(())
     }
 

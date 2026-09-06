@@ -26,8 +26,8 @@ use crate::transport::{Transport, TransportState};
 /// insert (channel inserts keep their state inside `InsertNode`).
 pub struct MixerBeatParam {
     pub bus: String,
+    pub bus_index: usize,
     pub insert: usize,
-    pub seconds_id: String,
     pub state: crate::channel::BeatParam,
 }
 
@@ -47,6 +47,7 @@ pub struct RenderGraph {
     /// Declared send routes `(source bus, destination bus)` from the
     /// compiled specs (host `setParameter` target validation).
     pub(crate) mixer_sends: BTreeSet<(String, String)>,
+    pub(crate) effect_targets: crate::effect_targets::EffectTargetIndex,
     pub(crate) limiter: Option<Box<dyn PluginInstance>>,
     pub(crate) metronome: Option<Metronome>,
     pub(crate) transport: Transport,
@@ -112,6 +113,7 @@ impl RenderGraph {
             mixer,
             mixer_beat_params,
             mixer_sends,
+            effect_targets: Default::default(),
             limiter,
             metronome,
             transport: Transport::new(),
@@ -135,6 +137,13 @@ impl RenderGraph {
             clip_gain: vec![0.0; block_size],
             clip_pan: vec![0.0; block_size],
         };
+        for beat in &mut graph.mixer_beat_params {
+            beat.bus_index = graph
+                .mixer
+                .bus_index(&beat.bus)
+                .expect("validated mixer bus");
+        }
+        graph.effect_targets = crate::effect_targets::EffectTargetIndex::from_graph(&graph);
         graph.rt_bindings = resolve_bindings(&graph);
         graph
     }
@@ -298,6 +307,10 @@ impl RenderGraph {
         let beat = self.plan.tempo.frame_to_beat(cur).to_f64();
         let bpm = self.plan.tempo.bpm_at_frame(cur);
 
+        for channel in &mut self.channels {
+            channel.stage_initial();
+        }
+
         // Host parameter events due at or before this block's start
         // (control rate, ahead of automation application).
         while let Some(event) = self.param_queue.front() {
@@ -311,14 +324,16 @@ impl RenderGraph {
         // Control-rate automation and parameter staging.
         apply_bindings(self, beat, first);
         for channel in &mut self.channels {
-            channel.stage_control(bpm);
+            for insert in &mut channel.inserts {
+                insert.stage_tempo(bpm);
+            }
         }
         for beat_param in &mut self.mixer_beat_params {
-            if let Some((_, seconds)) = beat_param.state.poll(bpm) {
-                let _ = self.mixer.set_insert_parameter(
-                    &beat_param.bus,
+            if let Some((index, seconds)) = beat_param.state.poll(bpm) {
+                self.mixer.set_insert_parameter_at(
+                    beat_param.bus_index,
                     beat_param.insert,
-                    &beat_param.seconds_id,
+                    index,
                     seconds,
                 );
             }

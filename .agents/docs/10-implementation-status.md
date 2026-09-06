@@ -146,7 +146,28 @@
   median/p95/p99 为 11.44/12.61/12.80 ms。首个控制线程基线，不包含 native compile、
   callback 或 xrun；Rust 执行路径未变，不替代 M4/M7 的实时验收。
 
-当前剩余重点：insert 插件参数及 Mixer/Master insert 自动化；预设；标准化 WAV 导入
+## Insert 参数自动化（2026-09-06）
+
+- Channel/MixerChannel/Master 的 `insert.<index>.mix/bypass` 与
+  `insert.<index>.parameter.<pluginParameterId>` 已统一支持 automation 和
+  `setParameter`，控制线程校验 descriptor、索引、automation 标志和物理值范围。
+  同时修复 send ratio host target 误拒绝与 Master outgoing ratio 的错误接受。
+- 初始值先于 host event 和 automation；beat 参数可随有效 tempoMap/tempo lane
+  换算，并支持 seconds/beat 模式切换。新目标只携带整数索引，参数暂存空间按
+  descriptor 预分配并合并同帧更新，避免原 Channel 64 事件截断。
+- 新增 10 项 Rust integration 场景覆盖三种宿主、首块优先级、64/128/256 block
+  的 frame 120/240 边界、PDC、beat/seconds、范围和零 allocation/free。
+  320 参数队列测试通过 Miri；TS native WAV 与真实 C 动态插件测试覆盖 facade parity。
+- release native build、TS 187 tests、lint/typecheck、fmt 和专项 benchmark 通过。
+  Rust workspace 的 `jitter_within_horizon_causes_no_underrun` 在当前机器失败；
+  原提交 4bcc217 的隔离工作树也出现 6 xruns，独立 render 包测试曾通过。
+  该既有模拟调度问题单独追踪，不能记作全量检查通过或实时 soak 验收。
+  对该项显式 skip 后，其余 Rust workspace 检查全部通过；没有放宽断言或隐藏失败。
+- [专项基准](../../benchmarks/results/2026-09-06-insert-automation.json)：Apple M4，
+  1 Track / 3 buses / 4 inserts / 4 lanes，compile mean 32.03 µs、resolve 51.60 ns、
+  render 128 frames mean 168.99 µs。没有设备、callback 或 xrun 测量。
+
+当前剩余重点：预设；标准化 WAV 导入
 缓存/provenance 与内置音源便捷入口；macOS CI/npm 分发/示例；Preview runner/GPUI；
 持续有声负载及设备拔插、资源预算/watchdog、fuzz/sanitizer/SBOM/签名公证等发布门禁。
 这些项仍未完成，逐项实现和记录出口证据后才能关闭对应里程碑。

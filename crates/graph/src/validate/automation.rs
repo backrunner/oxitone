@@ -39,14 +39,11 @@ fn resolve_target(
         if let Some(spec) = find_parameter(BuiltinEntityKind::Channel, parameter_id) {
             return Ok(spec);
         }
-        if let Some((index, param)) = crate::builtin_params::parse_insert_parameter(parameter_id) {
-            if index < channel.effect_chain.len() {
-                return Ok(crate::builtin_params::insert_parameter(param));
-            }
-            return Err(target_invalid(
-                path,
-                format!("channel has no insert #{index} for parameter {parameter_id:?}"),
-            ));
+        if parameter_id.starts_with("insert.") {
+            return crate::insert_params::resolve(&channel.effect_chain, registry, parameter_id)
+                .ok_or_else(|| {
+                    target_invalid(path, format!("invalid insert target {parameter_id:?}"))
+                });
         }
         let descriptor = registry
             .lookup_descriptor(
@@ -68,6 +65,14 @@ fn resolve_target(
             });
     }
     if let Some(bus) = snapshot.mixer_channels.iter().find(|m| m.id == entity_id) {
+        if parameter_id.starts_with("insert.") {
+            return crate::insert_params::resolve(&bus.inserts, registry, parameter_id).ok_or_else(
+                || target_invalid(path, format!("invalid insert target {parameter_id:?}")),
+            );
+        }
+        if entity_id == MASTER_MIXER_CHANNEL_ID && parameter_id == "masterSendRatio" {
+            return Err(target_invalid(path, "Master has no outgoing route"));
+        }
         let spec =
             find_parameter(BuiltinEntityKind::MixerChannel, parameter_id).ok_or_else(|| {
                 target_invalid(

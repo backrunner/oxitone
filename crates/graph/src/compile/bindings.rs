@@ -10,10 +10,7 @@ use oxitone_core::error::{codes, OxitoneError};
 use oxitone_core::wire::{AutomationCombine, EntityId, ParameterSpec, ProjectSnapshot};
 use oxitone_transport::automation::CompiledAutomation;
 
-use crate::builtin_params::{
-    find_parameter, insert_parameter, parse_insert_parameter, parse_send_ratio_parameter,
-    BuiltinEntityKind,
-};
+use crate::builtin_params::{find_parameter, parse_send_ratio_parameter, BuiltinEntityKind};
 use crate::registry::PluginRegistry;
 
 /// One compiled lane: fixed evaluator plus combine rule and loop mapping.
@@ -35,6 +32,10 @@ pub struct CompiledLane {
 /// mixer targets carry bus IDs (the mixer engine resolves them).
 #[derive(Debug, Clone, PartialEq)]
 pub enum BindingTarget {
+    EffectInsert {
+        entity_id: String,
+        parameter_id: String,
+    },
     ChannelLevel(usize),
     ChannelPan(usize),
     ChannelMute(usize),
@@ -110,24 +111,19 @@ fn resolve(
             };
             return Ok(Some((target, spec)));
         }
-        if let Some((index, param)) = parse_insert_parameter(parameter_id) {
-            let target = match param {
-                crate::builtin_params::InsertParam::Mix => BindingTarget::InsertMix {
-                    channel,
-                    insert: index,
-                },
-                crate::builtin_params::InsertParam::Bypass => BindingTarget::InsertBypass {
-                    channel,
-                    insert: index,
-                },
-            };
-            return Ok(Some((target, insert_parameter(param))));
-        }
         let channel_spec = snapshot
             .channels
             .iter()
             .find(|c| c.id == entity_id)
             .expect("channel index covers the snapshot");
+        if parameter_id.starts_with("insert.") {
+            return resolve_insert(
+                &channel_spec.effect_chain,
+                registry,
+                entity_id,
+                parameter_id,
+            );
+        }
         let descriptor = registry
             .lookup_descriptor(
                 &channel_spec.instrument.plugin_id,
@@ -152,7 +148,10 @@ fn resolve(
             spec,
         )));
     }
-    if snapshot.mixer_channels.iter().any(|m| m.id == entity_id) {
+    if let Some(bus) = snapshot.mixer_channels.iter().find(|m| m.id == entity_id) {
+        if parameter_id.starts_with("insert.") {
+            return resolve_insert(&bus.inserts, registry, entity_id, parameter_id);
+        }
         let spec =
             find_parameter(BuiltinEntityKind::MixerChannel, parameter_id).ok_or_else(|| {
                 target_invalid(format!("mixer channel has no parameter {parameter_id:?}"))
@@ -195,6 +194,23 @@ fn resolve(
     }
     Err(target_invalid(format!(
         "unknown automation target entity {entity_id:?}"
+    )))
+}
+
+fn resolve_insert(
+    effects: &[oxitone_core::wire::EffectRef],
+    registry: &PluginRegistry,
+    entity_id: &str,
+    parameter_id: &str,
+) -> Result<Option<(BindingTarget, ParameterSpec)>, OxitoneError> {
+    let spec = crate::insert_params::resolve(effects, registry, parameter_id)
+        .ok_or_else(|| target_invalid(format!("invalid insert target {parameter_id:?}")))?;
+    Ok(Some((
+        BindingTarget::EffectInsert {
+            entity_id: entity_id.to_string(),
+            parameter_id: parameter_id.to_string(),
+        },
+        spec,
     )))
 }
 
