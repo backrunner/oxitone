@@ -1,16 +1,16 @@
-# 计划与实现核对（2026-09-05）
+# 计划与实现核对（更新至 2026-09-06）
 
-本次以 `9423ad3` 为核对基线。工作区干净；已有 5 个提交均使用
-`BackRunner <dev@backrunner.top>` 和 `type(scope): description` 格式，无待补提交的实现。
-下表依据源码、正式测试和分发目录核对；“已有”不等于整个里程碑通过验收。
+最初以 `9423ad3` 为核对基线；下表更新为当前实现，后文保留各阶段证据。
+提交继续使用 `BackRunner <dev@backrunner.top>` 与 `type(scope): description`。
+表格依据源码、正式测试和分发目录核对；“已有”不等于整个里程碑通过验收。
 
 | 里程碑 | 已有实现与依据 | 尚未完成或缺少验收证据 |
 | --- | --- | --- |
 | M0 工程与协议 | pnpm/Cargo workspace、版本协议、canonical fixtures、N-API smoke tests | `.github/workflows` 缺失；干净 macOS 环境安装/构建门禁未建立 |
-| M1 时间轴/MIDI | Project/Track/Pattern/Clip、Chord/Arp、tempo/time-signature、确定性 SMF writer 与边界测试 | TS Track 未暴露 `tempo`、`enabled`、`midiChannel`；不能据底层 wire 字段认定 authoring 已交付 |
-| M2 音源/采样 | Rust synth/Sampler/Slicer、解码/编辑/SRC、SampleClip stretch/repitch、C ABI/动态插件与 conformance tests | `packages/samples` 缺失；Project 的 samples/sampleClips 固定为空；缺 Sample/SampleClip builders、fit helpers 和内置音源便捷入口 |
-| M3 Mixer/Automation/导出 | Rust mixer/PDC/12 effects、automation evaluator/tempo bake、WAV/stem/loudness 与回归测试 | TS 仅固定 Master、Channel effectChain 固定为空；effect 插件参数和 Mixer/Master insert 自动化缺乏完整 binding；全规格 golden/PDC/export 门禁需逐项复核 |
-| M4 实时与设备 | CoreAudio HAL、render-ahead/direct、transport/loop、设备适配/诊断、换图回收及模拟设备测试 | SDK 的 marker/timecode 起播、Session 换图入口未完整暴露；修正循环负载后的 10/60 分钟 soak、真实设备切换/拔插和 callback 指标仍需验收 |
+| M1 时间轴/MIDI | Project/Track/Pattern/Clip、Chord/Arp、tempo/time-signature、Track tempo/enabled/midiChannel、确定性 SMF writer 与边界测试 | 当前已识别的 authoring 缺口已关闭；持续维护确定性/边界回归 |
+| M2 音源/采样 | Rust synth/Sampler/Slicer、解码/编辑/SRC、SampleClip stretch/repitch、C ABI、TS Sample/Clip/fit builders 与 @oxitone/samples 只读导入 | 压缩素材的标准化 WAV 缓存、provenance 持久化、内置音源便捷入口 |
+| M3 Mixer/Automation/导出 | TS mixer/insert authoring，Rust mixer/PDC/12 effects、完整 insert 自动化/host 参数路径、tempo bake、WAV/stem/loudness 与回归测试 | 全规格 golden/PDC/export 的自动化发布门禁仍需建立和复核 |
+| M4 实时与设备 | CoreAudio HAL、render-ahead/direct、transport/loop、设备适配/诊断、Session 换图及 bar/beat/marker/timecode 入口、换图回收与模拟设备测试 | 修正循环负载后的 10/60 分钟 soak、真实设备切换/拔插和 callback 指标仍需验收 |
 | M5 npm/DX/插件 | CLI render/export-midi/doctor、显式动态插件注册/校验/故障计数，最新提交有 C/Rust/N-API 测试 | 平台包/发布/签名公证、逐节点 deadline watchdog、示例/API reference/迁移说明；`oxitone` 当前仅导出底层 facade，未提供仅安装它即可使用 Project 的包结构 |
 | M6 Preview | `09-preview-app.md` 规格 | runner/watch、IPC、GPUI viewer、CLI preview 和分发均未建立 |
 | M7 稳定性/发布 | 定向回归、插件 conformance、基准 harness | fuzz/sanitizer、持续负载 endurance、故障注入/资源上限、SBOM/签名公证和自动发布门禁 |
@@ -31,10 +31,10 @@
 
 1. **本轮已完成（2026-09-06）**：TS mixer/Channel insert authoring，覆盖快照隔离、
    revision、非法路由和实际 native WAV 输出；复用现有协议 1.0，不改变 DSP callback。
-2. **进行中（2026-09-06）**：Sample/SampleClip 与 fit helpers 已补齐 TypeScript
+2. **已完成入口（2026-09-06）**：Sample/SampleClip 与 fit helpers 已补齐 TypeScript
    authoring 和 snapshot 连接；Track `enabled`/`midiChannel` 与只读文件导入 facade 已完成。
    Track `tempo` 的 authoring、独立时钟换算及音频/MIDI 验证已于后续阶段补齐。
-3. 完成 insert 参数自动化、Session 换图/播放位置、项目持久化与预设。
+3. insert 参数自动化、Session 换图/播放位置、项目持久化与可编辑恢复已完成；继续预设。
 4. 建立 macOS CI、npm 平台包和用户示例；跑持续有声负载性能与设备验收。
 5. 实现 Preview，完成 fuzz/endurance/发布门禁。各项出口分别记录证据。
 
@@ -54,7 +54,7 @@
   warmup 1 s、measurement 3 s、30 samples，各场景未检测到显著回退。
   详见 [基准归档](../../benchmarks/results/2026-09-06-mixer-authoring.json)。callback
   p95/p99、设备与 xrun 未在微基准中测量，记录为 null，不视为 0。
-- 表格仍保留起始基线的缺口以便对照；M3 的 TS mixer/Channel insert 空入口在本轮
+- 本节保留起始基线的缺口以便对照；M3 的 TS mixer/Channel insert 空入口在本轮
   关闭，其余列出的缺口继续追踪。下一步优先 Sample/SampleClip authoring 与导入 facade。
 
 ## Sample/Track 后续推进（2026-09-06）
@@ -166,6 +166,24 @@
 - [专项基准](../../benchmarks/results/2026-09-06-insert-automation.json)：Apple M4，
   1 Track / 3 buses / 4 inserts / 4 lanes，compile mean 32.03 µs、resolve 51.60 ns、
   render 128 frames mean 168.99 µs。没有设备、callback 或 xrun 测量。
+
+## 实时缓冲深度与模拟调度修复（2026-09-06）
+
+- 同采样率 worker 现在可以填满配置的 4-block ring；此前无条件预留 SRC 余量，
+  导致实际最多填入 3 blocks。重采样分支仍保留额外帧余量，设备链重建后判断随之更新。
+- 模拟 sink 调度落后时等待新 period，不连续补拉。隔离 jitter 注入在 horizon
+  恢复后才继续，避免把恢复期的暂停累积成持续过载；超过 horizon 的单次暂停仍
+  由 extreme-jitter 测试验证错误计数与 transport 连续性，没有放宽 xrun 断言。
+- 新增 4 项确定性测试验证完整填满/补满、SRC 余量和正常/延迟时钟调度。
+  原先失败的 jitter 用例现已通过；`cargo test --workspace` 全部 400 tests 通过，
+  无 skip/ignore。`pnpm build`、187 项 TS tests、lint/typecheck、fmt 全部通过。
+- 修复短基准 `--tracks 1` 时重复 lane target 的配置，并记录实际 automation lane 数；
+  simulated 报告不再把系统默认设备标成受测设备。
+- [10 秒模拟基准](../../benchmarks/results/2026-09-06-buffered-horizon.json)：
+  Apple M4 / 48 kHz / 128 frames，1 Track / 4 lanes，隔离 jitter probability 0.3、
+  max 2 periods、seed 11；3,761 blocks，xruns/deadlineMisses/NaN/queueDrops 均为 0。
+  worker p99 直方图桶上界 1.049 ms，deadline 2.667 ms，ring 观测达到 512 frames。
+  这不关闭真实 CoreAudio、10/60 分钟长测、设备拔插或资源预算的验收缺口。
 
 当前剩余重点：预设；标准化 WAV 导入
 缓存/provenance 与内置音源便捷入口；macOS CI/npm 分发/示例；Preview runner/GPUI；

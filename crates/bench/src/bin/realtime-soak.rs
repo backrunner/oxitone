@@ -122,7 +122,8 @@ fn start_session(
 
 fn main() {
     let args = parse_args();
-    let mut snapshot = typical_snapshot(args.tracks, 32, 8);
+    // Each track exposes four distinct lane targets in this fixture.
+    let mut snapshot = typical_snapshot(args.tracks, 32, 8.min(args.tracks.saturating_mul(4)));
     // Keep the real-device run unobtrusive: the workload is audible on the
     // default output, so play it quietly (gain-only; CPU cost unchanged).
     for channel in &mut snapshot.channels {
@@ -203,7 +204,7 @@ fn main() {
     session.transport(TransportCmd::Stop).unwrap();
 
     let devices = oxitone_io_macos::list_output_devices().unwrap_or_default();
-    let default_device = devices.iter().find(|d| d.is_default);
+    let default_device = devices.iter().find(|d| d.is_default && !args.simulated);
     let date = std::process::Command::new("date")
         .arg("+%Y-%m-%d")
         .output()
@@ -231,6 +232,7 @@ fn main() {
             "renderAheadBlocks": 4,
             "latencyMode": "buffered",
             "tracks": args.tracks,
+            "automationLanes": snapshot.automation.len(),
             "seed": SEED,
             "seconds": args.seconds,
             "loopEndFrame": loop_end,

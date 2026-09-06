@@ -39,6 +39,11 @@
 
 `dsp/*` benchmark 必须包含 denormal 语料（衰减中的滤波器/混响尾部），验证 FTZ/DAZ 与 denormal-safe 实现没有性能悬崖。
 
+模拟 worker 的 `JitterConfig` 注入隔离的调度暂停：仅在 ring 已恢复完整可用
+horizon 后按 probability 决定是否暂停，并避免连续 block 暂停。恢复阶段不继续
+注入，否则会把“可由 horizon 吸收的单次暂停”变为多个暂停累积的持续过载。
+长于 horizon 的单次暂停仍由 extreme-jitter 测试验证 underrun 和 transport 连续性。
+
 使用 Criterion 或等价 Rust harness；microbench 固定 seed 与输入 buffer，并包含 warmup。Realtime benchmark 采用独立高优先级线程、真实 block size 和预热后的 graph，禁止用仅测函数调用的 microbench 代替。realtime-soak 会循环完整 timeline，避免长测试在内容结束后只测静音；可用 `--plugin PATH --plugin-manifest PATH` 给每个 channel 添加已信任的动态效果器，并记录 hash 与 fault 数。
 
 ## 回归策略

@@ -415,6 +415,13 @@ impl WorkerCore {
         }
     }
 
+    /// Device-rate conversion alone can produce a few extra frames. An
+    /// unchanged sample rate writes exactly one block and uses the full ring.
+    pub(crate) fn has_render_capacity(&self) -> bool {
+        let slack = if self.resampler.is_some() { 8 } else { 0 };
+        self.ring.available_to_write_frames() >= self.dev_block_frames + slack
+    }
+
     /// Worker thread body. Sets FTZ/DAZ and a time-constraint scheduling
     /// policy before entering the loop (03 §CPU 尖峰防线, §线程模型).
     pub(crate) fn run(mut self) {
@@ -435,14 +442,13 @@ impl WorkerCore {
             // The resampler can overshoot one block's nominal frame count
             // by a few frames; require the slack up front so the ring
             // write never truncates a block.
-            if self.graph.is_some()
-                && self.ring.available_to_write_frames() >= self.dev_block_frames + 8
-            {
+            if self.graph.is_some() && self.has_render_capacity() {
                 self.render_block();
                 // Test-only preemption injection (05-performance-and-
                 // benchmarks.md: 注入人工调度抖动模拟抢占). Sleeps on the
                 // worker, exactly like an OS scheduling stall would.
-                // Stalls are capped at one consecutive block — they model
+                // Stalls only start after the ring horizon has recovered,
+                // and are capped at one consecutive block — they model
                 // the isolated scheduler jitter the render-ahead ring is
                 // specified to absorb (03 §线程模型), not sustained
                 // overload, which the underrun test covers with long
@@ -453,7 +459,7 @@ impl WorkerCore {
                     *state ^= *state >> 27;
                     let roll = state.wrapping_mul(0x2545_F491_4F6C_DD1D);
                     let unit = (roll >> 11) as f64 / (1u64 << 53) as f64;
-                    if !stalled_last && unit < jitter.probability {
+                    if !stalled_last && !self.has_render_capacity() && unit < jitter.probability {
                         stalled_last = true;
                         let extra = self
                             .deadline

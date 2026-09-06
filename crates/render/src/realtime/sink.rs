@@ -64,15 +64,10 @@ impl SimulatedSink {
                 let mut next = Instant::now();
                 while !stop_thread.load(Ordering::Relaxed) {
                     pull(&mut scratch[..frames * channels]);
-                    next += period;
                     let now = Instant::now();
-                    if next > now {
-                        std::thread::sleep(next - now);
-                    } else {
-                        // Fell behind (e.g. the machine was busy): resync
-                        // instead of bursting.
-                        next = now;
-                    }
+                    let (deadline, wait) = next_pull(next, now, period);
+                    next = deadline;
+                    std::thread::sleep(wait);
                 }
             })
             .map_err(|e| {
@@ -86,6 +81,50 @@ impl SimulatedSink {
             stop,
             join: Some(join),
         })
+    }
+}
+
+/// Keep the nominal cadence while on time. A missed period starts a fresh
+/// interval; an immediate second pull would fabricate consumer starvation.
+fn next_pull(previous: Instant, now: Instant, period: Duration) -> (Instant, Duration) {
+    let scheduled = previous + period;
+    let wait = scheduled
+        .checked_duration_since(now)
+        .filter(|wait| !wait.is_zero())
+        .unwrap_or(period);
+    (now + wait, wait)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn on_time_pulls_preserve_nominal_deadlines() {
+        let start = Instant::now();
+        let period = Duration::from_millis(3);
+        let now = start + Duration::from_millis(1);
+        assert_eq!(
+            next_pull(start, now, period),
+            (start + period, Duration::from_millis(2))
+        );
+    }
+
+    #[test]
+    fn late_pulls_wait_a_full_period_instead_of_bursting() {
+        let start = Instant::now();
+        let period = Duration::from_millis(3);
+        for elapsed in [3, 4, 100] {
+            let now = start + Duration::from_millis(elapsed);
+            let (deadline, wait) = next_pull(start, now, period);
+            assert_eq!(wait, period);
+            assert_eq!(deadline, now + period);
+            // The following on-time pull also waits; no deferred catch-up.
+            assert_eq!(
+                next_pull(deadline, deadline, period),
+                (deadline + period, period)
+            );
+        }
     }
 }
 

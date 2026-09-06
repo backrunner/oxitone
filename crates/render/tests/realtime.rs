@@ -140,7 +140,18 @@ fn jitter_within_horizon_causes_no_underrun() {
         .unwrap();
     std::thread::sleep(Duration::from_secs(3));
     let diag = session.snapshot_diagnostics();
-    assert_eq!(diag.xruns, 0, "ring must absorb injected jitter");
+    assert_eq!(
+        diag.xruns,
+        0,
+        "ring must absorb injected jitter; load={}, p99_ns={}, misses={}, events={:?}",
+        diag.engine_load,
+        diag.block_time_p99_ns,
+        diag.deadline_misses,
+        diag.events
+            .iter()
+            .map(|event| (event.code, event.frame))
+            .collect::<Vec<_>>()
+    );
     assert!(diag.blocks > 500);
 }
 

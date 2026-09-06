@@ -12,6 +12,9 @@ mod session;
 mod sink;
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod capacity_tests;
 mod worker;
 
 pub use diagnostics::{event_codes, DiagnosticEvent, DiagnosticsSnapshot, RtCounters, Severity};
