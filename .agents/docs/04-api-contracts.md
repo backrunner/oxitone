@@ -417,7 +417,21 @@ native `compile(engine, snapshot, options?: {assetBaseDir?: string})` 在控制�
 项目文件入口：`Project.save(directory, options?: {assetBaseDir?: string}): Promise<void>`，
 或 `saveProject(snapshot, directory, options?)`；`loadProject(directory)` 返回
 `Promise<{snapshot: ProjectSnapshot, assetBaseDir: string}>`。格式、原子写入和错误码见
-`06-format-and-export.md`，schema 为 `project-file.schema.json`。不创建播放设备或执行 JS DSP。
+`06-format-and-export.md`，schema 为 `project-file.schema.json`。
+
+`Project.fromSnapshot(snapshot, {assetBaseDir?}): Project` 恢复 authoring builders；
+`Project.load(directory): Promise<Project>` 同时加载、校验素材 hash，并把绝对资源目录保留
+在 `project.assetBaseDir`。后续 compile/update/renderWav/save 默认使用它，显式参数可覆盖。
+恢复不创建 engine、不打开播放设备或执行插件；结构、ID、clip 归属、资源引用和 builder
+范围错误报 `InvalidProject`；DSP 路由 DAG、插件 descriptor/参数的完整校验仍在 Rust compile。
+
+恢复保留 ID、note ID/顺序、精确 rational beat、send/insert 顺序、插件 state 和可选默认值，
+无编辑的 canonical snapshot 往返一致。省略的 Master 保持省略，显式修改 Master 时才写入。
+`project.patterns` 可访问已恢复、尚未放置的 Pattern；NoteInput 新增可选 `id`。
+`PatternClip.durationBeats` 支持正数或 undefined setter，修改保持其他已保存的时序字段。
+`revisionBigInt: bigint` 精确表示 u64 revision；既有 `revision: number` 在安全整数范围内
+继续可用，超限报 `InvalidProject` 并提示使用 bigint。到达 u64 最大值时允许读/导出，
+后续编辑以 `InvalidProject` 拒绝且保持原状态。恢复后创建实体跳过已有 ID，重复显式 ID 拒绝。
 
 - `registerPlugin(engineId, optionsJson)`：返回 `{ pluginId, pluginVersion, sha256 }` JSON；manifest 必填，按 engine 独立注册并用于 compile/renderWav。相同 ID/version/hash 幂等，不同 hash 冲突；完整 ABI、签名与信任边界见 `08-plugin-abi.md`。
 - `getPluginDiagnostics(engineId)`：返回 `{ pluginId, pluginVersion, faults }[]` JSON，累计各实例的故障静音次数；无需启动播放。不是逐节点 deadline watchdog。

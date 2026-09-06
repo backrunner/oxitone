@@ -46,6 +46,19 @@ describe("snapshot", () => {
     expect(decoded).toEqual(snapshot);
   });
 
+  it("restores a snapshot into editable builders without changing wire state", () => {
+    const original = buildProject();
+    const snapshot = original.snapshot();
+    const restored = Project.fromSnapshot(snapshot);
+    expect(restored.snapshot()).toEqual(snapshot);
+    expect(restored.tracks[0]?.clips[0]?.pattern.id).toBe("pat_riff");
+    restored.setTempo(100);
+    expect(restored.revision).toBe(Number(snapshot.revision) + 1);
+    const added = restored.addTrack("new");
+    expect([restored.id, ...restored.tracks.map((track) => track.id)]).toContain(added.id);
+    expect(new Set(restored.tracks.map((track) => track.id)).size).toBe(restored.tracks.length);
+  });
+
   it("normalizes beats to reduced wire rationals", () => {
     const snapshot = buildProject().snapshot();
     const riff = snapshot.patterns.find((pattern) => pattern.name === "riff");

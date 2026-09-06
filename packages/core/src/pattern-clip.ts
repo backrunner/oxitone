@@ -1,4 +1,5 @@
-import { beatToWire, ErrorCode, OxitoneError, type PatternClipSpec } from "@oxitone/protocol";
+import { beatToWire, beatFromWire, patternClipSpecSchema, ErrorCode, OxitoneError, type PatternClipSpec } from "@oxitone/protocol";
+import { parseAuthoring } from "./authoring-validation.js";
 import type { Pattern } from "./pattern.js";
 import type { Project } from "./project.js";
 import type { BarBeatPosition } from "./time-signature.js";
@@ -15,12 +16,14 @@ export class PatternClip {
   readonly track: Track;
   readonly startBeat: number;
   private readonly project: Project;
-  private loopCountValue?: number;
-  private lastBeatValue?: number;
+  private loopCountValue: number | undefined;
+  private lastBeatValue: number | undefined;
   private transposeValue = 0;
   private velocityScaleValue = 1;
   private probabilityValue = 1;
   private enabledValue = true;
+  private restoredSpec?: PatternClipSpec;
+  private durationValue: PatternClipSpec["durationBeats"] | undefined;
 
   /** @internal Use `track.pattern(pattern).at(...)` instead. */
   constructor(project: Project, track: Track, pattern: Pattern, id: string, startBeat: number) {
@@ -29,6 +32,41 @@ export class PatternClip {
     this.pattern = pattern;
     this.id = id;
     this.startBeat = startBeat;
+  }
+
+  /** @internal Restore exact wire positions and explicit defaults. */
+  static fromSpec(project: Project, track: Track, pattern: Pattern, input: PatternClipSpec): PatternClip {
+    const spec = parseAuthoring(patternClipSpecSchema, input, "patternClip");
+    if (spec.durationBeats?.numerator === 0 || (spec.lastBeat !== undefined &&
+      BigInt(spec.lastBeat.numerator) * BigInt(spec.startBeat.denominator) <=
+      BigInt(spec.startBeat.numerator) * BigInt(spec.lastBeat.denominator))) {
+      throw new OxitoneError(ErrorCode.InvalidProject, "invalid pattern clip duration or end");
+    }
+    const clip = new PatternClip(project, track, pattern, spec.id, beatFromWire(spec.startBeat));
+    clip.loopCountValue = spec.loopCount;
+    clip.lastBeatValue = spec.lastBeat === undefined ? undefined : beatFromWire(spec.lastBeat);
+    clip.transposeValue = spec.transpose ?? 0;
+    clip.velocityScaleValue = spec.velocityScale ?? 1;
+    clip.probabilityValue = spec.probability ?? 1;
+    clip.enabledValue = spec.enabled ?? true;
+    clip.durationValue = spec.durationBeats;
+    clip.restoredSpec = spec;
+    return clip;
+  }
+
+  get durationBeats(): number | undefined {
+    return this.durationValue === undefined ? undefined : beatFromWire(this.durationValue);
+  }
+
+  /** Explicit clip length; undefined uses the pattern/loop boundary. */
+  set durationBeats(value: number | undefined) {
+    if (value !== undefined && (!Number.isFinite(value) || value <= 0)) {
+      throw new OxitoneError(ErrorCode.InvalidProject, "pattern clip duration must be finite and positive");
+    }
+    const duration = value === undefined ? undefined : beatToWire(value);
+    this.project.touch();
+    this.durationValue = duration;
+    if (this.restoredSpec !== undefined) this.restoredSpec.durationBeats = duration;
   }
 
   get loopCount(): number | undefined {
@@ -57,6 +95,7 @@ export class PatternClip {
 
   /** Repeat the pattern `count` times from `startBeat`. */
   loop(count: number): this {
+    this.project.assertMutable();
     if (this.lastBeatValue !== undefined) {
       throw new OxitoneError(
         ErrorCode.InvalidProject,
@@ -72,12 +111,14 @@ export class PatternClip {
       );
     }
     this.loopCountValue = count;
+    if (this.restoredSpec !== undefined) this.restoredSpec.loopCount = count;
     this.project.touch();
     return this;
   }
 
   /** Exclusive end position (bar/beat) for looping; trims trailing notes. */
   last(position: BarBeatPosition): this {
+    this.project.assertMutable();
     if (this.loopCountValue !== undefined) {
       throw new OxitoneError(
         ErrorCode.InvalidProject,
@@ -94,12 +135,14 @@ export class PatternClip {
       );
     }
     this.lastBeatValue = beat;
+    if (this.restoredSpec !== undefined) this.restoredSpec.lastBeat = beatToWire(beat);
     this.project.touch();
     return this;
   }
 
   /** Transpose all notes by `semitones` (integer). */
   transpose(semitones: number): this {
+    this.project.assertMutable();
     if (!Number.isInteger(semitones)) {
       throw new OxitoneError(
         ErrorCode.InvalidProject,
@@ -108,12 +151,14 @@ export class PatternClip {
       );
     }
     this.transposeValue = semitones;
+    if (this.restoredSpec !== undefined) this.restoredSpec.transpose = semitones;
     this.project.touch();
     return this;
   }
 
   /** Scale note velocities; factor in 0..2. */
   velocityScale(factor: number): this {
+    this.project.assertMutable();
     if (!Number.isFinite(factor) || factor < 0 || factor > 2) {
       throw new OxitoneError(
         ErrorCode.InvalidProject,
@@ -122,12 +167,14 @@ export class PatternClip {
       );
     }
     this.velocityScaleValue = factor;
+    if (this.restoredSpec !== undefined) this.restoredSpec.velocityScale = factor;
     this.project.touch();
     return this;
   }
 
   /** Per-clip playback probability in 0..1 (seeded, deterministic). */
   probability(value: number): this {
+    this.project.assertMutable();
     if (!Number.isFinite(value) || value < 0 || value > 1) {
       throw new OxitoneError(
         ErrorCode.InvalidProject,
@@ -136,25 +183,31 @@ export class PatternClip {
       );
     }
     this.probabilityValue = value;
+    if (this.restoredSpec !== undefined) this.restoredSpec.probability = value;
     this.project.touch();
     return this;
   }
 
   /** Enable/disable scheduling without dropping clip data. */
   enabled(on = true): this {
+    this.project.assertMutable();
+    if (typeof on !== "boolean") throw new OxitoneError(ErrorCode.InvalidProject, "enabled must be a boolean");
     this.enabledValue = on;
+    if (this.restoredSpec !== undefined) this.restoredSpec.enabled = on;
     this.project.touch();
     return this;
   }
 
   /** Wire form; non-default options are omitted. */
   toSpec(): PatternClipSpec {
+    if (this.restoredSpec !== undefined) return structuredClone(this.restoredSpec);
     const spec: PatternClipSpec = {
       id: this.id,
       patternId: this.pattern.id,
       trackId: this.track.id,
       startBeat: beatToWire(this.startBeat),
     };
+    if (this.durationValue !== undefined) spec.durationBeats = { ...this.durationValue };
     if (this.loopCountValue !== undefined) {
       spec.loopCount = this.loopCountValue;
     }
@@ -196,9 +249,9 @@ export class PatternClipDraft {
     if (this.placed) {
       throw new OxitoneError(ErrorCode.InvalidProject, "pattern draft is already placed");
     }
-    this.placed = true;
     const startBeat = this.project.barBeatToBeats(position);
     const clip = this.project.createPatternClip(this.track, this.pattern, startBeat);
+    this.placed = true;
     return clip;
   }
 }

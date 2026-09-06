@@ -1,4 +1,5 @@
-import { ErrorCode, OxitoneError, type TrackSpec } from "@oxitone/protocol";
+import { ErrorCode, OxitoneError, trackSpecSchema, type TrackSpec } from "@oxitone/protocol";
+import { parseAuthoring } from "./authoring-validation.js";
 import type { Channel } from "./channel.js";
 import type { Pattern } from "./pattern.js";
 import { PatternClipDraft, type PatternClip } from "./pattern-clip.js";
@@ -20,6 +21,7 @@ export class Track {
   private enabledValue = true;
   private midiChannelValue: number | undefined;
   private tempoValue: number | undefined;
+  private restoredSpec?: TrackSpec;
 
   /** @internal Use `project.addTrack(...)` instead. */
   constructor(project: Project, id: string, name?: string) {
@@ -34,37 +36,55 @@ export class Track {
     return this.trackName;
   }
 
+  /** @internal Clips are attached in the saved membership order by the project restorer. */
+  static fromSpec(project: Project, input: TrackSpec): Track {
+    const spec = parseAuthoring(trackSpecSchema, input, "track");
+    const track = new Track(project, spec.id, spec.name);
+    track.channelIdList.push(...spec.channelIds);
+    track.enabledValue = spec.enabled ?? true;
+    track.tempoValue = spec.tempo;
+    track.midiChannelValue = spec.midiChannel;
+    track.restoredSpec = spec;
+    return track;
+  }
+
   get enabled(): boolean { return this.enabledValue; }
   /** Static local BPM (20..999); undefined follows the project clock. */
   get tempo(): number | undefined { return this.tempoValue; }
   set tempo(value: number | undefined) {
+    this.project.assertMutable();
     if (value !== undefined && (!Number.isFinite(value) || value < 20 || value > 999)) {
       throw new OxitoneError(ErrorCode.TempoRange, "track tempo must be finite and in 20..999", {
         details: { path: "track.tempo" },
       });
     }
     this.tempoValue = value;
+    if (this.restoredSpec !== undefined) this.restoredSpec.tempo = value;
     this.project.touch();
   }
   set enabled(value: boolean) {
+    this.project.assertMutable();
     if (typeof value !== "boolean") {
       throw new OxitoneError(ErrorCode.InvalidProject, "track enabled must be a boolean", {
         details: { path: "track.enabled" },
       });
     }
     this.enabledValue = value;
+    if (this.restoredSpec !== undefined) this.restoredSpec.enabled = value;
     this.project.touch();
   }
 
   /** Explicit MIDI channel (1..16); omitted means deterministic auto allocation. */
   get midiChannel(): number | undefined { return this.midiChannelValue; }
   set midiChannel(value: number | undefined) {
+    this.project.assertMutable();
     if (value !== undefined && (!Number.isInteger(value) || value < 1 || value > 16)) {
       throw new OxitoneError(ErrorCode.InvalidProject, `midiChannel must be an integer in 1..16, got ${value}`, {
         details: { path: "track.midiChannel" },
       });
     }
     this.midiChannelValue = value;
+    if (this.restoredSpec !== undefined) this.restoredSpec.midiChannel = value;
     this.project.touch();
   }
 
@@ -101,6 +121,7 @@ export class Track {
       });
     }
     if (!this.channelIdList.includes(channel.id)) {
+      this.project.assertMutable();
       this.channelIdList.push(channel.id);
       this.project.touch();
     }
@@ -125,6 +146,7 @@ export class Track {
   /** Wire form. */
   toSpec(): TrackSpec {
     const spec: TrackSpec = {
+      ...this.restoredSpec,
       id: this.id,
       channelIds: [...this.channelIdList],
       patternClipIds: this.clipList.map((clip) => clip.id),

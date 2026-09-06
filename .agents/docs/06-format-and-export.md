@@ -28,8 +28,12 @@ Canonical JSON 的字节级规则（`@oxitone/protocol` 与 `oxitone-core` 的�
 `saveProject(snapshot, directory, options?)` / `loadProject(directory)`。manifest 使用
 上述快照字段，并附加 `formatVersion: '1.0'`、`projectId`（必须与 snapshot.id 相同）。
 加载返回 `{ snapshot, assetBaseDir }`；snapshot 保留相对 URI，可直接传给 native
-`compile(engine, snapshot, { assetBaseDir })` 或 renderWav。当前返回 wire snapshot，
-重建可编辑的 Project/Track builders 尚未提供；未知字段目前丢弃，未实现扩展 metadata 回写。
+`compile(engine, snapshot, { assetBaseDir })` 或 renderWav。`Project.fromSnapshot` 与
+`Project.load` 可进一步恢复可编辑 builders，并保留 stable ID、note ID/顺序、rational
+beat 和显式 clip defaults；未知字段目前丢弃，未实现扩展 metadata 回写。
+`Project.load(directory)` 直接返回 Project，其 assetBaseDir 默认用于后续保存、编译与
+WAV 导出；仅解析 snapshot 时用 `Project.fromSnapshot(snapshot, {assetBaseDir?})`。
+恢复会校验 clip 与 Track 列表的一对一归属；不会丢弃未放置的 Pattern 或重排其 notes。
 
 保存对所有 Sample 源字节验证 SHA-256 后，以 `assets/<sha256>.<format>` 发布不可变
 资源；文件先写临时路径并 fsync，通过 link 发布且不覆盖已存在内容，已有文件必须

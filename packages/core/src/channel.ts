@@ -137,6 +137,7 @@ export class Channel {
   }
 
   private update(patch: Partial<ChannelSpec>): void {
+    this.project?.assertMutable();
     this.spec = parseAuthoring(channelSpecSchema, { ...this.spec, ...patch }, "channel");
     this.project?.touch();
   }

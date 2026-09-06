@@ -48,6 +48,11 @@
 重复 save 和 load（包含 SHA-256、canonical manifest、fsync）。记录 median/p95/p99
 I/O 耗时；不测 callback 或 xrun，不用于实时验收。
 
+`node benchmarks/project-restore.mjs` 测 `Project.fromSnapshot(...).snapshot()`：32 Tracks、
+32 Channels/Patterns、每 Pattern 64 notes、32 lanes、3 buses/1 send，固定 seed 42。
+预热 20 次、测量 100 次，归档 median/p95/p99 和原始样本。包括 TS schema、归属校验、
+builder 恢复与快照生成；不含 native compile、素材 I/O、设备或 DSP，不作为 callback 验收。
+
 主分支保存每个场景的 JSON baseline。p95/p99 超过 baseline 10%、peak memory 超过 15%、render ratio 下降超过 10% 或出现任何 xrun 时 CI 失败；硬件噪声较大时允许人工批准并记录原因。golden WAV 使用 SHA-256 加上 peak/RMS/true-peak 摘要，浮点比较需声明容差。
 
 ## 诊断

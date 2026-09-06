@@ -11,8 +11,12 @@ conventional commits (`type(scope): description`).
 - Atomic portable project save/load through Project.save and snapshot file helpers:
   versioned canonical manifests, content-addressed source assets, SHA-256 verification,
   fsync and atomic publication. Directory moves preserve native render output; load
-  returns a snapshot and asset base. Editable builder restoration and compressed WAV
-  caching remain pending.
+  returns a snapshot and asset base. Compressed WAV caching remains pending.
+- `Project.fromSnapshot` and `Project.load` restore editable builders and retain the
+  resource directory for compile/render/save. Exact beats, note IDs/order, plugin state,
+  routes and optional defaults survive round-trips; new entities avoid restored IDs.
+  `revisionBigInt` preserves the full u64 range and exhausted revisions reject edits.
+  Loaded Patterns remain accessible, and PatternClip exposes an editable duration.
 - Graph compilation accepts assetBaseDir; Sessions retain it for updates and offline
   rendering, so saved projects can use relative sample URIs for playback as well.
 

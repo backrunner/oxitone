@@ -24,6 +24,9 @@ export type ProjectCompileOptions = EngineOptions & CompileOptions;
 
 export abstract class ProjectPlayback {
   private activeSession?: Session;
+  protected projectAssetBaseDir: string | undefined;
+  /** Absolute resource directory retained when restoring a portable project. */
+  get assetBaseDir(): string | undefined { return this.projectAssetBaseDir; }
 
   abstract snapshot(): ProjectSnapshot;
   abstract barBeatToBeats(position: BarBeatPosition): number;
@@ -34,6 +37,7 @@ export abstract class ProjectPlayback {
    * render and MIDI export. Replaces (and disposes) any previous session.
    */
   async compile(options?: ProjectCompileOptions): Promise<Session> {
+    options = { assetBaseDir: this.assetBaseDir, ...options };
     const engine = createEngine(options);
     let snapshot: ProjectSnapshot;
     try {
@@ -69,7 +73,7 @@ export abstract class ProjectPlayback {
   /** One-shot offline WAV export on a temporary engine (04 §RenderOptions). */
   async renderWav(options: RenderOptions): Promise<RenderReport> {
     const snapshot = this.snapshot();
-    return withTempEngine((engine) => nativeRenderWav(engine, snapshot, options));
+    return withTempEngine((engine) => nativeRenderWav(engine, snapshot, { assetBaseDir: this.assetBaseDir, ...options }));
   }
 
   /** One-shot SMF Type 1 export on a temporary engine. */

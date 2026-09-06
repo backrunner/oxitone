@@ -1,5 +1,6 @@
 import {
   beatToWire,
+  beatFromWire,
   ErrorCode,
   OxitoneError,
   type TempoSegment,
@@ -35,6 +36,7 @@ function validateBpm(bpm: number): void {
  */
 export class TempoMap {
   private segments: TempoSegmentInput[] = [{ startBeat: 0, bpm: DEFAULT_BPM }];
+  private restoredBeats: TempoSegment["startBeat"][] = [];
 
   /** Replace the whole map with a single segment at beat 0. */
   set(bpm: number, curve?: TempoCurve): void {
@@ -44,6 +46,7 @@ export class TempoMap {
       segment.curve = curve;
     }
     this.segments = [segment];
+    this.restoredBeats = [];
   }
 
   /** Append a segment; `startBeat` must be greater than every existing one. */
@@ -76,11 +79,23 @@ export class TempoMap {
     return this.segments.map((segment) => ({ ...segment }));
   }
 
+  /** @internal Validate the map while preserving exact restored rational positions. */
+  restore(segments: TempoSegment[]): void {
+    const first = segments[0];
+    if (first === undefined || first.startBeat.numerator !== 0) {
+      throw new OxitoneError(ErrorCode.TempoMapOrder, "tempo map must start at beat zero");
+    }
+    this.set(first.bpm, first.curve);
+    for (const segment of segments.slice(1)) this.add({ startBeat: beatFromWire(segment.startBeat), bpm: segment.bpm,
+      ...(segment.curve === undefined ? {} : { curve: segment.curve }) });
+    this.restoredBeats = segments.map((segment) => ({ ...segment.startBeat }));
+  }
+
   /** Wire-form segments with canonicalized beats. */
   toWire(): TempoSegment[] {
-    return this.segments.map((segment) => {
+    return this.segments.map((segment, index) => {
       const wire: TempoSegment = {
-        startBeat: beatToWire(segment.startBeat),
+        startBeat: { ...(this.restoredBeats[index] ?? beatToWire(segment.startBeat)) },
         bpm: segment.bpm,
       };
       if (segment.curve !== undefined) {

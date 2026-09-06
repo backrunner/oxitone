@@ -1,5 +1,6 @@
 import {
   beatToWire,
+  beatFromWire,
   frameToWire,
   sampleClipSpecSchema,
   sampleRefSchema,
@@ -30,7 +31,7 @@ export interface SampleOptions {
 /** Immutable audio asset reference; decoding and editing happen in Rust prepare. */
 export class Sample {
   readonly id: EntityId;
-  private readonly spec: SampleRef;
+  private spec: SampleRef;
 
   constructor(id: EntityId, options: SampleOptions) {
     this.id = id;
@@ -62,6 +63,17 @@ export class Sample {
   }
 
   get assetUri(): string { return this.spec.assetUri; }
+
+  /** Restore an immutable resource without rounding its musical length through a double. */
+  static fromSpec(input: SampleRef): Sample {
+    const spec = parseAuthoring(sampleRefSchema, input, "sample");
+    const sample = new Sample(spec.id, { assetUri: spec.assetUri, sha256: spec.sha256, format: spec.format,
+      sampleRate: spec.sampleRate, channels: spec.channels, frames: BigInt(spec.frames),
+      ...(spec.edits === undefined ? {} : { edits: spec.edits }),
+      ...(spec.musicalLengthBeats === undefined ? {} : { musicalLengthBeats: beatFromWire(spec.musicalLengthBeats) }) });
+    sample.spec = spec;
+    return sample;
+  }
   get sampleRate(): number { return this.spec.sampleRate; }
   get channels(): 1 | 2 { return this.spec.channels; }
   get frames(): bigint { return BigInt(this.spec.frames); }
@@ -118,6 +130,18 @@ export class SampleClip {
   }
 
   get id(): EntityId { return this.spec.id; }
+
+  /** @internal Restore wire timing; bar lookup is only used by subsequent fitBars calls. */
+  static fromSpec(project: Project, track: Track, sample: Sample, input: SampleClipSpec): SampleClip {
+    const spec = parseAuthoring(sampleClipSpecSchema, input, "sampleClip");
+    if (spec.durationBeats?.numerator === 0 || spec.loop?.lengthBeats.numerator === 0 ||
+      (spec.loop?.count !== undefined && spec.loop.lastBeat !== undefined)) {
+      throw new OxitoneError(ErrorCode.InvalidProject, "invalid sample clip duration or loop");
+    }
+    const clip = new SampleClip(project, track, sample, spec.id, project.beatsToBarBeat(beatFromWire(spec.startBeat)));
+    clip.spec = spec;
+    return clip;
+  }
   get startBeat(): number {
     return Number(this.spec.startBeat.numerator) / Number(this.spec.startBeat.denominator);
   }
@@ -165,6 +189,7 @@ export class SampleClip {
     if (!Number.isFinite(value) || value <= 0) throw new OxitoneError(ErrorCode.InvalidProject, `${path} must be finite and > 0`, { details: { path } });
   }
   private update(patch: Partial<SampleClipSpec>): void {
+    this.project.assertMutable();
     this.spec = parseAuthoring(sampleClipSpecSchema, { ...this.spec, ...patch }, "sampleClip");
     this.project.touch();
   }

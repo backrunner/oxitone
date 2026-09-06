@@ -45,15 +45,23 @@ describe("portable project files", () => {
       const roundtrip = await loadProject(moved);
       renderWav(engine, roundtrip.snapshot, { path: out, assetBaseDir: moved, tailSeconds: 0 });
       expect(await readFile(out)).toEqual(audio);
-      const relativeProject = new Project();
-      const relativeSample = relativeProject.addSample({ ...info, assetUri: loaded.snapshot.samples[0]!.assetUri, frames: BigInt(info.frames) });
-      relativeProject.addTrack().use(relativeProject.addChannel()).sample(relativeSample).at({ bar: 1 });
-      const session = await relativeProject.compile({ assetBaseDir: moved });
+      const relativeProject = await Project.load(moved);
+      expect(relativeProject.assetBaseDir).toBe(moved);
+      expect(relativeProject.snapshot()).toEqual(loaded.snapshot);
+      await relativeProject.save(moved);
+      expect(await readFile(join(moved, "oxitone.project.json"), "utf8")).toBe(manifest);
+      await relativeProject.renderWav({ path: out, tailSeconds: 0 });
+      expect(await readFile(out)).toEqual(audio);
+      const session = await relativeProject.compile();
       try {
         relativeProject.setTempo(90);
+        relativeProject.tracks[0]!.sampleClips[0]!.gain = 0.5;
         await session.update();
         expect((await session.renderWav({ path: out, tailSeconds: 0 })).files[0]?.peakDbfs).toBeGreaterThan(-60);
       } finally { await session.dispose(); }
+      const copy = join(root, "edited copy");
+      await relativeProject.save(copy);
+      expect((await Project.load(copy)).snapshot().sampleClips[0]?.gain).toBe(0.5);
       await writeFile(join(moved, loaded.snapshot.samples[0]!.assetUri), "changed");
       await expect(loadProject(moved)).rejects.toMatchObject({ code: ErrorCode.AssetUnavailable });
     } finally { dispose(engine); await rm(root, { recursive: true, force: true }); }

@@ -97,6 +97,26 @@ export class TimeSignatureMap {
     return this.segments.map((segment) => ({ ...segment }));
   }
 
+  /** Inverse for authoring/display helpers; serialized rational positions remain unchanged. */
+  fromBeats(absoluteBeat: number): BarBeatPosition {
+    if (!Number.isFinite(absoluteBeat) || absoluteBeat < 0) {
+      throw new OxitoneError(ErrorCode.InvalidProject, "absolute beat must be finite and nonnegative");
+    }
+    let remaining = absoluteBeat;
+    for (let i = 0; i < this.segments.length; i++) {
+      const segment = this.segments[i]!;
+      const next = this.segments[i + 1];
+      const perBar = beatsPerBar(segment);
+      const span = next === undefined ? Infinity : (next.startBar - segment.startBar) * perBar;
+      if (remaining < span) {
+        const bars = Math.floor(remaining / perBar);
+        return { bar: segment.startBar + bars, beat: remaining - bars * perBar };
+      }
+      remaining -= span;
+    }
+    throw new OxitoneError(ErrorCode.InvalidProject, "time signature map is empty");
+  }
+
   /**
    * Convert a bar/beat position to absolute project beats, accumulating
    * across signature changes. `beat` must fit inside the bar it names.

@@ -23,7 +23,7 @@ export class AutomationSource {
   /** @internal Use the automation namespace builders instead. */
   constructor(spec: AutomationSourceSpec) {
     validateAutomationSpec(spec);
-    this.spec = spec;
+    this.spec = structuredClone(spec);
   }
 
   /** Protocol-validated wire form (deep copy). */

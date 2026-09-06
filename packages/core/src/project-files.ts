@@ -5,7 +5,7 @@ import { canonicalEncode, checkProtocolVersion, ErrorCode, OxitoneError, PROJECT
   projectFileSchema, projectSnapshotSchema, type ProjectSnapshot } from "@oxitone/protocol";
 import { parseAuthoring } from "./authoring-validation.js";
 
-export interface SaveProjectOptions { assetBaseDir?: string; }
+export interface SaveProjectOptions { assetBaseDir?: string | undefined; }
 export interface LoadedProject { snapshot: ProjectSnapshot; assetBaseDir: string; }
 const FILE = "oxitone.project.json";
 const hash = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex");

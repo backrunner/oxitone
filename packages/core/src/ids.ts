@@ -10,6 +10,7 @@ export { ID_PREFIXES };
 export class IdGenerator {
   private readonly rng: Pcg32;
   private counter = 0;
+  private readonly reserved = new Set<string>();
 
   constructor(seed: number | bigint = 0) {
     this.rng = new Pcg32(seed);
@@ -17,10 +18,24 @@ export class IdGenerator {
 
   /** Generate the next ID for the given prefix (e.g. `ID_PREFIXES.track`). */
   next(prefix: string): EntityId {
-    this.counter += 1;
-    const serial = this.counter.toString(36);
-    const random = this.rng.nextU32().toString(36);
-    return `${prefix}${serial}${random}`;
+    let id: string;
+    do {
+      this.counter += 1;
+      const serial = this.counter.toString(36);
+      const random = this.rng.nextU32().toString(36);
+      id = `${prefix}${serial}${random}`;
+    } while (this.reserved.has(id));
+    return id;
+  }
+
+  /** Keep standalone generation clear of explicitly restored IDs. */
+  reserve(id: string): void { this.reserved.add(id); }
+
+  /** Advance until a generated ID is outside a restored entity set. */
+  nextUnused(prefix: string, used: ReadonlySet<string>): EntityId {
+    let id = this.next(prefix);
+    while (used.has(id)) id = this.next(prefix);
+    return id;
   }
 }
 

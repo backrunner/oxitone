@@ -124,5 +124,29 @@
 - [文件 I/O 基准](../../benchmarks/results/2026-09-06-project-files.json)：1 秒 stereo
   float32 资源、5 次预热、30 次测量，保存 median/p95 为 54.00/175.74 ms，加载为
   5.59/45.39 ms。BRData 卷、并发主机负载；首次基线，不代表回退或 realtime 验收。
-- 当前 load 返回 snapshot 和资源目录；可编辑 builder 恢复、预设、标准化 WAV 缓存及
-  provenance 持久化继续推进。原表的 Preview、分发、长时设备与发布门禁仍未完成。
+- `Project.fromSnapshot` 与 `Project.load` 已恢复可编辑 builders，并保留稳定 ID、音符
+  ID/顺序、有理数拍点、clip 默认字段和 tempo/automation wire state。预设、标准化 WAV
+  缓存及 provenance 持久化继续推进。原表的 Preview、分发、长时设备与发布门禁仍未完成。
+
+## 可编辑工程恢复（2026-09-06）
+
+- `Project.load` 直接返回可编辑 Project，保留资源目录；compile、Session.update、导出与
+  再保存默认复用该目录。省略的 Master、未放置 Pattern、note ID/顺序、精确 rational
+  beat、插件 state、send/insert 顺序、automation loop/hold 与显式默认值均可往返。
+- 使用 `revisionBigInt` 保存完整 u64 revision；旧 number getter 超出安全整数范围时
+  明确报错。u64 耗尽时拒绝编辑且不修改状态。生成 ID 跳过恢复实体，显式重复 ID 拒绝。
+- 新增 6 个恢复测试和 1 个 snapshot 测试，扩展目录迁移集成：有声 WAV、seeded MIDI
+  恢复前后字节一致；移动目录后加载、编译、修改 gain、更新 Session 和保存到新目录通过。
+  缺失资源/归属、重复 ID、无效 trim/duration 和版本边界均有拒绝测试。
+- `pnpm build`（release native）、`pnpm lint`、`pnpm typecheck`、`pnpm test`
+  （185 tests）、`cargo fmt --all --check`、`cargo test --workspace`（385 tests）通过。
+  本阶段 TS 使用默认 timeout；临时目录仍在 BRData 卷。
+- [恢复基准](../../benchmarks/results/2026-09-06-project-restore.json)：Apple M4 / Node
+  26.5.0，32 Tracks/2048 notes/32 lanes，20 次预热、100 次测量；恢复加 snapshot
+  median/p95/p99 为 11.44/12.61/12.80 ms。首个控制线程基线，不包含 native compile、
+  callback 或 xrun；Rust 执行路径未变，不替代 M4/M7 的实时验收。
+
+当前剩余重点：insert 插件参数及 Mixer/Master insert 自动化；预设；标准化 WAV 导入
+缓存/provenance 与内置音源便捷入口；macOS CI/npm 分发/示例；Preview runner/GPUI；
+持续有声负载及设备拔插、资源预算/watchdog、fuzz/sanitizer/SBOM/签名公证等发布门禁。
+这些项仍未完成，逐项实现和记录出口证据后才能关闭对应里程碑。

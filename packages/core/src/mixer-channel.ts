@@ -152,6 +152,14 @@ export class MixerChannel {
     return structuredClone(this.spec);
   }
 
+  /** @internal Restore detached wire state without recording an authoring mutation. */
+  restoreSpec(input: MixerChannelSpec): void {
+    const spec = parseAuthoring(mixerChannelSpecSchema, input, "mixerChannel");
+    if (spec.id !== this.id) throw new OxitoneError(ErrorCode.InvalidProject, "mixer identity cannot change");
+    this.checkMaster(spec);
+    this.spec = spec;
+  }
+
   private checkMaster(spec: MixerChannelSpec): void {
     if (this.isMaster && (spec.masterSendRatio !== undefined || spec.sends.length > 0)) {
       throw new OxitoneError(ErrorCode.InvalidProject, "Master has no outgoing routes", {
@@ -161,9 +169,11 @@ export class MixerChannel {
   }
 
   private update(patch: Partial<MixerChannelSpec>): void {
+    this.project.assertMutable();
     const next = parseAuthoring(mixerChannelSpecSchema, { ...this.spec, ...patch }, "mixerChannel");
     this.checkMaster(next);
     this.spec = next;
+    if (this.isMaster) this.project.materializeMaster();
     this.project.touch();
   }
 }

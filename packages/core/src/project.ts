@@ -1,10 +1,11 @@
+import { resolve } from "node:path";
 import {
   ErrorCode,
   ID_PREFIXES,
   OxitoneError,
   type EntityId,
   type ProjectSnapshot,
-  type TimeSignatureSegment,
+  type CompileOptions,
 } from "@oxitone/protocol";
 import { Channel, type ChannelOptions } from "./channel.js";
 import { Sample, SampleClip, type SampleClipOptions, type SampleOptions } from "./sample.js";
@@ -15,16 +16,19 @@ import {
   type AutomationLaneOptions,
   type AutomationLaneTarget,
 } from "./automation/lane.js";
-import { AutomationSource } from "./automation/source.js";
+import type { AutomationSource } from "./automation/source.js";
+import { validateLaneTarget } from "./automation/target.js";
 import type { Pattern } from "./pattern.js";
 import { PatternClip } from "./pattern-clip.js";
-import { ProjectPlayback } from "./project-playback.js";
+import { ProjectTimeline } from "./project-timeline.js";
 import { snapshotProject } from "./project-snapshot.js";
 import { Track } from "./track.js";
-import { TempoMap, type TempoCurve, type TempoSegmentInput } from "./tempo-map.js";
-import { TimeSignatureMap, type BarBeatPosition } from "./time-signature.js";
-import { resolveBeatDuration } from "oxitone";
-import { saveProject, type SaveProjectOptions } from "./project-files.js";
+import type { BarBeatPosition } from "./time-signature.js";
+import { saveProject, loadProject, type SaveProjectOptions } from "./project-files.js";
+import { parseRestorableSnapshot } from "./project-restore.js";
+import { restoreEntities } from "./project-hydrate.js";
+
+export type { Marker } from "./project-timeline.js";
 
 /** Options for {@link Project}. */
 export interface ProjectOptions {
@@ -33,13 +37,6 @@ export interface ProjectOptions {
   sampleRate?: number;
   blockSize?: number;
   seed?: number;
-}
-
-/** A named beat position on the project timeline. */
-export interface Marker {
-  id: EntityId;
-  name: string;
-  startBeat: number;
 }
 
 const DEFAULT_SAMPLE_RATE = 48_000;
@@ -60,7 +57,7 @@ function checkPositiveInteger(value: number, path: string): void {
  * channels, mixer buses and Master. Every mutation bumps
  * `revision`; `snapshot()` emits a protocol-validated immutable snapshot.
  */
-export class Project extends ProjectPlayback {
+export class Project extends ProjectTimeline {
   readonly id: EntityId;
   readonly sampleRate: number;
   readonly blockSize: number;
@@ -68,10 +65,7 @@ export class Project extends ProjectPlayback {
   readonly master: MixerChannel;
   private readonly projectName?: string;
   private readonly ids: IdGenerator;
-  private readonly tempos = new TempoMap();
-  private readonly signatures = new TimeSignatureMap();
   private readonly masterId: EntityId;
-  private readonly markerList: Marker[] = [];
   private readonly trackList: Track[] = [];
   private readonly channelList: Channel[] = [];
   private readonly mixerChannelList: MixerChannel[] = [];
@@ -79,7 +73,8 @@ export class Project extends ProjectPlayback {
   private readonly automationLaneList: AutomationLane[] = [];
   private readonly patternsById = new Map<string, Pattern>();
   private readonly entityIds = new Set<string>();
-  private revisionCounter = 0;
+  private revisionCounter = 0n;
+  private implicitMaster = false;
 
   constructor(options: ProjectOptions = {}) {
     super();
@@ -110,7 +105,19 @@ export class Project extends ProjectPlayback {
 
   /** Monotonically increasing mutation counter. */
   get revision(): number {
-    return this.revisionCounter;
+    if (this.revisionCounter > BigInt(Number.MAX_SAFE_INTEGER)) {
+      throw new OxitoneError(ErrorCode.InvalidProject, "revision exceeds safe integer range; use revisionBigInt");
+    }
+    return Number(this.revisionCounter);
+  }
+
+  get revisionBigInt(): bigint { return this.revisionCounter; }
+
+  /** @internal Reject exhausted revisions before mutating any builder. */
+  assertMutable(): void {
+    if (this.revisionCounter === 0xffff_ffff_ffff_ffffn) {
+      throw new OxitoneError(ErrorCode.InvalidProject, "project revision exhausted");
+    }
   }
 
   /** ID of the undeletable Master mixer channel. */
@@ -122,7 +129,8 @@ export class Project extends ProjectPlayback {
   get mixerChannels(): readonly MixerChannel[] { return [...this.mixerChannelList]; }
 
   addMixerChannel(options: MixerChannelOptions = {}): MixerChannel {
-    const bus = new MixerChannel(this, this.ids.next(ID_PREFIXES.mixerChannel), options);
+    this.assertMutable();
+    const bus = new MixerChannel(this, this.ids.nextUnused(ID_PREFIXES.mixerChannel, this.entityIds), options);
     this.mixerChannelList.push(bus);
     this.entityIds.add(bus.id);
     this.touch();
@@ -131,7 +139,8 @@ export class Project extends ProjectPlayback {
 
   /** @internal Validate before registering or attaching a sample clip. */
   createSampleClip(track: Track, sample: Sample, position: BarBeatPosition, options: SampleClipOptions): SampleClip {
-    const clip = new SampleClip(this, track, sample, this.ids.next("scl_"), position, options);
+    this.assertMutable();
+    const clip = new SampleClip(this, track, sample, this.ids.nextUnused("scl_", this.entityIds), position, options);
     this.entityIds.add(clip.id);
     track.attachSampleClip(clip);
     this.touch();
@@ -140,7 +149,8 @@ export class Project extends ProjectPlayback {
 
   /** Register an immutable sample asset reference; decoding occurs in Rust prepare. */
   addSample(options: SampleOptions): Sample {
-    const id = options.id ?? this.ids.next(ID_PREFIXES.sample);
+    this.assertMutable();
+    const id = options.id ?? this.ids.nextUnused(ID_PREFIXES.sample, this.entityIds);
     if (this.entityIds.has(id) || this.patternsById.has(id)) {
       throw new OxitoneError(ErrorCode.InvalidProject, `duplicate sample id: ${id}`, {
         details: { path: "sample.id" },
@@ -154,6 +164,7 @@ export class Project extends ProjectPlayback {
   }
 
   get samples(): readonly Sample[] { return [...this.sampleList]; }
+  get patterns(): readonly Pattern[] { return [...this.patternsById.values()]; }
   get sampleClips() { return this.trackList.flatMap((track) => track.sampleClips); }
 
   /** @internal Resolve routing IDs against buses owned by this project. */
@@ -169,91 +180,13 @@ export class Project extends ProjectPlayback {
 
   /** @internal Bump the revision after any authoring mutation. */
   touch(): void {
-    this.revisionCounter += 1;
-  }
-
-  /** Replace the tempo map with a static tempo (`step` curve by default). */
-  setTempo(bpm: number, curve?: TempoCurve): this {
-    this.tempos.set(bpm, curve);
-    this.touch();
-    return this;
-  }
-
-  /** Append a tempo segment; start beats must strictly increase. */
-  addTempoSegment(segment: TempoSegmentInput): this {
-    this.tempos.add(segment);
-    this.touch();
-    return this;
-  }
-
-  /** Current tempo segments (defensive copy). */
-  get tempoMap(): TempoSegmentInput[] {
-    return this.tempos.list();
-  }
-
-  /** Replace the time-signature map with a single signature from bar 1. */
-  setTimeSignature(numerator: number, denominator: number): this {
-    this.signatures.set(numerator, denominator);
-    this.touch();
-    return this;
-  }
-
-  /** Append a time-signature change at a bar boundary. */
-  addTimeSignature(segment: TimeSignatureSegment): this {
-    this.signatures.add(segment);
-    this.touch();
-    return this;
-  }
-
-  /** Current time-signature segments (defensive copy). */
-  get timeSignatureMap(): TimeSignatureSegment[] {
-    return this.signatures.list();
-  }
-
-  /** Convert a bar/beat position to absolute project beats. */
-  barBeatToBeats(position: BarBeatPosition): number {
-    return this.signatures.toBeats(position);
-  }
-
-  /** Beats contained in one bar at a given bar. */
-  beatsPerBarAt(bar: number): number { return this.signatures.beatsPerBarAt(bar); }
-
-  /** Static tempo at a beat, used only for authoring fit helpers. */
-  tempoAt(beat: number): number {
-    const segments = this.tempos.list();
-    let bpm = segments[0]?.bpm ?? 120;
-    for (const segment of segments) {
-      if (segment.startBeat > beat) break;
-      bpm = segment.bpm;
-    }
-    return bpm;
-  }
-
-  /** Convert a content duration in seconds through the authored tempo map. */
-  beatsForSeconds(startBeat: number, seconds: number): number {
-    return resolveBeatDuration(this.snapshot(), startBeat, seconds);
-  }
-
-  /** Add a named marker at a beat position; returns the marker. */
-  addMarker(name: string, beat: number): Marker {
-    if (!Number.isFinite(beat) || beat < 0) {
-      throw new OxitoneError(ErrorCode.InvalidProject, `marker beat must be >= 0, got ${beat}`, {
-        details: { path: "markers.startBeat" },
-      });
-    }
-    const marker: Marker = { id: this.claimId("mrk_"), name, startBeat: beat };
-    this.markerList.push(marker);
-    this.touch();
-    return { ...marker };
-  }
-
-  /** Markers in insertion order (defensive copy). */
-  get markers(): readonly Marker[] {
-    return this.markerList.map((marker) => ({ ...marker }));
+    this.assertMutable();
+    this.revisionCounter += 1n;
   }
 
   /** Create a track. */
   addTrack(name?: string): Track {
+    this.assertMutable();
     const track = new Track(this, this.claimId(ID_PREFIXES.track), name);
     this.trackList.push(track);
     this.touch();
@@ -270,7 +203,8 @@ export class Project extends ProjectPlayback {
    * `instrument` it uses the built-in wavetable instrument.
    */
   addChannel(options: ChannelOptions = {}): Channel {
-    const channel = new Channel(this.ids.next(ID_PREFIXES.channel), options, this.masterId, this);
+    this.assertMutable();
+    const channel = new Channel(this.ids.nextUnused(ID_PREFIXES.channel, this.entityIds), options, this.masterId, this);
     this.channelList.push(channel);
     this.entityIds.add(channel.id);
     this.touch();
@@ -293,35 +227,10 @@ export class Project extends ProjectPlayback {
     source: AutomationSource,
     options: AutomationLaneOptions = {},
   ): AutomationLane {
-    if (!(source instanceof AutomationSource)) {
-      throw new OxitoneError(ErrorCode.InvalidProject, "lane source must be an AutomationSource", {
-        details: { path: "automation.source" },
-      });
-    }
-    if (!this.entityIds.has(target.entityId)) {
-      throw new OxitoneError(
-        ErrorCode.AutomationTargetInvalid,
-        `unknown automation target entity: ${target.entityId}`,
-        { details: { path: "automation.target.entityId" } },
-      );
-    }
-    if (target.entityId === this.id) {
-      if (target.parameterId !== "tempo") {
-        throw new OxitoneError(
-          ErrorCode.AutomationTargetInvalid,
-          `project exposes only the 'tempo' parameter, got '${target.parameterId}'`,
-          { details: { path: "automation.target.parameterId" } },
-        );
-      }
-      if (this.automationLaneList.some((lane) => lane.target.entityId === this.id)) {
-        throw new OxitoneError(
-          ErrorCode.TempoAutomationConflict,
-          "a tempo automation lane already exists for this project",
-          { details: { path: "automation.target" } },
-        );
-      }
-    }
+    this.assertMutable();
+    validateLaneTarget(this.id, this.entityIds, this.automationLaneList, target, source);
     const lane = new AutomationLane(this.claimId(ID_PREFIXES.automation), target, source, options);
+    if (target.entityId === this.masterId) this.materializeMaster();
     this.automationLaneList.push(lane);
     this.touch();
     return lane;
@@ -334,6 +243,7 @@ export class Project extends ProjectPlayback {
 
   /** @internal Create and attach a pattern clip; called by the draft API. */
   createPatternClip(track: Track, pattern: Pattern, startBeat: number): PatternClip {
+    this.assertMutable();
     this.registerPattern(pattern);
     const clip = new PatternClip(this, track, pattern, this.claimId("pcl_"), startBeat);
     track.attachClip(clip);
@@ -350,11 +260,18 @@ export class Project extends ProjectPlayback {
         { details: { path: "patterns.id" } },
       );
     }
+    if (existing === pattern) return;
+    const claimed = [pattern.id, ...pattern.notes.flatMap((note) => note.id === undefined ? [] : [note.id])];
+    const unique = new Set(claimed);
+    if (unique.size !== claimed.length || claimed.some((id) => this.entityIds.has(id))) {
+      throw new OxitoneError(ErrorCode.InvalidProject, "pattern or note ID is already registered");
+    }
+    for (const id of unique) this.entityIds.add(id);
     this.patternsById.set(pattern.id, pattern);
   }
 
-  private claimId(prefix: string): EntityId {
-    const id = this.ids.next(prefix);
+  protected claimId(prefix: string): EntityId {
+    const id = this.ids.nextUnused(prefix, this.entityIds);
     this.entityIds.add(id);
     return id;
   }
@@ -365,11 +282,56 @@ export class Project extends ProjectPlayback {
    * emitted in ascending ID order, matching the canonical encoding rules.
    */
   snapshot(): ProjectSnapshot {
-    return snapshotProject(this, [...this.patternsById.values()], this.tempos.toWire());
+    return snapshotProject(this, [...this.patternsById.values()], this.tempoSegments());
+  }
+
+  /** Restore editable builders without opening resources or instantiating plugins. */
+  static fromSnapshot(input: ProjectSnapshot, options: CompileOptions = {}): Project {
+    const { snapshot, ids } = parseRestorableSnapshot(input);
+    const project = new Project({ id: snapshot.id, ...(snapshot.name === undefined ? {} : { name: snapshot.name }),
+      sampleRate: snapshot.sampleRate, blockSize: snapshot.blockSize, seed: snapshot.seed });
+    if (options.assetBaseDir !== undefined) {
+      if (!options.assetBaseDir || options.assetBaseDir.includes("\0")) {
+        throw new OxitoneError(ErrorCode.InvalidProject, "assetBaseDir must be a nonempty local path");
+      }
+      project.projectAssetBaseDir = resolve(options.assetBaseDir);
+    }
+    project.restoreTimeline(snapshot);
+    const master = snapshot.mixerChannels.find((bus) => bus.id === "mix_master");
+    project.implicitMaster = master === undefined;
+    if (master !== undefined) project.master.restoreSpec(master);
+    for (const spec of snapshot.mixerChannels) {
+      if (spec.id === "mix_master") continue;
+      const bus = new MixerChannel(project, spec.id);
+      bus.restoreSpec(spec);
+      project.mixerChannelList.push(bus);
+    }
+    const restored = restoreEntities(project, snapshot);
+    project.channelList.push(...restored.channels);
+    project.sampleList.push(...restored.samples);
+    project.trackList.push(...restored.tracks);
+    project.automationLaneList.push(...restored.automation);
+    for (const [id, pattern] of restored.patterns) project.patternsById.set(id, pattern);
+    for (const id of ids) project.entityIds.add(id);
+    project.revisionCounter = BigInt(snapshot.revision);
+    return project;
+  }
+
+  /** Load editable builders, retaining the asset root for compile, render and save. */
+  static async load(directory: string): Promise<Project> {
+    const loaded = await loadProject(directory);
+    return Project.fromSnapshot(loaded.snapshot, { assetBaseDir: loaded.assetBaseDir });
+  }
+
+  /** @internal Preserve an implicit Master until a user explicitly edits it. */
+  materializeMaster(): void { this.implicitMaster = false; }
+  /** @internal Serialized buses; implicit Master is represented by omission. */
+  snapshotMixerChannels(): readonly MixerChannel[] {
+    return this.mixerChannelList.filter((bus) => !this.implicitMaster || bus !== this.master);
   }
 
   /** Save a canonical manifest and content-addressed assets on the control thread. */
   async save(directory: string, options: SaveProjectOptions = {}): Promise<void> {
-    await saveProject(this.snapshot(), directory, options);
+    await saveProject(this.snapshot(), directory, { assetBaseDir: this.assetBaseDir, ...options });
   }
 }

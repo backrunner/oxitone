@@ -1,7 +1,8 @@
-import { ErrorCode, OxitoneError, type Beat, type Pitch } from "@oxitone/protocol";
+import { entityIdSchema, ErrorCode, OxitoneError, type Beat, type EntityId, type Pitch } from "@oxitone/protocol";
 
 /** Authoring input for a single note (fields per `NoteSpec`). */
 export interface NoteInput {
+  id?: EntityId;
   pitch: Pitch;
   start: Beat;
   duration: Beat;
@@ -32,6 +33,9 @@ function checkRange(
 
 /** Validate a note against the `NoteSpec` field ranges. */
 export function validateNote(note: NoteInput): void {
+  if (note.id !== undefined && !entityIdSchema.safeParse(note.id).success) {
+    throw new OxitoneError(ErrorCode.InvalidProject, "invalid note id");
+  }
   checkRange(note.pitch, 0, 127, "pitch", true);
   if (!Number.isFinite(note.start) || note.start < 0) {
     throw new OxitoneError(ErrorCode.InvalidProject, `note start must be >= 0, got ${note.start}`, {
@@ -66,6 +70,7 @@ export function freezeNote(note: NoteInput): Readonly<NoteInput> {
     duration: note.duration,
     velocity: note.velocity,
   };
+  if (note.id !== undefined) copy.id = note.id;
   if (note.offVelocity !== undefined) {
     copy.offVelocity = note.offVelocity;
   }

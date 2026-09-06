@@ -6,6 +6,10 @@
 
 `Project` 是渲染和导出的根。它拥有唯一 `id`、`name`、`sampleRate`（默认 48_000）、`blockSize`（默认 128）、`tempoMap`、`timeSignatureMap`、markers、tracks、channels、mixer 和 automation lanes。
 
+`Project.fromSnapshot`/`Project.load` 恢复可编辑工程，保持 stable ID、有理数时序、音符
+顺序和原 revision；加载本身不视为 authoring mutation。`revisionBigInt` 覆盖 wire u64
+范围，后续每次成功修改递增一次，耗尽时拒绝修改；API 与目录资源语义见 04/06。
+
 - `Project.tempoMap` 是全局权威时钟，支持 beat 级变速：每个 segment 为 `{ startBeat, bpm, curve }`，`curve` 描述该 segment 到下一个 segment 的过渡方式——`step`（阶跃，默认）、`linear`（BPM 线性斜坡）、`exponential`（乘性斜坡，用于听觉均匀的 rit./accel.）。三种 curve 都有 beat↔秒的闭式积分与逆变换（公式见 `03-audio-runtime-spec.md`）。BPM 有效范围为 20..999 的有限数；segment 按 startBeat 严格递增，首个 segment 必须位于 beat 0。time signature 变化仍只允许在 bar 边界。
 - Track 的 `tempo` 是独立预览/编译上下文的静态 convenience override，不支持变速，也不会隐式改变同一 Project 其他 Track。Track tempo 会把该 Track 的相对 bar/beat 编排先换算到 Project beats，只有显式 `tempoMap` 才改变 Project 全局时钟。
 - 全局 tempo 是可自动化 target：lane 绑定 `target: { entityId: <projectId>, parameterId: 'tempo' }`，输出的 0..1 系数按 log 映射到 20..999 BPM。规则：
