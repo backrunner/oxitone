@@ -10,10 +10,7 @@ packages/native-generated/index.d.ts
 .DS_Store
 coverage/
 benches/results/
-benchmarks/results/
+benchmarks/results/*
 !benchmarks/results/*.json
 *.wav
 !benches/golden/**/*.wav
-target/
-dist/
-node_modules/

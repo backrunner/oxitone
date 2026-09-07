@@ -33,3 +33,14 @@ Physical-device switching/unplugging, 10/60-minute sustained load, minimum macOS
 runtime testing, performance budgets, npm installation, signing and notarization
 remain separate release gates. The workflow uses no release credentials and does
 not publish packages.
+
+Keep temporary logs, screenshots and test fixtures under `target/`. Routine cleanup
+can remove Cargo compilation caches and temporary test environments while retaining
+`target/examples` (songs and piano assets), `target/criterion` (comparison baselines),
+the preview bundles and the active local tooling. Compilation caches regenerate on
+the next build; package `dist` and native bindings are needed to run the current SDK.
+
+Small JSON reports in `benchmarks/results` are versioned; raw benchmark output stays
+ignored. Historical measurements are not current acceptance evidence. In particular,
+the old 10-minute soak did not maintain a full-song load; its limitations are recorded
+in the [review](../.agents/reviews/2026-09-05/README.md).

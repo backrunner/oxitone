@@ -1,0 +1,50 @@
+{
+  "schema": "oxitone-plugin-benchmark-v1",
+  "date": "2026-09-05",
+  "machine": {
+    "cpu": "Apple M4",
+    "os": "macOS 27.0",
+    "arch": "aarch64",
+    "rustc": "1.98.0 (88d9e12ae 2026-08-18)",
+    "llvm": "22.1.8"
+  },
+  "command": "cargo bench -p oxitone-bench --bench plugin_process -- --sample-size 30 --warm-up-time 1 --measurement-time 2",
+  "config": {
+    "sampleRate": 48000,
+    "channels": 2,
+    "plugin": "fixture.gain@1.0.0",
+    "parameterEventsPerBlock": 1,
+    "gain": 0.5,
+    "input": 0.25,
+    "warmupSeconds": 1,
+    "measurementSeconds": 2,
+    "samples": 30
+  },
+  "note": "C plugin and host adapter, including finite-output checks; means are not callback percentiles. Realtime results are recorded separately.",
+  "results": [
+    {
+      "blockSize": 64,
+      "meanNs": 177.07766699823588,
+      "confidence95Ns": [
+        176.76957224874812,
+        177.41939754875577
+      ]
+    },
+    {
+      "blockSize": 128,
+      "meanNs": 315.95529929132704,
+      "confidence95Ns": [
+        315.28316218072706,
+        316.6689040456135
+      ]
+    },
+    {
+      "blockSize": 256,
+      "meanNs": 578.0850309997136,
+      "confidence95Ns": [
+        576.399694614414,
+        579.8645905012647
+      ]
+    }
+  ]
+}
