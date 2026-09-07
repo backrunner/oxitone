@@ -34,6 +34,7 @@ pub fn schedule(window: &Window, cx: &mut Context<Preview>) {
     let appearance = std::env::var("OXITONE_PREVIEW_APPEARANCE").unwrap_or_default();
     let navigation = std::env::var("OXITONE_PREVIEW_CAPTURE_NAVIGATION").is_ok_and(|v| v == "1");
     let plugin = std::env::var("OXITONE_PREVIEW_CAPTURE_PLUGIN").unwrap_or_default();
+    let mixer = std::env::var("OXITONE_PREVIEW_CAPTURE_MIXER").unwrap_or_default();
     let revision = std::env::var("OXITONE_PREVIEW_CAPTURE_REVISION")
         .ok()
         .map(|v| v.parse::<u64>().expect("capture revision must be u64"))
@@ -57,6 +58,12 @@ pub fn schedule(window: &Window, cx: &mut Context<Preview>) {
             surface.redraw();
             if current.is_some() {
                 ready_frames += 1;
+            }
+            if !mixer.is_empty() {
+                this.update(cx, |this, cx| {
+                    crate::capture_mixer::step(this, ready_frames, &mixer, cx)
+                })
+                .unwrap();
             }
             if !plugin.is_empty() {
                 // Let AppKit finish presenting/closing between lifecycle steps.
@@ -106,6 +113,13 @@ pub fn schedule(window: &Window, cx: &mut Context<Preview>) {
                 let _ = cx.update_window(window_handle, |_, window, cx| {
                     if let Some(view) = this.upgrade() {
                         crate::capture_navigation::step(ready_frames, &view, window, cx);
+                    }
+                });
+            }
+            if !mixer.is_empty() {
+                let _ = cx.update_window(window_handle, |_, window, cx| {
+                    if let Some(view) = this.upgrade() {
+                        crate::capture_mixer::keyboard(ready_frames, &view, window, cx);
                     }
                 });
             }

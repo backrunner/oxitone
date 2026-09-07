@@ -3,7 +3,7 @@ use crate::{
     ui::{alpha, Preview},
 };
 use gpui::{prelude::*, *};
-const ROW: f32 = 56.;
+const ROW: f32 = 52.;
 
 pub fn rows(
     this: &Preview,
@@ -56,7 +56,7 @@ pub fn rows(
                     .left(px(start as f32 * zoom))
                     .top(px(4.))
                     .w(px(((end - start) as f32 * zoom - 2.).max(2.)))
-                    .h(px(47.))
+                    .h(px(43.))
                     .rounded_sm()
                     .overflow_hidden()
                     .border_1()
@@ -85,7 +85,7 @@ pub fn rows(
                                     .child(project.pattern_label(&clip.pattern_id)),
                             ),
                     )
-                    .child(div().h(px(28.)).px_1().child(pattern_preview::thumbnail(
+                    .child(div().h(px(24.)).px_1().child(pattern_preview::thumbnail(
                         project.clone(),
                         clip.clone(),
                         tint,
@@ -123,7 +123,7 @@ pub fn rows(
                             * zoom
                             - 2.)
                             .max(2.)))
-                        .h(px(47.))
+                        .h(px(43.))
                         .rounded_sm()
                         .overflow_hidden()
                         .border_1()

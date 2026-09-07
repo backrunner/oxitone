@@ -54,6 +54,8 @@ pub struct Workspace {
     pub editor_height: f32,
     pub piano_fraction: f32,
     pub inspector_open: bool,
+    pub inspector_tab: crate::mixer_inspector::InspectorTab,
+    pub mixer_expanded: bool,
     pub playlist_fitted: bool,
 }
 impl Default for Workspace {
@@ -63,9 +65,11 @@ impl Default for Workspace {
             mixer: ScrollHandle::new(),
             inspector: ScrollHandle::new(),
             gesture: None,
-            editor_height: 352.,
-            piano_fraction: 0.54,
+            editor_height: 404.,
+            piano_fraction: 0.45,
             inspector_open: true,
+            inspector_tab: crate::mixer_inspector::InspectorTab::Routing,
+            mixer_expanded: false,
             playlist_fitted: false,
         }
     }
@@ -84,10 +88,11 @@ pub fn panels(
         .editor_height
         .min((f32::from(size.height) - 390.).max(240.));
     let width = f32::from(size.width);
+    let expanded = this.workspace.mixer_expanded;
     let fraction = this
         .workspace
         .piano_fraction
-        .clamp((420. / width).min(0.55), (1. - 360. / width).max(0.55));
+        .clamp(420. / width, 1. - 526. / width);
     div()
         .flex_1()
         .min_h_0()
@@ -121,44 +126,55 @@ pub fn panels(
                 .flex_shrink_0()
                 .flex()
                 .overflow_hidden()
-                .child(
-                    div()
-                        .w(relative(fraction))
-                        .flex_shrink_0()
-                        .min_w_0()
-                        .h_full()
-                        .flex()
-                        .child(crate::piano::view(this, cx)),
-                )
-                .child(
-                    div()
-                        .id("editor-width-divider")
-                        .w(px(6.))
-                        .flex_shrink_0()
-                        .bg(rgb(theme.bg))
-                        .cursor(CursorStyle::ResizeLeftRight)
-                        .hover(move |s| s.bg(rgb(theme.selected)))
-                        .on_mouse_down(
-                            MouseButton::Left,
-                            cx.listener(move |this, event: &MouseDownEvent, _, cx| {
-                                this.workspace.gesture = Some(Gesture::Split {
-                                    pointer: f32::from(event.position.x),
-                                    fraction,
-                                    width,
-                                });
-                                cx.stop_propagation();
-                            }),
-                        ),
-                )
-                .child(crate::mixer::view(this, height, cx)),
+                .when(!expanded, |d| {
+                    d.child(
+                        div()
+                            .w(relative(fraction))
+                            .flex_shrink_0()
+                            .min_w_0()
+                            .h_full()
+                            .flex()
+                            .child(crate::piano::view(this, width * fraction, cx)),
+                    )
+                    .child(
+                        div()
+                            .id("editor-width-divider")
+                            .w(px(6.))
+                            .flex_shrink_0()
+                            .bg(rgb(theme.bg))
+                            .cursor(CursorStyle::ResizeLeftRight)
+                            .hover(move |s| s.bg(rgb(theme.selected)))
+                            .on_mouse_down(
+                                MouseButton::Left,
+                                cx.listener(move |this, event: &MouseDownEvent, _, cx| {
+                                    this.workspace.gesture = Some(Gesture::Split {
+                                        pointer: f32::from(event.position.x),
+                                        fraction,
+                                        width,
+                                    });
+                                    cx.stop_propagation();
+                                }),
+                            ),
+                    )
+                })
+                .child(crate::mixer::view(
+                    this,
+                    height,
+                    if expanded {
+                        width
+                    } else {
+                        width * (1. - fraction) - 6.
+                    },
+                    cx,
+                )),
         )
         .when(this.show_scopes, |d| {
             d.child(crate::scopes::view(
                 this,
                 if f32::from(size.height) < 820. {
-                    100.
+                    88.
                 } else {
-                    116.
+                    96.
                 },
             ))
         })
@@ -216,8 +232,9 @@ impl crate::ui::Preview {
                 fraction,
                 width,
             } => {
-                self.workspace.piano_fraction =
-                    (fraction + (f32::from(event.position.x) - pointer) / width).clamp(0.35, 0.7);
+                self.workspace.piano_fraction = (fraction
+                    + (f32::from(event.position.x) - pointer) / width)
+                    .clamp(420. / width, 1. - 526. / width);
             }
         }
     }

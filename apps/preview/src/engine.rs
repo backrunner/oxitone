@@ -157,6 +157,7 @@ impl Engine {
         )?);
         let project = Arc::new(ViewProject {
             plugins: crate::plugin_catalog::collect(&snapshot, &registry, libraries),
+            mixer_strips: Default::default(),
             snapshot,
             plan: graph.plan().into(),
             graph_latency: graph.graph_latency_frames(),

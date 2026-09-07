@@ -132,6 +132,6 @@ fn named_patterns_and_mixer_routes_keep_user_facing_names() {
     assert_eq!(project.pattern_label("pat_keys"), "Opening phrase");
     let strips = crate::mixer_model::strips(project);
     assert_eq!(strips[0].name, "Electric keys");
-    assert_eq!(strips[0].routes, ["→ Master"]);
+    assert_eq!(strips[0].outputs[0].destination_name, "Master");
     assert_eq!(strips.iter().filter(|s| s.id == "mix_master").count(), 1);
 }

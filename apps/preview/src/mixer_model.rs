@@ -1,32 +1,63 @@
-use crate::model::ViewProject;
+use crate::{
+    mixer_routes::{self, Route},
+    model::ViewProject,
+};
+use oxitone_core::wire::EffectRef;
 
+pub const STRIP_WIDTH: f32 = 92.;
+#[derive(Clone)]
+pub struct EffectSlot {
+    pub name: String,
+    pub bypass: bool,
+    pub mix: f64,
+}
 pub struct Strip {
     pub id: String,
     pub name: String,
     pub kind: String,
+    pub instrument: bool,
     pub index: usize,
     pub color_index: usize,
     pub level: f64,
     pub pan: f64,
     pub mute: bool,
     pub solo: bool,
-    pub effects: Vec<(String, bool)>,
-    pub routes: Vec<String>,
+    pub effects: Vec<EffectSlot>,
+    pub outputs: Vec<Route>,
+    pub inputs: Vec<Route>,
 }
-pub fn strips(project: &ViewProject) -> Vec<Strip> {
+impl Strip {
+    pub fn sends(&self) -> impl Iterator<Item = &Route> {
+        self.outputs.iter().filter(|r| r.is_send())
+    }
+    pub fn output(&self) -> Option<&Route> {
+        self.outputs.iter().find(|r| !r.is_send())
+    }
+    pub fn relation(&self, id: &str) -> Option<&'static str> {
+        if self.outputs.iter().any(|r| r.destination == id) {
+            Some("OUT")
+        } else if self.inputs.iter().any(|r| r.source == id) {
+            Some("IN")
+        } else {
+            None
+        }
+    }
+}
+pub fn strips(project: &ViewProject) -> &[Strip] {
+    project.mixer_strips.get_or_init(|| build(project))
+}
+fn build(project: &ViewProject) -> Vec<Strip> {
     let s = &project.snapshot;
-    let bus_name = |id: &str| {
-        s.mixer_channels
+    let routes = mixer_routes::connections(s);
+    let effects = |chain: &[EffectRef]| {
+        chain
             .iter()
-            .find(|b| b.id == id)
-            .and_then(|b| b.name.clone())
-            .unwrap_or_else(|| {
-                if id == "mix_master" {
-                    "Master".into()
-                } else {
-                    id.into()
-                }
+            .map(|e| EffectSlot {
+                name: plugin_name(&e.plugin_id),
+                bypass: e.bypass.unwrap_or(false),
+                mix: e.mix.unwrap_or(1.),
             })
+            .collect()
     };
     let mut result: Vec<_> = s
         .channels
@@ -39,6 +70,7 @@ pub fn strips(project: &ViewProject) -> Vec<Strip> {
                 .clone()
                 .unwrap_or_else(|| format!("Channel {}", i + 1)),
             kind: plugin_name(&c.instrument.plugin_id),
+            instrument: true,
             index: i + 1,
             color_index: s
                 .tracks
@@ -49,57 +81,31 @@ pub fn strips(project: &ViewProject) -> Vec<Strip> {
             pan: c.pan,
             mute: c.mute.unwrap_or(false),
             solo: c.solo.unwrap_or(false),
-            effects: c
-                .effect_chain
-                .iter()
-                .map(|e| (plugin_name(&e.plugin_id), e.bypass.unwrap_or(false)))
-                .collect(),
-            routes: vec![format!("→ {}", bus_name(&c.mixer_channel_id))],
+            effects: effects(&c.effect_chain),
+            outputs: vec![],
+            inputs: vec![],
         })
         .collect();
     for (i, b) in s.mixer_channels.iter().enumerate() {
         result.push(Strip {
             id: b.id.clone(),
-            name: bus_name(&b.id),
-            kind: "Mix bus".into(),
+            name: mixer_routes::name(s, &b.id),
+            kind: if b.id == "mix_master" {
+                "Stereo output"
+            } else {
+                "Mix bus"
+            }
+            .into(),
+            instrument: false,
             index: s.channels.len() + i + 1,
             color_index: s.tracks.len() + i,
             level: b.level,
             pan: b.balance,
             mute: b.mute.unwrap_or(false),
             solo: b.solo.unwrap_or(false),
-            effects: b
-                .inserts
-                .iter()
-                .map(|e| (plugin_name(&e.plugin_id), e.bypass.unwrap_or(false)))
-                .collect(),
-            routes: b
-                .sends
-                .iter()
-                .map(|send| {
-                    format!(
-                        "{} {} · {:.0}%{}",
-                        if send.sidechain == Some(true) {
-                            "SC →"
-                        } else {
-                            "→"
-                        },
-                        bus_name(&send.destination_id),
-                        send.ratio * 100.,
-                        if send.pre_fader == Some(true) {
-                            " pre"
-                        } else {
-                            ""
-                        }
-                    )
-                })
-                .chain((b.id != "mix_master").then(|| {
-                    format!(
-                        "→ Master · {:.0}%",
-                        b.master_send_ratio.unwrap_or(1.) * 100.
-                    )
-                }))
-                .collect(),
+            effects: effects(&b.inserts),
+            outputs: vec![],
+            inputs: vec![],
         });
     }
     if !result.iter().any(|s| s.id == "mix_master") {
@@ -107,6 +113,7 @@ pub fn strips(project: &ViewProject) -> Vec<Strip> {
             id: "mix_master".into(),
             name: "Master".into(),
             kind: "Stereo output".into(),
+            instrument: false,
             index: 0,
             color_index: 0,
             level: 1.,
@@ -114,8 +121,21 @@ pub fn strips(project: &ViewProject) -> Vec<Strip> {
             mute: false,
             solo: false,
             effects: vec![],
-            routes: vec![],
+            outputs: vec![],
+            inputs: vec![],
         });
+    }
+    for strip in &mut result {
+        strip.outputs = routes
+            .iter()
+            .filter(|r| r.source == strip.id)
+            .cloned()
+            .collect();
+        strip.inputs = routes
+            .iter()
+            .filter(|r| r.destination == strip.id)
+            .cloned()
+            .collect();
     }
     result
 }

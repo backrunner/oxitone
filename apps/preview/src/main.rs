@@ -2,6 +2,7 @@ mod analysis;
 mod arrangement;
 mod backend;
 mod capture;
+mod capture_mixer;
 mod capture_navigation;
 #[cfg(target_os = "macos")]
 mod capture_surface;
@@ -9,8 +10,14 @@ mod chrome;
 mod engine;
 mod mixer;
 mod mixer_actions;
+mod mixer_flow;
 mod mixer_inspector;
+mod mixer_meter;
 mod mixer_model;
+mod mixer_routes;
+#[cfg(test)]
+mod mixer_routes_tests;
+mod mixer_routing_view;
 mod mixer_strip;
 mod model;
 mod parameter_format;
@@ -20,12 +27,14 @@ mod piano;
 mod piano_actions;
 mod piano_layout;
 mod piano_paint;
+mod piano_toolbar;
 mod playlist_lane;
 mod plugin_capture;
 mod plugin_catalog;
 mod plugin_details;
 #[cfg(test)]
 mod plugin_details_tests;
+mod plugin_parameters;
 mod plugin_resources;
 mod plugin_scroll;
 mod plugin_window;
@@ -39,6 +48,7 @@ mod theme;
 #[cfg(test)]
 mod theme_tests;
 mod ui;
+mod ui_icons;
 mod window_chrome;
 mod wire;
 mod workspace;

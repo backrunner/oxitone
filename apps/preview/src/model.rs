@@ -15,6 +15,7 @@ pub struct ViewProject {
     pub graph_latency: u64,
     pub pattern_labels: OnceLock<HashMap<String, String>>,
     pub plugins: crate::plugin_catalog::Catalog,
+    pub mixer_strips: OnceLock<Vec<crate::mixer_model::Strip>>,
 }
 
 pub struct ViewPlan {

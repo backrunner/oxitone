@@ -90,7 +90,7 @@ impl Preview {
                 );
         controls = controls.child(crate::position::view(self, cx));
         div()
-            .h(px(56.))
+            .h(px(48.))
             .flex_shrink_0()
             .px_5()
             .flex()

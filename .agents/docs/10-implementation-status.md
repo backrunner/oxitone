@@ -376,3 +376,30 @@
 - `11-plugin-ui.md` 明确当前仅交付通用详情 P0；后续 P1 声明式 GPUI 布局、P2 独立版本
   native companion UI C ABI、P3 有界实时反馈分别列出契约/所有权/主题/watch/fallback 与出口。
   自定义 UI 注册、schema、symbol、第三方 UI 进程隔离与签名分发仍是规划，未声称已实现。
+
+## Mixer 路由呈现与整体视觉优化（2026-09-07）
+
+- Mixer 通道条统一为 92 px，重新绘制 pan、推子和 peak/RMS 表，改善名称、读数、
+  选中态、边框及留白。固定 Master，底部显示输出/send 数，关联通道标为 IN/OUT。
+  右侧详情按宽度适配，Chain 卡片展示音源/效果器、mix/bypass，Routing 优先展示 sends。
+- 路由来自已接受快照：直接输出、独立 Master 比例（含 0）、aux/sidechain、输入来源、
+  比例/dB、pre/post tap 与自动化标识。Channel 下游发送注明所属 bus，侧链正确显示
+  post-insert/pre-fader detector tap。点击连接跳转并显示目标；反向输入可回到来源。
+  路由模型随快照缓存，watch 接受时更新、拒绝时保留，测试覆盖旧快照与反向输入稳定性。
+- Expand/Split 切换整个编辑区的 Mixer/钢琴窗，保留浏览状态；宽屏空余区展示最多三条
+  连接的 signal-flow 图，完整列表在 Routing。右侧独立滚动条及键盘导航不修改音乐。
+  钢琴窗窄布局使用两行工具栏，分隔线考虑自身宽度并保留 Piano ≥420 px、Mixer ≥520 px。
+- 统一更轻的控件边框、圆角、线条图标与标签页；压缩 Transport/Playlist/Scope 的占用。
+  插件参数改为双列数值卡片，保留来源、范围和默认值；Specs 展开完整技术元数据及自动化绑定。
+- 新增可运行 `examples/drum-machine/src/mixer-preview.ts`，复用真实鼓机/gain dylib，包含
+  Drum/Music bus、混响/延迟返回、pre/post send、自动化与侧链；原歌曲导出入口独立保留。
+- lint/typecheck、rustfmt、433 项 Rust 工作区测试（含 16 项 viewer）通过，无失败/忽略；
+  最后布局调整后再次通过全部 viewer 测试。未修改音频回调、DSP、协议或 authoring API。
+- Release unsigned `.app` 重建及 plist 校验通过；真实 GPUI 深色展开、浅色最小窗口截图
+  与发送跳转/反向输入/右侧独立滚动冒烟通过。最小窗口钢琴缩放/滚动与 Mixer 导航通过；
+  最终 bundle 的多窗口 watch 冒烟验证两个 dylib 详情跟随 revision 2、volume 更新到 0.42。
+- [专项基准](../../benchmarks/results/2026-09-07-mixer-design.json)：Apple M4 / 48 kHz /
+  128 frames / 4 Channels，baseline 31.459 µs、telemetry 33.119 µs。Criterion 报告历史变化
+  +2.43%（噪声阈值内）/+1.73%（回退）；基准二进制未变且不链接 viewer，不能归因于 UI
+  或据此宣称界面帧率。仍未测真实设备 callback p95/p99/xrun、并发窗口有声长测。
+  桌面锁定，物理鼠标/触控板、原生窗口操作与运行中系统主题切换仍待未锁屏验收。

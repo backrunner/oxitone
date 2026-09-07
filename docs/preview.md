@@ -31,6 +31,16 @@ pnpm example:drums
 pnpm preview examples/drum-machine/src/preview.ts
 ```
 
+To explore bus sends and sidechains, use the routed version of the same song:
+
+```sh
+pnpm preview examples/drum-machine/src/mixer-preview.ts
+```
+
+It routes instruments through Drum/Music buses, adds Room reverb and Tape echo returns,
+and includes pre/post-fader sends, an automated send and a drum sidechain into the
+Music bus compressor. The original song/export entry stays available separately.
+
 Change `examples/drum-machine/src/song.ts` while it plays. The runner watches local
 static imports, executes a fresh Node process, and sends each changed snapshot to
 the native viewer. Compilation and graph swaps use the Rust engine; no JavaScript
@@ -111,13 +121,22 @@ palettes. Appearance changes are display-only and do not rebuild the music.
   stereo scope. Level, pan, mute/solo, inserts and send routes are read-only values
   from source. Peak/RMS and note-gate highlights come from native playback telemetry.
 - Master stays at the left of the Mixer. Scroll or use **‹/›** to browse strips;
-  **Inserts** toggles the independently scrolling effect/routing inspector. At small
-  panel heights, Alt-scroll or drag the vertical scrollbar to reach lower readouts.
+  **Details** toggles the independently scrolling inspector. **Chain** shows instrument
+  and effect cards with mix/bypass; **Routing** shows sends first, then output and inputs.
+  Send cards show source percentage/dB, pre/post-fader, detector-only sidechain and
+  automation status. A Channel's downstream sends are labeled **Sends via [bus]**;
+  the sends belong to that bus. Click a route to select/reveal its other endpoint.
+  Related strips show IN/OUT and each strip's footer identifies its output/send count.
+  **Expand** gives Mixer the full editor width; **Split** restores the piano roll.
+  Spare bank space shows a compact signal-flow map (first three connections, with the
+  complete list in Routing). At small panel heights, Alt-scroll or drag the vertical
+  scrollbar to reach lower readouts.
   After clicking the Mixer, Left/Right and Home/End select and reveal a strip;
-  Up/Down and Page Up/Down scroll vertically. Meter columns mean **peak and RMS**.
+  Up/Down and Page Up/Down scroll vertically. After clicking Details, navigation keys
+  scroll that panel independently. Meter columns mean **peak and RMS**.
 - Drag the horizontal divider above the editors to change their height, or the
   divider between the piano roll and Mixer to change their widths.
-- Double-click an instrument strip or choose **Open instrument ↗** in its inspector;
+- Double-click an instrument strip or click its instrument card under **Chain**;
   click an effect slot to open that instrument/effect in an independent, live-updating
   detail window. See [plugin windows and custom-UI plans](plugin-ui.md).
 - The footer shows native load, estimated output/graph latency, xruns and dynamic
@@ -152,6 +171,11 @@ checks the minimum logical window size. `OXITONE_PREVIEW_CAPTURE_NAVIGATION=1`
 adds a keyboard-dispatch and scroll/drag-controller smoke using measured view bounds,
 then captures the resulting selection and zoom. Use the drum example for this smoke.
 The process exits after capture and the CLI cleans up its socket.
+
+With `mixer-preview.ts`, `OXITONE_PREVIEW_CAPTURE_MIXER=split|expanded|chain` checks
+send values/automation, follows an outgoing send and returns via an incoming route,
+and dispatches Home/End to verify independent inspector scrolling before capture.
+Use it separately from the navigation/plugin capture modes.
 
 For instrument/effect windows, set `OXITONE_PREVIEW_CAPTURE_PLUGIN` to `instrument`,
 `synth` (first Wavetable), `effect`, or `info` (effect metadata). This also checks

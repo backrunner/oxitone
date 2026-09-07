@@ -31,6 +31,7 @@ pub struct PluginWindow {
     pub scroll: ScrollHandle,
     pub scroll_drag: Option<(f32, f32, f32)>,
     pub copied: bool,
+    pub parameter_specs: bool,
     focus: FocusHandle,
     _subscriptions: Vec<Subscription>,
 }
@@ -67,6 +68,7 @@ impl PluginWindow {
             scroll: ScrollHandle::new(),
             scroll_drag: None,
             copied: false,
+            parameter_specs: false,
             focus,
             _subscriptions: vec![project_changes, appearance_changes],
         }

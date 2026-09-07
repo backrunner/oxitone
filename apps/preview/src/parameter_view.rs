@@ -2,78 +2,79 @@ use crate::{
     parameter_format::{number, unit},
     plugin_details::ParameterDetail,
     theme::Theme,
+    ui::alpha,
 };
 use gpui::{prelude::*, *};
 
-pub fn row(parameter: &ParameterDetail, theme: Theme) -> impl IntoElement {
+pub fn row(parameter: &ParameterDetail, theme: Theme, specs: bool) -> impl IntoElement {
     let spec = &parameter.spec;
     let origin = if parameter.explicit {
-        "Source"
+        "In source"
     } else {
         "Default"
     };
-    let metadata = format!(
-        "{} … {} {}  ·  default {}  ·  {:?} / {:?} / {:?}  ·  automatable {}",
-        number(spec.min),
-        number(spec.max),
-        unit(spec.unit),
-        number(spec.default),
-        spec.mapping
-            .unwrap_or(oxitone_core::wire::ParameterMapping::Linear),
-        spec.rate,
-        spec.smoothing,
-        spec.automation.unwrap_or(false)
-    );
     div()
         .w_full()
+        .min_h(px(126.))
         .p_3()
-        .border_b_1()
-        .border_color(rgb(theme.border))
+        .rounded_lg()
+        .bg(rgb(theme.panel))
+        .border_1()
+        .border_color(alpha(theme.border, 0.6))
         .child(
             div()
                 .flex()
-                .gap_3()
-                .justify_between()
                 .items_center()
+                .justify_between()
+                .gap_2()
                 .child(
                     div()
                         .flex_1()
                         .min_w_0()
-                        .child(
-                            div()
-                                .text_sm()
-                                .font_weight(FontWeight::SEMIBOLD)
-                                .child(spec.label.clone()),
-                        )
-                        .child(div().text_size(px(10.)).text_color(rgb(theme.muted)).child(
-                            format!("{}{}", if parameter.host { "Host · " } else { "" }, spec.id),
-                        )),
-                )
-                .child(
-                    div().flex_shrink_0().text_right().child(
-                        div()
-                            .text_sm()
-                            .font_family("Menlo")
-                            .text_color(rgb(theme.accent))
-                            .child(if parameter.host && spec.id == "bypass" {
-                                if parameter.value >= 0.5 {
-                                    "On".into()
-                                } else {
-                                    "Off".into()
-                                }
-                            } else {
-                                format!("{} {}", number(parameter.value), unit(spec.unit))
-                            }),
-                    ),
+                        .text_size(px(11.))
+                        .font_weight(FontWeight::SEMIBOLD)
+                        .child(spec.label.clone()),
                 )
                 .child(
                     div()
-                        .w(px(52.))
-                        .text_right()
-                        .text_size(px(10.))
+                        .flex_shrink_0()
+                        .px_2()
+                        .py(px(2.))
+                        .rounded_full()
+                        .bg(rgb(theme.button))
+                        .text_size(px(8.))
                         .text_color(rgb(theme.muted))
                         .child(origin),
                 ),
+        )
+        .child(
+            div()
+                .mt_3()
+                .flex()
+                .items_baseline()
+                .gap_2()
+                .child(
+                    div()
+                        .text_size(px(22.))
+                        .font_family("Menlo")
+                        .text_color(rgb(theme.accent))
+                        .child(if parameter.host && spec.id == "bypass" {
+                            if parameter.value >= 0.5 {
+                                "On".into()
+                            } else {
+                                "Off".into()
+                            }
+                        } else {
+                            number(parameter.value)
+                        }),
+                )
+                .child(div().text_size(px(10.)).text_color(rgb(theme.muted)).child(
+                    if parameter.host && spec.id == "bypass" {
+                        ""
+                    } else {
+                        unit(spec.unit)
+                    },
+                )),
         )
         .child(
             div()
@@ -91,18 +92,50 @@ pub fn row(parameter: &ParameterDetail, theme: Theme) -> impl IntoElement {
         )
         .child(
             div()
-                .mt_1()
-                .text_size(px(10.))
+                .mt_2()
+                .flex()
+                .justify_between()
+                .gap_2()
+                .text_size(px(9.))
                 .text_color(rgb(theme.muted))
-                .child(metadata),
+                .child(format!("{} … {}", number(spec.min), number(spec.max)))
+                .child(format!("Default {}", number(spec.default))),
         )
         .when(!parameter.automation.is_empty(), |d| {
             d.child(
                 div()
-                    .mt_1()
-                    .text_size(px(10.))
+                    .mt_2()
+                    .text_size(px(9.))
                     .text_color(rgb(theme.gold))
-                    .child(format!("Automation · {}", parameter.automation.join(", "))),
+                    .child(if specs {
+                        format!("Automation · {}", parameter.automation.join(", "))
+                    } else {
+                        "Automated".into()
+                    }),
+            )
+        })
+        .when(specs, |d| {
+            d.child(
+                div()
+                    .mt_2()
+                    .pt_2()
+                    .border_t_1()
+                    .border_color(alpha(theme.border, 0.5))
+                    .text_size(px(9.))
+                    .text_color(rgb(theme.muted))
+                    .child(format!(
+                        "{}{}",
+                        if parameter.host { "Host · " } else { "" },
+                        spec.id
+                    ))
+                    .child(div().mt_1().child(format!(
+                            "Mapping {:?} · Rate {:?} · Smoothing {:?} · Automatable {}",
+                            spec.mapping
+                                .unwrap_or(oxitone_core::wire::ParameterMapping::Linear),
+                            spec.rate,
+                            spec.smoothing,
+                            spec.automation.unwrap_or(false)
+                        ))),
             )
         })
 }

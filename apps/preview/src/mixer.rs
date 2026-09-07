@@ -1,8 +1,18 @@
 //! Scrollable mixer bank, pinned master and a separate insert/routing inspector.
-use crate::{mixer_model, ui::Preview, workspace::Axis};
+use crate::{
+    mixer_model::{self, STRIP_WIDTH},
+    ui::{alpha, Preview},
+    ui_icons::{icon, Icon},
+    workspace::Axis,
+};
 use gpui::{prelude::*, *};
 
-pub fn view(this: &Preview, height: f32, cx: &mut Context<Preview>) -> impl IntoElement {
+pub fn view(
+    this: &Preview,
+    height: f32,
+    width: f32,
+    cx: &mut Context<Preview>,
+) -> impl IntoElement {
     let theme = this.theme;
     let strips = mixer_model::strips(this.project.as_ref().unwrap());
     let master = strips.iter().find(|s| s.id == "mix_master").unwrap();
@@ -10,13 +20,32 @@ pub fn view(this: &Preview, height: f32, cx: &mut Context<Preview>) -> impl Into
         .iter()
         .find(|s| s.id == this.selected_scope)
         .unwrap_or(master);
-    let strip_height = (height - 50.).max(310.);
+    let strip_height = (height - 52.).max(356.);
+    let inspector_width = if width < 650. { 228. } else { 260. };
+    let spare = width
+        - strips.len() as f32 * STRIP_WIDTH
+        - 11.
+        - if this.workspace.inspector_open {
+            inspector_width
+        } else {
+            0.
+        };
     let mut bank = div()
         .flex()
         .h(px(strip_height))
-        .w(px((strips.len() - 1) as f32 * 84.));
+        .w(px((strips.len() - 1) as f32 * STRIP_WIDTH));
     for strip in strips.iter().filter(|s| s.id != "mix_master") {
-        bank = bank.child(crate::mixer_strip::view(this, strip, cx));
+        bank = bank.child(crate::mixer_strip::view(
+            this,
+            strip,
+            selected.relation(&strip.id),
+            cx,
+        ));
+    }
+    if spare >= 280. {
+        bank = bank
+            .w(px((strips.len() - 1) as f32 * STRIP_WIDTH + spare))
+            .child(crate::mixer_flow::view(this, selected, spare, cx));
     }
     let mut body = div()
         .flex_1()
@@ -26,19 +55,24 @@ pub fn view(this: &Preview, height: f32, cx: &mut Context<Preview>) -> impl Into
         .child(
             div()
                 .relative()
-                .w(px(85.))
+                .w(px(STRIP_WIDTH + 1.))
                 .h_full()
                 .flex_shrink_0()
                 .pb(px(10.))
                 .border_r_1()
-                .border_color(rgb(theme.gold))
+                .border_color(alpha(theme.gold, 0.4))
                 .overflow_hidden()
                 .child(
                     div()
                         .absolute()
                         .top(this.workspace.mixer.offset().y)
                         .h(px(strip_height))
-                        .child(crate::mixer_strip::view(this, master, cx)),
+                        .child(crate::mixer_strip::view(
+                            this,
+                            master,
+                            selected.relation(&master.id),
+                            cx,
+                        )),
                 ),
         )
         .child(
@@ -105,7 +139,12 @@ pub fn view(this: &Preview, height: f32, cx: &mut Context<Preview>) -> impl Into
             cx,
         ));
     if this.workspace.inspector_open {
-        body = body.child(crate::mixer_inspector::view(this, selected, cx));
+        body = body.child(crate::mixer_inspector::view(
+            this,
+            selected,
+            inspector_width,
+            cx,
+        ));
     }
     div()
         .id("mixer-panel")
@@ -132,7 +171,7 @@ pub fn view(this: &Preview, height: f32, cx: &mut Context<Preview>) -> impl Into
         .bg(rgb(theme.bg))
         .child(
             div()
-                .h(px(40.))
+                .h(px(42.))
                 .flex_shrink_0()
                 .px_3()
                 .flex()
@@ -140,7 +179,13 @@ pub fn view(this: &Preview, height: f32, cx: &mut Context<Preview>) -> impl Into
                 .gap_2()
                 .border_b_1()
                 .border_color(rgb(theme.border))
-                .child(div().text_xs().font_weight(FontWeight::BOLD).child("MIXER"))
+                .child(icon(Icon::Effect, theme.accent))
+                .child(
+                    div()
+                        .text_size(px(12.))
+                        .font_weight(FontWeight::SEMIBOLD)
+                        .child("Mixer"),
+                )
                 .child(
                     div()
                         .flex_1()
@@ -148,13 +193,17 @@ pub fn view(this: &Preview, height: f32, cx: &mut Context<Preview>) -> impl Into
                         .text_color(rgb(theme.muted))
                         .min_w_0()
                         .truncate()
-                        .child(format!("{} strips · Source levels", strips.len())),
+                        .child(if width > 600. {
+                            format!("{} channels · Source levels", strips.len())
+                        } else {
+                            String::new()
+                        }),
                 )
                 .child(
                     theme
                         .button("mixer-prev", "‹")
                         .on_click(cx.listener(|this, _, _, cx| {
-                            nudge(&this.workspace.mixer, 168.);
+                            nudge(&this.workspace.mixer, STRIP_WIDTH * 2.);
                             cx.notify();
                         })),
                 )
@@ -162,15 +211,31 @@ pub fn view(this: &Preview, height: f32, cx: &mut Context<Preview>) -> impl Into
                     theme
                         .button("mixer-next", "›")
                         .on_click(cx.listener(|this, _, _, cx| {
-                            nudge(&this.workspace.mixer, -168.);
+                            nudge(&this.workspace.mixer, -STRIP_WIDTH * 2.);
                             cx.notify();
                         })),
                 )
                 .child(
                     theme
-                        .button("mixer-inspector", "Inserts")
+                        .button("mixer-inspector", "Details")
+                        .when(this.workspace.inspector_open, |d| d.bg(rgb(theme.selected)))
                         .on_click(cx.listener(|this, _, _, cx| {
                             this.workspace.inspector_open = !this.workspace.inspector_open;
+                            cx.notify();
+                        })),
+                )
+                .child(
+                    theme
+                        .button(
+                            "mixer-expand",
+                            if this.workspace.mixer_expanded {
+                                "Split"
+                            } else {
+                                "Expand"
+                            },
+                        )
+                        .on_click(cx.listener(|this, _, _, cx| {
+                            this.workspace.mixer_expanded = !this.workspace.mixer_expanded;
                             cx.notify();
                         })),
                 ),

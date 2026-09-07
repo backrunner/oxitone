@@ -29,6 +29,7 @@ pub struct Preview {
     pub position_focus: FocusHandle,
     pub piano_focus: FocusHandle,
     pub mixer_focus: FocusHandle,
+    pub inspector_focus: FocusHandle,
     pub workspace_focus: FocusHandle,
     pub position_text: String,
     pub plugin_windows: std::collections::HashMap<
@@ -86,6 +87,7 @@ impl Preview {
             position_focus: cx.focus_handle(),
             piano_focus: cx.focus_handle(),
             mixer_focus: cx.focus_handle(),
+            inspector_focus: cx.focus_handle(),
             workspace_focus,
             position_text: String::new(),
             plugin_windows: Default::default(),

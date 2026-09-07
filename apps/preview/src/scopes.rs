@@ -12,7 +12,7 @@ pub fn view(this: &Preview, height: f32) -> impl IntoElement {
                 .into_iter()
                 .find(|s| s.id == this.selected_scope)
         })
-        .map_or_else(|| "Master".into(), |s| s.name);
+        .map_or_else(|| "Master".into(), |s| s.name.clone());
     let node = this.analysis.get(&this.selected_scope);
     let wave = node.map(|n| n.wave.clone()).unwrap_or_default();
     let bins = crate::analysis::spectrum(&wave);

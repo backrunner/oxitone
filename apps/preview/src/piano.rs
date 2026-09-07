@@ -2,7 +2,7 @@
 use crate::ui::Preview;
 use gpui::{prelude::*, *};
 
-pub fn view(this: &mut Preview, cx: &mut Context<Preview>) -> impl IntoElement {
+pub fn view(this: &mut Preview, width: f32, cx: &mut Context<Preview>) -> impl IntoElement {
     let theme = this.theme;
     if this.piano.selection != this.selected_clip {
         this.piano.selection = this.selected_clip.clone();
@@ -38,79 +38,15 @@ pub fn view(this: &mut Preview, cx: &mut Context<Preview>) -> impl IntoElement {
     let (start, end) = project.clip_bounds(clip);
     let name = project.pattern_label(&pattern.id);
     let local_length = pattern.length_beats.to_f64();
-    root = root.child(
-        div()
-            .h(px(46.))
-            .flex_shrink_0()
-            .px_3()
-            .flex()
-            .items_center()
-            .gap_2()
-            .child(
-                div()
-                    .flex_1()
-                    .min_w_0()
-                    .child(div().text_sm().truncate().child(name))
-                    .child(theme.label(format!(
-                        "PIANO ROLL · {} notes · {local_length:.1} beats",
-                        pattern.notes.len()
-                    ))),
-            )
-            .child(
-                theme
-                    .button("piano-fit", "Fit")
-                    .on_click(cx.listener(|this, _, _, cx| {
-                        this.piano.fit();
-                        cx.notify();
-                    })),
-            )
-            .child(
-                theme
-                    .button("piano-out", "−")
-                    .on_click(cx.listener(|this, _, _, cx| {
-                        this.zoom_piano(0.8, 1.);
-                        cx.notify();
-                    })),
-            )
-            .child(
-                theme
-                    .button("piano-in", "+")
-                    .on_click(cx.listener(|this, _, _, cx| {
-                        this.zoom_piano(1.25, 1.);
-                        cx.notify();
-                    })),
-            )
-            .child(
-                theme
-                    .button("piano-keys-out", "Keys −")
-                    .on_click(cx.listener(|this, _, _, cx| {
-                        this.zoom_piano(1., 0.8);
-                        cx.notify();
-                    })),
-            )
-            .child(
-                theme
-                    .button("piano-keys-in", "Keys +")
-                    .on_click(cx.listener(|this, _, _, cx| {
-                        this.zoom_piano(1., 1.25);
-                        cx.notify();
-                    })),
-            )
-            .child(
-                theme
-                    .button("loop-selection", "Loop clip")
-                    .on_click(cx.listener(move |this, _, _, cx| {
-                        this.loop_start = start;
-                        this.loop_end = end;
-                        this.loop_enabled = true;
-                        this.seek(start);
-                        if this.playback.playing {
-                            this.play();
-                        }
-                        cx.notify();
-                    })),
-            ),
-    );
+    root = root.child(crate::piano_toolbar::view(
+        this,
+        width,
+        name,
+        pattern.notes.len(),
+        local_length,
+        (start, end),
+        cx,
+    ));
     let channel_ids = project
         .snapshot
         .tracks

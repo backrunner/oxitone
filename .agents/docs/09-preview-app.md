@@ -50,6 +50,8 @@ diagnostic、status、transport、query、shutdown；所有帧含 protocolVersio
 - **Playlist/arrangement**：固定 Track 侧栏与小节标尺，PatternClip 的彩色标题与真实 note 缩略图；缩略图遵循 Track tempo、clip 重复和截断。首次打开适配工程长度，markers 独立导航。未命名 Pattern 按全局首次出现顺序编号，同一 Pattern 的多个 clip 共用名称，派生标签按 snapshot 缓存。
 - **Piano roll**：完整 128 MIDI 音高范围，固定琴键、局部 Pattern 拍标尺和 velocity lane；自动适配选中音符，播放头及 native note-on/off 高亮。音符与琴键可滚动、缩放，不能编辑。
 - **Mixer**：紧凑通道条、固定 Master、通道颜色、只读 level/pan/mute/solo、分段 peak/RMS 表（两列不是 L/R）；独立可收起的效果器/路由 inspector 展示完整名称、bypass、send 和 Master scope true-peak。
+- Mixer 详情采用 Chain/Routing 标签：有序插件卡片显示 mix/bypass，路由卡片显示直接输出、独立 Master 比例、aux/sidechain sends 和输入来源，含比例/dB、实际 pre/post tap 和自动化标识。Channel 只拥有直达 bus 的输出；其下游 send 标为 “Sends via …”，不冒充 Channel 自己的 send。侧链遵循引擎固定 post-insert/pre-fader detector tap，不进入目标音频求和。
+- 通道条显示输出目标与 send 数；选择连接跳转并显示目标通道，关联输入/输出标为 IN/OUT。Inspector 按宽度适配，Mixer 可展开到整个编辑区并恢复 Split。所有导航仅改变视图；路由模型随已接受快照缓存，换图更新，拒绝换图保持上次合法连接。
 - **插件详情窗口**：Mixer 的音源入口、Channel/Mixer/Master 的每个效果器槽位均可独立打开。窗口按 `Instrument(channelId)`、`ChannelInsert(channelId,index)`、`BusInsert(busId,index)` 复用；不同实例/槽位可并排查看。当前 EffectRef 没有实例 ID，watch 时窗口跟随槽位索引，重排后显示该槽位的新插件；删除后显示未挂载状态，再出现时恢复。
 - 详情来自已接受快照与控制线程复制的权威 descriptor，包含参数显式值/默认值、物理范围/单位、平滑/rate/mapping、自动化绑定、效果器 mix/bypass、音源资源/structured state、布局/复音/capabilities、内置或动态库来源及已验证 hash。参数是 source 初始配置，不能冒充自动化/平滑后的实时有效值；不创建第二个 DSP 实例、不调用插件 process/getter、不持有动态库或 DSP 指针。
 - **Scopes**：波形（各 bus 峰值 ring）、频谱（FFT）、相位空间 XY/vectorscope（M/S 分解）。
@@ -77,6 +79,7 @@ diagnostic、status、transport、query、shutdown；所有帧含 protocolVersio
 - Mixer 滚轮/触控板与 ‹/› 按钮横向浏览；面板过矮时 Alt 滚轮或纵向滚动条浏览下部；Master 同步纵向位置。点击后左右/Home/End 选择并显示通道，上下/Page Up/Down 纵向浏览；inspector 独立纵向滚动。选择只改变分析 scope。
 - Playlist 与下部编辑视图之间、Piano 与 Mixer 之间的分隔线可拖动。Space 播放/暂停，位置输入框独立处理文字。所有视口状态仅在 viewer 内持有，watch 换图保留仍有效的选择并按新边界夹紧视口。
 - 详情窗口沿用自绘标题区、原生交通灯与系统 appearance；支持参数筛选、滚动、参数/资源/插件信息切换和复制该引用的 JSON。重复打开聚焦已有窗口；独立关闭不影响播放或其他窗口，关闭主窗口退出整个配对 session。有效 watch revision 才更新详情，失败编译保持上次合法数据。dylib 自定义 UI 的后续方案见 `11-plugin-ui.md`，当前通用详情不执行插件 UI 代码。
+- 参数页以双列卡片突出数值、来源、范围与默认值；Specs 展开 ID、mapping/rate/smoothing 和完整自动化绑定。钢琴窗窄于 620 px 时工具栏分为标题与控制两行，防止挤压裁切；分隔线保持 Piano ≥420 px、Mixer ≥520 px。
 
 ## 打包与启动
 
@@ -109,3 +112,4 @@ voice；启动 realtime session 后改变 sampleRate/blockSize 需重启。大�
 - `OXITONE_PREVIEW_CAPTURE_NAVIGATION=1` 在截图模式加入 GPUI 键盘分发、基于真实布局边界的滚轮/拖动控制器冒烟，验证钢琴缩放/滚动、Mixer 选择及滚动。它不等于物理鼠标/触控板与系统交通灯、拖动、全屏验收；后者仍需未锁屏桌面。
 - `OXITONE_PREVIEW_CAPTURE_PLUGIN=instrument|synth|effect|info` 在截图模式打开音源和效果器详情，验证重复打开复用、分步关闭重开和键盘滚动；分别截图第一个音源、第一个 Wavetable、第一个 Channel effect 或其插件信息。关闭主窗口走 AppKit 的正常 should-close 路径，验证详情仍打开时 session 可以退出。`OXITONE_PREVIEW_CAPTURE_REVISION` 指定截图前必须接受的最低 revision（默认 1）。
 - `node scripts/smoke-preview-details.mjs [viewer]` 使用真实鼓机/gain dylib，在详情窗口已打开后修改临时入口的 volume，断言所有窗口跟随 revision 2、音源显示新值并成功截图；不修改示例文件，不启动播放。需要先构建 workspace、鼓机示例动态库与 viewer。
+- `OXITONE_PREVIEW_CAPTURE_MIXER=split|expanded|chain` 搭配 `examples/drum-machine/src/mixer-preview.ts` 验证发送比例/自动化、发送目标与输入反向导航、右侧独立键盘滚动；与 navigation/plugin capture 模式分别运行。该可运行示例独立于原始歌曲导出，包含 Drum/Music bus、Reverb/Delay return、pre/post send 和 sidechain，不伪造 UI 数据。

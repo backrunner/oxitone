@@ -1,5 +1,5 @@
 use crate::{
-    plugin_window::{DetailTab, ParameterFilter, PluginWindow},
+    plugin_window::{DetailTab, PluginWindow},
     theme::Theme,
 };
 use gpui::{prelude::*, *};
@@ -67,10 +67,10 @@ pub fn view(this: &PluginWindow, cx: &mut Context<PluginWindow>) -> impl IntoEle
     let descriptor = &details.info.descriptor;
     let mut tabs = div()
         .flex()
-        .gap_2()
+        .gap_4()
+        .h(px(42.))
         .items_center()
         .px_4()
-        .py_2()
         .flex_shrink_0()
         .border_b_1()
         .border_color(rgb(theme.border));
@@ -81,8 +81,7 @@ pub fn view(this: &PluginWindow, cx: &mut Context<PluginWindow>) -> impl IntoEle
     ] {
         tabs = tabs.child(
             theme
-                .button(title, title)
-                .when(this.tab == tab, |d| d.bg(rgb(theme.selected)))
+                .tab(title, title.into(), this.tab == tab)
                 .on_click(cx.listener(move |this, _, _, cx| {
                     this.tab = tab;
                     this.scroll.set_offset(point(px(0.), px(0.)));
@@ -108,46 +107,7 @@ pub fn view(this: &PluginWindow, cx: &mut Context<PluginWindow>) -> impl IntoEle
     );
     let mut content = div().w_full().flex().flex_col();
     match this.tab {
-        DetailTab::Parameters => {
-            content = content.child(div().px_4().py_3().text_xs().text_color(rgb(theme.muted))
-                .child("Initial values from code and plugin defaults. Automation can change playback values."));
-            let mut filters = div().px_4().pb_2().flex().gap_2();
-            for (filter, label) in [
-                (ParameterFilter::All, "All"),
-                (ParameterFilter::Source, "In source"),
-                (ParameterFilter::Automated, "Automated"),
-            ] {
-                filters = filters.child(
-                    theme
-                        .button(label, label)
-                        .when(this.filter == filter, |d| d.bg(rgb(theme.selected)))
-                        .on_click(cx.listener(move |this, _, _, cx| {
-                            this.filter = filter;
-                            this.scroll.set_offset(point(px(0.), px(0.)));
-                            cx.notify();
-                        })),
-                );
-            }
-            content = content.child(filters);
-            let mut count = 0;
-            for parameter in details.parameters.iter().filter(|p| match this.filter {
-                ParameterFilter::All => true,
-                ParameterFilter::Source => p.explicit,
-                ParameterFilter::Automated => !p.automation.is_empty(),
-            }) {
-                count += 1;
-                content = content.child(crate::parameter_view::row(parameter, theme));
-            }
-            if count == 0 {
-                content = content.child(
-                    div()
-                        .p_4()
-                        .text_sm()
-                        .text_color(rgb(theme.muted))
-                        .child("No parameters in this view"),
-                );
-            }
-        }
+        DetailTab::Parameters => content = crate::plugin_parameters::view(this, cx),
         DetailTab::Resources => content = crate::plugin_resources::view(this),
         DetailTab::Plugin => {
             content = content

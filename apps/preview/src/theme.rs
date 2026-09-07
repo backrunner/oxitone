@@ -93,9 +93,9 @@ impl Theme {
             .id(ElementId::Name(id.into()))
             .px_2()
             .py_1()
-            .rounded_sm()
+            .rounded_md()
             .border_1()
-            .border_color(rgb(self.border))
+            .border_color(crate::ui::alpha(self.border, 0.65))
             .bg(rgb(self.button))
             .text_color(rgb(self.text))
             .hover(move |style| style.bg(rgb(self.button_hover)))
@@ -115,5 +115,26 @@ impl Theme {
 
     pub fn track(self, index: usize) -> u32 {
         self.tracks[index % self.tracks.len()]
+    }
+
+    pub fn tab(self, id: &'static str, label: String, selected: bool) -> Stateful<Div> {
+        div()
+            .id(id)
+            .h_full()
+            .flex()
+            .items_center()
+            .px_1()
+            .border_b_2()
+            .border_color(if selected {
+                rgb(self.accent)
+            } else {
+                crate::ui::alpha(self.border, 0.)
+            })
+            .text_size(px(11.))
+            .font_weight(FontWeight::MEDIUM)
+            .text_color(rgb(if selected { self.text } else { self.muted }))
+            .cursor_pointer()
+            .hover(move |s| s.text_color(rgb(self.text)))
+            .child(label)
     }
 }

@@ -1,13 +1,15 @@
 # Instrument and effect windows
 
-Double-click an instrument's Mixer strip, or select it and choose **Open instrument ↗**.
-Click any effect slot in the Mixer inspector to open that effect. This includes
+Double-click an instrument's Mixer strip, or select it and click its instrument card
+under **Details → Chain**. Click any effect card there to open that effect. This includes
 channel effects and bus/Master inserts. Each instance/slot gets its own window;
 opening the same item again brings its existing window forward.
 
 The windows show all declared parameters, their source values or plugin defaults,
 units and ranges, mapping/smoothing/rate, automation bindings, and host mix/bypass.
-Use **All**, **In source** or **Automated** to filter, scroll or use navigation keys,
+Parameters use two-column readout cards; **Specs** reveals parameter IDs, mapping,
+smoothing/rate and full automation bindings. Use **All**, **In source** or **Automated**
+to filter, scroll or use navigation keys,
 and switch to **Resources / State** or **Plugin info** for samples, structured state,
 channel context and plugin capabilities. **Copy JSON** copies the selected source
 instrument/effect reference. These are viewing controls; they never edit the music.

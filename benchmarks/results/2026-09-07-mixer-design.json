@@ -1,0 +1,25 @@
+{
+  "schema": "oxitone.focused-benchmark.v1",
+  "date": "2026-09-07",
+  "change": "Mixer design, source routing navigation and plugin parameter cards",
+  "baseCommit": "0393fb9",
+  "machine": { "cpu": "Apple M4", "os": "macOS 27.0 (26A5425a)", "arch": "aarch64-apple-darwin", "cargo": "1.98.0" },
+  "config": {
+    "sampleRate": 48000, "blockSize": 128, "outputChannels": 2,
+    "channels": 4, "masterLimiter": true,
+    "sampleCount": 30, "warmupSeconds": 1, "measurementTargetSeconds": 3,
+    "device": null, "cpuUtilization": null, "callbackP95Ns": null, "callbackP99Ns": null, "xruns": null
+  },
+  "command": "cargo bench -p oxitone-bench --bench preview -- --warm-up-time 1 --measurement-time 3 --sample-size 30",
+  "scenarios": [
+    { "id": "preview/4_channels_128/baseline", "slopeNs": 31458.57417828346, "confidence95Ns": [30955.150673180484, 32280.175770079823] },
+    { "id": "preview/4_channels_128/telemetry", "slopeNs": 33119.3860112153, "confidence95Ns": [33029.33613237322, 33231.828097065896] }
+  ],
+  "notes": [
+    "Preview windows and other build/test processes were stopped during this run. Audio processing and benchmark sources are unchanged; Cargo reused the existing benchmark binary.",
+    "Criterion reports a historical baseline change of +2.43% within its noise threshold and a telemetry regression of +1.73%. These measurements do not establish a causal connection to UI changes; this benchmark does not link the viewer.",
+    "Four channels; playback restarts every 180 blocks. Telemetry queues are consumed every 12 blocks, approximately 30 Hz.",
+    "This microbenchmark excludes GPUI layout, painting, plugin windows, routing model construction and device I/O. It does not measure UI frame rate, physical-device callback p95/p99 or xrun endurance.",
+    "Real GPUI captures separately cover dark/light layouts, compact piano controls, mixer routing navigation and independent inspector keyboard scrolling. Physical mouse/trackpad and native window interactions still require an unlocked desktop."
+  ]
+}
