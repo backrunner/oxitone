@@ -24,9 +24,10 @@ oxitone/
     protocol/             # @oxitone/protocol: versioned wire schemas and codecs
     midi/                 # @oxitone/midi: deterministic SMF Type 1 export
     samples/              # @oxitone/samples: sample metadata/editing facade
-    native/               # oxitone: public facade and platform binary resolver
+    native/               # @oxitone/native: low-level facade and platform binary resolver
+    sdk/                  # oxitone: unified public authoring/native/sample entry
     native-generated/     # generated N-API TS declarations; never hand edit
-    cli/                  # @oxitone/cli: render/export-midi/doctor
+    cli/                  # @oxitone/cli: render/export-midi/doctor and preview/watch runner
   crates/
     core/                 # oxitone-core: IDs, units, errors, immutable data
     graph/                # oxitone-graph: validation and RenderGraph compiler
@@ -49,6 +50,10 @@ oxitone/
 ```
 
 The first npm package may bundle `@oxitone/core`, `@oxitone/protocol`, and the native resolver for ergonomics. Subpath packages remain separately testable and must not create circular dependencies.
+
+统一入口 `oxitone`（packages/sdk）依赖 core、samples、native；core/samples/midi
+依赖底层 `@oxitone/native`，不能反向依赖统一入口。保留原有低层函数导出并新增
+Project、Pattern、音源 helpers、importSample 等 authoring 导出，无循环依赖。
 
 仓库根是私有 `oxitone-workspace`，不能与公开 facade `oxitone` 同名；否则 pnpm
 会混淆 workspace 依赖顺序，首次构建时可能在 native 类型生成前构建 core。

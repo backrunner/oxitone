@@ -8,6 +8,9 @@ import {
   type ProjectSnapshot,
   type RenderOptions,
   type RenderReport,
+  registerPluginOptionsSchema,
+  type RegisterPluginOptions,
+  type RegisteredPlugin,
 } from "@oxitone/protocol";
 import {
   compile as nativeCompile,
@@ -15,7 +18,9 @@ import {
   dispose as nativeDispose,
   renderWav as nativeRenderWav,
   exportMidi as nativeExportMidi,
-} from "oxitone";
+  registerPlugin as nativeRegisterPlugin,
+} from "@oxitone/native";
+import { resolve } from "node:path";
 import { Session, withTempEngine, type TransportPosition, type LoopRegion } from "./session.js";
 import type { BarBeatPosition } from "./time-signature.js";
 
@@ -24,6 +29,28 @@ export type ProjectCompileOptions = EngineOptions & CompileOptions;
 
 export abstract class ProjectPlayback {
   private activeSession?: Session;
+  private pluginList: RegisterPluginOptions[] = [];
+  private policy: EngineOptions["allowPlugins"];
+  get registeredPlugins(): RegisterPluginOptions[] { return structuredClone(this.pluginList); }
+  get pluginPolicy(): EngineOptions["allowPlugins"] { return this.policy; }
+
+  /** Register trusted plugin code for this project's current and future engines. */
+  registerPlugin(input: RegisterPluginOptions, options: Pick<EngineOptions, "allowPlugins"> = {}): RegisteredPlugin {
+    const plugin = registerPluginOptionsSchema.parse(input);
+    plugin.libraryPath = resolve(plugin.libraryPath);
+    const policy = options.allowPlugins ?? this.policy;
+    const engine = createEngine({ allowPlugins: policy });
+    try {
+      for (const existing of this.pluginList) nativeRegisterPlugin(engine, existing);
+      const result = nativeRegisterPlugin(engine, plugin);
+      this.session?.registerPlugin({ ...plugin, expectedHash: result.sha256 });
+      if (!this.pluginList.some((entry) => entry.manifest.pluginId === result.pluginId && entry.manifest.pluginVersion === result.pluginVersion)) {
+        this.pluginList.push({ ...plugin, expectedHash: result.sha256 });
+      }
+      this.policy = policy;
+      return result;
+    } finally { nativeDispose(engine); }
+  }
   protected projectAssetBaseDir: string | undefined;
   /** Absolute resource directory retained when restoring a portable project. */
   get assetBaseDir(): string | undefined { return this.projectAssetBaseDir; }
@@ -37,10 +64,11 @@ export abstract class ProjectPlayback {
    * render and MIDI export. Replaces (and disposes) any previous session.
    */
   async compile(options?: ProjectCompileOptions): Promise<Session> {
-    options = { assetBaseDir: this.assetBaseDir, ...options };
+    options = { assetBaseDir: this.assetBaseDir, allowPlugins: this.policy, ...options };
     const engine = createEngine(options);
     let snapshot: ProjectSnapshot;
     try {
+      for (const plugin of this.pluginList) nativeRegisterPlugin(engine, plugin);
       snapshot = nativeCompile(engine, this.snapshot(), { assetBaseDir: options?.assetBaseDir });
     } catch (error) {
       nativeDispose(engine);
@@ -73,7 +101,8 @@ export abstract class ProjectPlayback {
   /** One-shot offline WAV export on a temporary engine (04 §RenderOptions). */
   async renderWav(options: RenderOptions): Promise<RenderReport> {
     const snapshot = this.snapshot();
-    return withTempEngine((engine) => nativeRenderWav(engine, snapshot, { assetBaseDir: this.assetBaseDir, ...options }));
+    return withTempEngine((engine) => nativeRenderWav(engine, snapshot, { assetBaseDir: this.assetBaseDir, ...options }),
+      { allowPlugins: this.policy }, this.pluginList);
   }
 
   /** One-shot SMF Type 1 export on a temporary engine. */

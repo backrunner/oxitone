@@ -377,6 +377,12 @@ impl MixerEngine {
         self.index.get(bus_id).map(|&i| &self.buses[i].meter)
     }
 
+    /// Borrow a bus's post-fader output by a prepare-resolved index; no allocation.
+    pub fn preview_output(&self, index: usize) -> (&[f32], &[f32]) {
+        let bus = &self.buses[index];
+        (&bus.out_l, &bus.out_r)
+    }
+
     /// Enable/disable per-bus stem taps of the Master-route contribution.
     /// Control thread; allocates on first enable. Tap buffers are indexed by
     /// bus position in [`MixerEngine::bus_order`] (Master's slot stays zero).

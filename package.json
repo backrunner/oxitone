@@ -17,7 +17,9 @@
     "fmt:rust": "cargo fmt --all --check",
     "schemas": "pnpm --filter @oxitone/protocol run generate",
     "example": "pnpm --filter @oxitone/example-offline start",
-    "example:drums": "pnpm --filter @oxitone/example-drums start"
+    "example:drums": "pnpm --filter @oxitone/example-drums start",
+    "build:preview": "node scripts/build-preview.mjs",
+    "preview": "node packages/cli/dist/index.js preview"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

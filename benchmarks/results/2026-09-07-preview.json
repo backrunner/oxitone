@@ -1,0 +1,25 @@
+{
+  "schema": "oxitone.focused-benchmark.v1",
+  "date": "2026-09-07",
+  "change": "GPUI read-only preview and opt-in native analysis telemetry",
+  "baseCommit": "7b1b51c",
+  "machine": { "cpu": "Apple M4", "os": "macOS 27.0 (26A5425a)", "arch": "aarch64-apple-darwin", "cargo": "1.98.0" },
+  "config": {
+    "sampleRate": 48000, "blockSize": 128, "outputChannels": 2,
+    "channels": 4, "masterLimiter": true,
+    "sampleCount": 30, "warmupSeconds": 1, "measurementTargetSeconds": 3,
+    "device": null, "cpuUtilization": null, "callbackP95Ns": null, "callbackP99Ns": null, "xruns": null
+  },
+  "command": "cargo bench -p oxitone-bench --bench preview -- --warm-up-time 1 --measurement-time 3 --sample-size 30",
+  "scenarios": [
+    { "id": "preview/4_channels_128/baseline", "slopeNs": 30046.566580497583, "confidence95Ns": [30004.25328349345, 30108.915405245392] },
+    { "id": "preview/4_channels_128/telemetry", "slopeNs": 31514.309566470693, "confidence95Ns": [31494.505589863293, 31532.915632571207] }
+  ],
+  "notes": [
+    "Same graph with telemetry disabled/enabled. Playback restarts every 180 blocks to maintain audible content; restart is timed.",
+    "Telemetry scenario includes bounded PCM/note queues and meter consumption every 12 blocks (approximately 30 Hz); excludes GPUI layout, FFT and scope true peak.",
+    "Measured after build/test processes and preview windows stopped. Added cost about 1.468 microseconds per 128-frame block, 4.885 percent relative to the disabled baseline.",
+    "Render/seek allocation and deallocation counts are zero; telemetry-enabled PCM is bit-exact against disabled PCM in the focused integration test.",
+    "No physical device/callback/endurance measurement; this microbenchmark does not close M4/M7 acceptance. GPUI window/IPC launched, but visual acceptance was limited by the locked macOS session."
+  ]
+}

@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@oxitone/protocol": "workspace:*",
-    "oxitone": "workspace:*"
+    "@oxitone/native": "workspace:*"
   },
   "devDependencies": {
     "@oxitone/core": "workspace:*",

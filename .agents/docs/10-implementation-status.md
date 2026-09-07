@@ -11,12 +11,12 @@
 | M2 音源/采样 | Rust synth/Sampler/Slicer、解码/编辑/SRC、SampleClip stretch/repitch、C ABI、TS Sample/Clip/fit 和三种内置音源入口、缓存/provenance；Slicer repitch tempo map/lane 跟随 | 当前已识别的功能缺口已关闭；全规格 golden 和发布环境验证继续追踪 |
 | M3 Mixer/Automation/导出 | TS mixer/insert authoring，Rust mixer/PDC/12 effects、完整 insert 自动化/host 参数路径、tempo bake、WAV/stem/loudness 与回归测试 | 全规格 golden/PDC/export 的自动化发布门禁仍需建立和复核 |
 | M4 实时与设备 | CoreAudio HAL、render-ahead/direct、transport/loop、设备适配/诊断、Session 换图及 bar/beat/marker/timecode 入口、换图回收与模拟设备测试 | 修正循环负载后的 10/60 分钟 soak、真实设备切换/拔插和 callback 指标仍需验收 |
-| M5 npm/DX/插件 | CLI render/export-midi/doctor 与便携工程输入、动态插件注册/校验/故障计数；有声离线示例、API 使用指南和迁移文档 | 平台包/发布/签名公证、逐节点 deadline watchdog；`oxitone` 当前仅导出底层 facade，未提供仅安装它即可使用 Project 的包结构 |
-| M6 Preview | `09-preview-app.md` 规格 | runner/watch、IPC、GPUI viewer、CLI preview 和分发均未建立 |
+| M5 npm/DX/插件 | 统一 `oxitone` authoring/native/sample 入口，Project/Session 动态插件注册，descriptor 查询，instrument/effect/Channel preset；CLI、便携工程与有声示例 | npm 平台包/发布/签名公证、干净安装验收和逐节点 deadline watchdog |
+| M6 Preview | runner/watch、带版本 IPC、GPUI arrangement/piano/channel rack/mixer/scopes/transport、原生换图与错误恢复、CLI preview、unsigned 开发 app bundle | 锁屏限制下尚未完成完整视觉交互验收；正式 npm 平台包、签名分发及大工程虚拟列表继续追踪 |
 | M7 稳定性/发布 | 定向回归、插件 conformance、基准 harness | fuzz/sanitizer、持续负载 endurance、故障注入/资源上限、SBOM/签名公证和自动发布门禁 |
 
 规格中的项目目录保存/读取（formatVersion、资产相对路径、原子写入）已在后续阶段提供，
-详见下文；preset 仍未提供。canonical snapshot 编解码本身不能替代这些功能。
+详见下文；preset 已在 2026-09-07 后续阶段提供。canonical snapshot 编解码本身不能替代这些功能。
 
 ## 审查与性能记录的解释
 
@@ -241,7 +241,7 @@
   加载 0.59/0.66 ms。验证 CLI 复用的项目 I/O 层，未测子进程启动或设备 callback，
   不作为实时或远端 CI 验收证据。
 
-当前剩余重点：预设；CI 首跑及 npm 单包/平台分发；Preview runner/GPUI；
+该阶段剩余重点（历史记录）：预设；CI 首跑及 npm 单包/平台分发；Preview runner/GPUI；
 持续有声负载及设备拔插、资源预算/watchdog、fuzz/sanitizer/SBOM/签名公证等发布门禁。
 这些项仍未完成，逐项实现和记录出口证据后才能关闭对应里程碑。
 
@@ -265,3 +265,39 @@
   drum C entry 约 7.33 µs；后者静态链接同一函数表，不含宿主 adapter，置信区间较宽。
   两项均为 microbenchmark；未测真实设备 callback、worker 长测或 xrun，不关闭
   上述发布门禁。鼓机为仓库自带开发示例，尚未发布为签名平台包。
+
+## SDK 补齐与 GPUI 代码预览（2026-09-07）
+
+- 核对 SDK public source 后补齐统一 `oxitone` 入口、Project/Session 插件注册与
+  descriptor 元数据，以及 canonical instrument/effect/Channel preset。底层包改名
+  `@oxitone/native` 避免依赖环；旧 `oxitone` 原生函数继续 re-export。采样预设目录
+  移动、hash/路径校验、失败应用原子性、恢复前后有声 WAV 一致均有测试。
+- 修复 TS/Rust 的 signed-only、adapt-device、follow-default 与 one-pole wire
+  拼写差异；Rust 保留旧 camelCase 解码别名。Project 注册保留实际 hash，未来
+  compile/render 和已有 Session 使用同一验证结果；动态鼓机链已验证高低层 parity。
+- `oxitone preview` 使用 esbuild 本地依赖 watch、独立 tsx worker、150 ms 防抖、
+  generation 取消、10 秒超时与 64 MiB 帧限制。Unix IPC 一帧 in-flight，慢编译时
+  合并待发状态；重复内容跳过，native 拒绝后允许下一次 watch 重试。
+- GPUI 链接原生 Rust 引擎，展示轨道/clip、钢琴窗、Channel/Mixer 路由和 peak/RMS、
+  Master scope true peak、波形/频谱/XY，以及 marker/ruler/位置输入/loop transport。
+  authoring 只读；有效 tempo/Track tempo 和 sample clip 编译边界用于呈现。
+  Opt-in telemetry 预分配，FFT/true-peak 在 UI；满 ring 丢分析帧并计数。
+- Native IPC 冒烟验证播放中换图、失败保持旧图且游标前进、旧 revision 拒绝、代码
+  错误恢复、重复内容去重/失败重试、超时/过期执行和显式 runtime asset watch。
+  macOS accept 继承 O_NONBLOCK 曾导致消息间隙断线，已修正并由多帧测试覆盖。
+- Release GPUI 和 unsigned `.app` 已构建；鼓机工程在真实 GPUI 进程接受了 revision 1，
+  IPC 返回 4 Tracks / 54 Patterns。当前机器锁屏，WindowServer 未刷新完整界面；
+  因而不记作视觉或真实设备播放验收。`docs/preview.md` 提供直接运行的入口与限制。
+- `pnpm build`（release native）、lint、typecheck、209 TS tests、421 Rust tests、
+  rustfmt、schema 再生成无漂移、frozen install、actionlint/plist 检查通过，无 skip。
+  CLI 用实际 `.app` executable 启动，保留 viewer PID 以保证退出时回收；真实 GPUI
+  接受工程和进程/socket 清理通过。独立 1 秒 headless 鼓机播放游标达到 48,128，
+  xruns/pluginFaults 均为 0，仅是模拟输出启动冒烟。
+- [专项基准](../../benchmarks/results/2026-09-07-preview.json)：Apple M4 / 48 kHz /
+  128 frames、4 Channels，30 samples；关闭采集 30.047 µs，启用并模拟约 30 Hz 消费
+  31.514 µs（增加约 4.9%）。PCM 逐样本一致，process/seek allocation/free 均为 0。
+  没有设备 callback p95/p99 或长期 xrun 测量，不关闭 M4/M7 的发布门禁。
+
+当前仍需独立完成：远端 CI 首跑、macOS 最低版本和完整视觉交互、签名 npm 平台分发；
+10/60 分钟有声负载、设备拔插、资源预算/watchdog、fuzz/sanitizer/SBOM/公证。
+这些验收不能由本地源码与模拟输出测试替代。

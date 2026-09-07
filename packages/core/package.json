@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@oxitone/protocol": "workspace:*",
-    "oxitone": "workspace:*"
+    "@oxitone/native": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

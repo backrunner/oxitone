@@ -164,6 +164,18 @@ export class Project extends ProjectTimeline {
   }
 
   get samples(): readonly Sample[] { return [...this.sampleList]; }
+
+  /** Import a detached resource descriptor, preserving exact rational musical length. */
+  importSampleRef(ref: import("@oxitone/protocol").SampleRef, id?: string): Sample {
+    this.assertMutable();
+    const next = id ?? this.ids.nextUnused(ID_PREFIXES.sample, this.entityIds);
+    if (this.entityIds.has(next)) throw new OxitoneError(ErrorCode.InvalidProject, `duplicate sample ID: ${next}`);
+    const sample = Sample.fromSpec({ ...ref, id: next });
+    this.sampleList.push(sample);
+    this.entityIds.add(next);
+    this.touch();
+    return sample;
+  }
   get patterns(): readonly Pattern[] { return [...this.patternsById.values()]; }
   get sampleClips() { return this.trackList.flatMap((track) => track.sampleClips); }
 

@@ -100,6 +100,7 @@ pub enum LatencyMode {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum AllowPlugins {
+    #[serde(rename = "signed-only", alias = "signedOnly")]
     SignedOnly,
     Any,
 }
@@ -107,6 +108,7 @@ pub enum AllowPlugins {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum DeviceRatePolicy {
+    #[serde(rename = "adapt-device", alias = "adaptDevice")]
     AdaptDevice,
     Resample,
 }
@@ -114,6 +116,7 @@ pub enum DeviceRatePolicy {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum DeviceChangePolicy {
+    #[serde(rename = "follow-default", alias = "followDefault")]
     FollowDefault,
     Pause,
 }

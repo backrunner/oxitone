@@ -58,6 +58,8 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Build native addon, SDK and examples
         run: pnpm build
+      - name: Build GPUI viewer and development bundle
+        run: node scripts/build-preview.mjs --debug
       - name: Verify generated schemas
         run: |
           pnpm schemas
@@ -80,6 +82,7 @@ jobs:
           cargo bench -p oxitone-bench --bench insert_automation -- --warm-up-time 1 --measurement-time 3 --sample-size 30
           cargo bench -p oxitone-bench --bench plugin_process -- --warm-up-time 1 --measurement-time 3 --sample-size 30
           cargo bench -p oxitone-example-drums --bench process -- --warm-up-time 1 --measurement-time 3 --sample-size 30
+          cargo bench -p oxitone-bench --bench preview -- --warm-up-time 1 --measurement-time 3 --sample-size 30
       - uses: actions/upload-artifact@v4
         if: always()
         with:

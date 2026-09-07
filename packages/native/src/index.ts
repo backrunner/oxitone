@@ -10,6 +10,8 @@ import {
   registerPluginOptionsSchema,
   registeredPluginSchema,
   pluginDiagnosticsSchema,
+  pluginInfoSchema,
+  type PluginInfo,
   midiExportOptionsSchema,
   midiExportReportSchema,
   outputDeviceInfoSchema,
@@ -46,8 +48,7 @@ import {
   type TransportCommand,
   type TransportState,
 } from "@oxitone/protocol";
-import { toOxitoneError } from "./errors.js";
-import { loadNativeBinding, type NativeBinding } from "./load.js";
+import { call, native } from "./call.js";
 
 export type {
   SampleInfo,
@@ -56,6 +57,7 @@ export type {
   RegisteredPlugin,
   PluginManifest,
   PluginDiagnostics,
+  PluginInfo,
   EngineDiagnostics,
   EngineOptions,
   MidiExportOptions,
@@ -109,21 +111,6 @@ export function cacheSample(path: string, cacheDir: string): CachedSampleInfo {
   return info;
 }
 
-let cachedBinding: NativeBinding | undefined;
-
-function native(): NativeBinding {
-  cachedBinding ??= loadNativeBinding();
-  return cachedBinding;
-}
-
-function call<T>(fn: (binding: NativeBinding) => T): T {
-  try {
-    return fn(native());
-  } catch (error) {
-    throw toOxitoneError(error);
-  }
-}
-
 export function createEngine(options?: EngineOptions): EngineHandle {
   const validated = options === undefined ? undefined : engineOptionsSchema.parse(options);
   const json = call((binding) =>
@@ -154,6 +141,14 @@ export function registerPlugin(engine: EngineHandle, options: RegisterPluginOpti
 export function getPluginDiagnostics(engine: EngineHandle): PluginDiagnostics[] {
   const result = call((binding) => binding.getPluginDiagnostics(engine.id));
   return pluginDiagnosticsSchema.array().parse(JSON.parse(result));
+}
+
+/** Authoritative descriptor metadata for a built-in or registered native plugin. */
+export function getPluginInfo(engine: EngineHandle, pluginId: string, pluginVersion: string): PluginInfo {
+  const result = call((binding) => binding.getPluginInfo(engine.id, pluginId, pluginVersion));
+  const info = pluginInfoSchema.parse(JSON.parse(result));
+  checkProtocolVersion(info.protocolVersion);
+  return info;
 }
 
 export function compile(

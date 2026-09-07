@@ -3,6 +3,32 @@
 use super::*;
 use oxitone_core::wire::{AllowPlugins, RegisterPluginOptions};
 
+#[napi(js_name = "getPluginInfo")]
+pub fn get_plugin_info(
+    engine_id: String,
+    plugin_id: String,
+    plugin_version: String,
+) -> napi::Result<String> {
+    guarded(|| {
+        let engines = lock_registry();
+        let engine = engines
+            .get(&engine_id)
+            .ok_or_else(|| unknown_engine(&engine_id))?;
+        let descriptor = engine
+            .plugins
+            .lookup_descriptor(&plugin_id, &plugin_version)
+            .ok_or_else(|| {
+                OxitoneError::new(codes::PLUGIN_MANIFEST_MISMATCH, "unknown plugin ID/version")
+            })?;
+        Ok(serde_json::json!({
+            "protocolVersion": PROTOCOL_VERSION, "pluginId": descriptor.plugin_id,
+            "pluginVersion": descriptor.plugin_version, "abiMajor": 1,
+            "kind": match descriptor.kind { oxitone_graph::PluginKind::Instrument => "instrument", oxitone_graph::PluginKind::Effect => "effect" },
+            "parameters": descriptor.parameters, "stateSchema": descriptor.state_schema.map(|id| id.0),
+        }).to_string())
+    })
+}
+
 #[napi(js_name = "registerPlugin")]
 pub fn register_plugin(engine_id: String, options_json: String) -> napi::Result<String> {
     guarded(|| {

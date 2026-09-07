@@ -24,6 +24,22 @@ viewer 操作 -> transport command -> engine（仅此一个方向回到引擎）
 
 ## 同步语义
 
+入口默认导出 Project 或返回 Project 的 sync/async factory，也可返回
+`{ project, assetBaseDir? }`；Project.registerPlugin 的已校验库配置随 IPC 发送。
+runner 用 esbuild 追踪本地静态 import 依赖（含解析失败的目录；npm packages external），以独立 Node/tsx 子进程
+执行原始入口，避免模块缓存、保留 import.meta.url。每轮执行有 10 秒超时、64 MiB
+结果上限；代码日志走 stderr，snapshot 单独走 pipe，不混用 stdout JSON。
+运行期动态 import/文件读取依赖可由 `--watch-path <path>` 显式补充。未使用文件扫描
+或远程下载来寻找插件。
+
+IPC 是仅本机 Unix socket，目录 0700、socket 0600；4-byte big-endian 长度 + UTF-8
+JSON，单帧最大 64 MiB。`preview-frame.schema.json` 定义 snapshot（含 revision）、
+diagnostic、status、transport、query、shutdown；所有帧含 protocolVersion 1.0。
+`preview-response.schema.json` 定义有序 state/rejected 应答；runner 一帧 in-flight，
+队列保留各类型最新状态，避免慢编译积累大快照。native rejected 清除该 revision 的
+去重缓存，下次 watch 事件允许重试相同内容。只有 snapshot 能替换 authoring 呈现，transport 仅改变播放状态。viewer 断线仍持有
+最后合法图；runner 显式退出才发送 shutdown。`--headless` 使用模拟输出供集成测试。
+
 - revision 单调递增；viewer 忽略乱序或重复 revision。
 - snapshot 内容 hash 不变时不触发重编译（runner 负责 diff）。
 - 编译/校验失败：保持当前可播放图（引擎既有语义），viewer 显示结构化诊断 overlay，包含稳定错误码和 JSON path。
@@ -40,7 +56,7 @@ viewer 操作 -> transport command -> engine（仅此一个方向回到引擎）
 ## 分析数据路径（实时纪律）
 
 - audio 线程只写预分配 ring/atomic：meter 值、降采样峰值、analysis 帧、transport 游标。**FFT、加窗、M/S 分解都在 viewer 的 UI/分析线程执行**，从 ring 取数。
-- UI 以显示帧率（30/60 fps）节流消费；ring 溢出丢旧帧是允许的，transport ack 不允许丢（沿用引擎规则）。
+- UI 以约 30 fps 节流消费；满 ring 丢新 analysis 帧并计数，transport ack 不允许丢（沿用引擎规则）。
 - 播放头显示必须补偿 `getOutputLatency()`：画面位置 = engine 游标 − 输出延迟，使视觉与听觉对齐。
 - viewer 显示 `engineLoad`、underrun 计数和插件 fault 归因，与 `05` 的诊断指标一致。
 
@@ -54,6 +70,19 @@ viewer 操作 -> transport command -> engine（仅此一个方向回到引擎）
 - `oxitone preview <entry.ts>`：CLI 启动 runner，并拉起/连接 viewer。
 - viewer 以平台二进制分发：`@oxitone/preview-darwin-arm64`（x64 同规则），npm 安装，规则同 native 包；不允许运行时下载。
 - GPUI 依赖 pin 到具体 git rev，升级必须过 viewer 的 smoke test；GPUI 的 UI 线程模型不得反向约束音频线程。
+
+当前源码入口和 unsigned 开发 app bundle 已提供，`pnpm build:preview` 构建后
+`pnpm preview <entry.ts>` 默认 watch；`--viewer` 可指定二进制或 `.app`，`--no-watch`
+只构建一次。GPUI pin 为 `69e2130295c2649963eb639fc70b4f2ee8ea1624`，runtime_shaders
+不依赖单独的 Metal compiler。正式 npm 平台包与签名分发仍是发布门禁，不能把本地
+bundle 视为已发布包。详细入口/controls 示例见 `docs/preview.md`。
+
+首版 piano roll 呈现选中 Pattern 的原始音符，按 native dispatch 回显 note gate；
+scope true-peak 为 UI 消费音频的 4× 估计，丢帧时不能代替 export report。轨道和
+mixer 状态来自 source，动态 meter 来自引擎。Loop selection 选择 clip 区间；Go
+支持 bar.beat（均从 1 起）、mm:ss 或 `s` 后缀秒数。当前换图保留 transport 并重建
+voice；启动 realtime session 后改变 sampleRate/blockSize 需重启。大工程虚拟列表、
+主题持久化、锁屏后的视觉验收及真实设备 endurance 继续单独追踪。
 
 ## 测试
 

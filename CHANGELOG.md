@@ -8,6 +8,19 @@ conventional commits (`type(scope): description`).
 
 ### Added
 
+- Unified `oxitone` authoring/sample/native exports, with the low-level facade now
+  named `@oxitone/native`. Project/Session register dynamic plugins; native descriptor
+  metadata supports validated instrument/effect/Channel presets with portable assets.
+- GPUI read-only preview: arrangement, piano roll, channel rack/mixer, routes/meters,
+  waveform/spectrum/stereo scopes and transport. `oxitone preview` watches ESM source
+  dependencies and swaps native graphs, preserving the last valid graph on errors.
+  Includes bounded IPC, headless integration tests and an unsigned macOS app build.
+- Opt-in preallocated render telemetry with native note echoes and peak/RMS; FFT and
+  scope true-peak analysis stay on the UI thread. PCM parity and zero-allocation tests
+  plus a focused baseline/telemetry benchmark cover the realtime change.
+- Public engine-policy and `one-pole` smoothing spellings now round-trip correctly
+  through Rust; old camelCase values remain accepted during native decoding.
+
 - macOS CI for Apple Silicon and Intel: frozen installs, native/SDK/example builds,
   schema drift checks, tests and focused benchmarks with a virtual CoreAudio output.
 - Executable offline synth/sample-slice example with WAV/MIDI export and verified

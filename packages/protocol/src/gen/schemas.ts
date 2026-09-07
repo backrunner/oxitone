@@ -4,6 +4,10 @@ import {
   compileOptionsSchema,
   projectFileSchema,
   pluginManifestSchema,
+  pluginInfoSchema,
+  presetSchema,
+  previewFrameSchema,
+  previewResponseSchema,
   registerPluginOptionsSchema,
   nativeCommandSchema,
   nativeEventSchema,
@@ -40,6 +44,10 @@ export function generateSchemas(): void {
   writeSchema("schemas/beat-duration-query.schema.json", beatDurationQuerySchema);
   writeSchema("schemas/beat-duration-result.schema.json", beatDurationResultSchema);
   writeSchema("schemas/plugin-manifest.schema.json", pluginManifestSchema);
+  writeSchema("schemas/plugin-info.schema.json", pluginInfoSchema);
+  writeSchema("schemas/preset.schema.json", presetSchema);
+  writeSchema("schemas/preview-frame.schema.json", previewFrameSchema);
+  writeSchema("schemas/preview-response.schema.json", previewResponseSchema);
   writeSchema("schemas/register-plugin-options.schema.json", registerPluginOptionsSchema);
 
   // The recursive automation source is hand-maintained: zod cannot emit a

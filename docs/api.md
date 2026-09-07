@@ -13,8 +13,9 @@ stable `code` through `OxitoneError`, plus a message and optional details/path.
 | `@oxitone/samples` | `importSample` metadata and normalized WAV caching |
 | `@oxitone/midi` | SMF export facade and option/report types |
 | `@oxitone/protocol` | Schemas, wire types, canonical encoding and error codes |
-| `oxitone` | Lower-level native engine facade; complete authoring re-export is pending |
-| `@oxitone/cli` | `render`, `export-midi`, `doctor` commands |
+| `oxitone` | Unified Project/builders, presets, sample import and native facade |
+| `@oxitone/native` | Lower-level engine facade and native binary resolver |
+| `@oxitone/cli` | `render`, `export-midi`, `doctor`, `preview` commands |
 
 The generated native package is a build artifact interface, not an authoring API.
 
@@ -155,7 +156,8 @@ pnpm --filter @oxitone/cli exec node dist/index.js render /path/chops-project /p
 ```
 
 CLI failures return JSON diagnostics on stderr with exit code 1; invalid command
-usage returns exit code 2. Preview is still tracked follow-up work.
+usage returns exit code 2. `preview <entry.ts>` launches the read-only GPUI app and
+dependency watcher; see [preview usage](preview.md).
 Low-level consumers can use `createEngine`,
 `compile`, `enqueueTransport`, `renderWav`, `exportMidi`, diagnostics and `dispose`
 from `oxitone`. Third-party plugins register explicitly with `registerPlugin` and
@@ -170,3 +172,37 @@ Instrument parameters use their descriptor IDs (the example uses `volume` and
 `decay`); channel controls such as `level` and `pan` take precedence over instrument
 parameters with the same name. Saved projects retain plugin IDs and versions;
 register the matching libraries on the engine used to render their snapshots.
+
+`project.registerPlugin({libraryPath, manifest, expectedHash?}, {allowPlugins?})`
+retains validated paths and hashes for subsequent compile/play/render calls, and
+registers with an existing Session. `session.registerPlugin` affects that Session;
+`session.pluginDiagnostics()` reports per-plugin faults. Register before compiling
+when selecting a different trust policy: an existing Session keeps its engine policy.
+`getPluginInfo(engine, id, version)` reads authoritative native descriptor metadata.
+Registration is runtime configuration and is not saved into the project snapshot.
+
+## Presets
+
+```ts
+import { createChannelPreset, savePreset, loadPreset, applyPreset } from 'oxitone';
+
+const preset = createChannelPreset(channel, { name: 'Soft keys', samples: project.samples });
+await savePreset(preset, '/path/presets/keys.oxitonepreset.json', { assetBaseDir: project.assetBaseDir });
+const loaded = await loadPreset('/path/presets/keys.oxitonepreset.json');
+await applyPreset(project, channel, loaded.preset, { assetBaseDir: loaded.assetBaseDir });
+await project.session?.update();
+```
+
+Instrument/effect presets use `createPluginPreset(ref, 'instrument' | 'effect',
+{name?, samples?})`; `presetInstrument` / `presetEffect` extract detached references
+for authoring. Effect presets can be assigned to an insert array with `presetEffect`;
+their resource IDs must already exist in that project. `applyPreset` applies an
+instrument or whole Channel, imports/remaps its sample IDs, and compiles a detached
+candidate first. Invalid state/parameters/resources leave the original project intact.
+
+Files contain versioned canonical metadata and relative resource URIs/hashes.
+Sample bytes remain external and must be inside the preset directory. Loading
+validates plugin versions, ABI major, kind, parameters, state and sample hashes.
+Pass `{plugins, allowPlugins}` to file/validation helpers for dynamic plugins.
+Applying a preset changes authoring only; `Session.update` adopts structural changes
+at a block boundary, resetting voices. Use `setParameter` for continuous live changes.

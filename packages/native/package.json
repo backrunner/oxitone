@@ -1,5 +1,5 @@
 {
-  "name": "oxitone",
+  "name": "@oxitone/native",
   "version": "0.1.0",
   "description": "Oxitone public facade: loads the native engine addon and exposes the typed authoring API",
   "license": "Apache-2.0",

@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { encodeProjectSnapshot } from "@oxitone/protocol";
 import { Pattern, Project } from "@oxitone/core";
-import { inspectSample } from "oxitone";
+import { inspectSample } from "@oxitone/native";
 
 const cli = fileURLToPath(new URL("../dist/index.js", import.meta.url));
 function run(cwd: string, ...args: string[]) {

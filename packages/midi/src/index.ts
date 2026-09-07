@@ -5,7 +5,7 @@ import {
   type MidiExportReport,
   type ProjectSnapshot,
 } from "@oxitone/protocol";
-import { createEngine, dispose, exportMidi as nativeExportMidi } from "oxitone";
+import { createEngine, dispose, exportMidi as nativeExportMidi } from "@oxitone/native";
 
 export type { MidiExportOptions, MidiExportReport } from "@oxitone/protocol";
 

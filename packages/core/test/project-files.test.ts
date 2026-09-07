@@ -3,7 +3,7 @@ import { mkdtemp, readFile, readdir, rename, rm, symlink, writeFile } from "node
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { canonicalEncode, ErrorCode } from "@oxitone/protocol";
-import { compile, createEngine, dispose, enqueueTransport, inspectSample, renderWav } from "oxitone";
+import { compile, createEngine, dispose, enqueueTransport, inspectSample, renderWav } from "@oxitone/native";
 import { loadProject, Pattern, Project, saveProject } from "../src/index.js";
 
 describe("portable project files", () => {

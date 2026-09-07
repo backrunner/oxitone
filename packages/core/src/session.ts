@@ -13,6 +13,10 @@ import {
   type RenderReport,
   type TransportCommand,
   type TransportState,
+  type EngineOptions,
+  type RegisterPluginOptions,
+  type RegisteredPlugin,
+  type PluginDiagnostics,
 } from "@oxitone/protocol";
 import {
   createEngine,
@@ -25,7 +29,9 @@ import {
   renderWav as nativeRenderWav,
   setParameter as nativeSetParameter,
   type EngineHandle,
-} from "oxitone";
+  registerPlugin as nativeRegisterPlugin,
+  getPluginDiagnostics,
+} from "@oxitone/native";
 import { positionFields, type TransportPosition } from "./transport-position.js";
 export type { TransportPosition } from "./transport-position.js";
 
@@ -55,6 +61,16 @@ export class Session {
 
   get disposed(): boolean { return this.disposedValue; }
   get revision(): bigint { return BigInt(this.compiledSnapshot.revision); }
+
+  registerPlugin(options: RegisterPluginOptions): RegisteredPlugin {
+    this.assertActive();
+    return nativeRegisterPlugin(this.engine, options);
+  }
+
+  pluginDiagnostics(): PluginDiagnostics[] {
+    this.assertActive();
+    return getPluginDiagnostics(this.engine);
+  }
 
   private assertActive(): void {
     if (this.disposedValue) throw new OxitoneError(ErrorCode.InvalidProject, "session has been disposed");
@@ -154,9 +170,11 @@ export class Session {
 }
 
 /** @internal Create a throwaway engine around one snapshot call. */
-export async function withTempEngine<T>(run: (engine: EngineHandle) => T): Promise<T> {
-  const engine = createEngine();
+export async function withTempEngine<T>(run: (engine: EngineHandle) => T,
+  options?: EngineOptions, plugins: readonly RegisterPluginOptions[] = []): Promise<T> {
+  const engine = createEngine(options);
   try {
+    for (const plugin of plugins) nativeRegisterPlugin(engine, plugin);
     return run(engine);
   } finally {
     nativeDispose(engine);

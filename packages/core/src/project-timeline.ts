@@ -1,6 +1,6 @@
 import { beatFromWire, beatToWire, ErrorCode, OxitoneError,
   type EntityId, type MarkerSpec, type ProjectSnapshot, type TimeSignatureSegment } from "@oxitone/protocol";
-import { resolveBeatDuration } from "oxitone";
+import { resolveBeatDuration } from "@oxitone/native";
 import { ProjectPlayback } from "./project-playback.js";
 import { TempoMap, type TempoCurve, type TempoSegmentInput } from "./tempo-map.js";
 import { TimeSignatureMap, type BarBeatPosition } from "./time-signature.js";

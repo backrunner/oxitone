@@ -5,7 +5,7 @@ import { basename, join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Project } from "@oxitone/core";
 import { ErrorCode } from "@oxitone/protocol";
-import { compile, createEngine, dispose } from "oxitone";
+import { compile, createEngine, dispose } from "@oxitone/native";
 import { cacheSample, importSample } from "../src/index.js";
 import { tempDirectory, wavFile, wavSamples } from "./fixtures.js";
 

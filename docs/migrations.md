@@ -7,6 +7,10 @@ migration is currently needed or implemented.
 
 | Earlier usage | Current API / behavior |
 | --- | --- |
+| Installing several authoring packages | `oxitone` re-exports authoring, presets, sample import and the existing native API; lower layers use `@oxitone/native` to avoid cycles |
+| Per-engine-only plugin registration | `Project.registerPlugin` retains verified libraries for future Project engines; existing Session policy still applies |
+| Copying parameter objects between projects | Versioned presets validate native descriptors and can atomically apply Channel settings/resources |
+| Manual preview scripts | `oxitone preview <entry.ts>` supplies GPUI views and dependency watch; factories run in ESM worker processes |
 | Hand-built builtin InstrumentRefs | `wavetable`, `sampler`, `slicer` return the same declarative references with typed controls |
 | JSON snapshots only | `Project.save` and `Project.load` preserve portable assets and editable builders |
 | Restoring an authoring model manually | `Project.fromSnapshot(snapshot, {assetBaseDir?})` retains IDs, exact beats, order and revision |
@@ -30,6 +34,8 @@ No caller-owned source files are rewritten by import or project restoration. Sav
 is explicit. Unknown extension fields are currently dropped by schema parsing;
 round-tripping arbitrary third-party project metadata is not supported yet.
 
-The published single-package authoring facade and macOS platform distribution are
-still pending. Development examples use `@oxitone/core`, `@oxitone/samples` and the
-workspace-built native addon; do not treat workspace success as npm release acceptance.
+The unified authoring facade is implemented in `packages/sdk`; the old low-level
+facade moved to package name `@oxitone/native` and remains re-exported from `oxitone`.
+macOS npm platform distribution is still pending. Do not treat workspace success
+as npm release acceptance. Engine policy and parameter smoothing strings now
+serialize with the public hyphenated spellings; Rust accepts the old camelCase aliases.

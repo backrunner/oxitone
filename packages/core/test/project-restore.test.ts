@@ -4,7 +4,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { beatToWire, canonicalEncode, ErrorCode, type ProjectSnapshot } from "@oxitone/protocol";
-import { compile, createEngine, dispose, exportMidi, renderWav } from "oxitone";
+import { compile, createEngine, dispose, exportMidi, renderWav } from "@oxitone/native";
 import { AutomationSource, IdGenerator, Pattern, Project } from "../src/index.js";
 
 const rational = { numerator: 123456789, denominator: 4294967291 };

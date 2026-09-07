@@ -165,4 +165,10 @@ blockSize 帧，必须使用完整配置的 ring horizon，不能因额外余量
 
 ## Offline parity
 
+Preview telemetry 为显式 opt-in：graph prepare 时按 Channel/Mixer bus 数创建固定容量
+PCM ring、note echo queue 和 atomic meter。每段只复制音频、累加 peak/RMS、写 note
+事件；满 ring 丢帧计数，不阻塞音频。UI 消费后执行加窗/FFT/XY 和 Master true-peak
+分析；telemetry 不调用 JS。seek 增加 epoch 并清空 pending note queue，viewer 清除
+旧高亮；换图获得新的独立 telemetry。默认关闭时不分配这些缓冲。
+
 Offline renderer 使用同一 `RenderGraph`、event scheduler、automation evaluators 和 DSP implementations，只替换 output sink 和 clock。golden tests 比较固定 seed、sample rate、block size、transport 起点和 loop 策略下的 WAV hash/peak/RMS，并允许在不同 CPU 上配置极小浮点容差。必须单独测试 sine/cos phase、gate duty、chance seed/restart/absolute、tempo change 和 block-boundary continuity。为保证 block size 无关性，voice 在**非 legato 的（重）触发**（含 steal）时重置 oscillator 相位与滤波器 state——release 尾音结束后 voice slot 的释放发生在 segment（block）边界，残留的相位/滤波器记忆会随 block size 变化；包络电平保留（retrigger 从当前电平起音，避免爆音），legato/glide 路径不重置。

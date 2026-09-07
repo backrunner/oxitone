@@ -27,7 +27,26 @@ pub enum ParameterUnit {
 pub enum ParameterSmoothing {
     None,
     Linear,
+    #[serde(rename = "one-pole", alias = "onePole")]
     OnePole,
+}
+
+#[cfg(test)]
+mod smoothing_tests {
+    use super::ParameterSmoothing;
+    #[test]
+    fn one_pole_uses_public_wire_spelling_and_reads_legacy_spelling() {
+        assert_eq!(
+            serde_json::to_string(&ParameterSmoothing::OnePole).unwrap(),
+            "\"one-pole\""
+        );
+        for wire in ["\"one-pole\"", "\"onePole\""] {
+            assert_eq!(
+                serde_json::from_str::<ParameterSmoothing>(wire).unwrap(),
+                ParameterSmoothing::OnePole
+            );
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

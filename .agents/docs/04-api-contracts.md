@@ -510,4 +510,22 @@ Events include stable `code`, `severity`, and `path` where applicable. N-API err
 
 ## Compatibility
 
+`oxitone` 统一导出 core authoring、native facade 和 importSample；底层包改为
+`@oxitone/native`，避免 core 与统一入口循环依赖。既有低层函数签名保留。
+
+`Project.registerPlugin(options, {allowPlugins?})` 显式校验/注册动态库并保留绝对路径
+与实际 SHA-256（不进入 snapshot）。后续 compile/play/renderWav 创建的引擎都注册
+这些库；已有 Session 同步注册。未指定策略时仍遵循 native 默认策略，不隐式放宽。
+`Project.registeredPlugins`、`pluginPolicy` 提供只读控制配置，供 preview runner 传递。
+`Session.registerPlugin`、`pluginDiagnostics()` 作用于该 Session 的引擎。
+`getPluginInfo(engine, pluginId, pluginVersion)` 返回版本化的 kind/parameter/state schema
+元数据，复用 Rust registry 的权威 descriptor，未知 ID/version 报 PluginManifestMismatch。
+EngineOptions 的 signed-only/adapt-device/follow-default 与 ParameterSpec.one-pole
+使用公开的连字符拼写；Rust 解码保留旧 camelCase 别名兼容，序列化只输出公开拼写。
+
+`Channel.applySettings({instrument?, effectChain?, level?, pan?, swing?})` 校验并按单个
+revision 应用一组 authoring 设置。`Project.importSampleRef(ref, id?)` 导入 detached
+SampleRef（默认生成新 ID），保留精确 rational 音乐长度；不在 TS 中读取/解码 PCM。
+预设格式、资源迁移、候选图验证与显式 Session.update 语义见 `06-format-and-export.md`。
+
 Protocol major changes require a new npm major and native ABI tag. Minor additions are optional and must have defaults. Rust rejects snapshots with a newer minor version unless the field is explicitly marked ignorable. Generated declarations include protocol version constants and are checked in CI against schemas.

@@ -7,8 +7,8 @@ audio callback.
 
 macOS 13+ is the target platform. Apple Silicon is the primary development target;
 the macOS CI matrix also builds and tests Intel. This is an unreleased development
-workspace: publishing platform binaries and making `oxitone` the complete authoring
-entry point are still tracked work.
+workspace. `oxitone` is the unified authoring entry; publishing signed platform
+binaries remains tracked work.
 
 ## Run from a checkout
 
@@ -33,10 +33,10 @@ effect, verifies their native parameter/automation paths, and renders
 melody. WAV, drum solo, MIDI, portable project and verification report go into
 `target/examples/drum-machine`. No external samples are needed.
 
-The current authoring entry point is `@oxitone/core`:
+The unified entry point is `oxitone`; the individual workspace packages remain available:
 
 ```ts
-import { Pattern, Project, wavetable } from '@oxitone/core';
+import { Pattern, Project, wavetable } from 'oxitone';
 
 const project = new Project({ seed: 42 });
 const keys = project.addChannel({ instrument: wavetable({
@@ -52,15 +52,37 @@ For device playback, use `const session = await project.play()` and dispose the
 session when finished. [The API guide](docs/api.md) covers transport, samples,
 automation, persistence and the lower-level native facade.
 
+## Preview the code as a DAW
+
+```sh
+pnpm build:preview
+pnpm preview examples/offline/src/preview.ts
+# The bundled drum-machine arrangement, after pnpm example:drums:
+pnpm preview examples/drum-machine/src/preview.ts
+```
+
+The GPUI app shows tracks, pattern/sample clips, a piano roll, channel rack, mixer
+routes/meters and waveform/spectrum/stereo scopes. Play, pause, seek and loop are
+available; music is edited in TypeScript. Watch is on by default: imported source
+changes rebuild the project and swap the native graph during playback. Code or
+compile errors leave the last valid project playing and appear as diagnostics.
+
+Export a Project or a sync/async factory from your entry file. `--no-watch` loads
+once; `--watch-path path` adds file dependencies read at runtime. The local build
+creates an unsigned macOS app bundle. See [the preview guide](docs/preview.md) for
+entry examples, transport controls, plugin registration and current limits.
+
 ## Development checks
 
 ```sh
 pnpm lint
 pnpm typecheck
+cargo build -p oxitone-preview
 pnpm test
 cargo fmt --all --check
 cargo test --workspace
 cargo bench -p oxitone-bench --bench slicer_tempo
+cargo bench -p oxitone-bench --bench preview
 ```
 
 `pnpm build`, lint and typecheck include the executable examples. `pnpm schemas`

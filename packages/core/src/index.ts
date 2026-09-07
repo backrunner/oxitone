@@ -1,4 +1,8 @@
 export { Project } from "./project.js";
+export { createPluginPreset, createChannelPreset, validatePreset, applyPreset, presetInstrument, presetEffect } from "./preset.js";
+export type { Preset, ChannelPreset, InstrumentPreset, EffectPreset, PresetMetadata, PresetRuntimeOptions } from "./preset.js";
+export { savePreset, loadPreset } from "./preset-files.js";
+export type { LoadedPreset } from "./preset-files.js";
 export type { Marker, ProjectOptions } from "./project.js";
 export type { ProjectCompileOptions } from "./project-playback.js";
 export { Session } from "./session.js";

@@ -38,3 +38,10 @@ export const pluginDiagnosticsSchema = z.object({
   faults: z.number().int().nonnegative(),
 });
 export type PluginDiagnostics = z.infer<typeof pluginDiagnosticsSchema>;
+
+export const pluginInfoSchema = z.object({
+  protocolVersion: z.string(), pluginId: z.string(), pluginVersion: z.string(), abiMajor: z.literal(1),
+  kind: z.enum(["instrument", "effect"]), parameters: z.array(parameterSpecSchema),
+  stateSchema: z.string().nullable(),
+});
+export type PluginInfo = z.infer<typeof pluginInfoSchema>;

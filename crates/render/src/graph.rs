@@ -34,6 +34,7 @@ pub struct MixerBeatParam {
 /// Compiled, playable/renderable graph. `process_block` is RT-safe: every
 /// buffer was preallocated at compile; no allocation, no locks, no I/O.
 pub struct RenderGraph {
+    pub(crate) preview: Option<std::sync::Arc<crate::preview::PreviewTelemetry>>,
     pub(crate) plan: RenderPlan,
     pub(crate) sample_rate: f64,
     pub(crate) block_size: usize,
@@ -113,6 +114,7 @@ impl RenderGraph {
             mixer,
             mixer_beat_params,
             mixer_sends,
+            preview: None,
             effect_targets: Default::default(),
             limiter,
             metronome,
@@ -206,6 +208,9 @@ impl RenderGraph {
     /// Seek: move the cursor and flush all voices/DSP state
     /// (02-domain-spec.md §Playback: seek 会 flush voices).
     pub fn seek(&mut self, frame: u64) {
+        if let Some(preview) = &self.preview {
+            preview.reset();
+        }
         self.transport.cursor = frame;
         self.eval_ctx = EvalContext {
             origin_beat: self.plan.tempo.frame_to_beat(frame).to_f64(),
@@ -358,6 +363,12 @@ impl RenderGraph {
                 None => plan.channels[channel].swing,
             },
         );
+        if let Some(preview) = &self.preview {
+            let epoch = preview.epoch.load(std::sync::atomic::Ordering::Relaxed);
+            for (node, channel) in preview.channels.iter().zip(&self.channels) {
+                node.echo(cur, epoch, &channel.notes);
+            }
+        }
         for channel in &mut self.channels {
             channel.process_instrument(frames, self.sample_rate);
         }
@@ -479,6 +490,19 @@ impl RenderGraph {
             }
         }
 
+        if let Some(preview) = &self.preview {
+            for (node, channel) in preview.channels.iter().zip(&self.channels) {
+                node.capture(&channel.delayed_l[..frames], &channel.delayed_r[..frames]);
+            }
+            for (index, node) in preview.buses.iter().enumerate() {
+                if node.id == "mix_master" {
+                    node.capture(&out_l[..frames], &out_r[..frames]);
+                } else {
+                    let (left, right) = self.mixer.preview_output(index);
+                    node.capture(&left[..frames], &right[..frames]);
+                }
+            }
+        }
         self.transport.advance(frames as u64);
     }
 

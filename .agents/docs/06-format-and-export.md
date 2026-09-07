@@ -127,4 +127,18 @@ MIDI 只有 16 个 channel，分配规则如下：
 - 插件预设：`{ formatVersion, pluginId, pluginVersion, parameters, resources? }`；加载时校验 pluginId 与 ABI 版本，未知参数报错而非忽略。
 - Channel 预设：在插件预设外加 `effectChain`、`level`、`pan`、`swing`，用于整条 channel 的保存/复用。
 - 预设只描述参数，不包含音频资产本体；引用的资源用相对 URI + hash，与项目文件同一规则。
-- 预设与应用都不触发 graph 之外的副作用；应用到正在播放的 engine 时与普通参数变化走同一队列和平滑路径。
+- 预设应用先修改 authoring；连续参数更新走普通参数队列/平滑，结构或资源改变由
+  显式 Session.update 通过 block 边界换图采用，不承诺保留已有 voice。
+
+具体 v1 编码新增 `kind: instrument|effect|channel`、`abiMajor: 1` 与可选 `name`。
+插件预设展开 InstrumentRef/EffectRef；Channel 预设含 instrument/effectChain、level、
+pan、swing。`samples` 保存引用 SampleRef 的描述（相对 URI/hash），资源参数仍使用
+Sample ID，文件不嵌入或复制音频。save 要求资源位于目标预设目录内，load 校验路径与
+hash；未知参数、插件版本/种类和范围由 Rust descriptor 校验，Slicer state 由 native
+compile 校验。提供 createPluginPreset/createChannelPreset、savePreset/loadPreset。
+
+`applyPreset(project, channel, preset, {assetBaseDir?})` 先在脱离原工程的候选快照上
+解析资源、重映射 Sample ID 并 native compile，成功后一次应用 Channel 设置；失败
+保留原 authoring revision。已有 Session 显式 update 后通过 block 边界换图采用新预设，
+结构/资源预设会重建声音状态；连续实时调参继续使用 Session.setParameter 的队列与平滑。
+预设应用本身不隐式启动设备或更新正在播放的图。

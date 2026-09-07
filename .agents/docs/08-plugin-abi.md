@@ -32,6 +32,8 @@ try {
   `oxitone_plugin_entry_v1`。库的初始化器可能在 descriptor 校验之前运行。
 - C descriptor 与 manifest 必须一致，包括参数顺序、标签、范围、默认值、
   smoothing、rate、mapping、automation。automation 缺省与 false 等价。
+- one-pole smoothing 的 wire 拼写统一为 `one-pole`（与 TS/manifest schema 一致）；
+  Rust 解码兼容旧内部拼写 `onePole`，新序列化总是输出 `one-pole`。
 - 每个 engine 有独立注册表。相同 ID/version 且相同文件 hash 重复注册幂等；
   同 ID/version 的不同二进制报错。内置插件 ID 不允许被动态库覆盖。
 - compile 和 renderWav 使用该 engine 的注册表；后者仍按传入 snapshot 独立编译。

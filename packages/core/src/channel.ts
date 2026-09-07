@@ -140,6 +140,11 @@ export class Channel {
     return structuredClone(this.spec);
   }
 
+  /** Apply a validated group of authoring settings as one revision. */
+  applySettings(settings: Partial<Pick<ChannelSpec, "instrument" | "effectChain" | "level" | "pan" | "swing">>): void {
+    this.update(settings);
+  }
+
   private update(patch: Partial<ChannelSpec>): void {
     this.project?.assertMutable();
     this.spec = parseAuthoring(channelSpecSchema, { ...this.spec, ...patch }, "channel");

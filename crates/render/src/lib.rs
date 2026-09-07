@@ -29,6 +29,7 @@ mod param_index;
 pub mod params;
 pub mod player;
 pub mod plugins;
+pub mod preview;
 pub mod realtime;
 pub mod render_wav;
 mod slicer_tempo;

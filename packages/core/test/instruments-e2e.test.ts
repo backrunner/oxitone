@@ -3,7 +3,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { ErrorCode } from "@oxitone/protocol";
-import { inspectSample } from "oxitone";
+import { inspectSample } from "@oxitone/native";
 import { Pattern, Project, sampler, slicer, wavetable } from "../src/index.js";
 
 describe("built-in instruments through native rendering", () => {

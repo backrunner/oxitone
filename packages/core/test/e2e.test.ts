@@ -19,7 +19,7 @@ import {
   getOutputLatency,
   listOutputDevices,
   setParameter,
-} from "oxitone";
+} from "@oxitone/native";
 import { createAutomationNamespace, Pattern, Project } from "../src/index.js";
 
 function buildProject(): { project: Project; channelId: string } {

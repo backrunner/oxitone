@@ -13,6 +13,7 @@ export interface NativeBinding {
   compile: typeof generated.compile;
   registerPlugin: typeof generated.registerPlugin;
   getPluginDiagnostics: typeof generated.getPluginDiagnostics;
+  getPluginInfo: typeof generated.getPluginInfo;
   dispose: typeof generated.dispose;
   enqueueTransport: typeof generated.enqueueTransport;
   exportMidi: typeof generated.exportMidi;

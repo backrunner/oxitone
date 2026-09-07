@@ -1,8 +1,8 @@
 import { isAbsolute, relative, resolve, sep } from "node:path";
 import { ErrorCode, inspectSampleRequestSchema, OxitoneError, type SampleInfo, type SampleProvenance } from "@oxitone/protocol";
-import { cacheSample, inspectSample } from "oxitone";
+import { cacheSample, inspectSample } from "@oxitone/native";
 
-export { inspectSample, cacheSample } from "oxitone";
+export { inspectSample, cacheSample } from "@oxitone/native";
 export type { SampleInfo, CachedSampleInfo, SampleProvenance } from "@oxitone/protocol";
 
 export interface ImportSampleOptions {

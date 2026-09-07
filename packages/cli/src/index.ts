@@ -6,18 +6,24 @@ import {
   exportMidi,
   listOutputDevices,
   renderWav,
-} from "oxitone";
+} from "@oxitone/native";
 import { OxitoneError } from "@oxitone/protocol";
 import { loadInput } from "./input.js";
+import { launchPreview, parsePreviewArgs } from "./preview/launch.js";
 
 function usage(): never {
-  console.error("Usage: oxitone doctor | oxitone <render|export-midi> <snapshot.json|project-directory> <output>");
+  console.error("Usage: oxitone doctor | oxitone <render|export-midi> <snapshot.json|project-directory> <output> | oxitone preview <entry.ts> [--no-watch] [--viewer path]");
   process.exit(2);
 }
 
 async function main(argv: string[]): Promise<void> {
   const [command, input, output] = argv;
   if (!command) usage();
+  if (command === "preview") {
+    const { entry, options } = parsePreviewArgs(argv.slice(1));
+    await launchPreview(entry, options);
+    return;
+  }
   if (command === "doctor") {
     const engine = createEngine();
     try {
