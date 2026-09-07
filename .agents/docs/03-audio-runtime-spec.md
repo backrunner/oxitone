@@ -138,6 +138,7 @@ Phase 1 没有音频输入，延迟敏感点只有 transport 响应和参数变�
 - `renderAheadBlocks` 默认 4（48 kHz/128 frames 下约 10.7 ms 安全垫），可配 2..16。只要平均 CPU 占用低于容量，单点调度抖动被 ring 吸收，不产生爆音。
 - 控制延迟语义：transport/parameter 命令在 ring horizon 生效，`controlLatency ≈ renderAheadBlocks * blockSize / sampleRate + 设备输出延迟`；facade 暴露当前 horizon frame 供调用方对齐 UI。
 - Underrun（ring 被掏空）：callback 输出静音、`xruns++`、transport 不停止；恢复后从当前 transport 位置继续，不追帧。每次 underrun 产生诊断事件，并归因到最近的高负载 node。
+- 诊断计数与事件队列是独立采样：单次 snapshot 不保证新增 xrun 和对应事件同时可见；消费者/测试必须持续消费有界队列，不能在首次读到计数后停止等待事件。
 - `latencyMode: 'direct'` 作为 engine option 回到在 HAL callback 内直接渲染，供未来 input 或超低延迟场景使用；同一 graph 在两种模式下输出必须 sample-accurate 一致（golden parity 测试）。
 - Offline render 不经过 ring，直接驱动 block renderer。
 

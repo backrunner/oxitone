@@ -179,12 +179,18 @@ fn extreme_jitter_underruns_but_transport_continues() {
         })
         .unwrap();
     let mut events = Vec::new();
-    let underran = wait_until(Duration::from_secs(10), || {
+    let mut underran = false;
+    let reported = wait_until(Duration::from_secs(10), || {
         let diag = session.snapshot_diagnostics();
+        underran |= diag.xruns > 0;
         events.extend(diag.events);
-        diag.xruns > 0
+        // The callback increments xruns before publishing its queue event, and
+        // diagnostics drains the queue before loading counters. Wait for both
+        // observations instead of requiring an atomic cross-thread snapshot.
+        underran && events.iter().any(|event| event.code == "Underrun")
     });
     assert!(underran, "extreme jitter must starve the ring");
+    assert!(reported, "underrun diagnostic event must arrive");
     // Underrun recovery: transport keeps playing, cursor advances.
     let cursor = session.cursor();
     assert!(wait_until(Duration::from_secs(3), || {
