@@ -2,8 +2,17 @@
 use crate::{theme::Theme, ui::Preview};
 use gpui::{prelude::*, *};
 
-pub fn view(this: &Preview) -> impl IntoElement {
+pub fn view(this: &Preview, height: f32) -> impl IntoElement {
     let theme = this.theme;
+    let name = this
+        .project
+        .as_ref()
+        .and_then(|p| {
+            crate::mixer_model::strips(p)
+                .into_iter()
+                .find(|s| s.id == this.selected_scope)
+        })
+        .map_or_else(|| "Master".into(), |s| s.name);
     let node = this.analysis.get(&this.selected_scope);
     let wave = node.map(|n| n.wave.clone()).unwrap_or_default();
     let bins = crate::analysis::spectrum(&wave);
@@ -11,6 +20,7 @@ pub fn view(this: &Preview) -> impl IntoElement {
     let waveform = canvas(
         |_, _, _| {},
         move |bounds, _, window, _| {
+            grid(window, bounds, theme);
             let w = f32::from(bounds.size.width);
             let h = f32::from(bounds.size.height);
             for (channel, tint) in [(0, theme.accent), (1, theme.secondary)] {
@@ -32,6 +42,7 @@ pub fn view(this: &Preview) -> impl IntoElement {
     let spectrum = canvas(
         |_, _, _| {},
         move |bounds, _, window, _| {
+            grid(window, bounds, theme);
             let w = f32::from(bounds.size.width);
             let h = f32::from(bounds.size.height);
             paint(
@@ -51,6 +62,7 @@ pub fn view(this: &Preview) -> impl IntoElement {
     let xy = canvas(
         |_, _, _| {},
         move |bounds, _, window, _| {
+            grid(window, bounds, theme);
             let w = f32::from(bounds.size.width);
             let h = f32::from(bounds.size.height);
             paint(
@@ -68,21 +80,24 @@ pub fn view(this: &Preview) -> impl IntoElement {
     )
     .size_full();
     div()
-        .h(px(144.))
+        .h(px(height))
         .flex_shrink_0()
         .border_t_1()
         .border_color(rgb(theme.border))
         .flex()
         .child(panel(
             theme,
-            format!("WAVEFORM · {}", this.selected_scope),
+            format!(
+                "WAVEFORM · {name}{}",
+                if this.playback.playing {
+                    ""
+                } else {
+                    " · Paused"
+                }
+            ),
             waveform,
         ))
-        .child(panel(
-            theme,
-            "SPECTRUM · Hann 512 · −90 … 0 dB".into(),
-            spectrum,
-        ))
+        .child(panel(theme, "SPECTRUM · −90 … 0 dB".into(), spectrum))
         .child(panel(theme, "STEREO · Mid ↑ / Side →".into(), xy))
 }
 
@@ -96,7 +111,14 @@ fn panel(theme: Theme, title: String, content: impl IntoElement) -> impl IntoEle
         .flex_col()
         .border_r_1()
         .border_color(rgb(theme.border))
-        .child(theme.label(title))
+        .child(
+            div()
+                .text_size(px(10.))
+                .font_weight(FontWeight::SEMIBOLD)
+                .text_color(rgb(theme.muted))
+                .truncate()
+                .child(title),
+        )
         .child(
             div()
                 .flex_1()
@@ -126,5 +148,24 @@ fn paint(
     }
     if let Ok(path) = path.build() {
         window.paint_path(path, rgb(tint));
+    }
+}
+
+fn grid(window: &mut Window, bounds: Bounds<Pixels>, theme: Theme) {
+    let w = f32::from(bounds.size.width);
+    let h = f32::from(bounds.size.height);
+    for i in 1..8 {
+        let x = w * i as f32 / 8.;
+        window.paint_quad(fill(
+            Bounds::new(bounds.origin + point(px(x), px(0.)), size(px(1.), px(h))),
+            crate::ui::alpha(theme.border, if i == 4 { 0.8 } else { 0.3 }),
+        ));
+    }
+    for i in 1..4 {
+        let y = h * i as f32 / 4.;
+        window.paint_quad(fill(
+            Bounds::new(bounds.origin + point(px(0.), px(y)), size(px(w), px(1.))),
+            crate::ui::alpha(theme.border, if i == 2 { 0.8 } else { 0.3 }),
+        ));
     }
 }

@@ -47,9 +47,9 @@ diagnostic、status、transport、query、shutdown；所有帧含 protocolVersio
 
 ## 视图（全部只读）
 
-- **Workspace/arrangement**：Track 列表、PatternClip/SampleClip 在时间轴上的布局、markers、loop region；静态结构来自 snapshot。
-- **Piano roll**：每个 Pattern 的 note 网格、播放头、当前发声 note 高亮（note-on/off 经 meter 通道回显）。频谱/波形见下。
-- **Channel rack 与 Mixer**：Channel/MixerChannel 列表、level/pan/mute/solo 状态、peak/RMS meter、Master true-peak、send 路由的只读图示。
+- **Playlist/arrangement**：固定 Track 侧栏与小节标尺，PatternClip 的彩色标题与真实 note 缩略图；缩略图遵循 Track tempo、clip 重复和截断。首次打开适配工程长度，markers 独立导航。未命名 Pattern 按全局首次出现顺序编号，同一 Pattern 的多个 clip 共用名称，派生标签按 snapshot 缓存。
+- **Piano roll**：完整 128 MIDI 音高范围，固定琴键、局部 Pattern 拍标尺和 velocity lane；自动适配选中音符，播放头及 native note-on/off 高亮。音符与琴键可滚动、缩放，不能编辑。
+- **Mixer**：紧凑通道条、固定 Master、通道颜色、只读 level/pan/mute/solo、分段 peak/RMS 表（两列不是 L/R）；独立可收起的效果器/路由 inspector 展示完整名称、bypass、send 和 Master scope true-peak。
 - **Scopes**：波形（各 bus 峰值 ring）、频谱（FFT）、相位空间 XY/vectorscope（M/S 分解）。
 - **Transport 条**：play/pause/stop/seek（bar/beat/marker/点击时间轴）、loop region、当前 bar.beat.tick 与 timecode、tempo 显示（含 tempo lane 烘焙结果）。
 
@@ -70,6 +70,10 @@ diagnostic、status、transport、query、shutdown；所有帧含 protocolVersio
   和位置输入 focus 共用语义配色；主题不进入 ProjectSnapshot，不触发编译或音频命令。
 - viewer 的 transport 操作走引擎同一 command queue；生效延迟 = ring horizon（见 `03`），UI 据此做预期反馈（按钮立即响应，播放头按 horizon 对齐）。
 - seek 目标支持 bar/beat/marker/timecode 与时间轴点击；点击位置按当前有效 tempo map（含烘焙的 tempo lane）换算。
+- Playlist 支持双轴滚动与拖动滚动条，Shift 滚轮横向、⌘/Ctrl 滚轮缩放，Fit 恢复全工程范围；长时间轴按可见范围创建标尺刻度。
+- Piano 支持双轴滚动与拖动滚动条，Shift 滚轮横向、⌘/Ctrl 滚轮缩放时间，Keys ± 调整音高行高，Fit 恢复适配。点击后方向键、Page Up/Down、Home/End 移动视口，± 缩放、F 适配；点击局部拍标尺 seek，Loop clip 使用全局 clip 边界。
+- Mixer 滚轮/触控板与 ‹/› 按钮横向浏览；面板过矮时 Alt 滚轮或纵向滚动条浏览下部；Master 同步纵向位置。点击后左右/Home/End 选择并显示通道，上下/Page Up/Down 纵向浏览；inspector 独立纵向滚动。选择只改变分析 scope。
+- Playlist 与下部编辑视图之间、Piano 与 Mixer 之间的分隔线可拖动。Space 播放/暂停，位置输入框独立处理文字。所有视口状态仅在 viewer 内持有，watch 换图保留仍有效的选择并按新边界夹紧视口。
 
 ## 打包与启动
 
@@ -79,16 +83,17 @@ diagnostic、status、transport、query、shutdown；所有帧含 protocolVersio
 
 当前源码入口和 unsigned 开发 app bundle 已提供，`pnpm build:preview` 构建后
 `pnpm preview <entry.ts>` 默认 watch；`--viewer` 可指定二进制或 `.app`，`--no-watch`
-只构建一次。GPUI pin 为 `69e2130295c2649963eb639fc70b4f2ee8ea1624`，runtime_shaders
+只构建一次。GPUI pin 为 `69e2130295c2649963eb639fc70b4f2ee8ea1624`，必须启用 `font-kit` 原生文字后端；关闭默认 features 时仅启用 runtime_shaders 会落入 dummy 文字系统，导致文字消失。启动 GUI 检查系统字体列表非空；headless 不初始化文字后端。runtime_shaders
 不依赖单独的 Metal compiler。正式 npm 平台包与签名分发仍是发布门禁，不能把本地
 bundle 视为已发布包。详细入口/controls 示例见 `docs/preview.md`。
+开发 bundle 重建使用临时副本 + rename 原子替换 executable，保证新 inode；禁止原地覆盖已运行过的 Mach-O，避免 macOS 沿用旧代码签名缓存并以 SIGKILL 拒绝启动。
 
 首版 piano roll 呈现选中 Pattern 的原始音符，按 native dispatch 回显 note gate；
 scope true-peak 为 UI 消费音频的 4× 估计，丢帧时不能代替 export report。轨道和
 mixer 状态来自 source，动态 meter 来自引擎。Loop selection 选择 clip 区间；Go
 支持 bar.beat（均从 1 起）、mm:ss 或 `s` 后缀秒数。当前换图保留 transport 并重建
 voice；启动 realtime session 后改变 sampleRate/blockSize 需重启。大工程虚拟列表、
-手动主题覆盖/偏好持久化、锁屏后的视觉验收及真实设备 endurance 继续单独追踪。
+手动主题覆盖/偏好持久化、未锁屏桌面的原生交互验收及真实设备 endurance 继续单独追踪。
 
 ## 测试
 
@@ -97,3 +102,5 @@ voice；启动 realtime session 后改变 sampleRate/blockSize 需重启。大�
 - 两套主题检查正文/控件/诊断/琴键/clip 文字对比度 ≥ 4.5:1、scope/meter 信号 ≥ 3:1；
   原生拖动、交通灯、全屏和运行中外观切换仍需未锁屏桌面交互验收。
 - 集成冒烟：示例工程启动 preview，断言 transport 命令生效、换图不中断、诊断 overlay 路径可达。
+- `OXITONE_PREVIEW_CAPTURE=<PNG>` 启用开发截图：在 UI 线程额外驱动真实 NSView 重绘，工程就绪后调用系统窗口截图并退出；不启动播放、不改系统偏好。仅此模式允许 `OXITONE_PREVIEW_APPEARANCE=light|dark` 覆盖单个窗口，以及 `OXITONE_PREVIEW_CAPTURE_SIZE=1060x720` 指定逻辑窗口尺寸。
+- `OXITONE_PREVIEW_CAPTURE_NAVIGATION=1` 在截图模式加入 GPUI 键盘分发、基于真实布局边界的滚轮/拖动控制器冒烟，验证钢琴缩放/滚动、Mixer 选择及滚动。它不等于物理鼠标/触控板与系统交通灯、拖动、全屏验收；后者仍需未锁屏桌面。

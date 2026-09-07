@@ -91,9 +91,11 @@ impl Theme {
     ) -> Stateful<Div> {
         div()
             .id(ElementId::Name(id.into()))
-            .px_3()
+            .px_2()
             .py_1()
-            .rounded_md()
+            .rounded_sm()
+            .border_1()
+            .border_color(rgb(self.border))
             .bg(rgb(self.button))
             .text_color(rgb(self.text))
             .hover(move |style| style.bg(rgb(self.button_hover)))

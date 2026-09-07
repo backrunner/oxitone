@@ -58,6 +58,7 @@ fn text_remains_readable_on_both_system_themes() {
                 let fill = composite(tint, lane, t.clip_opacity);
                 readable(tint, fill, 4.5);
                 readable(t.muted, fill, 4.5);
+                readable(tint, composite(tint, fill, 0.08), 4.5);
             }
         }
         for signal in [t.accent, t.secondary, t.gold, t.danger] {

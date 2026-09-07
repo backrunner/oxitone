@@ -1,42 +1,51 @@
-//! Read-only timeline. Clicking clips selects a pattern; ruler clicks seek.
-use crate::ui::{alpha, Preview};
+//! Playlist with pinned track headers/ruler and note thumbnails inside clips.
+use crate::{
+    ui::{alpha, Preview},
+    workspace::Axis,
+};
 use gpui::{prelude::*, *};
 
-pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
+const SIDEBAR: f32 = 176.;
+pub fn view(this: &mut Preview, window_width: f32, cx: &mut Context<Preview>) -> impl IntoElement {
     let theme = this.theme;
     let project = this.project.as_ref().unwrap();
+    let viewport = (window_width - SIDEBAR - 10.).max(1.);
+    if !this.workspace.playlist_fitted {
+        this.zoom = (viewport / project.end() as f32).clamp(0.01, 120.);
+        this.workspace.playlist_fitted = true;
+    }
     let zoom = this.zoom;
-    let width = (project.end() as f32 * zoom).max(900.);
+    let width = (project.end() as f32 * zoom).max(viewport);
     let cursor = project.beat(this.playback.audible) as f32 * zoom;
-    let mut ruler = div()
-        .relative()
-        .h(px(28.))
-        .w(px(width))
-        .bg(rgb(theme.panel));
-    // One seek target per beat. Labels reflect the actual time-signature map.
+    let offset = this.workspace.arrangement.offset();
+    let mut ruler = div().relative().h(px(30.)).w(px(width));
+    let mut grid_ticks = Vec::new();
     let step = ((20. / zoom).ceil() as usize).max(1);
-    for beat in (0..project.end().ceil() as usize)
-        .step_by(step)
-        .take(10_000)
-    {
+    let first = ((-f32::from(offset.x) / zoom).max(0.) as usize / step) * step;
+    let last = (((-f32::from(offset.x) + viewport) / zoom).ceil() as usize + step)
+        .min(project.end().ceil() as usize);
+    for beat in (first..last).step_by(step) {
         let (bar, within) = project
             .plan
             .time_signatures
             .beat_to_bar_beat(oxitone_core::Beat::new(beat as i64, 1).unwrap());
+        let downbeat = within == oxitone_core::Beat::ZERO;
+        grid_ticks.push((beat as f32 * zoom, downbeat));
         ruler = ruler.child(
             div()
                 .id(("beat", beat))
                 .absolute()
                 .left(px(beat as f32 * zoom))
+                .top_0()
                 .w(px(zoom * step as f32))
                 .h_full()
                 .border_l_1()
-                .border_color(rgb(theme.border))
+                .border_color(alpha(theme.border, if downbeat { 1. } else { 0.4 }))
                 .px_1()
-                .text_xs()
+                .text_size(px(10.))
                 .text_color(rgb(theme.muted))
                 .cursor_pointer()
-                .child(if within == oxitone_core::Beat::ZERO {
+                .child(if downbeat {
                     format!("{bar}")
                 } else {
                     "·".into()
@@ -44,162 +53,157 @@ pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
                 .on_click(cx.listener(move |this, _, _, _| this.seek(beat as f64))),
         );
     }
-    let mut rows = div().w(px(width + 184.)).flex().flex_col().child(
-        div()
-            .flex()
-            .child(
-                div()
-                    .w(px(184.))
-                    .h(px(28.))
-                    .px_4()
-                    .child(theme.label("ARRANGEMENT")),
-            )
-            .child(ruler),
-    );
-    for (index, track) in project.snapshot.tracks.iter().enumerate() {
-        let tint = theme.track(index);
-        let mut lane = div()
-            .relative()
-            .w(px(width))
-            .h(px(57.))
-            .bg(rgb(theme.lanes[index % 2]))
-            .overflow_hidden();
-        for clip in project
-            .snapshot
-            .pattern_clips
-            .iter()
-            .filter(|c| c.track_id == track.id)
-        {
-            let (start, end) = project.clip_bounds(clip);
-            let id = clip.id.clone();
-            let name = project
-                .snapshot
-                .patterns
-                .iter()
-                .find(|p| p.id == clip.pattern_id)
-                .and_then(|p| p.name.clone())
-                .unwrap_or_else(|| clip.pattern_id.clone());
-            let selected = this.selected_clip.as_ref() == Some(&id);
-            lane = lane.child(
-                div()
-                    .id(SharedString::from(id.clone()))
-                    .absolute()
-                    .left(px(start as f32 * zoom))
-                    .top(px(6.))
-                    .w(px(((end - start) as f32 * zoom - 2.).max(2.)))
-                    .h(px(45.))
-                    .overflow_hidden()
-                    .rounded_sm()
-                    .border_1()
-                    .border_color(rgb(if selected { theme.text } else { tint }))
-                    .bg(alpha(
-                        tint,
-                        if clip.enabled == Some(false) {
-                            theme.clip_opacity * 0.4
-                        } else {
-                            theme.clip_opacity
-                        },
-                    ))
-                    .px_2()
-                    .py_1()
-                    .text_xs()
-                    .text_color(rgb(tint))
-                    .cursor_pointer()
-                    .child(name)
-                    .child(
-                        div()
-                            .text_color(rgb(theme.muted))
-                            .child(format!("{:.1} beats", end - start)),
-                    )
-                    .on_click(cx.listener(move |this, _, _, cx| {
-                        this.selected_clip = Some(id.clone());
-                        cx.notify();
-                    })),
-            );
-        }
-        for clip in project
-            .snapshot
-            .sample_clips
-            .iter()
-            .filter(|c| c.track_id == track.id)
-        {
-            if let Some((_, start, end)) = project.plan.samples.iter().find(|c| c.0 == clip.id) {
-                let start = project.beat(*start);
-                let end = project.beat(*end);
-                lane = lane.child(
-                    div()
-                        .absolute()
-                        .left(px(start as f32 * zoom))
-                        .top(px(7.))
-                        .w(px(((end - start) as f32 * zoom - 2.).max(2.)))
-                        .h(px(43.))
-                        .overflow_hidden()
-                        .rounded_sm()
-                        .bg(alpha(tint, theme.clip_opacity))
-                        .border_1()
-                        .border_color(rgb(tint))
-                        .px_2()
-                        .text_xs()
-                        .child(format!("Audio · {}", clip.sample_id)),
-                );
-            }
-        }
-        if this.loop_enabled {
-            lane = lane.child(
-                div()
-                    .absolute()
-                    .left(px(this.loop_start as f32 * zoom))
-                    .top_0()
-                    .w(px(((this.loop_end - this.loop_start) as f32 * zoom).max(0.)))
-                    .h(px(2.))
-                    .bg(rgb(theme.gold)),
-            );
-        }
-        lane = lane.child(
-            div()
-                .absolute()
-                .left(px(cursor))
-                .top_0()
-                .w(px(1.))
-                .h_full()
-                .bg(rgb(theme.gold)),
+    let (lanes, headers) = crate::playlist_lane::rows(this, width, cursor, &grid_ticks, cx);
+    let mut markers = div()
+        .id("marker-navigation")
+        .flex_1()
+        .min_w_0()
+        .flex()
+        .gap_2()
+        .overflow_x_scroll();
+    for (index, marker) in project.snapshot.markers.iter().enumerate() {
+        let beat = marker.start_beat.to_f64();
+        markers = markers.child(
+            theme
+                .button(
+                    format!("marker-{index}"),
+                    marker
+                        .name
+                        .clone()
+                        .unwrap_or_else(|| format!("Marker {}", index + 1)),
+                )
+                .text_size(px(10.))
+                .flex_shrink_0()
+                .on_click(cx.listener(move |this, _, _, _| this.seek(beat))),
         );
-        rows = rows.child(
+    }
+    div()
+        .flex_1()
+        .min_h(px(120.))
+        .flex()
+        .flex_col()
+        .overflow_hidden()
+        .child(
             div()
+                .h(px(34.))
+                .flex_shrink_0()
+                .px_3()
                 .flex()
+                .items_center()
+                .gap_3()
+                .bg(rgb(theme.panel))
                 .border_b_1()
                 .border_color(rgb(theme.border))
                 .child(
                     div()
-                        .w(px(184.))
-                        .flex_shrink_0()
-                        .px_4()
-                        .py_2()
-                        .border_l_2()
-                        .border_color(rgb(tint))
-                        .bg(rgb(theme.panel))
-                        .child(
-                            div()
-                                .text_sm()
-                                .child(track.name.clone().unwrap_or_else(|| track.id.clone())),
-                        )
-                        .child(div().text_xs().text_color(rgb(theme.muted)).child(format!(
-                            "{} channels{}",
-                            track.channel_ids.len(),
-                            if track.enabled == Some(false) {
-                                " · disabled"
-                            } else {
-                                ""
-                            }
-                        ))),
+                        .w(px(SIDEBAR - 24.))
+                        .text_xs()
+                        .font_weight(FontWeight::BOLD)
+                        .child("PLAYLIST"),
                 )
-                .child(lane),
-        );
-    }
-    div()
-        .id("arrangement-scroll")
-        .flex_1()
-        .min_h(px(120.))
-        .overflow_scroll()
-        .child(rows)
+                .child(markers)
+                .child(
+                    div()
+                        .text_size(px(10.))
+                        .text_color(rgb(theme.muted))
+                        .child(format!("{} tracks", project.snapshot.tracks.len())),
+                ),
+        )
+        .child(
+            div()
+                .h(px(30.))
+                .flex_shrink_0()
+                .flex()
+                .bg(rgb(theme.bg))
+                .child(
+                    div()
+                        .w(px(SIDEBAR))
+                        .flex_shrink_0()
+                        .px_3()
+                        .text_size(px(9.))
+                        .text_color(rgb(theme.muted))
+                        .child("TRACKS / BARS"),
+                )
+                .child(
+                    div()
+                        .flex_1()
+                        .min_w_0()
+                        .relative()
+                        .overflow_hidden()
+                        .child(div().absolute().left(offset.x).child(ruler)),
+                ),
+        )
+        .child(
+            div()
+                .flex_1()
+                .min_h_0()
+                .flex()
+                .child(
+                    div()
+                        .relative()
+                        .w(px(SIDEBAR))
+                        .flex_shrink_0()
+                        .overflow_hidden()
+                        .bg(rgb(theme.panel))
+                        .child(headers),
+                )
+                .child(
+                    div()
+                        .id("arrangement-scroll")
+                        .flex_1()
+                        .min_w_0()
+                        .h_full()
+                        .overflow_scroll()
+                        .track_scroll(&this.workspace.arrangement)
+                        // A descendant handles the wheel before GPUI's scroll container
+                        // bubbles it, so Shift/zoom never also perform a native scroll.
+                        .child(lanes.id("playlist-lanes").min_h_full().on_scroll_wheel(
+                            cx.listener(|this, event: &ScrollWheelEvent, _, cx| {
+                                let scroll = &this.workspace.arrangement;
+                                let delta = event.delta.pixel_delta(px(24.));
+                                if event.modifiers.platform || event.modifiers.control {
+                                    let old = this.zoom;
+                                    this.zoom =
+                                        (old * (f32::from(delta.y) / 150.).exp()).clamp(0.01, 120.);
+                                    scroll.set_offset(point(
+                                        scroll.offset().x * (this.zoom / old),
+                                        scroll.offset().y,
+                                    ));
+                                } else {
+                                    let delta = if event.modifiers.shift {
+                                        point(delta.x + delta.y, px(0.))
+                                    } else {
+                                        delta
+                                    };
+                                    let max = scroll.max_offset();
+                                    scroll.set_offset(point(
+                                        (scroll.offset().x + delta.x).clamp(-max.width, px(0.)),
+                                        (scroll.offset().y + delta.y).clamp(-max.height, px(0.)),
+                                    ));
+                                }
+                                cx.stop_propagation();
+                                cx.notify();
+                            }),
+                        )),
+                )
+                .child(crate::scrollbar::view(
+                    "playlist-vertical",
+                    Axis::Vertical,
+                    &this.workspace.arrangement,
+                    this,
+                    cx,
+                )),
+        )
+        .child(
+            div()
+                .pl(px(SIDEBAR))
+                .pr(px(10.))
+                .child(crate::scrollbar::view(
+                    "playlist-horizontal",
+                    Axis::Horizontal,
+                    &this.workspace.arrangement,
+                    this,
+                    cx,
+                )),
+        )
 }

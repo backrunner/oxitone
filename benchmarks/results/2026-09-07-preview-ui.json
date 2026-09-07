@@ -1,0 +1,25 @@
+{
+  "schema": "oxitone.focused-benchmark.v1",
+  "date": "2026-09-07",
+  "change": "Native font backend, playlist/mixer design and read-only viewport navigation",
+  "baseCommit": "1a5dfc0",
+  "machine": { "cpu": "Apple M4", "os": "macOS 27.0 (26A5425a)", "arch": "aarch64-apple-darwin", "cargo": "1.98.0" },
+  "config": {
+    "sampleRate": 48000, "blockSize": 128, "outputChannels": 2,
+    "channels": 4, "masterLimiter": true,
+    "sampleCount": 30, "warmupSeconds": 1, "measurementTargetSeconds": 3,
+    "device": null, "cpuUtilization": null, "callbackP95Ns": null, "callbackP99Ns": null, "xruns": null
+  },
+  "command": "cargo bench -p oxitone-bench --bench preview -- --warm-up-time 1 --measurement-time 3 --sample-size 30",
+  "scenarios": [
+    { "id": "preview/4_channels_128/baseline", "slopeNs": 29628.025758906264, "confidence95Ns": [29585.67228413456, 29676.064604835574] },
+    { "id": "preview/4_channels_128/telemetry", "slopeNs": 31390.14084433298, "confidence95Ns": [31340.597559140067, 31443.2632627682] }
+  ],
+  "notes": [
+    "Measured with preview windows and other build/test processes stopped. Audio processing code is unchanged by this UI work.",
+    "Four channels; playback restarts every 180 blocks to maintain audible content. The telemetry scenario consumes bounded queues every 12 blocks, approximately 30 Hz.",
+    "This microbenchmark excludes GPUI layout, painting, fonts, FFT, scope true peak and device I/O. It is not a UI frame-rate or callback latency measurement.",
+    "Criterion reports a lower baseline and telemetry change within its noise threshold against the previous run; no UI performance improvement is inferred.",
+    "Physical-device callback p95/p99, xrun endurance and unlocked-desktop input acceptance remain separate gates. Real dark/light window capture and GPUI keyboard/controller navigation smoke are recorded in implementation status."
+  ]
+}

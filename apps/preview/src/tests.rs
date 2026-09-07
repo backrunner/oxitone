@@ -95,3 +95,43 @@ fn note_feedback_waits_for_audible_frame_and_clears_on_seek_or_pause() {
     analysis.update(node, 900, 1, false);
     assert!(!analysis.sounding(62));
 }
+
+#[test]
+fn presentation_uses_chronology_and_shared_pattern_identity_instead_of_canonical_ids() {
+    let mut engine = engine();
+    let project = std::sync::Arc::get_mut(engine.current.as_mut().unwrap()).unwrap();
+    let mut early_pattern = project.snapshot.patterns[0].clone();
+    early_pattern.id = "pat_z_first".into();
+    project.snapshot.patterns.push(early_pattern);
+    let mut early = project.snapshot.pattern_clips[0].clone();
+    early.id = "pcl_z_first".into();
+    early.pattern_id = "pat_z_first".into();
+    early.start_beat = oxitone_core::Beat::ZERO;
+    early.last_beat = Some(oxitone_core::Beat::new(4, 1).unwrap());
+    let mut repeat = early.clone();
+    repeat.id = "pcl_a_repeat".into();
+    repeat.start_beat = oxitone_core::Beat::new(12, 1).unwrap();
+    repeat.last_beat = Some(oxitone_core::Beat::new(16, 1).unwrap());
+    project.snapshot.pattern_clips.insert(0, repeat);
+    project.snapshot.pattern_clips.push(early);
+    assert_eq!(project.initial_clip().unwrap().id, "pcl_z_first");
+    assert_eq!(project.pattern_label("pat_z_first"), "Pattern 01");
+    assert_eq!(project.pattern_label("pat_keys"), "Pattern 02");
+    assert_eq!(
+        project.pattern_label(&project.snapshot.pattern_clips[0].pattern_id),
+        "Pattern 01"
+    );
+}
+
+#[test]
+fn named_patterns_and_mixer_routes_keep_user_facing_names() {
+    let mut engine = engine();
+    let project = std::sync::Arc::get_mut(engine.current.as_mut().unwrap()).unwrap();
+    project.snapshot.patterns[0].name = Some("Opening phrase".into());
+    project.snapshot.channels[0].name = Some("Electric keys".into());
+    assert_eq!(project.pattern_label("pat_keys"), "Opening phrase");
+    let strips = crate::mixer_model::strips(project);
+    assert_eq!(strips[0].name, "Electric keys");
+    assert_eq!(strips[0].routes, ["→ Master"]);
+    assert_eq!(strips.iter().filter(|s| s.id == "mix_master").count(), 1);
+}

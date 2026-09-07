@@ -6,7 +6,7 @@ license.workspace = true
 publish = false
 
 [dependencies]
-gpui = { git = "https://github.com/zed-industries/zed", rev = "69e2130295c2649963eb639fc70b4f2ee8ea1624", default-features = false, features = ["runtime_shaders"] }
+gpui = { git = "https://github.com/zed-industries/zed", rev = "69e2130295c2649963eb639fc70b4f2ee8ea1624", default-features = false, features = ["font-kit", "runtime_shaders"] }
 oxitone-core = { path = "../../crates/core" }
 oxitone-graph = { path = "../../crates/graph" }
 oxitone-render = { path = "../../crates/render" }

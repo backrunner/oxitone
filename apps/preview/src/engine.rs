@@ -148,6 +148,7 @@ impl Engine {
             snapshot,
             plan: graph.plan().into(),
             graph_latency: graph.graph_latency_frames(),
+            pattern_labels: Default::default(),
             telemetry: graph.enable_preview(),
         });
         if let Some(session) = &self.session {

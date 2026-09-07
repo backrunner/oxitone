@@ -3,13 +3,17 @@ use oxitone_core::{wire::ProjectSnapshot, Beat};
 use oxitone_graph::compile::RenderPlan;
 use oxitone_render::preview::PreviewTelemetry;
 use oxitone_transport::{timesig::CompiledTimeSignatureMap, CompiledTempoMap};
-use std::sync::Arc;
+use std::{
+    collections::HashMap,
+    sync::{Arc, OnceLock},
+};
 
 pub struct ViewProject {
     pub snapshot: ProjectSnapshot,
     pub plan: ViewPlan,
     pub telemetry: Arc<PreviewTelemetry>,
     pub graph_latency: u64,
+    pub pattern_labels: OnceLock<HashMap<String, String>>,
 }
 
 pub struct ViewPlan {
@@ -34,6 +38,61 @@ impl From<&RenderPlan> for ViewPlan {
 }
 
 impl ViewProject {
+    pub fn pattern_label(&self, id: &str) -> String {
+        self.pattern_labels
+            .get_or_init(|| self.build_pattern_labels())
+            .get(id)
+            .cloned()
+            .unwrap_or_else(|| "Pattern".into())
+    }
+    fn build_pattern_labels(&self) -> HashMap<String, String> {
+        let mut clips: Vec<_> = self.snapshot.pattern_clips.iter().collect();
+        clips.sort_by(|a, b| {
+            self.clip_bounds(a)
+                .0
+                .total_cmp(&self.clip_bounds(b).0)
+                .then(a.track_id.cmp(&b.track_id))
+                .then(a.id.cmp(&b.id))
+        });
+        let mut patterns: Vec<&str> = Vec::new();
+        for pattern in clips
+            .iter()
+            .map(|c| c.pattern_id.as_str())
+            .chain(self.snapshot.patterns.iter().map(|p| p.id.as_str()))
+        {
+            if !patterns.contains(&pattern) {
+                patterns.push(pattern);
+            }
+        }
+        patterns
+            .into_iter()
+            .enumerate()
+            .map(|(i, id)| {
+                let label = self
+                    .snapshot
+                    .patterns
+                    .iter()
+                    .find(|p| p.id == id)
+                    .and_then(|p| p.name.clone())
+                    .unwrap_or_else(|| format!("Pattern {:02}", i + 1));
+                (id.to_owned(), label)
+            })
+            .collect()
+    }
+    pub fn initial_clip(&self) -> Option<&oxitone_core::wire::PatternClipSpec> {
+        self.snapshot.tracks.iter().find_map(|track| {
+            self.snapshot
+                .pattern_clips
+                .iter()
+                .filter(|c| c.track_id == track.id)
+                .min_by(|a, b| {
+                    a.start_beat
+                        .to_f64()
+                        .total_cmp(&b.start_beat.to_f64())
+                        .then(a.id.cmp(&b.id))
+                })
+        })
+    }
     pub fn beat(&self, frame: u64) -> f64 {
         self.plan.tempo.frame_to_beat(frame).to_f64()
     }

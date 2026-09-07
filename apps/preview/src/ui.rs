@@ -18,6 +18,8 @@ pub struct Preview {
     pub selected_clip: Option<String>,
     pub selected_scope: String,
     pub zoom: f32,
+    pub piano: crate::piano_layout::PianoState,
+    pub workspace: crate::workspace::Workspace,
     pub loop_enabled: bool,
     pub loop_start: f64,
     pub loop_end: f64,
@@ -25,11 +27,17 @@ pub struct Preview {
     pub diagnostic: Option<Diagnostic>,
     pub show_scopes: bool,
     pub position_focus: FocusHandle,
+    pub piano_focus: FocusHandle,
+    pub mixer_focus: FocusHandle,
+    pub workspace_focus: FocusHandle,
     pub position_text: String,
 }
 
 impl Preview {
     pub fn new(backend: Backend, window: &mut Window, cx: &mut Context<Self>) -> Self {
+        let workspace_focus = cx.focus_handle();
+        workspace_focus.focus(window);
+        crate::capture::schedule(window, cx);
         cx.observe_window_appearance(window, |this, window, cx| {
             this.theme = Theme::from_appearance(window.appearance());
             cx.notify();
@@ -59,6 +67,8 @@ impl Preview {
             selected_clip: None,
             selected_scope: "mix_master".into(),
             zoom: 17.0,
+            piano: crate::piano_layout::PianoState::default(),
+            workspace: crate::workspace::Workspace::default(),
             loop_enabled: false,
             loop_start: 0.0,
             loop_end: 16.0,
@@ -66,6 +76,9 @@ impl Preview {
             diagnostic: None,
             show_scopes: true,
             position_focus: cx.focus_handle(),
+            piano_focus: cx.focus_handle(),
+            mixer_focus: cx.focus_handle(),
+            workspace_focus,
             position_text: String::new(),
         }
     }
@@ -80,11 +93,7 @@ impl Preview {
                         .iter()
                         .any(|clip| Some(&clip.id) == self.selected_clip.as_ref())
                     {
-                        self.selected_clip = project
-                            .snapshot
-                            .pattern_clips
-                            .first()
-                            .map(|clip| clip.id.clone());
+                        self.selected_clip = project.initial_clip().map(|clip| clip.id.clone());
                     }
                     if self.project.is_none() {
                         self.loop_end = project.plan.content_end_beat.to_f64().max(4.0);
@@ -175,12 +184,41 @@ impl Render for Preview {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = self.theme;
         let mut root = div()
+            .id("preview-workspace")
+            .track_focus(&self.workspace_focus)
+            .on_key_down(cx.listener(|this, event: &KeyDownEvent, _, cx| {
+                if event.keystroke.key == "space"
+                    && !event.keystroke.modifiers.platform
+                    && !event.keystroke.modifiers.control
+                {
+                    if this.playback.playing {
+                        this.transport(json!({"command":"pause"}));
+                    } else {
+                        this.play();
+                    }
+                    cx.stop_propagation();
+                }
+            }))
             .size_full()
             .flex()
             .flex_col()
             .bg(rgb(theme.bg))
             .text_color(rgb(theme.text))
             .font_family("Helvetica Neue")
+            .on_mouse_move(cx.listener(|this, event, window, cx| {
+                if this.workspace.gesture.is_some() {
+                    this.move_gesture(event, window);
+                    cx.notify();
+                }
+            }))
+            .on_mouse_up(
+                MouseButton::Left,
+                cx.listener(|this, _, _, _| this.workspace.gesture = None),
+            )
+            .on_mouse_up_out(
+                MouseButton::Left,
+                cx.listener(|this, _, _, _| this.workspace.gesture = None),
+            )
             .child(self.header(window, cx))
             .child(self.transport_bar(cx));
         if let Some(diagnostic) = &self.diagnostic {
@@ -200,19 +238,7 @@ impl Render for Preview {
             );
         }
         if self.project.is_some() {
-            root = root.child(crate::arrangement::view(self, cx)).child(
-                div()
-                    .flex()
-                    .h(px(290.))
-                    .min_h(px(200.))
-                    .border_t_1()
-                    .border_color(rgb(theme.border))
-                    .child(crate::piano::view(self, cx))
-                    .child(crate::mixer::view(self, cx)),
-            );
-            if self.show_scopes {
-                root = root.child(crate::scopes::view(self));
-            }
+            root = root.child(crate::workspace::panels(self, window, cx));
         } else {
             root = root.child(
                 div()

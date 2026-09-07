@@ -286,8 +286,8 @@
   错误恢复、重复内容去重/失败重试、超时/过期执行和显式 runtime asset watch。
   macOS accept 继承 O_NONBLOCK 曾导致消息间隙断线，已修正并由多帧测试覆盖。
 - Release GPUI 和 unsigned `.app` 已构建；鼓机工程在真实 GPUI 进程接受了 revision 1，
-  IPC 返回 4 Tracks / 54 Patterns。当前机器锁屏，WindowServer 未刷新完整界面；
-  因而不记作视觉或真实设备播放验收。`docs/preview.md` 提供直接运行的入口与限制。
+  IPC 返回 4 Tracks / 54 Patterns。当时机器锁屏、界面不完整，未记作视觉或真实设备播放验收。
+  后续确认另有 GPUI `font-kit` 未启用导致文字后端为空，不能仅归因于锁屏（见下方修复记录）。`docs/preview.md` 提供直接运行的入口与限制。
 - `pnpm build`（release native）、lint、typecheck、209 TS tests、421 Rust tests、
   rustfmt、schema 再生成无漂移、frozen install、actionlint/plist 检查通过，无 skip。
   CLI 用实际 `.app` executable 启动，保留 viewer PID 以保证退出时回收；真实 GPUI
@@ -320,3 +320,31 @@
   变化/噪声阈值内变化；不测 UI 布局、设备 callback p95/p99 或长期 xrun。
 - 当前桌面仍锁屏，原生拖动/交通灯/全屏及运行中主题切换的视觉交互验收待未锁屏
   桌面完成；配色测试和进程冒烟不能替代这些项目。
+
+## Preview 文字修复、Playlist 与 Mixer 设计及浏览交互（2026-09-07）
+
+- 确认并修复文字缺失根因：关闭 GPUI 默认 features 后没有启用 `font-kit`，落入 dummy
+  文字后端；现在启用原生字体与中文 fallback，并在 GUI 启动时检查字体目录非空。
+  锁屏另外会抑制 display-link 刷新，两者不能混为同一问题。
+- Playlist 使用固定 Track 侧栏/小节标尺、真实 note 缩略图、彩色 Pattern 标题，按
+  首次出现为未命名 Pattern 编号并缓存标签，首次打开适配工程；长时间轴按可见范围生成刻度。
+- 钢琴窗覆盖全部 128 MIDI keys，独立琴键/局部拍标尺/velocity lane，适配短音符及
+  鼓机音符范围；双轴滚动、可拖动滚动条、时间/行高缩放、快捷键和 Loop clip 可用。
+- Mixer 改为紧凑通道条、固定 Master、pan/level 只读图示和 peak/RMS 分段表；独立
+  效果器/路由 inspector、双轴滚动、键盘选择并显示通道。上下/左右面板分隔线可拖动，
+  Scope 增加网格、友好名称和暂停状态。浅/深色共同通过含 Pattern 标题混色的对比度检查。
+- Opt-in 截图模式驱动真实 NSView 绘制后用系统窗口截图，不生成假界面、不启动播放、
+  不改系统主题；深色 1440×920、浅色 1060×720 实际截图完成。GPUI 键盘分发与按
+  实测布局坐标执行的滚动/拖动控制器冒烟通过，验证缩放、滚动条、Mixer 选择及自动滚动。
+  物理鼠标/触控板、原生拖动/交通灯/全屏、运行中系统主题切换仍待未锁屏桌面验收。
+- 全套测试暴露既有 extreme-jitter 测试竞态：xrun atomic 与事件队列独立采样，首次读到
+  xrun 不能假定同批含 Underrun。修正测试为限时等待两者并保留游标继续推进断言；音频处理逻辑未变。
+- [专项基准](../../benchmarks/results/2026-09-07-preview-ui.json)：Apple M4 / 48 kHz /
+  128 frames / 4 Channels，baseline 29.628 µs、telemetry 31.390 µs；1 秒预热、3 秒
+  测量、30 samples。未测 GPUI 布局/绘制或设备 callback p95/p99/xrun，不据此推断 UI 帧率。
+- `pnpm lint`、`pnpm typecheck`、`cargo fmt --all --check` 与 427 项 Rust 工作区测试通过，
+  无失败/忽略。包含 10 项 viewer 测试与扩展后的双主题对比度覆盖。
+- Release `.app` 已重建并通过最终深/浅色截图与最小窗口导航冒烟，Info.plist 校验通过。
+  同时修复开发 bundle 原地覆盖旧 Mach-O 后的 `SIGKILL (Code Signature Invalid)`：
+  构建脚本使用临时文件 + rename 创建新 inode。连续两次构建后由 CLI 直接启动 bundle
+  executable、加载鼓机与截图退出均通过；仍是未做 Developer ID 签名/公证的本地开发包。

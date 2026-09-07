@@ -1,12 +1,18 @@
-use crate::ui::{alpha, Preview};
+//! Display/transport controls only. No note or authoring mutation is permitted.
+use crate::ui::Preview;
 use gpui::{prelude::*, *};
 
-pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
+pub fn view(this: &mut Preview, cx: &mut Context<Preview>) -> impl IntoElement {
     let theme = this.theme;
-    let project = this.project.as_ref().unwrap();
+    if this.piano.selection != this.selected_clip {
+        this.piano.selection = this.selected_clip.clone();
+        this.piano.fit();
+    }
+    let project = this.project.as_ref().unwrap().clone();
     let mut root = div()
         .flex_1()
         .min_w_0()
+        .h_full()
         .flex()
         .flex_col()
         .border_r_1()
@@ -30,18 +36,69 @@ pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
         .find(|p| p.id == clip.pattern_id)
         .unwrap();
     let (start, end) = project.clip_bounds(clip);
-    let name = pattern.name.clone().unwrap_or_else(|| pattern.id.clone());
+    let name = project.pattern_label(&pattern.id);
+    let local_length = pattern.length_beats.to_f64();
     root = root.child(
         div()
-            .h(px(34.))
+            .h(px(46.))
+            .flex_shrink_0()
             .px_3()
             .flex()
             .items_center()
-            .justify_between()
-            .child(theme.label(format!("PIANO ROLL · {name}")))
+            .gap_2()
+            .child(
+                div()
+                    .flex_1()
+                    .min_w_0()
+                    .child(div().text_sm().truncate().child(name))
+                    .child(theme.label(format!(
+                        "PIANO ROLL · {} notes · {local_length:.1} beats",
+                        pattern.notes.len()
+                    ))),
+            )
             .child(
                 theme
-                    .button("loop-selection", "Loop selection")
+                    .button("piano-fit", "Fit")
+                    .on_click(cx.listener(|this, _, _, cx| {
+                        this.piano.fit();
+                        cx.notify();
+                    })),
+            )
+            .child(
+                theme
+                    .button("piano-out", "−")
+                    .on_click(cx.listener(|this, _, _, cx| {
+                        this.zoom_piano(0.8, 1.);
+                        cx.notify();
+                    })),
+            )
+            .child(
+                theme
+                    .button("piano-in", "+")
+                    .on_click(cx.listener(|this, _, _, cx| {
+                        this.zoom_piano(1.25, 1.);
+                        cx.notify();
+                    })),
+            )
+            .child(
+                theme
+                    .button("piano-keys-out", "Keys −")
+                    .on_click(cx.listener(|this, _, _, cx| {
+                        this.zoom_piano(1., 0.8);
+                        cx.notify();
+                    })),
+            )
+            .child(
+                theme
+                    .button("piano-keys-in", "Keys +")
+                    .on_click(cx.listener(|this, _, _, cx| {
+                        this.zoom_piano(1., 1.25);
+                        cx.notify();
+                    })),
+            )
+            .child(
+                theme
+                    .button("loop-selection", "Loop clip")
                     .on_click(cx.listener(move |this, _, _, cx| {
                         this.loop_start = start;
                         this.loop_end = end;
@@ -54,25 +111,6 @@ pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
                     })),
             ),
     );
-    let low = pattern
-        .notes
-        .iter()
-        .map(|n| n.pitch)
-        .min()
-        .unwrap_or(48)
-        .saturating_sub(2);
-    let high = pattern
-        .notes
-        .iter()
-        .map(|n| n.pitch)
-        .max()
-        .unwrap_or(72)
-        .saturating_add(2)
-        .max(low.saturating_add(12))
-        .min(127);
-    let zoom = this.zoom.max(45.);
-    let width = (pattern.length_beats.to_f64() as f32 * zoom).max(600.);
-    let height = f32::from(high - low + 1) * 13.;
     let channel_ids = project
         .snapshot
         .tracks
@@ -80,94 +118,85 @@ pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
         .find(|t| t.id == clip.track_id)
         .map(|t| t.channel_ids.as_slice())
         .unwrap_or(&[]);
-    let mut grid = div().relative().w(px(width + 40.)).h(px(height));
-    for pitch in low..=high {
-        let y = f32::from(high - pitch) * 13.;
-        let black = [1, 3, 6, 8, 10].contains(&(pitch % 12));
-        let on = channel_ids.iter().any(|id| {
-            this.analysis.get(id).is_some_and(|a| {
-                let actual = i32::from(pitch) + clip.transpose.unwrap_or(0);
-                (0..128).contains(&actual) && a.sounding(actual as u8)
-            })
-        });
-        grid = grid.child(
-            div()
-                .absolute()
-                .top(px(y))
-                .left_0()
-                .w_full()
-                .h(px(13.))
-                .bg(rgb(theme.piano_rows[usize::from(black)]))
-                .border_b_1()
-                .border_color(rgb(theme.border))
-                .child(
-                    div()
-                        .w(px(40.))
-                        .h_full()
-                        .text_xs()
-                        .text_color(rgb(if on {
-                            theme.on_accent
-                        } else {
-                            theme.key_text[usize::from(black)]
-                        }))
-                        .bg(rgb(if on {
-                            theme.accent
-                        } else {
-                            theme.keys[usize::from(black)]
-                        }))
-                        .child(format!(
-                            "{}{}",
-                            [
-                                "C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"
-                            ][usize::from(pitch % 12)],
-                            i32::from(pitch) / 12 - 1
-                        )),
-                ),
-        );
-    }
-    for beat in 0..=pattern.length_beats.to_f64().ceil().min(10_000.) as usize {
-        grid = grid.child(
-            div()
-                .absolute()
-                .left(px(40. + beat as f32 * zoom))
-                .top_0()
-                .h_full()
-                .w(px(1.))
-                .bg(rgb(theme.border)),
-        );
-    }
-    for note in &pattern.notes {
-        grid = grid.child(
-            div()
-                .absolute()
-                .left(px(40. + note.start.to_f64() as f32 * zoom))
-                .top(px(f32::from(high - note.pitch) * 13. + 1.))
-                .w(px((note.duration.to_f64() as f32 * zoom - 1.).max(2.)))
-                .h(px(10.))
-                .rounded_sm()
-                .bg(alpha(theme.accent, 0.3 + note.velocity as f32 * 0.7)),
-        );
+    let mut sounding = [false; 128];
+    for pitch in 0..128 {
+        let actual = pitch as i32 + clip.transpose.unwrap_or(0);
+        sounding[pitch] = (0..128).contains(&actual)
+            && channel_ids.iter().any(|id| {
+                this.analysis
+                    .get(id)
+                    .is_some_and(|a| a.sounding(actual as u8))
+            });
     }
     let global = project.beat(this.playback.audible);
-    if global >= start && global < end {
-        let phase = (project.global_to_local(&clip.track_id, global) - clip.start_beat.to_f64())
-            .rem_euclid(pattern.length_beats.to_f64());
-        grid = grid.child(
-            div()
-                .absolute()
-                .left(px(40. + phase as f32 * zoom))
-                .top_0()
-                .h_full()
-                .w(px(1.))
-                .bg(rgb(theme.gold)),
-        );
-    }
+    let phase = (global >= start && global < end && clip.enabled != Some(false)).then(|| {
+        (project.global_to_local(&clip.track_id, global) - clip.start_beat.to_f64())
+            .rem_euclid(local_length)
+    });
+    let state = this.piano.clone();
+    let pattern_id = pattern.id.clone();
+    let source = project.clone();
+    let surface = canvas(
+        |_, _, _| {},
+        move |bounds, _, window, cx| {
+            state.viewport.set(bounds.size);
+            state.origin.set(bounds.origin);
+            let pattern = source
+                .snapshot
+                .patterns
+                .iter()
+                .find(|p| p.id == pattern_id)
+                .unwrap();
+            let layout = state.layout(local_length, pattern.notes.iter().map(|n| n.pitch));
+            window.with_content_mask(Some(ContentMask { bounds }), |window| {
+                crate::piano_paint::paint(
+                    bounds, layout, theme, pattern, &sounding, phase, window, cx,
+                );
+            });
+        },
+    )
+    .size_full();
     root.child(
         div()
-            .id("piano-scroll")
+            .id("piano-viewport")
             .flex_1()
             .min_h_0()
-            .overflow_scroll()
-            .child(grid),
+            .overflow_hidden()
+            .child(surface)
+            .track_focus(&this.piano_focus)
+            .on_scroll_wheel(cx.listener(|this, event, _, cx| {
+                this.scroll_piano(event);
+                cx.stop_propagation();
+                cx.notify();
+            }))
+            .on_mouse_down(
+                MouseButton::Left,
+                cx.listener(|this, event, window, cx| {
+                    this.piano_focus.focus(window);
+                    this.press_piano(event);
+                    cx.notify();
+                }),
+            )
+            .on_key_down(cx.listener(|this, event: &KeyDownEvent, _, cx| {
+                if !event.keystroke.modifiers.platform
+                    && !event.keystroke.modifiers.control
+                    && !event.keystroke.modifiers.alt
+                    && this.piano_key(&event.keystroke.key)
+                {
+                    cx.stop_propagation();
+                    cx.notify();
+                }
+            })),
+    )
+    .child(
+        div()
+            .h(px(24.))
+            .flex_shrink_0()
+            .px_3()
+            .flex()
+            .items_center()
+            .text_size(px(10.))
+            .text_color(rgb(theme.muted))
+            .child("Pattern beats · Scroll keys / Shift-scroll time · ⌘ scroll zoom · Read only"),
     )
 }

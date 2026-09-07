@@ -1,13 +1,25 @@
 mod analysis;
 mod arrangement;
 mod backend;
+mod capture;
+mod capture_navigation;
 mod chrome;
 mod engine;
 mod mixer;
+mod mixer_actions;
+mod mixer_inspector;
+mod mixer_model;
+mod mixer_strip;
 mod model;
+mod pattern_preview;
 mod piano;
+mod piano_actions;
+mod piano_layout;
+mod piano_paint;
+mod playlist_lane;
 mod position;
 mod scopes;
+mod scrollbar;
 #[cfg(test)]
 mod tests;
 mod theme;
@@ -16,6 +28,7 @@ mod theme_tests;
 mod ui;
 mod window_chrome;
 mod wire;
+mod workspace;
 
 use gpui::{prelude::*, *};
 
@@ -53,7 +66,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
     Application::new().run(move |cx: &mut App| {
-        let bounds = Bounds::centered(None, size(px(1440.), px(920.)), cx);
+        assert!(
+            !cx.text_system().all_font_names().is_empty(),
+            "Preview requires GPUI's native font-kit backend"
+        );
+        let bounds = Bounds::centered(None, capture::window_size(), cx);
         cx.open_window(
             WindowOptions {
                 window_bounds: Some(WindowBounds::Windowed(bounds)),

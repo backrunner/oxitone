@@ -1,273 +1,185 @@
-//! Channel rack and routing are presentation only; there are no authoring controls.
-use crate::ui::Preview;
+//! Scrollable mixer bank, pinned master and a separate insert/routing inspector.
+use crate::{mixer_model, ui::Preview, workspace::Axis};
 use gpui::{prelude::*, *};
 
-pub fn db(value: f32) -> String {
-    if value <= 0.000001 {
-        "−∞".into()
-    } else {
-        format!("{:.1}", 20. * value.log10())
-    }
-}
-
-pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
+pub fn view(this: &Preview, height: f32, cx: &mut Context<Preview>) -> impl IntoElement {
     let theme = this.theme;
-    let project = this.project.as_ref().unwrap();
-    let mut strips = div().flex().h_full();
-    for channel in &project.snapshot.channels {
-        strips = strips.child(strip(
-            this,
-            cx,
-            &channel.id,
-            channel.name.as_deref().unwrap_or(&channel.id),
-            channel.level,
-            channel.pan,
-            channel.mute.unwrap_or(false),
-            channel.solo.unwrap_or(false),
-            &channel.instrument.plugin_id,
-            channel
-                .effect_chain
-                .iter()
-                .map(|e| e.plugin_id.clone())
-                .collect(),
-            vec![format!("→ {}", channel.mixer_channel_id)],
-        ));
-    }
-    let implicit_master = (!project
-        .snapshot
-        .mixer_channels
+    let strips = mixer_model::strips(this.project.as_ref().unwrap());
+    let master = strips.iter().find(|s| s.id == "mix_master").unwrap();
+    let selected = strips
         .iter()
-        .any(|b| b.id == "mix_master"))
-    .then(|| oxitone_core::wire::MixerChannelSpec {
-        id: "mix_master".into(),
-        name: Some("Master".into()),
-        level: 1.,
-        balance: 0.,
-        master_send_ratio: None,
-        inserts: vec![],
-        sends: vec![],
-        mute: None,
-        solo: None,
-    });
-    for bus in project
-        .snapshot
-        .mixer_channels
-        .iter()
-        .chain(implicit_master.as_ref())
-    {
-        let routes = bus
-            .sends
-            .iter()
-            .map(|s| {
-                format!(
-                    "{} {} {:.0}%{}",
-                    if s.sidechain == Some(true) {
-                        "SC →"
-                    } else {
-                        "→"
-                    },
-                    s.destination_id,
-                    s.ratio * 100.,
-                    if s.pre_fader == Some(true) {
-                        " pre"
-                    } else {
-                        ""
-                    }
-                )
-            })
-            .chain((bus.id != "mix_master").then(|| {
-                format!(
-                    "→ Master {:.0}%",
-                    bus.master_send_ratio.unwrap_or(1.) * 100.
-                )
-            }))
-            .collect();
-        strips = strips.child(strip(
-            this,
-            cx,
-            &bus.id,
-            bus.name.as_deref().unwrap_or(&bus.id),
-            bus.level,
-            bus.balance,
-            bus.mute.unwrap_or(false),
-            bus.solo.unwrap_or(false),
-            if bus.id == "mix_master" {
-                "MASTER"
-            } else {
-                "BUS"
-            },
-            bus.inserts.iter().map(|e| e.plugin_id.clone()).collect(),
-            routes,
-        ));
-    }
-    div()
-        .w(relative(0.46))
-        .min_w(px(280.))
+        .find(|s| s.id == this.selected_scope)
+        .unwrap_or(master);
+    let strip_height = (height - 50.).max(310.);
+    let mut bank = div()
         .flex()
-        .flex_col()
+        .h(px(strip_height))
+        .w(px((strips.len() - 1) as f32 * 84.));
+    for strip in strips.iter().filter(|s| s.id != "mix_master") {
+        bank = bank.child(crate::mixer_strip::view(this, strip, cx));
+    }
+    let mut body = div()
+        .flex_1()
+        .min_h_0()
+        .flex()
+        .overflow_hidden()
         .child(
             div()
-                .h(px(34.))
+                .relative()
+                .w(px(85.))
+                .h_full()
+                .flex_shrink_0()
+                .pb(px(10.))
+                .border_r_1()
+                .border_color(rgb(theme.gold))
+                .overflow_hidden()
+                .child(
+                    div()
+                        .absolute()
+                        .top(this.workspace.mixer.offset().y)
+                        .h(px(strip_height))
+                        .child(crate::mixer_strip::view(this, master, cx)),
+                ),
+        )
+        .child(
+            div()
+                .flex_1()
+                .min_w_0()
+                .h_full()
+                .flex()
+                .flex_col()
+                .child(
+                    div()
+                        .id("mixer-scroll")
+                        .flex_1()
+                        .min_h_0()
+                        .overflow_scroll()
+                        .track_scroll(&this.workspace.mixer)
+                        // Intercept in the content before the native parent scroll handler.
+                        .child(
+                            bank.id("mixer-bank")
+                                .min_w_full()
+                                .min_h_full()
+                                .on_scroll_wheel(cx.listener(
+                                    |this, event: &ScrollWheelEvent, _, cx| {
+                                        let delta = event.delta.pixel_delta(px(28.));
+                                        let scroll = &this.workspace.mixer;
+                                        let movement = if delta.x.abs() > px(0.) {
+                                            delta.x
+                                        } else {
+                                            delta.y
+                                        };
+                                        let old = scroll.offset();
+                                        scroll.set_offset(if event.modifiers.alt {
+                                            point(
+                                                old.x,
+                                                (old.y + delta.y)
+                                                    .clamp(-scroll.max_offset().height, px(0.)),
+                                            )
+                                        } else {
+                                            point(
+                                                (old.x + movement)
+                                                    .clamp(-scroll.max_offset().width, px(0.)),
+                                                old.y,
+                                            )
+                                        });
+                                        cx.stop_propagation();
+                                        cx.notify();
+                                    },
+                                )),
+                        ),
+                )
+                .child(crate::scrollbar::view(
+                    "mixer-scrollbar",
+                    Axis::Horizontal,
+                    &this.workspace.mixer,
+                    this,
+                    cx,
+                )),
+        )
+        .child(crate::scrollbar::view(
+            "mixer-vertical",
+            Axis::Vertical,
+            &this.workspace.mixer,
+            this,
+            cx,
+        ));
+    if this.workspace.inspector_open {
+        body = body.child(crate::mixer_inspector::view(this, selected, cx));
+    }
+    div()
+        .id("mixer-panel")
+        .track_focus(&this.mixer_focus)
+        .on_mouse_down(
+            MouseButton::Left,
+            cx.listener(|this, _, window, _| this.mixer_focus.focus(window)),
+        )
+        .on_key_down(cx.listener(|this, event: &KeyDownEvent, _, cx| {
+            if !event.keystroke.modifiers.platform
+                && !event.keystroke.modifiers.control
+                && !event.keystroke.modifiers.alt
+                && this.mixer_key(&event.keystroke.key)
+            {
+                cx.stop_propagation();
+                cx.notify();
+            }
+        }))
+        .flex_1()
+        .min_w_0()
+        .h_full()
+        .flex()
+        .flex_col()
+        .bg(rgb(theme.bg))
+        .child(
+            div()
+                .h(px(40.))
+                .flex_shrink_0()
                 .px_3()
                 .flex()
                 .items_center()
-                .child(theme.label("CHANNEL RACK / MIXER · Click to inspect scope")),
+                .gap_2()
+                .border_b_1()
+                .border_color(rgb(theme.border))
+                .child(div().text_xs().font_weight(FontWeight::BOLD).child("MIXER"))
+                .child(
+                    div()
+                        .flex_1()
+                        .text_size(px(10.))
+                        .text_color(rgb(theme.muted))
+                        .min_w_0()
+                        .truncate()
+                        .child(format!("{} strips · Source levels", strips.len())),
+                )
+                .child(
+                    theme
+                        .button("mixer-prev", "‹")
+                        .on_click(cx.listener(|this, _, _, cx| {
+                            nudge(&this.workspace.mixer, 168.);
+                            cx.notify();
+                        })),
+                )
+                .child(
+                    theme
+                        .button("mixer-next", "›")
+                        .on_click(cx.listener(|this, _, _, cx| {
+                            nudge(&this.workspace.mixer, -168.);
+                            cx.notify();
+                        })),
+                )
+                .child(
+                    theme
+                        .button("mixer-inspector", "Inserts")
+                        .on_click(cx.listener(|this, _, _, cx| {
+                            this.workspace.inspector_open = !this.workspace.inspector_open;
+                            cx.notify();
+                        })),
+                ),
         )
-        .child(
-            div()
-                .id("mixer-scroll")
-                .flex_1()
-                .min_h_0()
-                .overflow_scroll()
-                .child(strips),
-        )
+        .child(body)
 }
-
-#[allow(clippy::too_many_arguments)]
-fn strip(
-    this: &Preview,
-    cx: &mut Context<Preview>,
-    id: &str,
-    name: &str,
-    level: f64,
-    pan: f64,
-    mute: bool,
-    solo: bool,
-    kind: &str,
-    effects: Vec<String>,
-    routes: Vec<String>,
-) -> impl IntoElement {
-    let theme = this.theme;
-    let analysis = this.analysis.get(id);
-    let peak = analysis.map_or(0., |a| a.peak);
-    let rms = analysis.map_or(0., |a| a.rms);
-    let selected = this.selected_scope == id;
-    let select = id.to_owned();
-    let mut strip = div()
-        .id(SharedString::from(format!("mixer-{id}")))
-        .w(px(125.))
-        .flex_shrink_0()
-        .p_2()
-        .flex()
-        .flex_col()
-        .gap_1()
-        .border_r_1()
-        .border_color(rgb(theme.border))
-        .bg(rgb(if selected {
-            theme.selected
-        } else {
-            theme.panel
-        }))
-        .cursor_pointer()
-        .on_click(cx.listener(move |this, _, _, cx| {
-            this.selected_scope = select.clone();
-            cx.notify();
-        }))
-        .child(
-            div()
-                .text_xs()
-                .font_weight(FontWeight::SEMIBOLD)
-                .truncate()
-                .child(name.to_owned()),
-        )
-        .child(
-            div()
-                .text_xs()
-                .text_color(rgb(theme.muted))
-                .truncate()
-                .child(kind.to_owned()),
-        );
-    let height = |v: f32| ((20. * v.max(0.000001).log10() + 60.) / 60.).clamp(0., 1.) * 67.;
-    strip =
-        strip
-            .child(
-                div()
-                    .flex()
-                    .gap_2()
-                    .items_end()
-                    .h(px(69.))
-                    .child(
-                        div()
-                            .relative()
-                            .w(px(10.))
-                            .h_full()
-                            .bg(rgb(theme.meter))
-                            .child(div().absolute().bottom_0().w_full().h(px(height(peak))).bg(
-                                rgb(if peak >= 1. {
-                                    theme.danger
-                                } else {
-                                    theme.accent
-                                }),
-                            )),
-                    )
-                    .child(
-                        div()
-                            .relative()
-                            .w(px(10.))
-                            .h_full()
-                            .bg(rgb(theme.meter))
-                            .child(
-                                div()
-                                    .absolute()
-                                    .bottom_0()
-                                    .w_full()
-                                    .h(px(height(rms)))
-                                    .bg(rgb(theme.secondary)),
-                            ),
-                    )
-                    .child(div().text_xs().text_color(rgb(theme.muted)).child(format!(
-                        "{} peak\n{} RMS",
-                        db(peak),
-                        db(rms)
-                    ))),
-            )
-            .child(
-                div()
-                    .text_xs()
-                    .text_color(rgb(if mute || solo {
-                        theme.gold
-                    } else {
-                        theme.muted
-                    }))
-                    .child(format!(
-                        "{:.1} dB · {:+.2}{}{}",
-                        20. * level.max(1e-6).log10(),
-                        pan,
-                        if mute { " M" } else { "" },
-                        if solo { " S" } else { "" }
-                    )),
-            );
-    for effect in effects {
-        strip = strip.child(
-            div()
-                .text_xs()
-                .truncate()
-                .text_color(rgb(theme.accent))
-                .child(effect),
-        );
-    }
-    if id == "mix_master" {
-        strip = strip.child(div().text_xs().text_color(rgb(theme.gold)).child(format!(
-            "{} dBTP · scope",
-            db(analysis.map_or(0., |a| a.true_peak))
-        )));
-    }
-    if let Some(a) = analysis.filter(|a| a.dropped > 0) {
-        strip = strip.child(
-            div()
-                .text_xs()
-                .text_color(rgb(theme.gold))
-                .child(format!("{} analysis drops", a.dropped)),
-        );
-    }
-    for route in routes {
-        strip = strip.child(
-            div()
-                .text_xs()
-                .truncate()
-                .text_color(rgb(theme.muted))
-                .child(route),
-        );
-    }
-    strip
+fn nudge(scroll: &ScrollHandle, amount: f32) {
+    scroll.set_offset(point(
+        (scroll.offset().x + px(amount)).clamp(-scroll.max_offset().width, px(0.)),
+        scroll.offset().y,
+    ));
 }

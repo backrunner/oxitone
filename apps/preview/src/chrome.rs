@@ -89,22 +89,6 @@ impl Preview {
                         )),
                 );
         controls = controls.child(crate::position::view(self, cx));
-        if let Some(project) = &self.project {
-            for (index, marker) in project.snapshot.markers.iter().take(8).enumerate() {
-                let beat = marker.start_beat.to_f64();
-                controls = controls.child(
-                    theme
-                        .button(
-                            format!("marker-{index}"),
-                            marker
-                                .name
-                                .clone()
-                                .unwrap_or_else(|| format!("M{}", index + 1)),
-                        )
-                        .on_click(cx.listener(move |this, _, _, _| this.seek(beat))),
-                );
-            }
-        }
         div()
             .h(px(56.))
             .flex_shrink_0()
@@ -120,11 +104,29 @@ impl Preview {
                 div()
                     .flex()
                     .gap_2()
+                    .items_center()
+                    .child(
+                        div()
+                            .text_size(px(10.))
+                            .text_color(rgb(theme.muted))
+                            .child("PLAYLIST ZOOM"),
+                    )
+                    .child(theme.button("playlist-fit", "Fit").on_click(cx.listener(
+                        |this, _, window, cx| {
+                            if let Some(project) = &this.project {
+                                this.zoom = ((f32::from(window.viewport_size().width) - 190.)
+                                    / project.end() as f32)
+                                    .clamp(0.01, 120.);
+                                this.workspace.arrangement.set_offset(point(px(0.), px(0.)));
+                                cx.notify();
+                            }
+                        },
+                    )))
                     .child(
                         theme
                             .button("zoom-out", "−")
                             .on_click(cx.listener(|this, _, _, cx| {
-                                this.zoom = (this.zoom / 1.25).max(5.);
+                                this.zoom = (this.zoom / 1.25).max(0.01);
                                 cx.notify();
                             })),
                     )
