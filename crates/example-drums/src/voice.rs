@@ -27,7 +27,7 @@ impl Voice {
         };
     }
 
-    pub fn tick(&mut self, pad: usize, rate: f64, noise: f64) -> f64 {
+    pub fn tick(&mut self, pad: usize, rate: f64, noise: f64, parameters: &[f64; 10]) -> f64 {
         if self.remaining == 0 {
             return 0.0;
         }
@@ -36,9 +36,23 @@ impl Voice {
         let high_noise = (noise - self.previous_noise) * 0.5;
         self.previous_noise = noise;
         let (hz, tone) = match pad {
-            0 => (48.0 + self.sweep, self.phase.sin() * 0.95),
-            1 => (185.0, self.phase.sin() * 0.25 + high_noise * 0.9),
-            _ => (7320.0, high_noise * 0.32 + self.phase.sin() * 0.07),
+            0 => (
+                parameters[0] + self.sweep * parameters[1] / 130.,
+                self.phase.sin() * 0.95
+                    + high_noise * parameters[2] * (-(self.age as f64) / (rate * 0.003)).exp(),
+            ),
+            1 => (
+                parameters[3],
+                self.phase.sin() * (0.25 + parameters[4] * 0.18)
+                    + high_noise * (0.9 + parameters[4] * 0.55)
+                    + (self.phase * 1.47).sin() * parameters[4] * 0.18,
+            ),
+            _ => (
+                7320.0 - parameters[9] * 1800.,
+                high_noise * (0.32 + parameters[9] * 0.12)
+                    + self.phase.sin() * 0.07
+                    + (self.phase * 1.413).sin() * parameters[9] * 0.045,
+            ),
         };
         self.phase = (self.phase + TAU * hz / rate) % TAU;
         self.sweep *= self.sweep_falloff;

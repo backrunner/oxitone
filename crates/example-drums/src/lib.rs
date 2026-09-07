@@ -14,6 +14,7 @@ struct Machine {
     level: f64,
     decay: f64,
     noise: u32,
+    tone: [f64; 10],
 }
 
 impl Machine {
@@ -33,7 +34,7 @@ impl Machine {
             46 => 3,
             _ => return,
         };
-        self.voices[pad].trigger(pad, velocity, self.rate, self.decay);
+        self.voices[pad].trigger(pad, velocity, self.rate, self.decay * self.tone[5 + pad]);
     }
 
     fn tick(&mut self) -> [f32; 2] {
@@ -43,7 +44,7 @@ impl Machine {
         let noise = f64::from(self.noise) / f64::from(u32::MAX) * 2.0 - 1.0;
         let mut output = [0.0; 2];
         for (pad, voice) in self.voices.iter_mut().enumerate() {
-            let value = voice.tick(pad, self.rate, noise) * self.level;
+            let value = voice.tick(pad, self.rate, noise, &self.tone) * self.level;
             let pan = [0.0, -0.08, 0.28, 0.35][pad];
             output[0] += (value * (1.0 - pan) * 0.5) as f32;
             output[1] += (value * (1.0 + pan) * 0.5) as f32;
@@ -59,6 +60,7 @@ unsafe extern "C" fn create(_: *const OxiHostContextV1) -> *mut c_void {
         level: 0.8,
         decay: 1.0,
         noise: 0,
+        tone: [48., 130., 0., 185., 0., 1., 1., 1., 1., 0.],
     };
     machine.reset();
     Box::into_raw(Box::new(machine)).cast()
@@ -115,6 +117,7 @@ unsafe extern "C" fn process(ptr: *mut c_void, context: *const OxiProcessContext
             match event.parameter_index {
                 0 => machine.level = event.value,
                 1 => machine.decay = event.value,
+                2..=11 => machine.tone[event.parameter_index as usize - 2] = event.value,
                 _ => return 1,
             }
             parameter += 1;

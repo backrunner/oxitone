@@ -87,7 +87,7 @@ fn motion_noise_reset_and_note_offsets_are_deterministic() {
 #[test]
 fn lfo_shapes_and_added_parameter_indices_are_stable() {
     use super::params as p;
-    assert_eq!(parameter_specs().len(), 46);
+    assert_eq!(parameter_specs().len(), super::advanced::COUNT);
     for (i, id) in [
         (p::OSC_A_MORPH_TO, "oscA.morphTo"),
         (p::OSC_B_POSITION, "oscB.position"),

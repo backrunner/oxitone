@@ -11,9 +11,9 @@ fn benchmark(c: &mut Criterion) {
     };
     let mut group = c.benchmark_group("instruments/synth_motion");
     for voices in [8, 32] {
-        for motion in [false, true] {
+        for mode in ["default", "full", "electronic"] {
             let mut values = BTreeMap::from([("amp.sustain".into(), 0.7)]);
-            if motion {
+            if mode != "default" {
                 values.extend(
                     [
                         ("oscA.unison", 7.),
@@ -32,6 +32,28 @@ fn benchmark(c: &mut Criterion) {
                         ("lfo.positionA", 0.2),
                         ("lfo.positionB", -0.1),
                         ("lfo.level", 0.2),
+                    ]
+                    .map(|(k, v)| (k.into(), v)),
+                );
+            }
+            if mode == "electronic" {
+                values.extend(
+                    [
+                        ("oscA.octave", 1.),
+                        ("oscB.octave", -1.),
+                        ("sub.wave", 4.),
+                        ("sub.octave", -2.),
+                        ("oscA.bank", 2.),
+                        ("oscA.warpMode", 2.),
+                        ("oscA.warp", 0.4),
+                        ("fm", 0.2),
+                        ("amp.decayCurve", -0.5),
+                        ("mod.0.source", 2.),
+                        ("mod.0.target", 2.),
+                        ("mod.0.amount", 0.2),
+                        ("mod.1.source", 5.),
+                        ("mod.1.target", 6.),
+                        ("mod.1.amount", 0.3),
                     ]
                     .map(|(k, v)| (k.into(), v)),
                 );
@@ -57,27 +79,20 @@ fn benchmark(c: &mut Criterion) {
                 parameter_events: &[],
                 sidechain: None,
             });
-            group.bench_function(
-                format!(
-                    "{}_{}_voices_128",
-                    if motion { "full" } else { "default" },
-                    voices
-                ),
-                |b| {
-                    b.iter(|| {
-                        synth.process(&mut ProcessContext {
-                            frames: 128,
-                            sample_rate: 48000.,
-                            inputs: &[],
-                            outputs: &mut [&mut left, &mut right],
-                            note_events: &[],
-                            parameter_events: &[],
-                            sidechain: None,
-                        });
-                        black_box((&left, &right));
+            group.bench_function(format!("{}_{}_voices_128", mode, voices), |b| {
+                b.iter(|| {
+                    synth.process(&mut ProcessContext {
+                        frames: 128,
+                        sample_rate: 48000.,
+                        inputs: &[],
+                        outputs: &mut [&mut left, &mut right],
+                        note_events: &[],
+                        parameter_events: &[],
+                        sidechain: None,
                     });
-                },
-            );
+                    black_box((&left, &right));
+                });
+            });
             assert!(left.iter().any(|v| v.abs() > 0.001));
         }
     }

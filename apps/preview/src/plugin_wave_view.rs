@@ -4,13 +4,35 @@ use crate::{
     ui::alpha,
 };
 use gpui::{prelude::*, *};
-use oxitone_instruments::wavetable::cycle_value;
+use oxitone_instruments::wavetable::{preview_cycle, preview_sub_cycle};
 
-pub fn oscillator(values: &[f64], theme: Theme, stacked: bool) -> Div {
+pub fn oscillator(values: &[f64], advanced: [f64; 4], theme: Theme, stacked: bool) -> Div {
     let (source, target, position, phase) =
         (values[0] as usize, values[1] as usize, values[2], values[3]);
     let names = ["SINE", "SAW", "SQUARE", "TRIANGLE", "ORGAN", "GLASS"];
-    let title = format!("{} → {}", names[source.min(5)], names[target.min(5)]);
+    let [bank, warp_mode, warp, octave] = advanced;
+    let title = if bank == 0. {
+        format!("{} → {}", names[source.min(5)], names[target.min(5)])
+    } else {
+        ["PAIR", "ANALOG", "DIGITAL", "VOWEL"][bank as usize].into()
+    };
+    let cycle = |blend| {
+        preview_cycle(
+            bank as usize,
+            source,
+            target,
+            blend,
+            phase,
+            warp_mode as usize,
+            warp as f32,
+        )
+    };
+    let selected = cycle(position as f32);
+    let layers: Vec<_> = if stacked {
+        (0..6).map(|i| cycle(i as f32 / 5.)).collect()
+    } else {
+        Vec::new()
+    };
     div()
         .w_full()
         .rounded_md()
@@ -27,21 +49,15 @@ pub fn oscillator(values: &[f64], theme: Theme, stacked: bool) -> Div {
                 |_, _, _| {},
                 move |at, _, window, _| {
                     grid(at, theme, window);
-                    let sample = |t: f64, blend: f64| {
-                        let a = cycle_value(source, t + phase);
-                        a + (cycle_value(target, t + phase) - a) * blend
-                    };
                     if stacked {
                         for layer in (0..6).rev() {
-                            let blend = layer as f64 / 5.;
                             trace(
                                 at,
                                 (0..=128).map(|i| {
                                     let x = i as f32 / 128.;
                                     (
                                         0.025 + x * 0.82 + layer as f32 * 0.025,
-                                        0.55 - sample(x as f64, blend) as f32 * 0.24
-                                            - layer as f32 * 0.055,
+                                        0.55 - layers[layer][i * 2] * 0.24 - layer as f32 * 0.055,
                                     )
                                 }),
                                 alpha(theme.secondary, 0.22 + layer as f32 * 0.05).into(),
@@ -52,12 +68,11 @@ pub fn oscillator(values: &[f64], theme: Theme, stacked: bool) -> Div {
                     }
                     trace(
                         at,
-                        (0..=192).map(|i| {
-                            let x = i as f32 / 192.;
+                        (0..=256).map(|i| {
+                            let x = i as f32 / 256.;
                             (
                                 0.025 + x * 0.95,
-                                0.55 - sample(x as f64, position) as f32
-                                    * if stacked { 0.3 } else { 0.4 },
+                                0.55 - selected[i] * if stacked { 0.3 } else { 0.4 },
                             )
                         }),
                         rgb(theme.accent).into(),
@@ -71,7 +86,43 @@ pub fn oscillator(values: &[f64], theme: Theme, stacked: bool) -> Div {
         )
         .child(caption(
             format!("{} voices · {:.0} ct", values[4] as usize, values[5]),
-            format!("Width {:.0}%", values[6] * 100.),
+            format!("{octave:+.0} OCT · Width {:.0}%", values[6] * 100.),
             theme,
         ))
+}
+
+pub fn sub(values: &[f64], theme: Theme) -> Div {
+    let wave = (values[0] as usize).min(5);
+    let samples = preview_sub_cycle(wave);
+    div()
+        .w_full()
+        .rounded_md()
+        .bg(rgb(theme.scope))
+        .mb_2()
+        .overflow_hidden()
+        .child(caption(
+            ["SINE", "TRIANGLE", "SAW", "SQUARE", "PULSE 25%", "ROUNDED"][wave].into(),
+            format!("{:+.0} OCT · {:.0}%", values[1], values[2] * 100.),
+            theme,
+        ))
+        .child(
+            canvas(
+                |_, _, _| {},
+                move |at, _, window, _| {
+                    grid(at, theme, window);
+                    trace(
+                        at,
+                        samples
+                            .iter()
+                            .enumerate()
+                            .map(|(i, v)| (0.025 + i as f32 / 256. * 0.95, 0.5 - v * 0.3)),
+                        rgb(theme.accent).into(),
+                        2.,
+                        window,
+                    );
+                },
+            )
+            .w_full()
+            .h(px(72.)),
+        )
 }

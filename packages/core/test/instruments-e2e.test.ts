@@ -13,10 +13,11 @@ describe("built-in instruments through native rendering", () => {
       const project = new Project();
       const channel = project.addChannel({ instrument: wavetable({
         oscA: { wave: "sine", morphTo: "organ", position: 0.35, phase: 0.2, phaseSpread: 0.6,
-          pitch: 0, unison: 2, detune: 8, spread: 0.5 },
+          pitch: 0, octave: 1, unison: 2, detune: 8, spread: 0.5, bank: "analog", warpMode: "bend", warp: 0.3 },
         oscB: { wave: "glass", morphTo: "triangle", position: 0.6, phase: 0.1, phaseSpread: 0.4,
-          pitch: -12, unison: 1, detune: 0, spread: 0 }, mix: 0.2,
-        sub: { level: 0.1, octave: -1 }, noise: { level: 0.02 },
+          pitch: 0, octave: -1, unison: 1, detune: 0, spread: 0 }, mix: 0.2,
+        sub: { wave: "rounded", level: 0.1, octave: -2 }, noise: { level: 0.02 },
+        fm: 0.1, macros: [0.2], modulation: [{ source: "macro1", target: "warpA", amount: 0.5 }],
         lfo: { shape: "triangle", rateHz: 4, phase: 0.25, pitch: 0.1, cutoff: 12,
           positionA: 0.2, positionB: -0.2, level: 0.2 },
         filter: { type: "lowpass", cutoff: 4000, resonance: 0.2 },

@@ -71,6 +71,27 @@ impl Plugin for DelayPlugin {
                         ParameterSmoothing::Linear,
                         ParameterMapping::Log,
                     ),
+                    super::enum_param("pingPong", "Ping Pong", 0., 1., 0.),
+                    param(
+                        "highpassHz",
+                        "Feedback Low Cut",
+                        ParameterUnit::Hz,
+                        20.,
+                        2000.,
+                        20.,
+                        ParameterSmoothing::None,
+                        ParameterMapping::Log,
+                    ),
+                    param(
+                        "ducking",
+                        "Wet Ducking",
+                        ParameterUnit::Normalized,
+                        0.,
+                        1.,
+                        0.,
+                        ParameterSmoothing::None,
+                        ParameterMapping::Linear,
+                    ),
                 ],
                 PluginCapabilities {
                     sidechain_input: false,
@@ -89,6 +110,7 @@ struct DelayChannel {
     line: Vec<f32>,
     pos: usize,
     filter_state: f32,
+    low_state: f32,
 }
 
 impl DelayChannel {
@@ -97,6 +119,7 @@ impl DelayChannel {
             line: vec![0.0; len],
             pos: 0,
             filter_state: 0.0,
+            low_state: 0.,
         }
     }
 }
@@ -109,6 +132,10 @@ struct DelayInstance {
     time_smooth: OnePoleSmoother,
     channels: [DelayChannel; 2],
     tail_remaining: u64,
+    ping_pong: bool,
+    highpass: f64,
+    ducking: f32,
+    detector: f32,
 }
 
 impl DelayInstance {
@@ -124,6 +151,10 @@ impl DelayInstance {
             time_smooth,
             channels: [DelayChannel::new(len), DelayChannel::new(len)],
             tail_remaining: 0,
+            ping_pong: false,
+            highpass: 20.,
+            ducking: 0.,
+            detector: 0.,
         }
     }
 
@@ -138,6 +169,9 @@ impl DelayInstance {
             }
             "feedback" => self.feedback = value.clamp(0.0, 0.95),
             "feedbackFilterHz" => self.filter_hz = value.clamp(100.0, 18_000.0),
+            "pingPong" => self.ping_pong = value >= 0.5,
+            "highpassHz" => self.highpass = value.clamp(20., 2000.),
+            "ducking" => self.ducking = value.clamp(0., 1.) as f32,
             _ => {}
         }
     }
@@ -168,25 +202,51 @@ impl PluginInstance for DelayInstance {
             (1.0 - (-2.0 * core::f64::consts::PI * self.filter_hz / self.sample_rate).exp()) as f32;
         let len = self.channels[0].line.len();
         let mut block_peak = 0.0f32;
-        for (ch, channel) in self.channels.iter_mut().enumerate() {
-            let input = &ctx.inputs[ch][..frames];
-            let output = &mut ctx.outputs[ch][..frames];
-            for n in 0..frames {
-                block_peak = block_peak.max(input[n].abs());
-                let delay = self.time_smooth.next_sample().clamp(1.0, (len - 2) as f32);
+        let hp = (1. - (-std::f64::consts::TAU * self.highpass / self.sample_rate).exp()) as f32;
+        let release = (-1. / (0.12 * self.sample_rate)).exp() as f32;
+        for n in 0..frames {
+            // One timeline advance for both channels; feedback reads precede writes.
+            let delay = self.time_smooth.next_sample().clamp(1.0, (len - 2) as f32);
+            let mut wet = [0.; 2];
+            let mut feedback_signal = [0.; 2];
+            let linked = ctx.inputs[0][n].abs().max(ctx.inputs[1][n].abs());
+            block_peak = block_peak.max(linked);
+            self.detector = linked.max(self.detector * release);
+            let duck = 1. / (1. + self.ducking * self.detector * 12.);
+            for (ch, channel) in self.channels.iter_mut().enumerate() {
                 // Linear-interpolated read `delay` frames behind the cursor.
                 let read = channel.pos as f32 - delay + len as f32;
                 let i0 = read as usize % len;
                 let i1 = (i0 + 1) % len;
                 let frac = read.fract();
-                let wet = channel.line[i0] * (1.0 - frac) + channel.line[i1] * frac;
+                wet[ch] = channel.line[i0] * (1.0 - frac) + channel.line[i1] * frac;
                 channel.filter_state = flush_denormal(
-                    channel.filter_state + (wet - channel.filter_state) * filter_coeff,
+                    channel.filter_state + (wet[ch] - channel.filter_state) * filter_coeff,
                 );
+                channel.low_state = flush_denormal(
+                    channel.low_state + (channel.filter_state - channel.low_state) * hp,
+                );
+                feedback_signal[ch] = if self.highpass > 20. {
+                    channel.filter_state - channel.low_state
+                } else {
+                    channel.filter_state
+                };
+            }
+            for (ch, channel) in self.channels.iter_mut().enumerate() {
+                let source = if self.ping_pong { 1 - ch } else { ch };
+                let input = if self.ping_pong {
+                    if ch == 0 {
+                        (ctx.inputs[0][n] + ctx.inputs[1][n]) * 0.5
+                    } else {
+                        0.
+                    }
+                } else {
+                    ctx.inputs[ch][n]
+                };
                 channel.line[channel.pos] =
-                    flush_denormal(input[n] + channel.filter_state * feedback);
+                    flush_denormal(input + feedback_signal[source] * feedback);
                 channel.pos = (channel.pos + 1) % len;
-                output[n] = wet;
+                ctx.outputs[ch][n] = wet[ch] * duck;
             }
         }
         if block_peak > 1e-6 {
@@ -201,10 +261,12 @@ impl PluginInstance for DelayInstance {
             channel.line.fill(0.0);
             channel.pos = 0;
             channel.filter_state = 0.0;
+            channel.low_state = 0.;
         }
         self.time_smooth
             .snap((self.time_seconds * self.sample_rate) as f32);
         self.tail_remaining = 0;
+        self.detector = 0.;
     }
 
     fn tail_frames(&self) -> u64 {

@@ -78,12 +78,17 @@ Channel、MixerChannel 和 Master 的有序 insert 均暴露 `insert.<index>.mix
 增量音色能力保持 `oxitone.wavetable@1.0.0` 的旧参数及默认声音：新增 Organ/Glass 两种谐波波形；
 每 OSC 的 morphTo + position 把源波形与目标波形在同相位的 mip 表之间线性渐变，position 默认 0。
 phase / phaseSpread（0…1 cycles，默认 0）在新声部 note-on 时设置各 unison 相位，legato 保持相位。
-Sub 为正弦、level 默认 0、octave -2…0（默认 -1），在滤波后混入并共用 amp envelope；
+OSC A/B 支持独立 octave −4…4（默认 0，与 pitch 半音相加）和 level 0…1（默认 1）。
+Sub 的 wave 为 sine/triangle/saw/square/pulse/rounded，默认 sine；level 默认 0，
+octave −4…4（默认 −1），在滤波后混入并共用 amp envelope；Sub 不跟随 A/B 的 octave。
 Noise 为确定性白噪声，level 默认 0，在滤波前混入。每次非 legato note-on 重置 noise/LFO/sub。
 每声部 LFO 支持 sine/triangle/ramp/square、0.01…30 Hz、初相位，以及 pitch（±12 st）、cutoff（±48 st）、
 OSC A/B position（±1）、amp level（0…1）五个固定目标。所有调制深度默认 0；相位以 f64 逐 sample 积分。
 该 LFO 随音符触发，Hz 为物理速率；工程节拍同步可用 bpm/60/periodBeats 明确换算，tempo map 自动跟随
 仍使用既有工程 automation。它不是新的 automation source，不改变 07 的 golden vectors。
+
+追加的波表库、warp、FM/ring、第二 LFO、曲线包络和八槽调制矩阵，以及 distortion、
+multiband、delay 与电子鼓参数遵循 `13-electronic-production.md`；A/B unison 为 1…16。
 
 内置 `Sampler`：把 Sample 映射为可用 Note 演奏的音源。note pitch 相对 `rootKey`（默认 60）决定 playback rate（varispeed 变调），velocity 按可调灵敏度映射到 level，带 amp ADSR、loop 模式（off/forward）和切片起点；复用 sample 解码/编辑链与 varispeed 路径，其播放参数同样可自动化。v1 为单采样；velocity layer、round-robin、键盘分区等多采样能力留待 descriptor 版本演进。
 

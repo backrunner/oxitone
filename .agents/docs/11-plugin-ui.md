@@ -73,7 +73,8 @@ project.registerPluginUi({
 
 | kind | 绑定与图形语义 |
 | --- | --- |
-| `oscillator` | wave/morphTo 对应 0…5 的六种内置 cycle；position/phase/spread 是 0…1，unison 为 1…8 enum，detune 为 0…100 cents（沿用 descriptor normalized unit）。显示同相位 source 插值、unison/width；2D/3D 按钮仅切换堆叠曲线 |
+| `oscillator` | wave/morphTo 对应 0…5 的六种内置 cycle；position/phase/spread 是 0…1，unison 为 1…16 enum，detune 为 0…100 cents。可选 bank/warpMode（0…3 enum）、warp（0…1）、octave（−4…4 enum）绑定。UI 线程读取共享准备表生成周期图，显示 source/bank 插值及 warp、octave；2D/3D 仅切换堆叠曲线 |
+| `subOscillator` | wave 为 sine/triangle/saw/square/pulse/rounded（0…5 enum），octave −4…4 enum，level 0…1；显示独立 Sub 周期、octave 和幅度 |
 | `filterResponse` | mode 对应 LP/HP/BP enum 0…2，cutoff 为正 Hz，resonance 为 0…1。用项目 sampleRate 和 Q=0.5+9.5r 的 biquad 系数计算对数频率响应 |
 | `lfoCurve` | shape 对应 sine/triangle/ramp/square enum 0…3，rate 为正 Hz，phase 为 0…1，显示一个 source 周期及周期秒数 |
 | `modulation` | routes 为 1…8 个 `{label, amount}`，amount 绑定现有参数，展示带物理单位的路由深度与双极条 |

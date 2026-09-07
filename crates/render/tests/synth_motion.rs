@@ -23,6 +23,21 @@ fn project(block: u32, voices: u8) -> ProjectSnapshot {
             ("oscB.position", 0.3),
             ("osc.mix", 0.2),
             ("sub.level", 0.1),
+            ("sub.wave", 4.),
+            ("sub.octave", -2.),
+            ("oscA.octave", 1.),
+            ("oscB.octave", -1.),
+            ("oscA.bank", 2.),
+            ("oscA.warpMode", 2.),
+            ("oscA.warp", 0.3),
+            ("fm", 0.15),
+            ("amp.decayCurve", -0.5),
+            ("mod.0.source", 2.),
+            ("mod.0.target", 2.),
+            ("mod.0.amount", 0.3),
+            ("mod.1.source", 8.),
+            ("mod.1.target", 9.),
+            ("mod.1.amount", 0.1),
             ("noise.level", 0.02),
             ("filter.cutoff", 2400.),
             ("filterEnv.amount", 12.),
@@ -34,7 +49,10 @@ fn project(block: u32, voices: u8) -> ProjectSnapshot {
             ("lfo.level", 0.2),
             ("amp.release", 0.02),
         ]),
-        vec![],
+        vec![
+            effect_ref("oxitone.distortion", &[("driveDb", 8.)]),
+            effect_ref("oxitone.multiband", &[("depth", 0.2)]),
+        ],
     )];
     s.tracks = vec![track("trk_s", &["chn_s"], &["pcl_s"], &[])];
     // Start at frame 17: a voice's control cycle must survive host block splits.

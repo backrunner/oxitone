@@ -10,6 +10,7 @@ fn machine() -> Machine {
         level: 0.8,
         decay: 1.0,
         noise: 1,
+        tone: [48., 130., 0., 185., 0., 1., 1., 1., 1., 0.],
     }
 }
 

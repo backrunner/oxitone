@@ -349,6 +349,30 @@
                             "minLength": 1,
                             "maxLength": 128,
                             "pattern": "^[^\\p{Cc}]+$"
+                          },
+                          "bank": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128,
+                            "pattern": "^[^\\p{Cc}]+$"
+                          },
+                          "warpMode": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128,
+                            "pattern": "^[^\\p{Cc}]+$"
+                          },
+                          "warp": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128,
+                            "pattern": "^[^\\p{Cc}]+$"
+                          },
+                          "octave": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128,
+                            "pattern": "^[^\\p{Cc}]+$"
                           }
                         },
                         "required": [
@@ -360,6 +384,46 @@
                           "unison",
                           "detune",
                           "spread"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "const": "subOscillator"
+                          },
+                          "label": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64,
+                            "pattern": "^[^\\p{Cc}]+$"
+                          },
+                          "wave": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128,
+                            "pattern": "^[^\\p{Cc}]+$"
+                          },
+                          "octave": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128,
+                            "pattern": "^[^\\p{Cc}]+$"
+                          },
+                          "level": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128,
+                            "pattern": "^[^\\p{Cc}]+$"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "wave",
+                          "octave",
+                          "level"
                         ],
                         "additionalProperties": false
                       },

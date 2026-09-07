@@ -30,6 +30,7 @@ export type { InspectSampleRequest, SampleInfo, CacheSampleRequest, CachedSample
 export { sampleProvenanceSchema } from "./sample-provenance.js";
 export type { SampleProvenance } from "./sample-provenance.js";
 export { wavetableOptionsSchema, samplerOptionsSchema, slicerStateSchema } from "./instruments.js";
+export { modulationSources, modulationTargets } from "./synth-modulation.js";
 export type { EnvelopeOptions, OscillatorOptions, WavetableOptions, SamplerOptions, SlicerState } from "./instruments.js";
 export { curveSchema, automationPointSchema, CURVE_KINDS } from "./curve.js";
 export type { Curve, CurveKind, AutomationPoint } from "./curve.js";

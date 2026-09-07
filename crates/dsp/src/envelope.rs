@@ -21,6 +21,11 @@ pub struct Adsr {
     level: f64,
     step: f64,
     remaining: u32,
+    curves: [f64; 3],
+    origin: f64,
+    target: f64,
+    total: u32,
+    factor: f64,
 }
 
 impl Adsr {
@@ -35,6 +40,11 @@ impl Adsr {
             level: 0.0,
             step: 0.0,
             remaining: 0,
+            curves: [0.; 3],
+            origin: 0.,
+            target: 0.,
+            total: 0,
+            factor: 1.,
         }
     }
 
@@ -51,6 +61,34 @@ impl Adsr {
         (seconds * self.sample_rate).round() as u32
     }
 
+    /// Curvature is latched at the next segment start; zero is the original linear ramp.
+    pub fn set_curves(&mut self, attack: f64, decay: f64, release: f64) {
+        self.curves = [
+            attack.clamp(-1., 1.),
+            decay.clamp(-1., 1.),
+            release.clamp(-1., 1.),
+        ];
+    }
+
+    fn start_segment(&mut self, samples: u32, target: f64, curve: usize) {
+        self.origin = self.level;
+        self.target = target;
+        self.total = samples;
+        self.factor = 2f64.powf(self.curves[curve] * 4.);
+    }
+
+    #[inline]
+    fn advance_segment(&mut self) {
+        self.remaining -= 1;
+        if self.factor == 1. {
+            self.level += self.step;
+        } else {
+            let t = 1. - self.remaining as f64 / self.total as f64;
+            let shaped = t / (t + (1. - t) * self.factor);
+            self.level = self.origin + (self.target - self.origin) * shaped;
+        }
+    }
+
     /// Start the attack from the current level (click-free retrigger).
     pub fn note_on(&mut self) {
         let samples = self.segment_samples(self.attack_s);
@@ -60,6 +98,7 @@ impl Adsr {
             return;
         }
         self.step = (1.0 - self.level) / f64::from(samples);
+        self.start_segment(samples, 1., 0);
         self.remaining = samples;
         self.stage = AdsrStage::Attack;
     }
@@ -76,6 +115,7 @@ impl Adsr {
             return;
         }
         self.step = -self.level / f64::from(samples);
+        self.start_segment(samples, 0., 2);
         self.remaining = samples;
         self.stage = AdsrStage::Release;
     }
@@ -88,6 +128,7 @@ impl Adsr {
             return;
         }
         self.step = (self.sustain as f64 - self.level) / f64::from(samples);
+        self.start_segment(samples, self.sustain as f64, 1);
         self.remaining = samples;
         self.stage = AdsrStage::Decay;
     }
@@ -99,8 +140,7 @@ impl Adsr {
             AdsrStage::Idle => 0.0,
             AdsrStage::Sustain => self.sustain,
             AdsrStage::Attack => {
-                self.level += self.step;
-                self.remaining -= 1;
+                self.advance_segment();
                 if self.remaining == 0 {
                     self.level = 1.0;
                     self.enter_decay();
@@ -108,8 +148,7 @@ impl Adsr {
                 self.level as f32
             }
             AdsrStage::Decay => {
-                self.level += self.step;
-                self.remaining -= 1;
+                self.advance_segment();
                 if self.remaining == 0 {
                     self.level = self.sustain as f64;
                     self.stage = AdsrStage::Sustain;
@@ -117,8 +156,7 @@ impl Adsr {
                 self.level as f32
             }
             AdsrStage::Release => {
-                self.level += self.step;
-                self.remaining -= 1;
+                self.advance_segment();
                 if self.remaining == 0 {
                     self.level = 0.0;
                     self.stage = AdsrStage::Idle;
@@ -230,5 +268,38 @@ mod tests {
         assert_eq!(e.level(), 0.25);
         e.note_off();
         assert_eq!(e.stage(), AdsrStage::Idle);
+    }
+
+    #[test]
+    fn curved_segments_keep_duration_endpoints_and_retrigger_continuity() {
+        for curve in [-1., -0.5, 0.5, 1.] {
+            let mut e = env();
+            e.set_curves(curve, curve, curve);
+            e.note_on();
+            let first: Vec<_> = (0..10).map(|_| e.next_sample()).collect();
+            assert!(first.windows(2).all(|v| v[1] >= v[0]));
+            assert_eq!(e.stage(), AdsrStage::Decay);
+            assert_eq!(e.level(), 1.);
+            for _ in 0..10 {
+                e.next_sample();
+            }
+            assert_eq!(e.level(), 0.5);
+            assert_eq!(e.stage(), AdsrStage::Sustain);
+            e.note_off();
+            let start = e.level();
+            e.next_sample();
+            assert!(e.level() < start);
+            let at = e.level();
+            e.note_on();
+            assert_eq!(at, e.level());
+            e.next_sample();
+            assert!(e.level() > at);
+            e.note_off();
+            for _ in 0..10 {
+                e.next_sample();
+            }
+            assert_eq!(e.stage(), AdsrStage::Idle);
+            assert_eq!(e.level(), 0.);
+        }
     }
 }

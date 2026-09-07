@@ -96,6 +96,45 @@ pub struct Wavetable {
 }
 
 impl Wavetable {
+    /// Prepare an analytic Fourier series without an O(N²) DFT. Coefficients are
+    /// (sine, cosine), ordered by harmonic starting at one; DC is always zero.
+    pub fn from_partials(
+        partials: &[(f64, f64)],
+        n: usize,
+        level_count: usize,
+        sample_rate: f64,
+    ) -> Self {
+        assert!(n >= 4 && level_count > 0);
+        let mut levels = Vec::with_capacity(level_count);
+        for k in 0..level_count {
+            let mut table = vec![0f32; n + 1];
+            for (index, &(s, c)) in partials.iter().take(n >> (k + 1)).enumerate() {
+                let angle = TAU * (index + 1) as f64 / n as f64;
+                let (step_sin, step_cos) = angle.sin_cos();
+                let (mut sin, mut cos) = (0., 1.);
+                for value in &mut table[..n] {
+                    *value += (s * sin + c * cos) as f32;
+                    (sin, cos) = (
+                        sin * step_cos + cos * step_sin,
+                        cos * step_cos - sin * step_sin,
+                    );
+                }
+            }
+            table[n] = table[0];
+            levels.push(table);
+        }
+        let peak = levels[0].iter().fold(0f32, |p, x| p.max(x.abs())).max(1.);
+        for table in &mut levels {
+            for value in table {
+                *value /= peak;
+            }
+        }
+        Self {
+            levels,
+            table_len: n,
+            sample_rate,
+        }
+    }
     /// Build mip levels from one cycle of `base`. Prepare-time only: the
     /// naive DFT is O(levels · N²) and allocates all level tables.
     pub fn new(base: &[f32], level_count: usize, sample_rate: f64) -> Self {
@@ -155,80 +194,9 @@ impl Wavetable {
     }
 }
 
-/// Wavetable playback state. `prepare` picks the mip level; `next` only
-/// reads the preselected table. RT-safe.
-pub struct WavetableReader {
-    phase: f64,
-    level: usize,
-}
-
-impl WavetableReader {
-    pub fn new() -> Self {
-        Self {
-            phase: 0.0,
-            level: 0,
-        }
-    }
-
-    /// Control-rate mip selection (per note-on / per block). Not per sample.
-    pub fn prepare(&mut self, table: &Wavetable, freq_hz: f64) {
-        self.level = table.select_level(freq_hz);
-    }
-
-    pub fn set_phase(&mut self, phase: f64) {
-        self.phase = phase.rem_euclid(1.0);
-    }
-
-    /// Linear-interpolated read at the prepared level. RT-safe.
-    #[inline]
-    pub fn next(&mut self, table: &Wavetable, freq_hz: f64) -> f32 {
-        let t = table.level_table(self.level);
-        let n = table.table_len;
-        let pos = self.phase * n as f64;
-        let i = pos as usize;
-        let frac = (pos - i as f64) as f32;
-        let out = t[i] + (t[i + 1] - t[i]) * frac;
-        self.phase = (self.phase + freq_hz / table.sample_rate).rem_euclid(1.0);
-        out
-    }
-
-    /// Same-phase interpolation between two prepared cycles; neither table is modified.
-    /// Both cycles must use the same table length, mip layout and sample rate.
-    /// The zero-position fast path preserves the original reader's exact samples.
-    #[inline]
-    pub fn next_blend(
-        &mut self,
-        table: &Wavetable,
-        target: &Wavetable,
-        position: f32,
-        freq_hz: f64,
-    ) -> f32 {
-        if position == 0. {
-            return self.next(table, freq_hz);
-        }
-        let position = position.clamp(0., 1.);
-        let t = target.level_table(self.level);
-        let pos = self.phase * target.table_len as f64;
-        let i = pos as usize;
-        let frac = (pos - i as f64) as f32;
-        let other = t[i] + (t[i + 1] - t[i]) * frac;
-        let base = self.next(table, freq_hz);
-        base + (other - base) * position
-    }
-
-    /// Fill `out` at constant frequency. RT-safe.
-    pub fn render(&mut self, table: &Wavetable, freq_hz: f64, out: &mut [f32]) {
-        for x in out.iter_mut() {
-            *x = self.next(table, freq_hz);
-        }
-    }
-}
-
-impl Default for WavetableReader {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+#[path = "oscillator_reader.rs"]
+mod reader;
+pub use reader::WavetableReader;
 
 #[cfg(test)]
 #[path = "oscillator_tests.rs"]

@@ -355,14 +355,15 @@ schema/类型从 protocol 导出；返回值独立且不修改 Sample。Channel 
 增加一次 revision，需 Session.update 或重新 compile 生效；失败保留旧 authoring 状态。
 
 Wavetable 新增参数追加在原 descriptor 索引之后，保留 `oxitone.wavetable@1.0.0`
-与原参数默认输出，共 46 个参数。以下 options 由 helper 映射到相同 dotted parameter ID：
+与原参数默认输出，保留前 46 个参数索引。以下 options 由 helper 映射到相同 dotted parameter ID：
 
 | Options | 范围、默认值与语义 |
 | --- | --- |
 | `oscA/oscB.wave`、`morphTo` | sine/saw/square/triangle/organ/glass → enum 0…5；wave 仍映射 `.wavetable`，morphTo 默认 triangle |
 | `.position` | 0…1，默认 0；source 到 morphTo 的同相位线性渐变 |
 | `.phase`、`.phaseSpread` | 0…1 cycles，默认 0；非复用声部起音的相位与 unison 相位铺开 |
-| `sub.level`、`sub.octave` | level 0…1 默认 0；octave 整数 −2…0 默认 −1，滤波后正弦层 |
+| `oscA/oscB.octave`、`.level` | octave 整数 −4…4 默认 0；叠加 pitch 半音；level 0…1 默认 1 |
+| `sub.level`、`sub.octave`、`sub.wave` | level 0…1 默认 0；octave 整数 −4…4 默认 −1；sine/triangle/saw/square/pulse/rounded → 0…5，默认 sine，滤波后独立层 |
 | `noise.level` | 0…1 默认 0，滤波前确定性白噪声层 |
 | `lfo.shape`、`.rateHz`、`.phase` | sine/triangle/ramp/square → 0…3，默认 sine；0.01…30 Hz 默认 1；phase 0…1 默认 0 |
 | `lfo.pitch`、`.cutoff` | 分别 ±12 / ±48 semitones，默认 0；双极调制深度 |
@@ -371,7 +372,9 @@ Wavetable 新增参数追加在原 descriptor 索引之后，保留 `oxitone.wav
 
 LFO 随音符触发，legato 保留 phase；是合成器内部固定路由，不新增工程 automation AST。
 可用 `rateHz: bpm / 60 / beatsPerCycle` 在代码声明节奏；当前不自动跟随 tempo map，
-不支持自由路由、FM 或导入任意波表。参数可由既有 Channel automation 绑定。
+扩展支持八槽调制矩阵、第二 LFO、FM/ring、三种八帧 bank 与 warp、ADSR curves、四个 macro，
+完整范围和默认值见 `13-electronic-production.md` 与 protocol schema；不支持导入任意波表。
+参数可由既有 Channel automation 绑定。
 非法字符串、非有限值、越界/非整数枚举由 helper 报 `InvalidProject`，Rust descriptor
 仍为权威验证来源。UI 显示的是这些 source/default 参数。
 

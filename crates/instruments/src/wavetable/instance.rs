@@ -17,7 +17,7 @@ use super::voice::{Voice, VoiceContext, FILTER_CHUNK};
 
 const MAX_VOICES: usize = 64;
 const TABLE_LEN: usize = 2048;
-const TABLE_LEVELS: usize = 8;
+const TABLE_LEVELS: usize = 11;
 pub(super) const MAX_HELD: usize = 16;
 /// One-pole smoothing time for level/pan/mix/cutoff/resonance.
 const SMOOTH_MS: f64 = 5.0;
@@ -46,6 +46,7 @@ pub struct WavetableSynthInstance {
     pub(super) held: [u8; MAX_HELD],
     pub(super) held_count: usize,
     pub(super) mono_slot: Option<usize>,
+    pub(super) note_sequence: u32,
 }
 
 impl WavetableSynthInstance {
@@ -67,6 +68,7 @@ impl WavetableSynthInstance {
             held: [0; MAX_HELD],
             held_count: 0,
             mono_slot: None,
+            note_sequence: 0,
         };
         instance.fix_voice_sample_rates();
         instance.snap_smoothers();
@@ -76,7 +78,7 @@ impl WavetableSynthInstance {
     /// Mip tables depend only on the sample rate and the fixed built-in
     /// base cycles, so all instances at one rate share a single
     /// (control-thread) cached set — the naive DFT build is O(N²) per kind.
-    fn build_tables(sample_rate: f64) -> Arc<Vec<Wavetable>> {
+    pub(super) fn build_tables(sample_rate: f64) -> Arc<Vec<Wavetable>> {
         static CACHE: OnceLock<Mutex<BTreeMap<u64, Arc<Vec<Wavetable>>>>> = OnceLock::new();
         let cache = CACHE.get_or_init(|| Mutex::new(BTreeMap::new()));
         cache
@@ -87,6 +89,7 @@ impl WavetableSynthInstance {
                 Arc::new(
                     (0..p::WAVETABLE_COUNT)
                         .map(|kind| Wavetable::new(&base_cycle(kind), TABLE_LEVELS, sample_rate))
+                        .chain(super::banks::build(sample_rate))
                         .collect(),
                 )
             })
@@ -100,6 +103,7 @@ impl WavetableSynthInstance {
             let voice = &mut self.pool.slot_mut(i).voice;
             voice.amp = Adsr::new(self.sample_rate);
             voice.fenv = Adsr::new(self.sample_rate);
+            voice.mod_env = Adsr::new(self.sample_rate);
         }
     }
 
@@ -141,6 +145,7 @@ impl WavetableSynthInstance {
             }
         };
         let motion = super::motion::Motion::from_values(&self.values, self.sample_rate);
+        let advanced = super::advanced::Advanced::new(&self.values, self.sample_rate);
         for i in 0..self.pool.capacity() {
             if !self.pool.slot(i).is_active() {
                 continue;
@@ -151,6 +156,9 @@ impl WavetableSynthInstance {
                 morph_a: &self.tables[self.values[p::OSC_A_MORPH_TO] as usize],
                 morph_b: &self.tables[self.values[p::OSC_B_MORPH_TO] as usize],
                 motion,
+                advanced,
+                tables: &self.tables,
+                sub_wave: self.values[super::advanced::SUB_WAVE] as usize,
                 mix: &self.mix_env[..frames],
                 cutoff_chunks: &self.cutoff_chunks[..chunks],
                 resonance_chunks: &self.resonance_chunks[..chunks],
@@ -255,6 +263,7 @@ impl PluginInstance for WavetableSynthInstance {
         self.fix_voice_sample_rates();
         self.mono_slot = None;
         self.held_count = 0;
+        self.note_sequence = 0;
         self.snap_smoothers();
     }
 

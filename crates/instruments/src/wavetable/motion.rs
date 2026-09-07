@@ -30,7 +30,7 @@ pub fn parameters() -> Vec<ParameterSpec> {
     }
     result.extend([
         stepped_continuous("sub.level", "Sub Level", 0., 1., 0.),
-        enum_spec("sub.octave", "Sub Octave", -2., 0., -1.),
+        enum_spec("sub.octave", "Sub Octave", -4., 4., -1.),
         stepped_continuous("noise.level", "Noise Level", 0., 1., 0.),
         enum_spec("lfo.shape", "LFO Shape", 0., 3., 0.),
         spec(

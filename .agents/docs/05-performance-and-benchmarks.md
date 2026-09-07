@@ -69,6 +69,14 @@ horizon 后按 probability 决定是否暂停，并避免连续 block 暂停。�
 
 ## 回归策略
 
+`cargo bench -p oxitone-bench --bench synth_motion --bench electronic_effects`
+新增电子合成/效果器内存基准：48 kHz、stereo、128 frames。Synth 8/32 个声部，
+default/full/electronic 三种配置；electronic 含 A/B octave、非正弦 Sub、bank/warp、
+FM、曲线包络及两条矩阵路由。Effects 单独测 distortion/multiband/delay 的连续
+1 kHz 输入和反复衰减至 subnormal 的语料，保持相同 buffer/event storage。
+此为 DSP microbench，device、CPU utilization、callback p95/p99、xruns 未测记 null；
+不能冒充系统输出或 soak 验收。全曲另测 native/Wasm PCM parity、process timings 和内存。
+
 `cargo bench -p oxitone-bench --bench insert_automation` 覆盖 insert 参数路径：
 48 kHz / 128 frames，1 wavetable Track，3 mixer buses（含 Master），4 utility
 inserts 和 4 条 polarity gate lanes（period 0.01 beat、duty 0.5、seed 7）。

@@ -2,6 +2,7 @@ import {
   beatToWire, frameToWire, ErrorCode, OxitoneError, samplerOptionsSchema,
   slicerStateSchema, wavetableOptionsSchema, type InstrumentRef, type SamplerOptions,
   type BeatWire, type WavetableOptions,
+  modulationSources, modulationTargets,
 } from "@oxitone/protocol";
 import { parseAuthoring } from "./authoring-validation.js";
 import { Sample } from "./sample.js";
@@ -28,13 +29,27 @@ export function wavetable(options: WavetableOptions = {}): InstrumentRef {
     const wave = value[key]?.wave;
     if (wave !== undefined) parameters[`${key}.wavetable`] = waves.indexOf(wave);
     if (value[key]?.morphTo !== undefined) parameters[`${key}.morphTo`] = waves.indexOf(value[key]!.morphTo!);
+    if (value[key]?.bank !== undefined) parameters[`${key}.bank`] = ["pair", "analog", "digital", "vowel"].indexOf(value[key]!.bank!);
+    if (value[key]?.warpMode !== undefined) parameters[`${key}.warpMode`] = ["off", "bend", "asymmetric", "sync"].indexOf(value[key]!.warpMode!);
   }
   flatten(parameters, "amp", value.amp);
   flatten(parameters, "filterEnv", value.filterEnvelope);
   flatten(parameters, "filter", value.filter);
   flatten(parameters, "sub", value.sub);
+  if (value.sub?.wave !== undefined) parameters["sub.wave"] = ["sine", "triangle", "saw", "square", "pulse", "rounded"].indexOf(value.sub.wave);
   flatten(parameters, "noise", value.noise);
   flatten(parameters, "lfo", value.lfo);
+  flatten(parameters, "lfo2", value.lfo2);
+  flatten(parameters, "modEnv", value.modEnvelope);
+  if (value.lfo2?.shape !== undefined) parameters["lfo2.shape"] = ["sine", "triangle", "ramp", "square"].indexOf(value.lfo2.shape);
+  for (const key of ["fm", "ring"] as const) if (value[key] !== undefined) parameters[key] = value[key];
+  value.macros?.forEach((v, i) => { parameters[`macro${i + 1}`] = v; });
+  value.modulation?.forEach((route, i) => {
+    parameters[`mod.${i}.source`] = modulationSources.indexOf(route.source);
+    parameters[`mod.${i}.target`] = modulationTargets.indexOf(route.target);
+    parameters[`mod.${i}.amount`] = route.amount;
+    if (route.curve !== undefined) parameters[`mod.${i}.curve`] = route.curve;
+  });
   if (value.lfo?.shape !== undefined) parameters["lfo.shape"] = ["sine", "triangle", "ramp", "square"].indexOf(value.lfo.shape);
   if (value.filter?.type !== undefined) parameters["filter.type"] = ["lowpass", "highpass", "bandpass"].indexOf(value.filter.type);
   if (value.mix !== undefined) parameters["osc.mix"] = value.mix;

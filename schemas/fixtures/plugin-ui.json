@@ -65,7 +65,17 @@
               "phase": "oscA.phase",
               "unison": "oscA.unison",
               "detune": "oscA.detune",
-              "spread": "oscA.spread"
+              "spread": "oscA.spread",
+              "bank": "oscA.bank",
+              "warpMode": "oscA.warpMode",
+              "warp": "oscA.warp",
+              "octave": "oscA.octave"
+            },
+            {
+              "kind": "subOscillator",
+              "wave": "sub.wave",
+              "octave": "sub.octave",
+              "level": "sub.level"
             },
             {
               "kind": "filterResponse",

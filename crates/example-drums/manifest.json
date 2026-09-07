@@ -7,6 +7,16 @@
     { "id": "volume", "label": "Volume", "unit": "normalized", "min": 0, "max": 1,
       "default": 0.8, "smoothing": "none", "rate": "audio", "automation": true, "mapping": "linear" },
     { "id": "decay", "label": "Decay", "unit": "normalized", "min": 0.5, "max": 2,
-      "default": 1, "smoothing": "none", "rate": "control", "automation": true, "mapping": "linear" }
+      "default": 1, "smoothing": "none", "rate": "control", "automation": true, "mapping": "linear" },
+    { "id": "kickTune", "label": "Kick Tune (Hz)", "unit": "normalized", "min": 32, "max": 80, "default": 48, "smoothing": "none", "rate": "control", "automation": true, "mapping": "linear" },
+    { "id": "kickSweep", "label": "Kick Sweep (Hz)", "unit": "normalized", "min": 0, "max": 400, "default": 130, "smoothing": "none", "rate": "control", "automation": true, "mapping": "linear" },
+    { "id": "kickClick", "label": "Kick Click", "unit": "normalized", "min": 0, "max": 1, "default": 0, "smoothing": "none", "rate": "control", "automation": true, "mapping": "linear" },
+    { "id": "snareTune", "label": "Snare Body (Hz)", "unit": "normalized", "min": 100, "max": 320, "default": 185, "smoothing": "none", "rate": "control", "automation": true, "mapping": "linear" },
+    { "id": "snareSnap", "label": "Snare Snap", "unit": "normalized", "min": 0, "max": 1, "default": 0, "smoothing": "none", "rate": "control", "automation": true, "mapping": "linear" },
+    { "id": "kickDecay", "label": "Kick Decay", "unit": "normalized", "min": 0.25, "max": 2, "default": 1, "smoothing": "none", "rate": "control", "automation": true, "mapping": "linear" },
+    { "id": "snareDecay", "label": "Snare Decay", "unit": "normalized", "min": 0.25, "max": 2, "default": 1, "smoothing": "none", "rate": "control", "automation": true, "mapping": "linear" },
+    { "id": "closedDecay", "label": "Closed Hat Decay", "unit": "normalized", "min": 0.25, "max": 2, "default": 1, "smoothing": "none", "rate": "control", "automation": true, "mapping": "linear" },
+    { "id": "openDecay", "label": "Open Hat Decay", "unit": "normalized", "min": 0.25, "max": 2, "default": 1, "smoothing": "none", "rate": "control", "automation": true, "mapping": "linear" },
+    { "id": "hatTone", "label": "Hat Color", "unit": "normalized", "min": 0, "max": 1, "default": 0, "smoothing": "none", "rate": "control", "automation": true, "mapping": "linear" }
   ]
 }

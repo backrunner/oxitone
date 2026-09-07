@@ -77,8 +77,13 @@ Wavetable 的 A/B 各支持六种 source cycle（sine/saw/square/triangle/organ/
 prepare 在控制线程构造并共享同采样率 mip tables。position 在相同 phase/mip 读取
 source 与 morph target 后线性插值，只前进一次 f64 phase；position=0 走旧读取路径。
 unison start phase/spread 在新声部起音时应用，不在 callback 构造波表。
-确定性 xorshift32 noise 进入滤波器，正弦 Sub 位于滤波器后、amp/velocity 前；
+确定性 xorshift32 noise 进入滤波器，可选六种波形的 Sub 位于滤波器后、amp/velocity 前；
 noise seed 随 note pitch 重置，seek/reset 重建固定声部状态而不分配。
+
+电子合成扩展详见 `13-electronic-production.md`：A/B octave 与 pitch 合并到 unison ratio，
+Sub octave 独立；两路 level 只控制进入 A/B mix 的幅度，B 为 A 的 FM/ring 提供者时仍运行。
+额外 bank/非正弦 Sub 的 mip 在控制线程共享创建。Warp/phase modulation 使用保守带宽 mip，
+不等于完整抗混叠 FM 算法；基频超过 0.49×sampleRate 的 oscillator/Sub 静音。
 
 合成器内部 LFO 为逐声部 note-triggered Hz source（不是工程 AutomationSource）：
 四种双极形状，固定路由到 pitch/cutoff/两路 position/amp。position 与 tremolo 逐样本求值；

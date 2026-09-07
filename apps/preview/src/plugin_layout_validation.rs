@@ -100,7 +100,13 @@ pub fn validate(layout: &Layout, descriptor: &PluginDescriptor) -> Result<(), St
                             );
                         }
                     }
-                    Control::Oscillator { .. } => {
+                    Control::Oscillator {
+                        bank,
+                        warp_mode,
+                        warp,
+                        octave,
+                        ..
+                    } => {
                         let within = |i: usize, unit, min, max| {
                             specs[i].unit == unit && specs[i].min >= min && specs[i].max <= max
                         };
@@ -110,10 +116,40 @@ pub fn validate(layout: &Layout, descriptor: &PluginDescriptor) -> Result<(), St
                             || ![2, 3, 6]
                                 .iter()
                                 .all(|&i| within(i, ParameterUnit::Normalized, 0., 1.))
-                            || !within(4, ParameterUnit::Enum, 1., 8.)
+                            || !within(4, ParameterUnit::Enum, 1., 16.)
                             || !within(5, ParameterUnit::Normalized, 0., 100.)
                         {
                             return invalid("Oscillator requires basic-cycle enums, normalized phase/position/spread and unison/detune");
+                        }
+                        let mut i = 7;
+                        for (id, unit, min, max) in [
+                            (bank, ParameterUnit::Enum, 0., 3.),
+                            (warp_mode, ParameterUnit::Enum, 0., 3.),
+                            (warp, ParameterUnit::Normalized, 0., 1.),
+                            (octave, ParameterUnit::Enum, -4., 4.),
+                        ] {
+                            if id.is_some() {
+                                if !within(i, unit, min, max) {
+                                    return invalid("Invalid oscillator bank/warp/octave binding");
+                                }
+                                i += 1;
+                            }
+                        }
+                    }
+                    Control::SubOscillator { .. } => {
+                        if specs[0].unit != ParameterUnit::Enum
+                            || specs[0].min < 0.
+                            || specs[0].max > 5.
+                            || specs[1].unit != ParameterUnit::Enum
+                            || specs[1].min < -4.
+                            || specs[1].max > 4.
+                            || specs[2].unit != ParameterUnit::Normalized
+                            || specs[2].min < 0.
+                            || specs[2].max > 1.
+                        {
+                            return invalid(
+                                "Sub requires six-wave enum, octave enum and normalized level",
+                            );
                         }
                     }
                     Control::FilterResponse { .. } => {

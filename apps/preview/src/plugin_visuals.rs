@@ -31,7 +31,23 @@ pub fn view(
             [values[0], values[1], values[2], values[3]],
             theme,
         )),
-        Control::Oscillator { .. } => crate::plugin_wave_view::oscillator(&values, theme, stacked),
+        Control::Oscillator {
+            bank,
+            warp_mode,
+            warp,
+            octave,
+            ..
+        } => {
+            let get =
+                |id: &Option<String>| id.as_deref().and_then(parameter).map_or(0., |p| p.value);
+            crate::plugin_wave_view::oscillator(
+                &values[..7],
+                [get(bank), get(warp_mode), get(warp), get(octave)],
+                theme,
+                stacked,
+            )
+        }
+        Control::SubOscillator { .. } => crate::plugin_wave_view::sub(&values, theme),
         Control::FilterResponse { .. } => {
             crate::plugin_response_view::filter(&values, theme, sample_rate)
         }

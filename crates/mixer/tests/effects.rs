@@ -7,7 +7,7 @@ use oxitone_mixer::builtin_effect_plugins;
 const SR: f64 = 48_000.0;
 const BLOCK: u32 = 128;
 
-const EXPECTED: [(&str, u64); 12] = [
+const EXPECTED: [(&str, u64); 14] = [
     ("oxitone.eq", 0),
     ("oxitone.limit", 264), // 5 ms lookahead (240) + 2x stage (24)
     ("oxitone.clipper", 24),
@@ -20,6 +20,8 @@ const EXPECTED: [(&str, u64); 12] = [
     ("oxitone.chorus", 0),
     ("oxitone.saturator", 36),
     ("oxitone.utility", 0),
+    ("oxitone.distortion", 36),
+    ("oxitone.multiband", 0),
 ];
 
 fn host() -> HostContext {
@@ -79,7 +81,7 @@ fn render(
 #[test]
 fn descriptors_are_valid_and_complete() {
     let plugins = builtin_effect_plugins();
-    assert_eq!(plugins.len(), 12);
+    assert_eq!(plugins.len(), EXPECTED.len());
     let mut ids: Vec<&str> = plugins
         .iter()
         .map(|p| p.descriptor().plugin_id.as_str())
@@ -261,8 +263,9 @@ fn delay_time_seconds_parameter_moves_the_echo() {
         parameter_id: "timeSeconds",
         value: 0.01,
     }];
-    // Settle the delay-time smoother (250 ms) with ~1 s of silence.
-    for block in 0..400 {
+    // Settle the 250 ms smoother for >10 time constants. Stereo advances it
+    // once per frame, so one second still leaves a measurable timing offset.
+    for block in 0..1000 {
         let inputs: [&[f32]; 2] = [&silence, &silence];
         let mut outputs: [&mut [f32]; 2] = [&mut out_l, &mut out_r];
         let mut ctx = ProcessContext {

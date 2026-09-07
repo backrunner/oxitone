@@ -91,3 +91,7 @@ harness = false
 [[bench]]
 name = "synth_motion"
 harness = false
+
+[[bench]]
+name = "electronic_effects"
+harness = false

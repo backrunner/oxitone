@@ -73,6 +73,17 @@ pub enum Control {
         unison: String,
         detune: String,
         spread: String,
+        bank: Option<String>,
+        #[serde(rename = "warpMode")]
+        warp_mode: Option<String>,
+        warp: Option<String>,
+        octave: Option<String>,
+    },
+    SubOscillator {
+        label: Option<String>,
+        wave: String,
+        octave: String,
+        level: String,
     },
     FilterResponse {
         label: Option<String>,
@@ -126,8 +137,34 @@ impl Control {
                 unison,
                 detune,
                 spread,
+                bank,
+                warp_mode,
+                warp,
+                octave,
                 ..
-            } => vec![wave, morph_to, position, phase, unison, detune, spread],
+            } => {
+                let mut ids = vec![
+                    wave.as_str(),
+                    morph_to,
+                    position,
+                    phase,
+                    unison,
+                    detune,
+                    spread,
+                ];
+                ids.extend(
+                    [bank, warp_mode, warp, octave]
+                        .into_iter()
+                        .filter_map(|v| v.as_deref()),
+                );
+                ids
+            }
+            Self::SubOscillator {
+                wave,
+                octave,
+                level,
+                ..
+            } => vec![wave, octave, level],
             Self::FilterResponse {
                 mode,
                 cutoff,
@@ -149,6 +186,7 @@ impl Control {
             | Self::Choice { label, .. }
             | Self::Envelope { label, .. }
             | Self::Oscillator { label, .. }
+            | Self::SubOscillator { label, .. }
             | Self::FilterResponse { label, .. }
             | Self::LfoCurve { label, .. }
             | Self::Modulation { label, .. } => label.as_deref(),
@@ -159,6 +197,7 @@ impl Control {
             self,
             Self::Envelope { .. }
                 | Self::Oscillator { .. }
+                | Self::SubOscillator { .. }
                 | Self::FilterResponse { .. }
                 | Self::LfoCurve { .. }
                 | Self::Modulation { .. }

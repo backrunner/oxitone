@@ -4,6 +4,8 @@
 
 use super::motion::{Motion, MotionState};
 use oxitone_dsp::biquad::{BiquadCoeffs, BiquadF64, BiquadKind};
+#[path = "voice_oscillator.rs"]
+mod oscillator;
 #[path = "voice_render.rs"]
 mod render;
 use oxitone_dsp::envelope::Adsr;
@@ -86,6 +88,9 @@ pub struct VoiceContext<'a> {
     pub morph_a: &'a Wavetable,
     pub morph_b: &'a Wavetable,
     pub motion: Motion,
+    pub advanced: super::advanced::Advanced,
+    pub tables: &'a [Wavetable],
+    pub sub_wave: usize,
     /// Per-sample osc-B mix (0 = A only), filled once per segment.
     pub mix: &'a [f32],
     /// Per-`FILTER_CHUNK` smoothed cutoff Hz / resonance (0..1).
@@ -102,6 +107,11 @@ pub struct Voice {
     pub osc_b: OscState,
     pub amp: Adsr,
     pub fenv: Adsr,
+    pub mod_env: Adsr,
+    pub lfo2_phase: f64,
+    pub note_random: f32,
+    pub sub_reader: WavetableReader,
+    pub modulation: [f32; 11],
     filter_l: BiquadF64,
     filter_r: BiquadF64,
     pub note: u8,
@@ -124,6 +134,11 @@ impl Voice {
             osc_b: OscState::new(),
             amp: Adsr::new(sample_rate),
             fenv: Adsr::new(sample_rate),
+            mod_env: Adsr::new(sample_rate),
+            lfo2_phase: 0.,
+            note_random: 0.,
+            sub_reader: WavetableReader::new(),
+            modulation: [0.; 11],
             filter_l: BiquadF64::new(unity_coeffs()),
             filter_r: BiquadF64::new(unity_coeffs()),
             note: 0,
@@ -156,6 +171,9 @@ impl Voice {
         }
         self.filter_l.reset();
         self.filter_r.reset();
+        self.sub_reader.set_phase(0.);
+        self.lfo2_phase = 0.;
+        self.modulation = [0.; 11];
     }
 
     pub fn invalidate_control(&mut self) {

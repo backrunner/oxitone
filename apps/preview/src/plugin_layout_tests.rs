@@ -53,6 +53,21 @@ fn typescript_layout_fixture_and_builtin_wavetable_bind_real_descriptor_paramete
 }
 
 #[test]
+fn sub_and_optional_oscillator_bindings_reject_incompatible_parameter_units() {
+    let descriptor = oxitone_instruments::wavetable::descriptor();
+    for control in [
+        json!({"kind":"subOscillator", "wave":"sub.wave", "octave":"pan", "level":"sub.level"}),
+        json!({"kind":"oscillator", "wave":"oscA.wavetable", "morphTo":"oscA.morphTo", "position":"oscA.position",
+            "phase":"oscA.phase", "unison":"oscA.unison", "detune":"oscA.detune", "spread":"oscA.spread", "bank":"filter.cutoff"}),
+    ] {
+        let mut candidate = fixture();
+        candidate["pages"][0]["groups"][0]["controls"] = json!([control]);
+        let layout: Layout = serde_json::from_value(candidate).unwrap();
+        assert!(validate(&layout, descriptor).is_err());
+    }
+}
+
+#[test]
 fn layout_only_refresh_reuses_graph_telemetry_and_preserves_transport() {
     let mut engine = crate::tests::engine();
     let old = engine.current.as_ref().unwrap().clone();

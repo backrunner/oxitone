@@ -78,7 +78,7 @@ pub fn parameters() -> Vec<ParameterSpec> {
             ParameterSmoothing::None,
             ParameterMapping::Bipolar,
         ),
-        enum_spec("oscA.unison", "Osc A Unison", 1.0, 8.0, 1.0),
+        enum_spec("oscA.unison", "Osc A Unison", 1.0, 16.0, 1.0),
         stepped_continuous("oscA.detune", "Osc A Detune (cents)", 0.0, 100.0, 8.0),
         stepped_continuous("oscA.spread", "Osc A Spread", 0.0, 1.0, 0.6),
         enum_spec("oscB.wavetable", "Osc B Wavetable", 0.0, 5.0, 2.0),
@@ -92,7 +92,7 @@ pub fn parameters() -> Vec<ParameterSpec> {
             ParameterSmoothing::None,
             ParameterMapping::Bipolar,
         ),
-        enum_spec("oscB.unison", "Osc B Unison", 1.0, 8.0, 1.0),
+        enum_spec("oscB.unison", "Osc B Unison", 1.0, 16.0, 1.0),
         stepped_continuous("oscB.detune", "Osc B Detune (cents)", 0.0, 100.0, 8.0),
         stepped_continuous("oscB.spread", "Osc B Spread", 0.0, 1.0, 0.6),
         smoothed("osc.mix", "Osc Mix", 0.0, 1.0, 0.0),
@@ -141,6 +141,8 @@ pub fn parameters() -> Vec<ParameterSpec> {
         bipolar("pan", "Pan", 0.0),
     ];
     parameters.extend(super::motion::parameters());
+    parameters.extend(super::advanced::parameters());
+    assert_eq!(parameters.len(), super::advanced::COUNT);
     parameters
 }
 

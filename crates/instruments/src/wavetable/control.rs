@@ -2,6 +2,7 @@
 //! poly/mono/legato note handling with glide (02-domain-spec.md §内置
 //! WavetableSynth). All methods run inside `process` and are RT-safe.
 
+use super::advanced as a;
 use super::instance::{WavetableSynthInstance, MAX_HELD};
 use super::params as p;
 
@@ -10,7 +11,11 @@ impl WavetableSynthInstance {
         self.values[index] = value;
         for i in 0..self.pool.capacity() {
             if self.pool.slot(i).is_active() {
-                self.pool.slot_mut(i).voice.invalidate_control();
+                let voice = &mut self.pool.slot_mut(i).voice;
+                voice.invalidate_control();
+                if (a::ENV..a::MACROS).contains(&index) {
+                    voice.configure_envelopes(&self.values);
+                }
             }
         }
         match index {
@@ -49,6 +54,8 @@ impl WavetableSynthInstance {
                 }
             }
             p::OSC_A_WAVETABLE
+            | a::OCTAVE_A
+            | a::OCTAVE_B
             | p::OSC_A_PITCH
             | p::OSC_A_UNISON
             | p::OSC_A_DETUNE
@@ -66,7 +73,7 @@ impl WavetableSynthInstance {
                     voice.osc_a.configure(
                         &self.tables[self.values[p::OSC_A_WAVETABLE] as usize],
                         voice.base_freq,
-                        self.values[p::OSC_A_PITCH],
+                        self.values[p::OSC_A_PITCH] + self.values[a::OCTAVE_A] * 12.,
                         self.values[p::OSC_A_UNISON] as usize,
                         self.values[p::OSC_A_DETUNE],
                         self.values[p::OSC_A_SPREAD] as f32,
@@ -74,7 +81,7 @@ impl WavetableSynthInstance {
                     voice.osc_b.configure(
                         &self.tables[self.values[p::OSC_B_WAVETABLE] as usize],
                         voice.base_freq,
-                        self.values[p::OSC_B_PITCH],
+                        self.values[p::OSC_B_PITCH] + self.values[a::OCTAVE_B] * 12.,
                         self.values[p::OSC_B_UNISON] as usize,
                         self.values[p::OSC_B_DETUNE],
                         self.values[p::OSC_B_SPREAD] as f32,
@@ -86,6 +93,7 @@ impl WavetableSynthInstance {
     }
 
     pub(super) fn start_voice(&mut self, slot: usize, pitch: u8, velocity: f32, from_glide: bool) {
+        self.note_sequence = self.note_sequence.wrapping_add(1);
         let voice = &mut self.pool.slot_mut(slot).voice;
         if !from_glide {
             voice.reset_playback_state();
@@ -114,12 +122,20 @@ impl WavetableSynthInstance {
             self.values[p::FILTER_ENV_SUSTAIN] as f32,
             self.values[p::FILTER_ENV_RELEASE],
         );
+        voice.configure_envelopes(&self.values);
         voice.amp.note_on();
         voice.fenv.note_on();
+        voice.mod_env.note_on();
+        voice.lfo2_phase = self.values[a::LFO2 + 2];
+        let mut random = self.note_sequence.wrapping_mul(0x9e3779b9) ^ (pitch as u32);
+        random ^= random >> 16;
+        random = random.wrapping_mul(0x85ebca6b);
+        random ^= random >> 13;
+        voice.note_random = (random as f64 / u32::MAX as f64 * 2. - 1.) as f32;
         voice.osc_a.configure(
             &self.tables[self.values[p::OSC_A_WAVETABLE] as usize],
             voice.base_freq,
-            self.values[p::OSC_A_PITCH],
+            self.values[p::OSC_A_PITCH] + self.values[a::OCTAVE_A] * 12.,
             self.values[p::OSC_A_UNISON] as usize,
             self.values[p::OSC_A_DETUNE],
             self.values[p::OSC_A_SPREAD] as f32,
@@ -127,7 +143,7 @@ impl WavetableSynthInstance {
         voice.osc_b.configure(
             &self.tables[self.values[p::OSC_B_WAVETABLE] as usize],
             voice.base_freq,
-            self.values[p::OSC_B_PITCH],
+            self.values[p::OSC_B_PITCH] + self.values[a::OCTAVE_B] * 12.,
             self.values[p::OSC_B_UNISON] as usize,
             self.values[p::OSC_B_DETUNE],
             self.values[p::OSC_B_SPREAD] as f32,
@@ -235,6 +251,7 @@ impl WavetableSynthInstance {
                     let voice = &mut self.pool.slot_mut(slot).voice;
                     voice.amp.note_off();
                     voice.fenv.note_off();
+                    voice.mod_env.note_off();
                 }
             }
             _ => {
@@ -246,6 +263,7 @@ impl WavetableSynthInstance {
                     if voice.note == pitch && voice.amp.is_active() {
                         voice.amp.note_off();
                         voice.fenv.note_off();
+                        voice.mod_env.note_off();
                     }
                 }
             }

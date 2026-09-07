@@ -10,10 +10,12 @@ pub mod chorus;
 pub mod clipper;
 pub mod compressor;
 pub mod delay;
+pub mod distortion;
 pub mod eq;
 pub mod filter;
 pub mod gate;
 pub mod limit;
+pub mod multiband;
 pub mod oversample;
 pub mod phaser;
 pub mod reverb;
@@ -40,6 +42,8 @@ pub fn builtin_effect_plugins() -> Vec<Box<dyn Plugin>> {
         Box::new(chorus::ChorusPlugin),
         Box::new(saturator::SaturatorPlugin),
         Box::new(utility::UtilityPlugin),
+        Box::new(distortion::DistortionPlugin),
+        Box::new(multiband::MultibandPlugin),
     ]
 }
 
