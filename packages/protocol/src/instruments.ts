@@ -3,13 +3,15 @@ import { beatWireSchema } from "./beat.js";
 import { entityIdSchema, frameWireSchema } from "./primitives.js";
 
 const range = (min: number, max: number) => z.number().finite().min(min).max(max);
+const wave = z.enum(["sine", "saw", "square", "triangle", "organ", "glass"]);
 export const envelopeOptionsSchema = z.strictObject({
   attack: range(0, 8).optional(), decay: range(0, 8).optional(),
   sustain: range(0, 1).optional(), release: range(0, 8).optional(),
 });
 export type EnvelopeOptions = z.infer<typeof envelopeOptionsSchema>;
 export const oscillatorOptionsSchema = z.strictObject({
-  wave: z.enum(["sine", "saw", "square", "triangle"]).optional(),
+  wave: wave.optional(), morphTo: wave.optional(), position: range(0, 1).optional(),
+  phase: range(0, 1).optional(), phaseSpread: range(0, 1).optional(),
   pitch: range(-24, 24).optional(), unison: range(1, 8).int().optional(),
   detune: range(0, 100).optional(), spread: range(0, 1).optional(),
 });
@@ -21,6 +23,13 @@ export const wavetableOptionsSchema = z.strictObject({
     cutoff: range(20, 20000).optional(), resonance: range(0, 1).optional() }).optional(),
   filterEnvelope: envelopeOptionsSchema.extend({ amount: range(-48, 48).optional() }).optional(),
   amp: envelopeOptionsSchema.optional(), voiceMode: z.enum(["poly", "mono", "legato"]).optional(),
+  sub: z.strictObject({ level: range(0, 1).optional(), octave: range(-2, 0).int().optional() }).optional(),
+  noise: z.strictObject({ level: range(0, 1).optional() }).optional(),
+  lfo: z.strictObject({ shape: z.enum(["sine", "triangle", "ramp", "square"]).optional(),
+    rateHz: range(0.01, 30).optional(), phase: range(0, 1).optional(),
+    pitch: range(-12, 12).optional(), cutoff: range(-48, 48).optional(),
+    positionA: range(-1, 1).optional(), positionB: range(-1, 1).optional(), level: range(0, 1).optional(),
+  }).optional(),
   glide: range(0, 2).optional(), level: range(0, 2).optional(), pan: range(-1, 1).optional(),
 });
 export type WavetableOptions = z.infer<typeof wavetableOptionsSchema>;

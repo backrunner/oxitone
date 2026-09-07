@@ -24,27 +24,8 @@ const SMOOTH_MS: f64 = 5.0;
 
 /// Built-in single-cycle waveforms, mip-mapped per sample rate in `prepare`.
 fn base_cycle(kind: usize) -> Vec<f32> {
-    use core::f64::consts::TAU;
     (0..TABLE_LEN)
-        .map(|i| {
-            let t = i as f64 / TABLE_LEN as f64;
-            match kind {
-                p::WAVETABLE_SAW => 2.0 * t - 1.0,
-                p::WAVETABLE_SQUARE => {
-                    if t < 0.5 {
-                        1.0
-                    } else {
-                        -1.0
-                    }
-                }
-                p::WAVETABLE_TRIANGLE => 4.0 * (t - 0.5).abs() - 1.0,
-                _ => {
-                    debug_assert_eq!(kind, p::WAVETABLE_SINE);
-                    (TAU * t).sin()
-                }
-            }
-            .clamp(-1.0, 1.0) as f32
-        })
+        .map(|i| super::cycle_value(kind, i as f64 / TABLE_LEN as f64) as f32)
         .collect()
 }
 
@@ -159,6 +140,7 @@ impl WavetableSynthInstance {
                 BiquadKind::Lowpass
             }
         };
+        let motion = super::motion::Motion::from_values(&self.values, self.sample_rate);
         for i in 0..self.pool.capacity() {
             if !self.pool.slot(i).is_active() {
                 continue;
@@ -166,6 +148,9 @@ impl WavetableSynthInstance {
             let ctx = VoiceContext {
                 table_a: &self.tables[self.values[p::OSC_A_WAVETABLE] as usize],
                 table_b: &self.tables[self.values[p::OSC_B_WAVETABLE] as usize],
+                morph_a: &self.tables[self.values[p::OSC_A_MORPH_TO] as usize],
+                morph_b: &self.tables[self.values[p::OSC_B_MORPH_TO] as usize],
+                motion,
                 mix: &self.mix_env[..frames],
                 cutoff_chunks: &self.cutoff_chunks[..chunks],
                 resonance_chunks: &self.resonance_chunks[..chunks],

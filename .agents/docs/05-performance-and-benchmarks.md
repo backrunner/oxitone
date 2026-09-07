@@ -15,6 +15,11 @@
 
 ## 必备 benchmark
 
+- `instruments/synth_motion`: 48 kHz/stereo/128 frames、8/32 个持续声部；default patch
+  对比 full patch（A 7/B 3 unison、morph、sub/noise、五条 LFO 路由）。波表/声部起音
+  在计时外准备，测试持续有声 process。`cargo bench -p oxitone-bench --bench synth_motion`。
+  Criterion 记录平均处理时间；不是设备 callback，callback p95/p99、CPU 占用与 xrun 记 null。
+
 - `compile/validate`: snapshot 大小、节点数、compile latency、峰值内存。
 - `transport/schedule`: tempo changes、loop boundaries、automation density 下每 block event 数和调度时间。
 - `automation/evaluate`: gate、polyline、sine/cos、triangle/saw、chance 在 control-rate/audio-rate 下的 evaluator 成本；记录 source 节点数、chance rate、每 block 求值次数和 PRNG 状态开销。

@@ -34,13 +34,28 @@ pub const VOICE_MODE: usize = 23;
 pub const GLIDE: usize = 24;
 pub const LEVEL: usize = 25;
 pub const PAN: usize = 26;
+pub const OSC_A_MORPH_TO: usize = 27;
+pub const OSC_A_POSITION: usize = 28;
+pub const OSC_A_PHASE: usize = 29;
+pub const OSC_A_PHASE_SPREAD: usize = 30;
+pub const OSC_B_MORPH_TO: usize = 31;
+pub const OSC_B_POSITION: usize = 32;
+pub const OSC_B_PHASE: usize = 33;
+pub const OSC_B_PHASE_SPREAD: usize = 34;
+pub const SUB_LEVEL: usize = 35;
+pub const SUB_OCTAVE: usize = 36;
+pub const NOISE_LEVEL: usize = 37;
+pub const LFO_SHAPE: usize = 38;
+pub const LFO_RATE: usize = 39;
+pub const LFO_PHASE: usize = 40;
+pub const LFO_PITCH: usize = 41;
+pub const LFO_CUTOFF: usize = 42;
+pub const LFO_POSITION_A: usize = 43;
+pub const LFO_POSITION_B: usize = 44;
+pub const LFO_LEVEL: usize = 45;
 
 /// Wavetable enum values (also the instance's table indices).
-pub const WAVETABLE_SINE: usize = 0;
-pub const WAVETABLE_SAW: usize = 1;
-pub const WAVETABLE_SQUARE: usize = 2;
-pub const WAVETABLE_TRIANGLE: usize = 3;
-pub const WAVETABLE_COUNT: usize = 4;
+pub const WAVETABLE_COUNT: usize = 6;
 
 pub const FILTER_LOWPASS: usize = 0;
 pub const FILTER_HIGHPASS: usize = 1;
@@ -51,8 +66,8 @@ pub const MODE_MONO: usize = 1;
 pub const MODE_LEGATO: usize = 2;
 
 pub fn parameters() -> Vec<ParameterSpec> {
-    vec![
-        enum_spec("oscA.wavetable", "Osc A Wavetable", 0.0, 3.0, 1.0),
+    let mut parameters = vec![
+        enum_spec("oscA.wavetable", "Osc A Wavetable", 0.0, 5.0, 1.0),
         spec(
             "oscA.pitch",
             "Osc A Pitch",
@@ -66,7 +81,7 @@ pub fn parameters() -> Vec<ParameterSpec> {
         enum_spec("oscA.unison", "Osc A Unison", 1.0, 8.0, 1.0),
         stepped_continuous("oscA.detune", "Osc A Detune (cents)", 0.0, 100.0, 8.0),
         stepped_continuous("oscA.spread", "Osc A Spread", 0.0, 1.0, 0.6),
-        enum_spec("oscB.wavetable", "Osc B Wavetable", 0.0, 3.0, 2.0),
+        enum_spec("oscB.wavetable", "Osc B Wavetable", 0.0, 5.0, 2.0),
         spec(
             "oscB.pitch",
             "Osc B Pitch",
@@ -124,7 +139,9 @@ pub fn parameters() -> Vec<ParameterSpec> {
         ),
         smoothed("level", "Level", 0.0, 2.0, 1.0),
         bipolar("pan", "Pan", 0.0),
-    ]
+    ];
+    parameters.extend(super::motion::parameters());
+    parameters
 }
 
 pub fn descriptor() -> PluginDescriptor {

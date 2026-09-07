@@ -87,3 +87,7 @@ harness = false
 [[bench]]
 name = "preview"
 harness = false
+
+[[bench]]
+name = "synth_motion"
+harness = false

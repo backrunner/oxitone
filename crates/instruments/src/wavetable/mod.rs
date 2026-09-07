@@ -2,10 +2,16 @@
 //! ABI v1 instrument (02-domain-spec.md §内置 WavetableSynth).
 
 mod control;
+mod cycles;
 mod instance;
+mod motion;
 mod params;
 mod voice;
+pub use cycles::cycle_value;
+pub use motion::lfo_value;
 
+#[cfg(test)]
+mod motion_tests;
 #[cfg(test)]
 mod tests;
 

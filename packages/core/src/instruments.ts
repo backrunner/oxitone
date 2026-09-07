@@ -22,14 +22,20 @@ function flatten(parameters: Record<string, number>, prefix: string, input: obje
 export function wavetable(options: WavetableOptions = {}): InstrumentRef {
   const value = parseAuthoring(wavetableOptionsSchema, options, "wavetable");
   const parameters: Record<string, number> = {};
+  const waves = ["sine", "saw", "square", "triangle", "organ", "glass"];
   for (const key of ["oscA", "oscB"] as const) {
     flatten(parameters, key, value[key]);
     const wave = value[key]?.wave;
-    if (wave !== undefined) parameters[`${key}.wavetable`] = ["sine", "saw", "square", "triangle"].indexOf(wave);
+    if (wave !== undefined) parameters[`${key}.wavetable`] = waves.indexOf(wave);
+    if (value[key]?.morphTo !== undefined) parameters[`${key}.morphTo`] = waves.indexOf(value[key]!.morphTo!);
   }
   flatten(parameters, "amp", value.amp);
   flatten(parameters, "filterEnv", value.filterEnvelope);
   flatten(parameters, "filter", value.filter);
+  flatten(parameters, "sub", value.sub);
+  flatten(parameters, "noise", value.noise);
+  flatten(parameters, "lfo", value.lfo);
+  if (value.lfo?.shape !== undefined) parameters["lfo.shape"] = ["sine", "triangle", "ramp", "square"].indexOf(value.lfo.shape);
   if (value.filter?.type !== undefined) parameters["filter.type"] = ["lowpass", "highpass", "bandpass"].indexOf(value.filter.type);
   if (value.mix !== undefined) parameters["osc.mix"] = value.mix;
   if (value.voiceMode !== undefined) parameters.voiceMode = ["poly", "mono", "legato"].indexOf(value.voiceMode);

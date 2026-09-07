@@ -8,6 +8,11 @@ use super::params as p;
 impl WavetableSynthInstance {
     pub(super) fn set_parameter(&mut self, index: usize, value: f64) {
         self.values[index] = value;
+        for i in 0..self.pool.capacity() {
+            if self.pool.slot(i).is_active() {
+                self.pool.slot_mut(i).voice.invalidate_control();
+            }
+        }
         match index {
             p::LEVEL => self.level.set_target(value as f32),
             p::PAN => self.pan.set_target(value as f32),
@@ -127,6 +132,18 @@ impl WavetableSynthInstance {
             self.values[p::OSC_B_DETUNE],
             self.values[p::OSC_B_SPREAD] as f32,
         );
+        if !from_glide {
+            voice.osc_a.start_phases(
+                self.values[p::OSC_A_PHASE],
+                self.values[p::OSC_A_PHASE_SPREAD],
+            );
+            voice.osc_b.start_phases(
+                self.values[p::OSC_B_PHASE],
+                self.values[p::OSC_B_PHASE_SPREAD],
+            );
+        }
+        voice.motion.reset(pitch, self.values[p::LFO_PHASE]);
+        voice.invalidate_control();
     }
 
     pub(super) fn note_on(&mut self, pitch: u8, velocity: f32) {
@@ -150,6 +167,7 @@ impl WavetableSynthInstance {
                 if legato_continue {
                     // Legato: keep envelopes, glide (or snap) to the new pitch.
                     let voice = &mut self.pool.slot_mut(slot).voice;
+                    voice.invalidate_control();
                     let target = f64::from(pitch);
                     let glide = self.values[p::GLIDE];
                     if glide > 0.0 {
@@ -199,6 +217,7 @@ impl WavetableSynthInstance {
                         self.start_voice(slot, prev, velocity, true);
                     } else {
                         let voice = &mut self.pool.slot_mut(slot).voice;
+                        voice.invalidate_control();
                         let target = f64::from(prev);
                         let glide = self.values[p::GLIDE];
                         if glide > 0.0 {

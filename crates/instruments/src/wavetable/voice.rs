@@ -2,7 +2,10 @@
 //! stereo biquad filter, amp ADSR, and optional filter envelope. All state is
 //! preallocated; `render` is RT-safe and allocation-free.
 
-use oxitone_dsp::biquad::{design, BiquadCoeffs, BiquadF64, BiquadKind};
+use super::motion::{Motion, MotionState};
+use oxitone_dsp::biquad::{BiquadCoeffs, BiquadF64, BiquadKind};
+#[path = "voice_render.rs"]
+mod render;
 use oxitone_dsp::envelope::Adsr;
 use oxitone_dsp::gain_pan::equal_power_gains;
 use oxitone_dsp::oscillator::{Wavetable, WavetableReader};
@@ -44,6 +47,12 @@ impl OscState {
         }
     }
 
+    pub fn start_phases(&mut self, phase: f64, spread: f64) {
+        for (u, reader) in self.readers.iter_mut().enumerate() {
+            reader.set_phase(phase + spread * u as f64 / self.count.max(1) as f64);
+        }
+    }
+
     /// Rebuild the unison plan and re-select mip levels. Control rate
     /// (note-on or parameter change), never per sample.
     pub fn configure(
@@ -74,6 +83,9 @@ impl OscState {
 pub struct VoiceContext<'a> {
     pub table_a: &'a Wavetable,
     pub table_b: &'a Wavetable,
+    pub morph_a: &'a Wavetable,
+    pub morph_b: &'a Wavetable,
+    pub motion: Motion,
     /// Per-sample osc-B mix (0 = A only), filled once per segment.
     pub mix: &'a [f32],
     /// Per-`FILTER_CHUNK` smoothed cutoff Hz / resonance (0..1).
@@ -100,6 +112,9 @@ pub struct Voice {
     /// Semitones per sample; 0 when not gliding.
     pub glide_step: f64,
     pub base_freq: f64,
+    pub motion: MotionState,
+    control_remaining: usize,
+    render_freq: f64,
 }
 
 impl Voice {
@@ -117,51 +132,9 @@ impl Voice {
             pitch_target: 60.0,
             glide_step: 0.0,
             base_freq: 261.63,
-        }
-    }
-
-    /// Render `out_l.len()` frames, accumulating into the stereo output.
-    /// RT-safe.
-    pub fn render(&mut self, out_l: &mut [f32], out_r: &mut [f32], ctx: &VoiceContext<'_>) {
-        let frames = out_l.len();
-        let mut i = 0usize;
-        let mut chunk = 0usize;
-        while i < frames {
-            let end = (i + FILTER_CHUNK).min(frames);
-            let fenv = self.fenv.level() as f64;
-            let cutoff = (ctx.cutoff_chunks[chunk]
-                * 2f64.powf(ctx.fenv_amount_semis * fenv / 12.0))
-            .clamp(10.0, ctx.sample_rate / 2.0 - 1.0);
-            let q = 0.5 + 9.5 * ctx.resonance_chunks[chunk];
-            let coeffs = design(ctx.filter_kind, ctx.sample_rate, cutoff, q, 0.0);
-            self.filter_l.set_coeffs(coeffs);
-            self.filter_r.set_coeffs(coeffs);
-            let freq = 440.0 * 2f64.powf((self.pitch_semis - 69.0) / 12.0);
-            for k in i..end {
-                let (mut al, mut ar) = (0.0f32, 0.0f32);
-                for u in 0..self.osc_a.count {
-                    let v = self.osc_a.readers[u].next(ctx.table_a, freq * self.osc_a.ratios[u]);
-                    al += v * self.osc_a.gain_l[u];
-                    ar += v * self.osc_a.gain_r[u];
-                }
-                let (mut bl, mut br) = (0.0f32, 0.0f32);
-                for u in 0..self.osc_b.count {
-                    let v = self.osc_b.readers[u].next(ctx.table_b, freq * self.osc_b.ratios[u]);
-                    bl += v * self.osc_b.gain_l[u];
-                    br += v * self.osc_b.gain_r[u];
-                }
-                let mb = ctx.mix[k];
-                let ma = 1.0 - mb;
-                let l = self.filter_l.next(al * ma + bl * mb);
-                let r = self.filter_r.next(ar * ma + br * mb);
-                let e = self.amp.next_sample() * self.velocity;
-                self.fenv.next_sample();
-                out_l[k] += l * e;
-                out_r[k] += r * e;
-            }
-            self.advance_glide((end - i) as f64);
-            i = end;
-            chunk += 1;
+            motion: MotionState::new(),
+            control_remaining: 0,
+            render_freq: 261.63,
         }
     }
 
@@ -174,6 +147,7 @@ impl Voice {
     /// parity). Envelope levels are intentionally kept (click-free
     /// retrigger starts the attack from the current level).
     pub fn reset_playback_state(&mut self) {
+        self.control_remaining = 0;
         for reader in &mut self.osc_a.readers {
             reader.set_phase(0.0);
         }
@@ -182,6 +156,10 @@ impl Voice {
         }
         self.filter_l.reset();
         self.filter_r.reset();
+    }
+
+    pub fn invalidate_control(&mut self) {
+        self.control_remaining = 0;
     }
 
     fn advance_glide(&mut self, frames: f64) {
