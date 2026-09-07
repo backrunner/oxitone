@@ -6,12 +6,12 @@
 
 | 里程碑 | 已有实现与依据 | 尚未完成或缺少验收证据 |
 | --- | --- | --- |
-| M0 工程与协议 | pnpm/Cargo workspace、版本协议、canonical fixtures、N-API smoke tests | `.github/workflows` 缺失；干净 macOS 环境安装/构建门禁未建立 |
+| M0 工程与协议 | pnpm/Cargo workspace、版本协议、canonical fixtures、N-API smoke tests、macOS arm64/x64 CI（locked install/build/schema/tests/examples/bench） | 远端 CI 首跑尚无记录；最低 macOS 13 runtime 验收仍待完成 |
 | M1 时间轴/MIDI | Project/Track/Pattern/Clip、Chord/Arp、tempo/time-signature、Track tempo/enabled/midiChannel、确定性 SMF writer 与边界测试 | 当前已识别的 authoring 缺口已关闭；持续维护确定性/边界回归 |
 | M2 音源/采样 | Rust synth/Sampler/Slicer、解码/编辑/SRC、SampleClip stretch/repitch、C ABI、TS Sample/Clip/fit 和三种内置音源入口、缓存/provenance；Slicer repitch tempo map/lane 跟随 | 当前已识别的功能缺口已关闭；全规格 golden 和发布环境验证继续追踪 |
 | M3 Mixer/Automation/导出 | TS mixer/insert authoring，Rust mixer/PDC/12 effects、完整 insert 自动化/host 参数路径、tempo bake、WAV/stem/loudness 与回归测试 | 全规格 golden/PDC/export 的自动化发布门禁仍需建立和复核 |
 | M4 实时与设备 | CoreAudio HAL、render-ahead/direct、transport/loop、设备适配/诊断、Session 换图及 bar/beat/marker/timecode 入口、换图回收与模拟设备测试 | 修正循环负载后的 10/60 分钟 soak、真实设备切换/拔插和 callback 指标仍需验收 |
-| M5 npm/DX/插件 | CLI render/export-midi/doctor、显式动态插件注册/校验/故障计数，最新提交有 C/Rust/N-API 测试 | 平台包/发布/签名公证、逐节点 deadline watchdog、示例/API reference/迁移说明；`oxitone` 当前仅导出底层 facade，未提供仅安装它即可使用 Project 的包结构 |
+| M5 npm/DX/插件 | CLI render/export-midi/doctor 与便携工程输入、动态插件注册/校验/故障计数；有声离线示例、API 使用指南和迁移文档 | 平台包/发布/签名公证、逐节点 deadline watchdog；`oxitone` 当前仅导出底层 facade，未提供仅安装它即可使用 Project 的包结构 |
 | M6 Preview | `09-preview-app.md` 规格 | runner/watch、IPC、GPUI viewer、CLI preview 和分发均未建立 |
 | M7 稳定性/发布 | 定向回归、插件 conformance、基准 harness | fuzz/sanitizer、持续负载 endurance、故障注入/资源上限、SBOM/签名公证和自动发布门禁 |
 
@@ -35,7 +35,7 @@
    authoring 和 snapshot 连接；Track `enabled`/`midiChannel` 与只读文件导入 facade 已完成。
    Track `tempo` 的 authoring、独立时钟换算及音频/MIDI 验证已于后续阶段补齐。
 3. insert 参数自动化、Session 换图/播放位置、项目持久化与可编辑恢复已完成；继续预设。
-4. 建立 macOS CI、npm 平台包和用户示例；跑持续有声负载性能与设备验收。
+4. macOS CI 和用户示例已建立；继续首跑记录、npm 平台包与持续有声负载/设备验收。
 5. 实现 Preview，完成 fuzz/endurance/发布门禁。各项出口分别记录证据。
 
 ## 本轮落地与验证（2026-09-06）
@@ -222,6 +222,25 @@
   首轮与构建/测试重叠，已在结束后复测；新场景首次基线，无前提交回退结论，未测设备
   callback/xrun，不替代 10/60 分钟验收。
 
-当前剩余重点：预设；macOS CI/npm 分发/示例；Preview runner/GPUI；
+## CI、离线示例与便携 CLI（2026-09-07）
+
+- 新增 macOS 15 arm64/Node 24、Intel/Node 22 的 CI；构建原生 addon/SDK/示例，
+  检查 schema 漂移，执行全部 TS/Rust tests、示例及 Slicer/insert benchmark。
+  CoreAudio 冒烟使用明确选定的 BlackHole 虚拟输出；不替代真实设备验收。
+- `examples/offline` 已生成 synth/automation/delay 的两小节 WAV/MIDI，再缓存并
+  Slicer 重排素材，经历 150→180 BPM ramp。保存/恢复后的有声 WAV hash 一致。
+  README、API 使用指南、迁移和 CI 说明已建立，明确当前 workspace 与 npm 分发的区别。
+- CLI 读取工程目录/标准 manifest 或 snapshot。相对素材基于输入 JSON 的目录解析，
+  移动工程、异 cwd 调用、WAV/MIDI 与 SDK parity、版本/损坏/缺失输入、失败保留输出
+  均有真实子进程/native 验证；stderr 现在提供结构化 JSON 错误。
+- actionlint、shellcheck、frozen install、schema drift、native build、lint/typecheck、
+  198 TS tests、412 Rust tests、fmt 与离线示例全部通过，无 skip/ignore。
+  远端 CI 尚未执行，不记作干净 runner 验收。
+- [文件加载专项基准](../../benchmarks/results/2026-09-07-cli-project-files.json)：
+  1 秒 stereo float32 资产，5 次预热/30 次测量，保存 median/p95 17.30/64.60 ms，
+  加载 0.59/0.66 ms。验证 CLI 复用的项目 I/O 层，未测子进程启动或设备 callback，
+  不作为实时或远端 CI 验收证据。
+
+当前剩余重点：预设；CI 首跑及 npm 单包/平台分发；Preview runner/GPUI；
 持续有声负载及设备拔插、资源预算/watchdog、fuzz/sanitizer/SBOM/签名公证等发布门禁。
 这些项仍未完成，逐项实现和记录出口证据后才能关闭对应里程碑。

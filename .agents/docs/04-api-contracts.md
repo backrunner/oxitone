@@ -354,6 +354,12 @@ EffectInsert: mix, bypass   // 每个 insert 节点内建，叠加在插件自�
 
 ## Facade 与 commands
 
+CLI `render <input> <output>` / `export-midi <input> <output>` 接受 snapshot JSON、
+便携工程目录或其中的 `oxitone.project.json`。目录/manifest 使用 loadProject 校验版本、
+相对 URI 和 hash；snapshot 资源相对输入 JSON 的目录解析，输出路径仍相对调用者 cwd。
+读取不修改输入；渲染始终把 assetBaseDir 传给 Rust。成功 stdout 为 JSON report，错误
+stderr 为 `{code?, message, details?}` JSON，exit 1；用法错误 exit 2。doctor 列出设备。
+
 ```ts
 export interface EngineOptions {
   sampleRate?: number;        // default 48000

@@ -27,8 +27,23 @@ importers:
         specifier: ^8.18.0
         version: 8.69.0(eslint@9.39.5)(typescript@5.9.3)
 
+  examples/offline:
+    dependencies:
+      '@oxitone/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@oxitone/protocol':
+        specifier: workspace:*
+        version: link:../../packages/protocol
+      '@oxitone/samples':
+        specifier: workspace:*
+        version: link:../../packages/samples
+
   packages/cli:
     dependencies:
+      '@oxitone/core':
+        specifier: workspace:*
+        version: link:../core
       '@oxitone/protocol':
         specifier: workspace:*
         version: link:../protocol
@@ -39,6 +54,9 @@ importers:
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
+      vitest:
+        specifier: ^3.2.0
+        version: 3.2.7(@types/node@22.20.1)
 
   packages/core:
     dependencies:

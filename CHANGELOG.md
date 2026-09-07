@@ -8,6 +8,13 @@ conventional commits (`type(scope): description`).
 
 ### Added
 
+- macOS CI for Apple Silicon and Intel: frozen installs, native/SDK/example builds,
+  schema drift checks, tests and focused benchmarks with a virtual CoreAudio output.
+- Executable offline synth/sample-slice example with WAV/MIDI export and verified
+  portable project restoration, plus getting-started, API, migration and CI guides.
+- CLI render/export-midi accept portable project directories and standard manifests.
+  Snapshot assets resolve relative to the input file; failures emit JSON diagnostics.
+
 - Built-in `wavetable`, `sampler` and `slicer` authoring helpers with typed controls,
   native defaults, exact slice markers and editable Channel instrument references.
 - Slicer repitch follows the effective Project tempo map/lane for active and new

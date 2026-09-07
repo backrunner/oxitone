@@ -1,0 +1,87 @@
+name: macOS
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macos-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+            node: 24
+          - runner: macos-15-intel
+            arch: x64
+            node: 22
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "13.0"
+      CARGO_TERM_COLOR: always
+      RUST_BACKTRACE: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - uses: pnpm/action-setup@v4
+      - name: Install Rust and record environment
+        env:
+          EXPECTED_ARCH: ${{ matrix.arch }}
+        run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          rustup toolchain install stable --profile minimal --component rustfmt
+          rustup override set stable
+          node -e 'if (process.arch !== process.env.EXPECTED_ARCH) process.exit(1)'
+          mkdir -p target/ci
+          {
+            sw_vers
+            sysctl -n machdep.cpu.brand_string
+            rustc --version --verbose
+            node --version
+            pnpm --version
+          } > target/ci/environment.txt
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build native addon, SDK and examples
+        run: pnpm build
+      - name: Verify generated schemas
+        run: |
+          pnpm schemas
+          git diff --exit-code -- schemas
+          test -z "$(git ls-files --others --exclude-standard schemas)"
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: cargo fmt --all --check
+      - run: cargo test --workspace --locked
+      - name: Set up virtual CoreAudio output
+        run: bash scripts/ci/setup-audio.sh
+      - run: pnpm test
+      - name: Run portable offline examples
+        run: pnpm example
+      - name: Run focused benchmarks
+        run: |
+          cargo bench -p oxitone-bench --bench slicer_tempo -- --warm-up-time 1 --measurement-time 3 --sample-size 30
+          cargo bench -p oxitone-bench --bench insert_automation -- --warm-up-time 1 --measurement-time 3 --sample-size 30
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: checks-${{ matrix.arch }}-node-${{ matrix.node }}
+          retention-days: 14
+          path: |
+            target/ci
+            target/criterion
+            target/examples/offline/*.json

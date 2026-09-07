@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import { readFile } from "node:fs/promises";
 import process from "node:process";
 import {
   createEngine,
@@ -8,15 +7,12 @@ import {
   listOutputDevices,
   renderWav,
 } from "oxitone";
-import { decodeProjectSnapshot } from "@oxitone/protocol";
+import { OxitoneError } from "@oxitone/protocol";
+import { loadInput } from "./input.js";
 
 function usage(): never {
-  console.error("Usage: oxitone <render|export-midi|doctor> ...");
+  console.error("Usage: oxitone doctor | oxitone <render|export-midi> <snapshot.json|project-directory> <output>");
   process.exit(2);
-}
-
-async function snapshot(path: string) {
-  return decodeProjectSnapshot(await readFile(path, "utf8"));
 }
 
 async function main(argv: string[]): Promise<void> {
@@ -35,10 +31,10 @@ async function main(argv: string[]): Promise<void> {
   if ((command === "render" || command === "export-midi") && input && output) {
     const engine = createEngine();
     try {
-      const project = await snapshot(input);
+      const project = await loadInput(input);
       const report = command === "render"
-        ? renderWav(engine, project, { path: output })
-        : exportMidi(engine, project, { path: output });
+        ? renderWav(engine, project.snapshot, { path: output, assetBaseDir: project.assetBaseDir })
+        : exportMidi(engine, project.snapshot, { path: output });
       console.log(JSON.stringify(report, null, 2));
     } finally {
       dispose(engine);
@@ -49,6 +45,8 @@ async function main(argv: string[]): Promise<void> {
 }
 
 main(process.argv.slice(2)).catch((error: unknown) => {
-  console.error(error instanceof Error ? error.message : String(error));
+  console.error(JSON.stringify(OxitoneError.isOxitoneError(error)
+    ? { code: error.code, message: error.message, details: error.details }
+    : { message: error instanceof Error ? error.message : String(error) }));
   process.exitCode = 1;
 });

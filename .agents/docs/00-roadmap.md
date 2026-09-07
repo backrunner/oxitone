@@ -14,6 +14,8 @@ Oxitone Phase 1 是 macOS 优先的编程化 DAW SDK，不是图形编辑器，�
 ### M0：工程基线与协议
 
 - 建立 pnpm workspace、Cargo workspace、变更日志和 CI。
+  macOS 双架构 workflow 已建立，覆盖 locked install/build、全部测试、schema drift、
+  离线示例与专项基准；远端首跑和最低 macOS 版本验收仍需记录。
 - 固定包名、crate 边界、协议版本、ID 规则、采样单位和错误码。
 - 建立 N-API smoke test：TypeScript 创建空 Project，Rust 返回可校验 snapshot。
 - 出口：全新 macOS 机器可执行 `pnpm install && pnpm build && cargo test --workspace`。
@@ -69,6 +71,8 @@ Oxitone Phase 1 是 macOS 优先的编程化 DAW SDK，不是图形编辑器，�
 - 第三方插件动态加载已实现：显式 registerPlugin、控制线程加载、SHA-256/签名/ABI/manifest 校验、C 实例适配、插件 fault 计数和实时延迟回收。纯 C 静态/动态 parity、Rust cdylib 和 N-API WAV 测试覆盖。逐节点 deadline watchdog、发布平台包与公证流水线仍待完成。
 - 项目诊断、结构化错误、日志级别和最小 CLI（render、export-midi、doctor）。
 - 示例项目、API reference、版本迁移说明。
+  `examples/offline`、README 与 `docs/api.md`/`docs/migrations.md` 已提供开发入口，
+  示例经 native 生成有声 WAV/MIDI，并验证采样工程保存/恢复。CLI 已能读取工程目录。
 - 出口：干净 npm 项目可以只安装 `oxitone`，无需 Rust 工具链即可播放/渲染。
 
 ### M6：GPUI Preview App

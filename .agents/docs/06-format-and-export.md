@@ -47,6 +47,9 @@ URI、`..`、反斜杠和经 symlink 逃出项目目录的资源。资源缺失/
 `AssetUnavailable`，结构/路径错误报 `InvalidProject`，版本错误报
 `ProtocolVersionUnsupported`。DSP 图完整性与插件参数仍由 Rust compile 校验。
 
+CLI render/export-midi 同时接受这个工程目录或标准文件名 `oxitone.project.json`，
+复用 loadProject 的全部校验；直接 snapshot JSON 的资产按该 JSON 所在目录解析。
+
 ## Sample 导入策略
 
 导入阶段识别 WAV、AIFF、FLAC 和 MP3/MP4 音频轨。压缩格式解码成规范化缓存 WAV：PCM source、sample rate、channel layout、decoder name/version、original hash 都写入 sample metadata。不能静默覆盖用户原文件；失败时给出 asset path、format 和稳定错误码：容器/编码/位深/声道布局无法表示时报 `SampleFormatUnsupported`，content hash 不匹配或资产不可读时报 `AssetUnavailable`。

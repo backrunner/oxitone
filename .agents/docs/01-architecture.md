@@ -42,7 +42,7 @@ oxitone/
   apps/
     preview/              # oxitone-preview: GPUI read-only viewer; links engine crates directly
   schemas/                # JSON schema / protocol fixtures
-  examples/               # small executable projects
+  examples/               # small executable projects; offline is a private TS workspace package
   benches/                # scenario manifests and golden assets
   .agents/
 ```
@@ -51,6 +51,10 @@ The first npm package may bundle `@oxitone/core`, `@oxitone/protocol`, and the n
 
 仓库根是私有 `oxitone-workspace`，不能与公开 facade `oxitone` 同名；否则 pnpm
 会混淆 workspace 依赖顺序，首次构建时可能在 native 类型生成前构建 core。
+
+根 build/lint/typecheck 包含 `packages/*` 与 `examples/*`，按 workspace 依赖顺序
+构建。`@oxitone/cli` 依赖 core 的项目文件加载器，避免重复实现便携工程版本/hash/
+路径校验；读取 snapshot 与准备资源仍分别归 protocol 与 Rust。
 
 ## Package ownership
 

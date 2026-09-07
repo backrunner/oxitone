@@ -5,17 +5,18 @@
   "description": "Oxitone: TypeScript authoring SDK backed by a Rust realtime audio engine",
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": ">=22.13"
   },
   "scripts": {
-    "build": "pnpm -r --filter './packages/*' run build",
+    "build": "pnpm -r --filter './packages/*' --filter './examples/*' run build",
     "build:native": "pnpm --filter @oxitone/native-generated run build",
-    "lint": "pnpm -r --filter './packages/*' run lint",
-    "typecheck": "pnpm -r --filter './packages/*' run typecheck",
+    "lint": "pnpm -r --filter './packages/*' --filter './examples/*' run lint",
+    "typecheck": "pnpm -r --filter './packages/*' --filter './examples/*' run typecheck",
     "test": "pnpm -r --filter './packages/*' run test",
     "test:rust": "cargo test --workspace",
     "fmt:rust": "cargo fmt --all --check",
-    "schemas": "pnpm --filter @oxitone/protocol run generate"
+    "schemas": "pnpm --filter @oxitone/protocol run generate",
+    "example": "pnpm --filter @oxitone/example-offline start"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
