@@ -48,6 +48,10 @@
   Project BPM 90→153 的 linear ramp。完整 Channel/Master 路径（关闭保护 limiter）；
   测 reset + 首块，以及每 180 blocks 重触发的持续有声处理；不包含资产加载。
   此处是内存渲染 microbench，callback、设备、CPU 利用率与 xrun 记 null。
+- `instruments/multisampler_39_regions_32_voices`: 48 kHz/stereo/128 frames，13 key zones × 3 dynamics，
+  32 个不同音高声部使用 mono 440 Hz 一秒素材，力度 0.3/0.6/0.9。测 reset + 32 note-on + 首块，以及
+  每 120 blocks 重触发的持续有声处理。资产/查表在计时前准备；不含 mixer、N-API、I/O 或设备。
+  命令 `cargo bench -p oxitone-bench --bench multisampler`；callback p95/p99、CPU 利用率与 xrun 记 null。
 
 `dsp/*` benchmark 必须包含 denormal 语料（衰减中的滤波器/混响尾部），验证 FTZ/DAZ 与 denormal-safe 实现没有性能悬崖。
 

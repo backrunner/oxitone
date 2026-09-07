@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { ErrorCode } from "@oxitone/protocol";
 import { inspectSample } from "@oxitone/native";
-import { Pattern, Project, sampler, slicer, wavetable } from "../src/index.js";
+import { Pattern, Project, multisampler, sampler, slicer, wavetable } from "../src/index.js";
 
 describe("built-in instruments through native rendering", () => {
   it("renders all helper options and restores slice resources through project files", async () => {
@@ -30,6 +30,20 @@ describe("built-in instruments through native rendering", () => {
         velocitySensitivity: 0.5, amp: { attack: 0, decay: 0, sustain: 1, release: 0.1 }, level: 0.5, pan: 0 });
       const output = join(root, "out.wav");
       expect((await project.renderWav({ ...options, path: output })).files[0]!.peakDbfs).toBeGreaterThan(-60);
+      channel.instrument = multisampler([
+        { sample, rootKey: 60, keyRange: [0, 127], velocityRange: [1, 64] },
+        { sample, rootKey: 48, keyRange: [0, 127], velocityRange: [65, 127], gain: 0.6 },
+      ], { transpose: -12, loop: "forward", amp: { attack: 0, release: 0.1 } });
+      expect((await project.renderWav({ ...options, path: output })).files[0]!.peakDbfs).toBeGreaterThan(-60);
+      const bankAudio = await readFile(output);
+      const bankPath = join(root, "bank");
+      await project.save(bankPath);
+      const bank = await Project.load(bankPath);
+      await bank.renderWav({ ...options, path: output });
+      expect(await readFile(output)).toEqual(bankAudio);
+      const ref = bank.channels[0]!.instrument;
+      bank.channels[0]!.instrument = { ...ref, resources: { ...ref.resources, region_0: "smp_missing" } };
+      await expect(bank.compile()).rejects.toMatchObject({ code: ErrorCode.InvalidProject });
       channel.instrument = slicer(sample, { slices: [{ start: { frames: 0n }, end: { beat: 0.5 },
         level: 0.8, pan: 0, rate: 1, reverse: true }], triggerNote: 60, playMode: "oneshot", tempoSync: "repitch" });
       expect((await project.renderWav({ ...options, path: output })).files[0]!.peakDbfs).toBeGreaterThan(-60);

@@ -1,6 +1,6 @@
 //! oxitone-instruments — built-in instruments as statically linked Plugin ABI
 //! v1 plugins (`.agents/docs/02-domain-spec.md` §内置音源, `08-plugin-abi.md`):
-//! WavetableSynth, Sampler, and Slicer share the exact
+//! WavetableSynth, Sampler, Multisampler, and Slicer share the exact
 //! [`Plugin`]/[`PluginInstance`] contract with third-party dylib plugins —
 //! there is no private built-in path.
 //!
@@ -27,6 +27,7 @@
 //! `oxitone-graph` and consumes [`builtin_plugins`].
 
 mod block;
+pub mod multisampler;
 mod params;
 mod sample_voice;
 pub mod sampler;
@@ -86,6 +87,7 @@ pub fn builtin_plugins() -> Vec<Arc<dyn Plugin>> {
     vec![
         Arc::new(WavetableSynthPlugin),
         Arc::new(SamplerPlugin),
+        Arc::new(multisampler::MultisamplerPlugin),
         Arc::new(SlicerPlugin),
     ]
 }
@@ -102,6 +104,9 @@ pub fn create_builtin_instance(
     beat_to_frame: Option<&dyn Fn(Beat) -> Option<u64>>,
 ) -> Result<Box<dyn PluginInstance>, OxitoneError> {
     match plugin_id {
+        oxitone_graph::multisampler::PLUGIN_ID => Ok(Box::new(
+            multisampler::MultisamplerPlugin.create_configured(host, config, samples)?,
+        )),
         WAVETABLE_PLUGIN_ID => Ok(Box::new(
             WavetableSynthPlugin.create_configured(host, config)?,
         )),

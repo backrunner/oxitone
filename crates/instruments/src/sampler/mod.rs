@@ -4,7 +4,7 @@
 //! resolved through the host's `SampleProvider` at compile time).
 
 mod instance;
-mod params;
+pub(crate) mod params;
 
 #[cfg(test)]
 mod tests;

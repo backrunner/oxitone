@@ -81,5 +81,9 @@ name = "slicer_tempo"
 harness = false
 
 [[bench]]
+name = "multisampler"
+harness = false
+
+[[bench]]
 name = "preview"
 harness = false

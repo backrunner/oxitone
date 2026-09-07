@@ -246,6 +246,12 @@ pub(super) fn validate_states(
     };
     for (i, channel) in snapshot.channels.iter().enumerate() {
         let Some(state) = &channel.instrument.state else {
+            if channel.instrument.plugin_id == crate::multisampler::PLUGIN_ID {
+                return Err(invalid(
+                    &format!("$.channels[{i}].instrument.state"),
+                    "multisampler requires region state",
+                ));
+            }
             continue;
         };
         let path = format!("$.channels[{i}].instrument.state");
@@ -272,6 +278,23 @@ pub(super) fn validate_states(
                 ));
             }
             check_slicer_state(&path, state, &sample_ids, sample_frames)?;
+        }
+        if schema == crate::multisampler::SCHEMA_ID {
+            let (bank, _) =
+                crate::multisampler::parse(state, channel.instrument.resources.as_ref(), &path)?;
+            for region in bank.regions {
+                let id = &channel
+                    .instrument
+                    .resources
+                    .as_ref()
+                    .expect("validated resources")[&region.resource];
+                if !sample_ids.contains(id.as_str()) {
+                    return Err(invalid(
+                        &path,
+                        format!("unknown multisampler sample {id:?}"),
+                    ));
+                }
+            }
         }
     }
     Ok(())

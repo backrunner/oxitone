@@ -85,6 +85,7 @@ pub(super) fn create_instrument(
         reference.plugin_id.as_str(),
         oxitone_instruments::WAVETABLE_PLUGIN_ID
             | oxitone_instruments::SAMPLER_PLUGIN_ID
+            | oxitone_graph::multisampler::PLUGIN_ID
             | oxitone_instruments::SLICER_PLUGIN_ID
     );
     let descriptor = registry

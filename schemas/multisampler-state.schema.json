@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "number",
+      "const": 1
+    },
+    "regions": {
+      "minItems": 1,
+      "maxItems": 256,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "resource": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "rootKey": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 127
+          },
+          "keyRange": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 127
+              },
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 127
+              }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "velocityRange": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 127
+              },
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 127
+              }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "gain": {
+            "default": 1,
+            "type": "number",
+            "minimum": 0,
+            "maximum": 4
+          }
+        },
+        "required": [
+          "resource",
+          "rootKey",
+          "keyRange",
+          "velocityRange",
+          "gain"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "version",
+    "regions"
+  ],
+  "additionalProperties": false
+}

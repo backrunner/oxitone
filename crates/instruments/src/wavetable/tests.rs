@@ -33,10 +33,11 @@ fn descriptor_validates_and_registers() {
     for plugin in builtin_plugins() {
         registry.register(plugin).expect("built-ins register");
     }
-    assert_eq!(registry.len(), 3);
+    assert_eq!(registry.len(), 4);
     assert!(registry.contains_id(crate::WAVETABLE_PLUGIN_ID));
     assert!(registry.contains_id(crate::SAMPLER_PLUGIN_ID));
     assert!(registry.contains_id(crate::SLICER_PLUGIN_ID));
+    assert!(registry.contains_id(oxitone_graph::multisampler::PLUGIN_ID));
 }
 
 #[test]

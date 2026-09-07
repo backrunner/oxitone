@@ -77,6 +77,13 @@ Channel、MixerChannel 和 Master 的有序 insert 均暴露 `insert.<index>.mix
 
 内置 `Sampler`：把 Sample 映射为可用 Note 演奏的音源。note pitch 相对 `rootKey`（默认 60）决定 playback rate（varispeed 变调），velocity 按可调灵敏度映射到 level，带 amp ADSR、loop 模式（off/forward）和切片起点；复用 sample 解码/编辑链与 varispeed 路径，其播放参数同样可自动化。v1 为单采样；velocity layer、round-robin、键盘分区等多采样能力留待 descriptor 版本演进。
 
+新增独立 `oxitone.multisampler@1.0.0`，保持旧 Sampler 语义：1…256 个互不重叠的键盘/力度区域，
+每区 resource key、rootKey、闭区间 keyRange 0…127 / velocityRange 1…127、gain 0…4。
+力度索引为 round(clamp(velocity,0,1)×127)，夹到 1…127；空白区域静音，重叠/倒置区域拒绝。
+原始 velocity 仍用于灵敏度增益。prepare 建立 128×128 u16 查表，32 个预分配声部各保存区域索引；
+process/reset 无分配、锁或 Arc 复制。播放音高差为 note - region.rootKey + transpose（±48 半音），其余 ADSR/loop/start/
+velocitySensitivity/level/pan 与 Sampler 一致；rootKey 不再是全局参数。暂不支持 round-robin 或踏板事件。
+
 内置 `Slicer`：把 Sample 切成 slice 并映射到连续 note 上演奏（Slicex/Fruity Slicer 类）。
 
 - slice 定义在编辑后的内容上，来源三种：显式 marker 列表（frame 或 beat 位置）、`grid: n` 等分、`onset` 瞬态检测。onset 检测算法必须确定性并版本化（`onsetAlgorithm`），与 stretch 同一规则：改进算法用新 id。
@@ -86,7 +93,7 @@ Channel、MixerChannel 和 Master 的有序 insert 均暴露 `insert.<index>.mix
 - slice 表是插件的结构化 state（见 `04-api-contracts.md` 的 `InstrumentRef.state`），compile 期定稿，播放中不可变；改 slice 需要重新 compile 该节点。
 
 `@oxitone/core` 提供 `wavetable(options?)`、`sampler(sample, options?)` 与
-`slicer(sample, options)`，返回可序列化 InstrumentRef，供 `addChannel({instrument})`
+`slicer(sample, options)`、`multisampler(regions, options?)`，返回可序列化 InstrumentRef，供 `addChannel({instrument})`
 或 `channel.instrument = ref` 使用。它们不持有 PCM 或 native instance。选项省略时保留
 Rust descriptor 默认值；非法选项报 `InvalidProject`。资源 ID 必须属于目标工程。
 

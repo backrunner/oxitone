@@ -21,6 +21,8 @@ pub struct SamplerInstance {
     max_block: usize,
     values: Vec<f64>,
     sample: Option<Arc<PreparedSample>>,
+    bank: Option<crate::multisampler::Bank>,
+    voice_regions: [usize; MAX_VOICES],
     pool: SampleVoicePool,
     level: OnePoleSmoother,
     pan: OnePoleSmoother,
@@ -39,12 +41,25 @@ impl SamplerInstance {
             max_block,
             values,
             sample,
+            bank: None,
+            voice_regions: [0; MAX_VOICES],
             pool: SampleVoicePool::new(MAX_VOICES, sample_rate, max_block),
             level: OnePoleSmoother::new(sample_rate, SMOOTH_MS),
             pan: OnePoleSmoother::new(sample_rate, SMOOTH_MS),
             zeros: vec![0.0; max_block],
         };
         instance.snap_smoothers();
+        instance
+    }
+
+    pub(crate) fn with_bank(
+        sample_rate: f64,
+        max_block: usize,
+        values: Vec<f64>,
+        bank: crate::multisampler::Bank,
+    ) -> Self {
+        let mut instance = Self::new(sample_rate, max_block, values, None);
+        instance.bank = Some(bank);
         instance
     }
 
@@ -86,13 +101,27 @@ impl SamplerInstance {
     }
 
     fn note_on(&mut self, pitch: u8, velocity: f32) {
-        let Some(sample) = self.sample.as_deref() else {
-            return;
+        let (sample, root, region_gain, region_index) = if let Some(bank) = &self.bank {
+            let Some(index) = bank.select(pitch, velocity) else {
+                return;
+            };
+            let region = &bank.regions[index];
+            (
+                region.sample.as_ref(),
+                region.root - self.values[crate::multisampler::TRANSPOSE],
+                region.gain,
+                index,
+            )
+        } else {
+            let Some(sample) = self.sample.as_deref() else {
+                return;
+            };
+            (sample, self.values[p::ROOT_KEY], 1., 0)
         };
-        let semitones = f64::from(pitch) - self.values[p::ROOT_KEY];
+        let semitones = f64::from(pitch) - root;
         let rate = 2f64.powf(semitones / 12.0).clamp(MIN_RATE, MAX_RATE);
         let sensitivity = self.values[p::VELOCITY_SENSITIVITY];
-        let gain = ((1.0 - sensitivity) + sensitivity * f64::from(velocity)) as f32;
+        let gain = (region_gain * ((1.0 - sensitivity) + sensitivity * f64::from(velocity))) as f32;
         let base = self.start_frame(sample);
         let stream_len = sample.frames() - base;
         let loop_region = if self.values[p::LOOP_MODE] as usize == p::LOOP_FORWARD {
@@ -105,6 +134,7 @@ impl SamplerInstance {
             None
         };
         let slot = self.pool.allocate(gain);
+        self.voice_regions[slot] = region_index;
         let adsr = self.adsr_params();
         self.pool.voice_mut(slot).start(VoiceStart {
             note: pitch,
@@ -129,17 +159,21 @@ impl SamplerInstance {
 
     fn render_segment(&mut self, out_l: &mut [f32], out_r: &mut [f32]) {
         let frames = out_l.len();
-        let Some(sample) = self.sample.as_deref() else {
-            return;
-        };
-        let chans: [&[f32]; 2] = [
-            &sample.channels[0],
-            sample.channels.get(1).unwrap_or(&sample.channels[0]),
-        ];
         for i in 0..self.pool.len() {
             if !self.pool.voice(i).active {
                 continue;
             }
+            let sample = if let Some(bank) = &self.bank {
+                &*bank.regions[self.voice_regions[i]].sample
+            } else {
+                self.sample
+                    .as_deref()
+                    .expect("active sampler voice has a sample")
+            };
+            let chans: [&[f32]; 2] = [
+                &sample.channels[0],
+                sample.channels.get(1).unwrap_or(&sample.channels[0]),
+            ];
             let voice = self.pool.voice_mut(i);
             voice.render(&chans, &self.zeros, out_l, out_r);
             voice.level = voice.amp.level() * voice.gain();
@@ -186,10 +220,14 @@ impl PluginInstance for SamplerInstance {
         let out_r = &mut out_r[0][..frames];
         out_l.fill(0.0);
         out_r.fill(0.0);
-        if self.sample.is_none() {
+        if self.sample.is_none() && self.bank.is_none() {
             return;
         }
-        let specs = super::parameter_specs();
+        let specs = if self.bank.is_some() {
+            crate::multisampler::parameter_specs()
+        } else {
+            super::parameter_specs()
+        };
         crate::block::walk_block(frames, ctx.note_events, ctx.parameter_events, |step| {
             use crate::block::Walk;
             match step {

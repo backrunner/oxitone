@@ -3377,6 +3377,7 @@ dependencies = [
  "oxitone-core",
  "oxitone-samples",
  "oxitone-transport",
+ "serde",
  "serde_json",
 ]
 

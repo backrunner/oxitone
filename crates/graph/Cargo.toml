@@ -9,3 +9,4 @@ oxitone-core = { path = "../core" }
 oxitone-transport = { path = "../transport" }
 oxitone-samples = { path = "../samples" }
 serde_json.workspace = true
+serde.workspace = true

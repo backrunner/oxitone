@@ -165,3 +165,5 @@ export type { PreviewFrame, PreviewSnapshotFrame, PreviewResponse } from "./prev
 export type { Preset, ChannelPreset, InstrumentPreset, EffectPreset } from "./preset.js";
 export { pluginUiManifestSchema, pluginUiControlSchema } from "./plugin-ui.js";
 export type { PluginUiManifest, PluginUiControl } from "./plugin-ui.js";
+export { multisamplerStateSchema, multisamplerOptionsSchema } from "./multisampler.js";
+export type { MultisamplerState, MultisamplerOptions } from "./multisampler.js";

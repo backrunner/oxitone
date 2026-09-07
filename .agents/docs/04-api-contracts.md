@@ -325,6 +325,10 @@ const lead = wavetable({ oscA: { wave: 'saw', unison: 4, detune: 12 },
   mix: 0.2, filter: { type: 'lowpass', cutoff: 4000, resonance: 0.3 },
   amp: { attack: 0.01, release: 0.2 }, voiceMode: 'poly' });
 const keys = sampler(sample, { rootKey: 60, loop: 'forward', startSeconds: 0.1 });
+const piano = multisampler([
+  { sample: softC4, rootKey: 60, keyRange: [58, 62], velocityRange: [1, 79] },
+  { sample: loudC4, rootKey: 60, keyRange: [58, 62], velocityRange: [80, 127] },
+], { amp: { attack: 0.001, sustain: 1, release: 0.25 } });
 const chops = slicer(sample, { slices: { grid: 8 }, tempoSync: 'repitch' });
 channel.instrument = chops;
 ```
@@ -337,6 +341,19 @@ frame/beat 标记、grid 1..64 或 onset-v1，以及 triggerNote/playMode/tempoS
 frame authoring 接受 safe-integer number 或 u64 bigint，wire 统一为十进制字符串。
 schema/类型从 protocol 导出；返回值独立且不修改 Sample。Channel 替换 instrument
 增加一次 revision，需 Session.update 或重新 compile 生效；失败保留旧 authoring 状态。
+
+`multisampler(regions, options?)` 返回 `oxitone.multisampler@1.0.0`；SampleRegion 使用 Sample、rootKey、
+keyRange、可选 velocityRange（默认 [1,127]）/gain（默认 1）。Options 为 SamplerOptions 去掉 rootKey、
+增加 transpose（-48…48）。Wire state 为 `{version:1,regions:[{resource,rootKey,keyRange,velocityRange,gain}]}`，
+声明 schema `oxitone.multisampler.regions@1`；resource 是 InstrumentRef.resources 的 key，资源值仍为 Sample ID，
+因此便携工程和 preset 的既有资源 remap 有效。TS 与 Rust 拒绝重叠/倒置区域（InvalidProject），
+缺失 state、resource key 或工程 Sample ID 为 InvalidProject，缺失已准备 PCM 为 AssetUnavailable；
+不在 TypeScript 解码音频。JSON schema 为 multisampler-state.schema.json。
+transpose 为连续半音偏移，在新 note-on 时取值；区域选择仍使用未转调的 MIDI key。
+最终播放速率沿用 Sampler 的 0.125…16 范围，`clamp(2^((note-rootKey+transpose)/12),0.125,16)`；
+极端跨区或转调会饱和到该范围。常规采样库应选择靠近实际演奏音高的 rootKey。
+完整 native 参数顺序为 transpose、velocitySensitivity、amp.attack/decay/sustain/release、loop、start、level、pan；
+后九项沿用 Sampler 的范围/默认值/自动化语义，transpose 的默认值为 0。键位与力度区域不可在 callback 修改。
 
 `Record<string, number>` 只表示经过 schema 校验的参数表，不代表插件可以接收任意键；每个 plugin descriptor 必须提供完整 `ParameterSpec[]`，缺失、未知或越界参数都在 compile 阶段拒绝。
 

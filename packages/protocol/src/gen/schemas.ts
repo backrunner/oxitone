@@ -5,6 +5,7 @@ import {
   projectFileSchema,
   pluginManifestSchema,
   pluginUiManifestSchema,
+  multisamplerStateSchema,
   pluginInfoSchema,
   presetSchema,
   previewFrameSchema,
@@ -47,6 +48,7 @@ export function generateSchemas(): void {
   writeSchema("schemas/beat-duration-result.schema.json", beatDurationResultSchema);
   writeSchema("schemas/plugin-manifest.schema.json", pluginManifestSchema);
   writeSchema("schemas/plugin-ui.schema.json", pluginUiManifestSchema);
+  writeSchema("schemas/multisampler-state.schema.json", multisamplerStateSchema);
   write("schemas/fixtures/plugin-ui.json", `${JSON.stringify(pluginUiManifestSchema.parse(pluginUiFixture), null, 2)}\n`);
   writeSchema("schemas/plugin-info.schema.json", pluginInfoSchema);
   writeSchema("schemas/preset.schema.json", presetSchema);
