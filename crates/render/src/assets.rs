@@ -106,3 +106,37 @@ impl oxitone_instruments::SampleProvider for SampleStore {
         self.prepared.borrow().get(sample_id).cloned()
     }
 }
+
+impl oxitone_mixer::effects::convolver::ImpulseProvider for SampleStore {
+    fn impulse(
+        &self,
+        sample_id: &str,
+    ) -> Result<oxitone_mixer::effects::convolver::Impulse, OxitoneError> {
+        let samples = self.prepared.borrow();
+        let sample = samples.get(sample_id).ok_or_else(|| {
+            OxitoneError::with_path(
+                codes::ASSET_UNAVAILABLE,
+                "impulse sample is unavailable",
+                "effect.resources.impulse",
+            )
+        })?;
+        let first = sample
+            .channels
+            .first()
+            .ok_or_else(|| OxitoneError::new(codes::INVALID_PROJECT, "impulse has no channels"))?;
+        if first.is_empty() || first.len() > oxitone_mixer::effects::convolver::MAX_IMPULSE_FRAMES {
+            return Err(OxitoneError::with_path(
+                codes::INVALID_PROJECT,
+                "impulse must contain 1..262144 resampled frames",
+                "effect.resources.impulse",
+            ));
+        }
+        Ok(oxitone_mixer::effects::convolver::Impulse {
+            channels: [
+                first.clone(),
+                sample.channels.get(1).unwrap_or(first).clone(),
+            ],
+            sample_rate: sample.sample_rate as f64,
+        })
+    }
+}

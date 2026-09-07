@@ -92,6 +92,7 @@ struct LimitInstance {
     ceiling_smooth: OnePoleSmoother,
     lookahead: Lookahead,
     envelope: f32,
+    peaks: super::peak_window::PeakWindow,
     gain: f32,
     os_left: Oversampler2x,
     os_right: Oversampler2x,
@@ -110,6 +111,7 @@ impl LimitInstance {
             ceiling_smooth,
             lookahead: Lookahead::new(lookahead_frames),
             envelope: 0.0,
+            peaks: super::peak_window::PeakWindow::new(lookahead_frames.max(1)),
             gain: 1.0,
             os_left: Oversampler2x::new(max_block_size as usize),
             os_right: Oversampler2x::new(max_block_size as usize),
@@ -133,7 +135,6 @@ impl LimitInstance {
     /// gain to the delayed audio. RT-safe.
     fn limit_block(&mut self, detector_l: &[f32], detector_r: &[f32], out: &mut [&mut [f32]]) {
         let release_coeff = (-1.0 / (self.release_ms / 1000.0 * self.sample_rate)).exp() as f32;
-        let attack_coeff = (-1.0 / (LOOKAHEAD_SECONDS * self.sample_rate)).exp() as f32;
         let frames = detector_l.len();
         let len = self.lookahead.left.len();
         for n in 0..frames {
@@ -142,19 +143,18 @@ impl LimitInstance {
             let xr = Lookahead::next(&mut self.lookahead.right, pos, detector_r[n]);
             self.lookahead.pos = (pos + 1) % len;
             let peak = detector_l[n].abs().max(detector_r[n].abs());
-            self.envelope = peak.max(self.envelope * release_coeff);
+            self.envelope = self.peaks.next(peak);
             let ceiling = self.ceiling_smooth.next_sample();
             let target = if self.envelope > ceiling && self.envelope > 0.0 {
                 ceiling / self.envelope
             } else {
                 1.0
             };
-            let coeff = if target < self.gain {
-                attack_coeff
+            self.gain = if target < self.gain {
+                target
             } else {
-                release_coeff
+                target + (self.gain - target) * release_coeff
             };
-            self.gain += (target - self.gain) * coeff;
             out[0][n] = xl * self.gain;
             out[1][n] = xr * self.gain;
         }
@@ -210,6 +210,7 @@ impl PluginInstance for LimitInstance {
         }
         self.lookahead.pos = 0;
         self.envelope = 0.0;
+        self.peaks.reset();
         self.gain = 1.0;
         self.os_left.reset();
         self.os_right.reset();

@@ -4,7 +4,28 @@ use oxitone_graph::{HostContext, ParameterEvent, ProcessContext};
 
 fn benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("effects/electronic");
-    for name in ["oxitone.distortion", "oxitone.multiband", "oxitone.delay"] {
+    for name in [
+        "oxitone.distortion",
+        "oxitone.multiband",
+        "oxitone.delay",
+        "oxitone.nonlinear-filter",
+        "oxitone.compactor",
+        "oxitone.multiband-dynamics",
+        "oxitone.resonator",
+        "oxitone.frequency-shifter",
+        "oxitone.pitch-shifter",
+        "oxitone.flanger",
+        "oxitone.convolver",
+        "oxitone.bitcrush",
+        "oxitone.tape",
+        "oxitone.spreader",
+        "oxitone.limiter",
+        "oxitone.compressor",
+        "oxitone.gate",
+        "oxitone.reverb",
+        "oxitone.filter",
+        "oxitone.limit",
+    ] {
         for signal in ["tone", "decay"] {
             let plugin = oxitone_mixer::builtin_effect_plugins()
                 .into_iter()

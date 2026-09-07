@@ -1,6 +1,5 @@
 //! Three complementary bands with bounded stereo-linked upward/downward dynamics.
-//! This is an original processor, not an emulation of Xfer OTT. Residual splits
-//! reconstruct the dry input at unity gain without crossover phase cancellation.
+//! Residual splits reconstruct the dry input at unity gain without crossover phase cancellation.
 use super::{db_to_linear, descriptor, param};
 use oxitone_core::wire::{
     ParameterMapping as Map, ParameterSmoothing as Smooth, ParameterUnit as Unit,

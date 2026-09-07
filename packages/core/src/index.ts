@@ -54,3 +54,6 @@ export type {
   AutomationLaneTarget,
   AutomationLoopInput,
 } from "./automation/lane.js";
+export { effect, convolver } from "./effects.js";
+export type { EffectOptions } from "./effects.js";
+export type { EffectKind, EffectParameters } from "@oxitone/protocol";

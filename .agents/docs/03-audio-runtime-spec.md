@@ -106,7 +106,7 @@ compiler 依据各 plugin 上报的 `latencyFrames` 执行全图 PDC（plugin de
 - Headroom 依赖 `f32` 动态范围；Master 出口前有默认启用的最终 limiter/clip 保护节点（仅诊断场景可显式关闭），实时设备输出与 WAV export 共用该保护。
 - 非线性处理器（Clipper、带饱和级的 Limit、waveshaper 类、含反馈的 Phaser）必须 2x/4x oversample 抑制 aliasing；oversampling 引入的 latency 经 `latencyFrames` 上报并参与 PDC。
 - 所有重采样（sample decode、device rate 适配、rate/pitch 播放）目标质量 ≥ 100 dB SNR（windowed-sinc polyphase）；质量和成本都进 benchmark。
-- bit depth 降低只发生在导出边界：16/24-bit WAV export 默认加 1 LSB TPDF dither（可用 render option 关闭）；32-bit float 导出与实时设备输出不 dither。
+- 格式 bit depth 降低只发生在导出边界：16/24-bit WAV export 默认加 1 LSB TPDF dither（可用 render option 关闭）；32-bit float 导出与实时设备输出不 dither。显式 Bitcrush insert 的量化/降采样是创作效果，内部通路仍为 f32，与导出格式和 dither 分开。
 - Meter：每个 MixerChannel 提供 peak/RMS，Master 额外提供 4x oversampled true-peak 估计；meter 在音频线程只写 atomic/ring，展示层自行节流。
 
 默认内部格式为 non-interleaved `f32`，headroom 至少 6 dB。动态 C 插件边界逐样本检查 NaN/Inf，故障只静音该实例并累计插件 fault；该额外开销必须由插件适配层 benchmark 验证。其余数值检查的开销同样需要符合 block 预算。

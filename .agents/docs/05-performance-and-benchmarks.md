@@ -15,6 +15,13 @@
 
 ## 必备 benchmark
 
+- `effects/electronic`: 26 种内置中的电子制作/动态效果，48 kHz/stereo/128 frames，
+  continuous tone 与反复衰减语料；Criterion 测平均 DSP 成本。
+  `cargo run --release -p oxitone-bench --bin effects-profile` 另测全部 26 种效果及
+  262144-frame stereo IR：128 blocks 预热、3000 blocks 计时，包含 256-frame FFT
+  分区的计算峰值，报告 process p95/p99/max。它是离线逐插件耗时，callback/设备/
+  CPU utilization/xrun 未测记 null；不能替代整图或实时 callback 验收。
+
 - `instruments/synth_motion`: 48 kHz/stereo/128 frames、8/32 个持续声部；default patch
   对比 full patch（A 7/B 3 unison、morph、sub/noise、五条 LFO 路由）。波表/声部起音
   在计时外准备，测试持续有声 process。`cargo bench -p oxitone-bench --bench synth_motion`。

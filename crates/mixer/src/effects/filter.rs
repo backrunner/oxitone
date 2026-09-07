@@ -1,6 +1,6 @@
 //! `oxitone.filter` — single multimode biquad (lp/hp/bp) with cutoff and
 //! resonance. `f64` coefficients and state; cutoff is smoothed per sample and
-//! coefficients redesigned at block rate.
+//! coefficients redesigned on a persistent 32-frame control cycle.
 
 use std::sync::OnceLock;
 
@@ -63,6 +63,7 @@ struct FilterInstance {
     cutoff_smooth: OnePoleSmoother,
     left: BiquadF64,
     right: BiquadF64,
+    coefficient_tick: u8,
 }
 
 impl FilterInstance {
@@ -78,6 +79,7 @@ impl FilterInstance {
             cutoff_smooth,
             left: BiquadF64::new(coeffs),
             right: BiquadF64::new(coeffs),
+            coefficient_tick: 0,
         }
     }
 
@@ -108,26 +110,29 @@ impl PluginInstance for FilterInstance {
         let (left, right) = ctx.outputs.split_at_mut(1);
         let left = &mut left[0][..frames];
         let right = &mut right[0][..frames];
-        for _ in 0..frames {
-            self.cutoff_smooth.next_sample();
-        }
         let kind = match self.mode {
             1 => BiquadKind::Highpass,
             2 => BiquadKind::Bandpass,
             _ => BiquadKind::Lowpass,
         };
-        let cutoff = self.cutoff_smooth.value() as f64;
-        let coeffs = design(kind, self.sample_rate, cutoff, self.q, 0.0);
-        self.left.set_coeffs(coeffs);
-        self.right.set_coeffs(coeffs);
-        self.left.process(left);
-        self.right.process(right);
+        for n in 0..frames {
+            let cutoff = self.cutoff_smooth.next_sample() as f64;
+            if self.coefficient_tick == 0 {
+                let coeffs = design(kind, self.sample_rate, cutoff, self.q, 0.0);
+                self.left.set_coeffs(coeffs);
+                self.right.set_coeffs(coeffs);
+            }
+            self.coefficient_tick = (self.coefficient_tick + 1) % 32;
+            left[n] = self.left.next(left[n]);
+            right[n] = self.right.next(right[n]);
+        }
     }
 
     fn reset(&mut self) {
         self.left.reset();
         self.right.reset();
         self.cutoff_smooth.snap(self.cutoff_hz as f32);
+        self.coefficient_tick = 0;
     }
 
     fn tail_frames(&self) -> u64 {

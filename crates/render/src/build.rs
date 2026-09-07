@@ -102,6 +102,7 @@ impl RenderGraph {
                     effect,
                     &host,
                     registry,
+                    samples,
                     host.sample_rate,
                     max_block,
                 )?);
@@ -179,7 +180,13 @@ impl RenderGraph {
             .iter()
             .map(|spec| preprocess_mixer_channel(spec, registry, bpm0, &mut mixer_beat_params))
             .collect::<Result<_, _>>()?;
-        let mut mixer = MixerEngine::build(host.sample_rate, max_block, &mixer_specs, registry)?;
+        let mut mixer = MixerEngine::build_with_resources(
+            host.sample_rate,
+            max_block,
+            &mixer_specs,
+            registry,
+            Some(samples),
+        )?;
         mixer.set_respect_solo(options.respect_solo);
 
         // Declared send routes (for host `setParameter` validation of

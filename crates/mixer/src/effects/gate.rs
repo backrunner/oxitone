@@ -9,7 +9,12 @@ use oxitone_graph::{
     HostContext, Plugin, PluginCapabilities, PluginDescriptor, PluginInstance, ProcessContext,
 };
 
+use super::controls::{Control as C, Controls};
 use super::{db_to_linear, descriptor, param};
+const EXTRA: [C; 2] = [
+    C::db("hysteresisDb", "Hysteresis", 0., 24., 0.),
+    C::db("rangeDb", "Range", -120., 0., -120.),
+];
 
 pub struct GatePlugin;
 
@@ -61,8 +66,13 @@ impl Plugin for GatePlugin {
                         ParameterSmoothing::Linear,
                         ParameterMapping::Log,
                     ),
+                    EXTRA[0].spec(),
+                    EXTRA[1].spec(),
                 ],
-                PluginCapabilities::default(),
+                PluginCapabilities {
+                    sidechain_input: true,
+                    reports_tail: false,
+                },
             )
         })
     }
@@ -81,6 +91,8 @@ struct GateInstance {
     envelope: f32,
     gain: f32,
     hold_remaining: u32,
+    extra: Controls<2>,
+    open: bool,
 }
 
 impl GateInstance {
@@ -94,6 +106,8 @@ impl GateInstance {
             envelope: 0.0,
             gain: 0.0,
             hold_remaining: 0,
+            extra: Controls::new(&EXTRA, sample_rate),
+            open: false,
         }
     }
 
@@ -117,9 +131,14 @@ impl PluginInstance for GateInstance {
         for event in ctx.parameter_events {
             self.set_parameter(event.parameter_id, event.value);
         }
+        self.extra.events(ctx.parameter_events);
         super::pass_inputs(ctx);
         let frames = ctx.frames;
         let threshold = db_to_linear(self.threshold_db);
+        let detector = ctx
+            .sidechain
+            .filter(|sc| sc.len() >= 2)
+            .unwrap_or(ctx.inputs);
         let attack_step = 1.0 / (self.attack_ms / 1000.0 * self.sample_rate).max(1.0) as f32;
         let release_step = 1.0 / (self.release_ms / 1000.0 * self.sample_rate).max(1.0) as f32;
         let hold_frames = (self.hold_ms / 1000.0 * self.sample_rate) as u32;
@@ -128,15 +147,27 @@ impl PluginInstance for GateInstance {
         let left = &mut left[0][..frames];
         let right = &mut right[0][..frames];
         for n in 0..frames {
-            let peak = left[n].abs().max(right[n].abs());
+            let [hysteresis, range] = self.extra.next();
+            let close_threshold = db_to_linear(self.threshold_db - hysteresis);
+            let floor = if range <= -120. {
+                0.
+            } else {
+                db_to_linear(range)
+            };
+            let peak = detector[0][n].abs().max(detector[1][n].abs());
             self.envelope = peak.max(self.envelope * env_coeff);
             if self.envelope >= threshold {
+                self.open = true;
+            } else if self.envelope < close_threshold {
+                self.open = false;
+            }
+            if self.open {
                 self.hold_remaining = hold_frames;
                 self.gain = (self.gain + attack_step).min(1.0);
             } else if self.hold_remaining > 0 {
                 self.hold_remaining -= 1;
             } else {
-                self.gain = (self.gain - release_step).max(0.0);
+                self.gain = (self.gain - release_step).max(floor);
             }
             left[n] *= self.gain;
             right[n] *= self.gain;
@@ -147,6 +178,8 @@ impl PluginInstance for GateInstance {
         self.envelope = 0.0;
         self.gain = 0.0;
         self.hold_remaining = 0;
+        self.open = false;
+        self.extra.reset();
     }
 
     fn tail_frames(&self) -> u64 {

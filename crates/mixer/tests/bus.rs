@@ -20,6 +20,26 @@ fn registry() -> PluginRegistry {
     registry
 }
 
+#[test]
+fn compressor_uses_self_detector_unless_an_external_route_exists() {
+    let mut destination = plain("mix_bus");
+    destination.inserts.push(effect(
+        "oxitone.compressor",
+        &[("thresholdDb", -30.), ("ratio", 10.), ("attackMs", 1.)],
+    ));
+    let mut own =
+        MixerEngine::build(SR, BLOCK as u32, &[destination.clone()], &registry()).unwrap();
+    let compressed = render(&mut own, 120, &|_| vec![("mix_bus", 0.5)]);
+    let mut detector = plain("mix_detector");
+    detector.master_send_ratio = Some(0.);
+    detector.sends.push(send("mix_bus", 1., true, true));
+    let mut external =
+        MixerEngine::build(SR, BLOCK as u32, &[destination, detector], &registry()).unwrap();
+    let untouched = render(&mut external, 120, &|_| vec![("mix_bus", 0.5)]);
+    let energy = |x: &[f32]| x[x.len() / 2..].iter().map(|v| v * v).sum::<f32>();
+    assert!(energy(&compressed) < energy(&untouched) * 0.1);
+}
+
 fn effect(plugin_id: &str, parameters: &[(&str, f64)]) -> EffectRef {
     EffectRef {
         plugin_id: plugin_id.to_string(),

@@ -163,6 +163,17 @@ pub struct Oversampler4x {
 }
 
 impl Oversampler4x {
+    /// Prepare-owned 4x band, for stereo-linked dynamics.
+    pub fn upsample(&mut self, input: &[f32]) -> &mut [f32] {
+        self.hi.upsample(self.lo.upsample(input))
+    }
+
+    pub fn downsample(&mut self, frames: usize) -> &[f32] {
+        let back = self.hi.downsample(2 * frames);
+        self.lo.band[..2 * frames].copy_from_slice(back);
+        self.lo.downsample(frames)
+    }
+
     pub fn new(max_block: usize) -> Self {
         Self {
             lo: Oversampler2x::new(max_block),

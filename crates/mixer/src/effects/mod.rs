@@ -6,21 +6,38 @@
 //! spec declares smoothing. Host-side `mix`/`bypass` is stacked by the
 //! compiler (04-api-contracts.md §EffectInsert) and is not part of the plugin.
 
+pub mod bitcrush;
 pub mod chorus;
 pub mod clipper;
+pub mod compactor;
 pub mod compressor;
+mod controls;
+pub mod convolver;
+mod crossover;
 pub mod delay;
 pub mod distortion;
 pub mod eq;
 pub mod filter;
+pub mod flanger;
+mod fractional;
+pub mod frequency_shifter;
 pub mod gate;
 pub mod limit;
+pub mod limiter;
 pub mod multiband;
+pub mod multiband_dynamics;
+pub mod nonlinear_filter;
 pub mod oversample;
+mod peak_window;
 pub mod phaser;
+pub mod pitch_shifter;
+pub mod resonator;
 pub mod reverb;
 pub mod saturator;
+pub mod spreader;
+pub mod tape;
 pub mod utility;
+mod wet_shape;
 
 use oxitone_core::wire::{
     ParameterMapping, ParameterRate, ParameterSmoothing, ParameterSpec, ParameterUnit,
@@ -44,7 +61,50 @@ pub fn builtin_effect_plugins() -> Vec<Box<dyn Plugin>> {
         Box::new(utility::UtilityPlugin),
         Box::new(distortion::DistortionPlugin),
         Box::new(multiband::MultibandPlugin),
+        Box::new(nonlinear_filter::NonlinearFilterPlugin),
+        Box::new(compactor::CompactorPlugin),
+        Box::new(multiband_dynamics::MultibandDynamicsPlugin),
+        Box::new(resonator::ResonatorPlugin),
+        Box::new(frequency_shifter::FrequencyShifterPlugin),
+        Box::new(pitch_shifter::PitchShifterPlugin),
+        Box::new(flanger::FlangerPlugin),
+        Box::new(convolver::ConvolverPlugin),
+        Box::new(bitcrush::BitcrushPlugin),
+        Box::new(tape::TapePlugin),
+        Box::new(spreader::SpreaderPlugin),
+        Box::new(limiter::LimiterPlugin),
     ]
+}
+
+/// Control-thread creation, with optional prepared convolution resources.
+pub fn create_effect(
+    plugin: &dyn Plugin,
+    reference: &oxitone_core::wire::EffectRef,
+    host: &oxitone_graph::HostContext,
+    resources: Option<&dyn convolver::ImpulseProvider>,
+) -> Result<Box<dyn oxitone_graph::PluginInstance>, oxitone_core::OxitoneError> {
+    if reference.plugin_id == "oxitone.convolver" {
+        if let Some(bindings) = &reference.resources {
+            let id = bindings
+                .get("impulse")
+                .filter(|id| !id.is_empty())
+                .filter(|_| bindings.len() == 1)
+                .ok_or_else(|| {
+                    oxitone_core::OxitoneError::new(
+                        oxitone_core::error::codes::INVALID_PROJECT,
+                        "convolver resources require exactly one impulse sample ID",
+                    )
+                })?;
+            let provider = resources.ok_or_else(|| {
+                oxitone_core::OxitoneError::new(
+                    oxitone_core::error::codes::ASSET_UNAVAILABLE,
+                    "convolver impulse provider is unavailable",
+                )
+            })?;
+            return convolver::from_impulse(provider.impulse(id)?, host.sample_rate);
+        }
+    }
+    plugin.try_create(host)
 }
 
 /// Continuous control-rate parameter.

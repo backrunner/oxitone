@@ -8,6 +8,7 @@
 //! accumulators are `f64`.
 
 pub mod biquad;
+pub mod convolution;
 pub mod dither;
 pub mod envelope;
 pub mod ftz;

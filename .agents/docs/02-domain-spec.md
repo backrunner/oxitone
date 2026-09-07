@@ -200,6 +200,12 @@ Mixer 总是包含不可删除的 `Master`。MixerChannel 有输入布局、inse
 
 Phase 1 内置效果器：`EQ`（至少 4 biquad bands）、`Limit`、`Clipper`、`Filter`、`Phaser`、`Reverb`、`Compressor`（必须支持 sidechain detector 输入）、`Delay`（beat-synced time、feedback、feedback 路径 filter）、`Gate`、`Chorus`、`Saturator`、`Utility`（gain/width/polarity/mono）。每个效果器共享标准 parameter/tail/bypass contract；效果器可以声明 sidechain 输入。
 
+电子制作扩展在 `14-effects-production.md`：新增非线性滤波、Compactor、Multiband
+Dynamics、Resonator、频移、移调、Flanger、Convolver、Bitcrush、Tape、Spreader 和
+4x mastering Limiter。总线无侧链路由时使用自身检测器；已连接的静音侧链仍是外部输入。
+Convolver 通过 EffectRef.resources.impulse 绑定工程 SampleRef，编译期解码/重采样和
+FFT 分区，IR 变化走完整换图。界面、API 与预设只使用自有的描述性名称。
+
 每个 insert 节点（Channel 和 MixerChannel 上的 EffectRef）除插件自身参数外，还暴露内建 `mix`（dry/wet 0..1，默认 1，并联处理）和 `bypass` 参数，均可自动化。时间类效果参数可声明 `unit: 'beats'`（如 Delay 的 time），引擎经 tempo map 换算为帧数，tempo 变化（含变速）自动跟随。
 
 任何音源/效果器都可以在 descriptor 上报 `latencyFrames`（lookahead limiter、线性相位 EQ、oversampling 级等）；compiler 对汇聚到同一 bus 的各路径自动插入补偿 delay，按最长路径做 plugin delay compensation，sidechain detector 路径同样对齐。PDC 只移动音频落点，不改变 automation 的 beat 域定义；图内部总延迟在 render report 和诊断中列出。

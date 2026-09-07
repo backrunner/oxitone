@@ -11,6 +11,8 @@ pub fn panel(details: &PluginDetails) -> Layout {
         && descriptor.plugin_version == "1.0.0"
     {
         crate::plugin_synth_layout::pages()
+    } else if let Some(pages) = crate::plugin_effect_layout::pages(descriptor) {
+        pages
     } else {
         let mut groups: Vec<Group> = Vec::new();
         for spec in &descriptor.parameters {

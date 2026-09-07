@@ -168,3 +168,5 @@ export { pluginUiManifestSchema, pluginUiControlSchema } from "./plugin-ui.js";
 export type { PluginUiManifest, PluginUiControl } from "./plugin-ui.js";
 export { multisamplerStateSchema, multisamplerOptionsSchema } from "./multisampler.js";
 export type { MultisamplerState, MultisamplerOptions } from "./multisampler.js";
+export { effectParameterSchemas, effectPluginIds } from "./effects.js";
+export type { EffectKind, EffectParameters } from "./effects.js";

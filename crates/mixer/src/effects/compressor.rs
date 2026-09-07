@@ -84,6 +84,14 @@ impl Plugin for CompressorPlugin {
                         ParameterMapping::Linear,
                     ),
                     enum_param("detector", "Detector (0=peak 1=rms)", 0.0, 1.0, 0.0),
+                    super::controls::Control::hz(
+                        "sidechainHighpassHz",
+                        "Detector Highpass",
+                        20.,
+                        2000.,
+                        20.,
+                    )
+                    .spec(),
                 ],
                 PluginCapabilities {
                     sidechain_input: true,
@@ -111,12 +119,17 @@ struct CompressorInstance {
     envelope: f32,
     mean_square: f32,
     gain_db: f32,
+    detector_hz: OnePoleSmoother,
+    detector_target: f32,
+    detector_low: [f64; 2],
 }
 
 impl CompressorInstance {
     fn new(sample_rate: f64) -> Self {
         let mut makeup_smooth = OnePoleSmoother::new(sample_rate, 20.0);
         makeup_smooth.snap(1.0);
+        let mut detector_hz = OnePoleSmoother::new(sample_rate, 5.);
+        detector_hz.snap(20.);
         Self {
             sample_rate,
             threshold_db: -18.0,
@@ -130,6 +143,9 @@ impl CompressorInstance {
             envelope: 0.0,
             mean_square: 0.0,
             gain_db: 0.0,
+            detector_hz,
+            detector_target: 20.,
+            detector_low: [0.; 2],
         }
     }
 
@@ -145,6 +161,10 @@ impl CompressorInstance {
                 self.makeup_smooth.set_target(db_to_linear(self.makeup_db));
             }
             "detector" => self.rms_detector = value.round() >= 1.0,
+            "sidechainHighpassHz" => {
+                self.detector_target = value.clamp(20., 2000.) as f32;
+                self.detector_hz.set_target(self.detector_target);
+            }
             _ => {}
         }
     }
@@ -186,7 +206,18 @@ impl PluginInstance for CompressorInstance {
         let left = &mut left[0][..frames];
         let right = &mut right[0][..frames];
         for n in 0..frames {
-            let linked = det_l[n].abs().max(det_r[n].abs());
+            let hz = self.detector_hz.next_sample() as f64;
+            let coefficient = 1. - (-std::f64::consts::TAU * hz / self.sample_rate).exp();
+            let mut linked = 0f32;
+            for (ch, input) in [det_l[n], det_r[n]].into_iter().enumerate() {
+                self.detector_low[ch] += coefficient * (input as f64 - self.detector_low[ch]);
+                let value = if hz <= 20.0001 {
+                    input
+                } else {
+                    (input as f64 - self.detector_low[ch]) as f32
+                };
+                linked = linked.max(value.abs());
+            }
             let level_db = if self.rms_detector {
                 let sq = linked * linked;
                 self.mean_square += (sq - self.mean_square) * (1.0 - rms_coeff);
@@ -216,6 +247,8 @@ impl PluginInstance for CompressorInstance {
         self.mean_square = 0.0;
         self.gain_db = 0.0;
         self.makeup_smooth.snap(db_to_linear(self.makeup_db));
+        self.detector_low = [0.; 2];
+        self.detector_hz.snap(self.detector_target);
     }
 
     fn tail_frames(&self) -> u64 {

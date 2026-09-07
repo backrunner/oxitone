@@ -144,6 +144,7 @@ pub(super) fn create_insert(
     effect: &oxitone_core::wire::EffectRef,
     host: &HostContext,
     registry: &PluginRegistry,
+    samples: &SampleStore,
     sample_rate: f64,
     max_block: u32,
 ) -> Result<InsertNode, OxitoneError> {
@@ -168,7 +169,8 @@ pub(super) fn create_insert(
         .map(|p| (p.id.clone(), p.unit))
         .collect();
     let (initial, beats) = split_effect_params(&param_ids, &units, &effect.parameters, &path)?;
-    let mut instance = plugin.try_create(host)?;
+    let mut instance =
+        oxitone_mixer::effects::create_effect(plugin.as_ref(), effect, host, Some(samples))?;
     instance.try_prepare(sample_rate, max_block)?;
     let mut mix = oxitone_dsp::gain_pan::OnePoleSmoother::new(sample_rate, 20.0);
     mix.snap(effect.mix.unwrap_or(1.0) as f32);

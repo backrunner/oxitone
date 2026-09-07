@@ -87,6 +87,7 @@ fn check_instrument<'a>(
 
 fn check_effect(
     registry: &PluginRegistry,
+    snapshot: &ProjectSnapshot,
     path: &str,
     effect: &EffectRef,
 ) -> Result<(), OxitoneError> {
@@ -97,6 +98,18 @@ fn check_effect(
             format!("plugin {:?} is not an effect", effect.plugin_id),
             path,
         ));
+    }
+    if effect.plugin_id == "oxitone.convolver" {
+        if let Some(resources) = &effect.resources {
+            let id = resources.get("impulse").filter(|_| resources.len() == 1);
+            if !id.is_some_and(|id| snapshot.samples.iter().any(|sample| &sample.id == id)) {
+                return Err(OxitoneError::with_path(
+                    codes::INVALID_PROJECT,
+                    "convolver requires one impulse referencing a project sample",
+                    format!("{path}.resources.impulse"),
+                ));
+            }
+        }
     }
     check_parameters(path, descriptor, &effect.parameters)
 }
@@ -109,13 +122,19 @@ pub(super) fn validate_plugins(
         let path = format!("$.channels[{i}]");
         check_instrument(registry, &format!("{path}.instrument"), &channel.instrument)?;
         for (e, effect) in channel.effect_chain.iter().enumerate() {
-            check_effect(registry, &format!("{path}.effectChain[{e}]"), effect)?;
+            check_effect(
+                registry,
+                snapshot,
+                &format!("{path}.effectChain[{e}]"),
+                effect,
+            )?;
         }
     }
     for (i, bus) in snapshot.mixer_channels.iter().enumerate() {
         for (e, insert) in bus.inserts.iter().enumerate() {
             check_effect(
                 registry,
+                snapshot,
                 &format!("$.mixerChannels[{i}].inserts[{e}]"),
                 insert,
             )?;

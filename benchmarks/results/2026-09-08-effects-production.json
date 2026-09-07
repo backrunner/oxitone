@@ -1,0 +1,842 @@
+{
+  "date": "2026-09-08",
+  "change": "Twelve production effects, typed helpers, custom convolution resources, native panels and dynamics routing fixes; demo authoring paused",
+  "environment": {
+    "cpu": "Apple M4",
+    "os": "macOS 27.0 (26A5425a)",
+    "arch": "aarch64",
+    "rust": "1.98.0 (88d9e12ae 2026-08-18)",
+    "llvm": "22.1.8",
+    "node": "26.5.0",
+    "build": "release",
+    "sampleRate": 48000,
+    "blockSize": 128,
+    "channels": 2,
+    "voices": 0,
+    "outputDevice": null
+  },
+  "profile": {
+    "mode": "offline DSP timing; no output device",
+    "arch": "aarch64",
+    "os": "macos",
+    "xrunCount": null,
+    "note": "Deadline exceedances are timed DSP calls, not device xruns. Includes FFT partition bursts. Whole-project acceptance is separate.",
+    "results": [
+      {
+        "id": "oxitone.eq",
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "blocks": 3000,
+        "meanUs": 7.289084666666497,
+        "p95Us": 10.042,
+        "p99Us": 10.084,
+        "maxUs": 31.916999999999998,
+        "deadlineUs": 2666.6666666666665,
+        "deadlineExceedances": 0,
+        "latencyFrames": 0,
+        "peak": 0.30000001192092896
+      },
+      {
+        "id": "oxitone.limit",
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "blocks": 3000,
+        "meanUs": 8.790063666666716,
+        "p95Us": 9.75,
+        "p99Us": 10.625,
+        "maxUs": 10.834,
+        "deadlineUs": 2666.6666666666665,
+        "deadlineExceedances": 0,
+        "latencyFrames": 264,
+        "peak": 0.30006763339042664
+      },
+      {
+        "id": "oxitone.clipper",
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "blocks": 3000,
+        "meanUs": 6.942406000000006,
+        "p95Us": 7.375,
+        "p99Us": 7.5,
+        "maxUs": 18.167,
+        "deadlineUs": 2666.6666666666665,
+        "deadlineExceedances": 0,
+        "latencyFrames": 24,
+        "peak": 0.5272001624107361
+      },
+      {
+        "id": "oxitone.filter",
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "blocks": 3000,
+        "meanUs": 0.9561386666666517,
+        "p95Us": 0.9590000000000001,
+        "p99Us": 1.0410000000000001,
+        "maxUs": 1.125,
+        "deadlineUs": 2666.6666666666665,
+        "deadlineExceedances": 0,
+        "latencyFrames": 0,
+        "peak": 0.21813061833381653
+      },
+      {
+        "id": "oxitone.phaser",
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "blocks": 3000,
+        "meanUs": 13.30460966666698,
+        "p95Us": 13.5,
+        "p99Us": 13.584000000000001,
+        "maxUs": 16.166,
+        "deadlineUs": 2666.6666666666665,
+        "deadlineExceedances": 0,
+        "latencyFrames": 24,
+        "peak": 0.3652206063270569
+      },
+      {
+        "id": "oxitone.reverb",
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "blocks": 3000,
+        "meanUs": 3.2074926666665244,
+        "p95Us": 3.292,
+        "p99Us": 3.541,
+        "maxUs": 5.417,
+        "deadlineUs": 2666.6666666666665,
+        "deadlineExceedances": 0,
+        "latencyFrames": 0,
+        "peak": 1.1883734464645386
+      },
+      {
+        "id": "oxitone.compressor",
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "blocks": 3000,
+        "meanUs": 1.5265030000000273,
+        "p95Us": 1.542,
+        "p99Us": 1.666,
+        "maxUs": 2.416,
+        "deadlineUs": 2666.6666666666665,
+        "deadlineExceedances": 0,
+        "latencyFrames": 0,
+        "peak": 0.29729172587394714
+      },
+      {
+        "id": "oxitone.delay",
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "blocks": 3000,
+        "meanUs": 0.9253336666666883,
+        "p95Us": 0.875,
+        "p99Us": 3.917,
+        "maxUs": 25.458,
+        "deadlineUs": 2666.6666666666665,
+        "deadlineExceedances": 0,
+        "latencyFrames": 0,
+        "peak": 0.4040035009384155
+      },
+      {
+        "id": "oxitone.gate",
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "blocks": 3000,
+        "meanUs": 0.4381686666666674,
+        "p95Us": 0.459,
+        "p99Us": 0.5,
+        "maxUs": 0.5840000000000001,
+        "deadlineUs": 2666.6666666666665,
+        "deadlineExceedances": 0,
+        "latencyFrames": 0,
+        "peak": 0.30000001192092896
+      },
+      {
+        "id": "oxitone.chorus",
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "blocks": 3000,
+        "meanUs": 1.2868706666666343,
+        "p95Us": 1.375,
+        "p99Us": 1.417,
+        "maxUs": 3.625,
+        "deadlineUs": 2666.6666666666665,
+        "deadlineExceedances": 0,
+        "latencyFrames": 0,
+        "peak": 0.29999998211860657
+      },
+      {
+        "id": "oxitone.saturator",
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "blocks": 3000,
+        "meanUs": 20.995184333333498,
+        "p95Us": 21.416999999999998,
+        "p99Us": 26.0,
+        "maxUs": 30.416,
+        "deadlineUs": 2666.6666666666665,
+        "deadlineExceedances": 0,
+        "latencyFrames": 36,
+        "peak": 0.8320745229721069
+      },
+      {
+        "id": "oxitone.utility",
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "blocks": 3000,
+        "meanUs": 0.3300716666666524,
+        "p95Us": 0.334,
+        "p99Us": 0.375,
+        "maxUs": 0.458,
+        "deadlineUs": 2666.6666666666665,
+        "deadlineExceedances": 0,
+        "latencyFrames": 0,
+        "peak": 0.30000001192092896
+      },
+      {
+        "id": "oxitone.distortion",
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "blocks": 3000,
+        "meanUs": 22.137674000000093,
+        "p95Us": 22.209,
+        "p99Us": 24.125,
+        "maxUs": 45.791999999999994,
+        "deadlineUs": 2666.6666666666665,
+        "deadlineExceedances": 0,
+        "latencyFrames": 36,
+        "peak": 0.2944302260875702
+      },
+      {
+        "id": "oxitone.multiband",
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "blocks": 3000,
+        "meanUs": 4.420111999999936,
+        "p95Us": 4.5,
+        "p99Us": 5.5,
+        "maxUs": 6.458,
+        "deadlineUs": 2666.6666666666665,
+        "deadlineExceedances": 0,
+        "latencyFrames": 0,
+        "peak": 0.3005303740501404
+      },
+      {
+        "id": "oxitone.nonlinear-filter",
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "blocks": 3000,
+        "meanUs": 19.715516333333362,
+        "p95Us": 19.791999999999998,
+        "p99Us": 20.041,
+        "maxUs": 27.792,
+        "deadlineUs": 2666.6666666666665,
+        "deadlineExceedances": 0,
+        "latencyFrames": 24,
+        "peak": 0.34525278210639954
+      },
+      {
+        "id": "oxitone.compactor",
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "blocks": 3000,
+        "meanUs": 3.126151666666644,
+        "p95Us": 3.167,
+        "p99Us": 3.25,
+        "maxUs": 5.0,
+        "deadlineUs": 2666.6666666666665,
+        "deadlineExceedances": 0,
+        "latencyFrames": 0,
+        "peak": 0.30269855260849
+      },
+      {
+        "id": "oxitone.multiband-dynamics",
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "blocks": 3000,
+        "meanUs": 10.87395866666682,
+        "p95Us": 10.958,
+        "p99Us": 11.041,
+        "maxUs": 18.709,
+        "deadlineUs": 2666.6666666666665,
+        "deadlineExceedances": 0,
+        "latencyFrames": 0,
+        "peak": 0.3320992588996887
+      },
+      {
+        "id": "oxitone.resonator",
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "blocks": 3000,
+        "meanUs": 8.892266666666842,
+        "p95Us": 8.958,
+        "p99Us": 9.041,
+        "maxUs": 19.708,
+        "deadlineUs": 2666.6666666666665,
+        "deadlineExceedances": 0,
+        "latencyFrames": 0,
+        "peak": 0.051748186349868774
+      },
+      {
+        "id": "oxitone.frequency-shifter",
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "blocks": 3000,
+        "meanUs": 16.477065666666554,
+        "p95Us": 16.625,
+        "p99Us": 17.084,
+        "maxUs": 22.833,
+        "deadlineUs": 2666.6666666666665,
+        "deadlineExceedances": 0,
+        "latencyFrames": 128,
+        "peak": 0.3312265872955322
+      },
+      {
+        "id": "oxitone.pitch-shifter",
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "blocks": 3000,
+        "meanUs": 2.2275126666666694,
+        "p95Us": 2.292,
+        "p99Us": 2.334,
+        "maxUs": 9.791,
+        "deadlineUs": 2666.6666666666665,
+        "deadlineExceedances": 0,
+        "latencyFrames": 1208,
+        "peak": 0.29860028624534607
+      },
+      {
+        "id": "oxitone.flanger",
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "blocks": 3000,
+        "meanUs": 1.7746610000000131,
+        "p95Us": 1.917,
+        "p99Us": 1.9589999999999999,
+        "maxUs": 8.5,
+        "deadlineUs": 2666.6666666666665,
+        "deadlineExceedances": 0,
+        "latencyFrames": 0,
+        "peak": 0.3802732229232788
+      },
+      {
+        "id": "oxitone.convolver",
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "blocks": 3000,
+        "meanUs": 16.11422999999988,
+        "p95Us": 30.958,
+        "p99Us": 31.041999999999998,
+        "maxUs": 46.791,
+        "deadlineUs": 2666.6666666666665,
+        "deadlineExceedances": 0,
+        "latencyFrames": 256,
+        "peak": 0.2610732614994049
+      },
+      {
+        "id": "oxitone.bitcrush",
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "blocks": 3000,
+        "meanUs": 0.42775066666668243,
+        "p95Us": 0.459,
+        "p99Us": 0.459,
+        "maxUs": 0.5419999999999999,
+        "deadlineUs": 2666.6666666666665,
+        "deadlineExceedances": 0,
+        "latencyFrames": 0,
+        "peak": 0.30078125
+      },
+      {
+        "id": "oxitone.tape",
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "blocks": 3000,
+        "meanUs": 17.119524666666692,
+        "p95Us": 17.375,
+        "p99Us": 17.459,
+        "maxUs": 20.0,
+        "deadlineUs": 2666.6666666666665,
+        "deadlineExceedances": 0,
+        "latencyFrames": 264,
+        "peak": 0.534671425819397
+      },
+      {
+        "id": "oxitone.spreader",
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "blocks": 3000,
+        "meanUs": 1.0889229999999832,
+        "p95Us": 1.125,
+        "p99Us": 1.167,
+        "maxUs": 1.209,
+        "deadlineUs": 2666.6666666666665,
+        "deadlineExceedances": 0,
+        "latencyFrames": 0,
+        "peak": 0.3473608195781708
+      },
+      {
+        "id": "oxitone.limiter",
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "blocks": 3000,
+        "meanUs": 23.810398999999926,
+        "p95Us": 23.959,
+        "p99Us": 24.209000000000003,
+        "maxUs": 27.583,
+        "deadlineUs": 2666.6666666666665,
+        "deadlineExceedances": 0,
+        "latencyFrames": 276,
+        "peak": 0.30007168650627136
+      },
+      {
+        "id": "oxitone.convolver/262144-frame-ir",
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "blocks": 3000,
+        "meanUs": 176.96826333333345,
+        "p95Us": 367.041,
+        "p99Us": 443.29200000000003,
+        "maxUs": 611.792,
+        "deadlineUs": 2666.6666666666665,
+        "deadlineExceedances": 0,
+        "latencyFrames": 256,
+        "peak": 0.01383542362600565
+      }
+    ]
+  },
+  "profileMethod": {
+    "command": "cargo run --release -p oxitone-bench --bin effects-profile",
+    "warmupBlocks": 128,
+    "measuredBlocks": 3000,
+    "signal": "same 128-frame 0.3-amplitude sine buffer per call; all plugin defaults; long stereo IR generated deterministically in the harness",
+    "cpuUtilization": null,
+    "callbackP95": null,
+    "callbackP99": null
+  },
+  "criterionMethod": {
+    "command": "cargo bench -p oxitone-bench --bench electronic_effects -- --sample-size 10 --warm-up-time 0.2 --measurement-time 0.5",
+    "warmupSeconds": 0.2,
+    "measurementSeconds": 0.5,
+    "samples": 10,
+    "cases": "tone and repeatedly decaying/subnormal input with FTZ; delay pingPong=1, timeSeconds=0.002, ducking=0.5; other effects use defaults"
+  },
+  "criterion": [
+    {
+      "id": "oxitone.bitcrush_decay_128",
+      "meanNanoseconds": 482.28654705886413,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 478.8435121250649,
+        "upper_bound": 485.45497802356914
+      }
+    },
+    {
+      "id": "oxitone.bitcrush_tone_128",
+      "meanNanoseconds": 478.38987757667167,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 476.6452971153846,
+        "upper_bound": 479.9380129462041
+      }
+    },
+    {
+      "id": "oxitone.compactor_decay_128",
+      "meanNanoseconds": 3090.809410218954,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 3062.1408392101553,
+        "upper_bound": 3125.9004715729734
+      }
+    },
+    {
+      "id": "oxitone.compactor_tone_128",
+      "meanNanoseconds": 3328.5318024487374,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 3250.9528858244366,
+        "upper_bound": 3421.0471303698523
+      }
+    },
+    {
+      "id": "oxitone.compressor_decay_128",
+      "meanNanoseconds": 1362.8009378502454,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 1354.490989524959,
+        "upper_bound": 1371.975029995402
+      }
+    },
+    {
+      "id": "oxitone.compressor_tone_128",
+      "meanNanoseconds": 1591.887998727996,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 1588.5031689972511,
+        "upper_bound": 1595.9720957972647
+      }
+    },
+    {
+      "id": "oxitone.convolver_decay_128",
+      "meanNanoseconds": 16455.406735168923,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 16388.28739189279,
+        "upper_bound": 16530.194762846946
+      }
+    },
+    {
+      "id": "oxitone.convolver_tone_128",
+      "meanNanoseconds": 16568.913251112313,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 16445.39414231602,
+        "upper_bound": 16736.876365740743
+      }
+    },
+    {
+      "id": "oxitone.delay_decay_128",
+      "meanNanoseconds": 851.5911476198207,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 849.6136537212287,
+        "upper_bound": 853.97223805658
+      }
+    },
+    {
+      "id": "oxitone.delay_tone_128",
+      "meanNanoseconds": 852.939887958764,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 848.5230951239228,
+        "upper_bound": 858.5090740613881
+      }
+    },
+    {
+      "id": "oxitone.distortion_decay_128",
+      "meanNanoseconds": 22238.07205581479,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 22224.301982299898,
+        "upper_bound": 22252.845002505088
+      }
+    },
+    {
+      "id": "oxitone.distortion_tone_128",
+      "meanNanoseconds": 22313.010104470355,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 22293.11807823129,
+        "upper_bound": 22342.32612591108
+      }
+    },
+    {
+      "id": "oxitone.filter_decay_128",
+      "meanNanoseconds": 1092.4601076343572,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 1020.7663812869312,
+        "upper_bound": 1183.5067028235776
+      }
+    },
+    {
+      "id": "oxitone.filter_tone_128",
+      "meanNanoseconds": 978.2119771116543,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 975.3221810034984,
+        "upper_bound": 980.9030393018214
+      }
+    },
+    {
+      "id": "oxitone.flanger_decay_128",
+      "meanNanoseconds": 1864.6980960702458,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 1856.6455170259953,
+        "upper_bound": 1874.9568859452827
+      }
+    },
+    {
+      "id": "oxitone.flanger_tone_128",
+      "meanNanoseconds": 1866.8648339079598,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 1857.5353836318889,
+        "upper_bound": 1877.4570440713535
+      }
+    },
+    {
+      "id": "oxitone.frequency-shifter_decay_128",
+      "meanNanoseconds": 17133.56695774842,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 16983.806851454265,
+        "upper_bound": 17309.226991570325
+      }
+    },
+    {
+      "id": "oxitone.frequency-shifter_tone_128",
+      "meanNanoseconds": 17080.3860674912,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 16962.80450713359,
+        "upper_bound": 17200.958332899063
+      }
+    },
+    {
+      "id": "oxitone.gate_decay_128",
+      "meanNanoseconds": 509.6995005148177,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 506.727713681363,
+        "upper_bound": 513.2010594134914
+      }
+    },
+    {
+      "id": "oxitone.gate_tone_128",
+      "meanNanoseconds": 481.76066896092414,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 468.437874742202,
+        "upper_bound": 499.0494424735213
+      }
+    },
+    {
+      "id": "oxitone.limit_decay_128",
+      "meanNanoseconds": 6970.901071553458,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 6920.38560713349,
+        "upper_bound": 7038.251624830623
+      }
+    },
+    {
+      "id": "oxitone.limit_tone_128",
+      "meanNanoseconds": 7092.0950930864765,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 6998.892288250811,
+        "upper_bound": 7219.854218202432
+      }
+    },
+    {
+      "id": "oxitone.limiter_decay_128",
+      "meanNanoseconds": 24889.470078688675,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 24677.67437959957,
+        "upper_bound": 25097.66092655912
+      }
+    },
+    {
+      "id": "oxitone.limiter_tone_128",
+      "meanNanoseconds": 24882.81727088734,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 24710.81528092168,
+        "upper_bound": 25130.38934984309
+      }
+    },
+    {
+      "id": "oxitone.multiband-dynamics_decay_128",
+      "meanNanoseconds": 11148.927784144751,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 11096.446789116177,
+        "upper_bound": 11199.246958881187
+      }
+    },
+    {
+      "id": "oxitone.multiband-dynamics_tone_128",
+      "meanNanoseconds": 11211.119573042428,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 11144.398675139426,
+        "upper_bound": 11291.495465874037
+      }
+    },
+    {
+      "id": "oxitone.multiband_decay_128",
+      "meanNanoseconds": 4519.218170373562,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 4500.516013211553,
+        "upper_bound": 4536.487743272524
+      }
+    },
+    {
+      "id": "oxitone.multiband_tone_128",
+      "meanNanoseconds": 4444.114732738797,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 4440.152191373605,
+        "upper_bound": 4448.432913932357
+      }
+    },
+    {
+      "id": "oxitone.nonlinear-filter_decay_128",
+      "meanNanoseconds": 13713.133007677712,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 13583.795615942032,
+        "upper_bound": 13863.722582891218
+      }
+    },
+    {
+      "id": "oxitone.nonlinear-filter_tone_128",
+      "meanNanoseconds": 23742.38915602651,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 21783.542368476366,
+        "upper_bound": 25814.970980540293
+      }
+    },
+    {
+      "id": "oxitone.pitch-shifter_decay_128",
+      "meanNanoseconds": 2393.879301761685,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 2293.951585850989,
+        "upper_bound": 2520.764051231269
+      }
+    },
+    {
+      "id": "oxitone.pitch-shifter_tone_128",
+      "meanNanoseconds": 2287.6653214171774,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 2272.8411586762963,
+        "upper_bound": 2305.533134985892
+      }
+    },
+    {
+      "id": "oxitone.resonator_decay_128",
+      "meanNanoseconds": 9634.351618111014,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 9306.442123878538,
+        "upper_bound": 10112.331820300946
+      }
+    },
+    {
+      "id": "oxitone.resonator_tone_128",
+      "meanNanoseconds": 9249.748689787117,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 9170.578705595279,
+        "upper_bound": 9344.352952093164
+      }
+    },
+    {
+      "id": "oxitone.reverb_decay_128",
+      "meanNanoseconds": 3297.5798885711934,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 3276.4054117865085,
+        "upper_bound": 3323.2919571375623
+      }
+    },
+    {
+      "id": "oxitone.reverb_tone_128",
+      "meanNanoseconds": 3291.2880517427466,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 3270.3991692689083,
+        "upper_bound": 3311.440520195421
+      }
+    },
+    {
+      "id": "oxitone.spreader_decay_128",
+      "meanNanoseconds": 1160.174659877903,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 1156.1505523924452,
+        "upper_bound": 1165.197998934531
+      }
+    },
+    {
+      "id": "oxitone.spreader_tone_128",
+      "meanNanoseconds": 1154.9549501420522,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 1149.7194431392816,
+        "upper_bound": 1160.4210278662372
+      }
+    },
+    {
+      "id": "oxitone.tape_decay_128",
+      "meanNanoseconds": 15982.034603174601,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 15836.795564151053,
+        "upper_bound": 16129.600299037305
+      }
+    },
+    {
+      "id": "oxitone.tape_tone_128",
+      "meanNanoseconds": 18785.745807795065,
+      "confidenceIntervalNanoseconds": {
+        "confidence_level": 0.95,
+        "lower_bound": 18042.14415511551,
+        "upper_bound": 20046.108256588876
+      }
+    }
+  ],
+  "wasmNativeParity": {
+    "effects": [
+      "oxitone.compressor",
+      "oxitone.gate",
+      "oxitone.delay",
+      "oxitone.reverb",
+      "oxitone.nonlinear-filter",
+      "oxitone.compactor",
+      "oxitone.multiband-dynamics",
+      "oxitone.resonator",
+      "oxitone.frequency-shifter",
+      "oxitone.pitch-shifter",
+      "oxitone.flanger",
+      "oxitone.convolver",
+      "oxitone.bitcrush",
+      "oxitone.tape",
+      "oxitone.spreader",
+      "oxitone.limiter"
+    ],
+    "customImpulse": true,
+    "sampleRate": 48000,
+    "blockSize": 128,
+    "processBlocks": 128,
+    "comparedFrames": 16384,
+    "maxPcmDifference": 0,
+    "tolerance": 0.0002,
+    "processMemoryBefore": {
+      "bytes": 24117248,
+      "allocations": 39351,
+      "deallocations": 27377
+    },
+    "processMemoryAfter": {
+      "bytes": 24117248,
+      "allocations": 39351,
+      "deallocations": 27377
+    },
+    "peak": 0.06649017333984375,
+    "impulsePeak": 0.06733494251966476,
+    "imports": [],
+    "outputDevice": null
+  },
+  "verification": {
+    "rustPassed": 486,
+    "rustFailed": 0,
+    "rustIgnored": 1,
+    "typescriptProtocolPassed": 38,
+    "typescriptCorePassed": 143,
+    "typescriptWebPassed": 9,
+    "lint": "passed",
+    "typecheck": "passed",
+    "cargoFmt": "passed",
+    "noAudioDevices": true
+  },
+  "limits": [
+    "DSP process timing is not a device callback or a complete production graph. No claim of whole-song realtime acceptance or commercial mastering quality.",
+    "No controlled before/after hardware comparison: earlier runs had shared-host contention.",
+    "Pitch shift uses overlapping grains; frequency-shift quality degrades near DC/Nyquist; limiter reconstruction reserve still requires checking the final export.",
+    "Existing song exports and production metrics precede these DSP changes; demo source was not edited in this iteration."
+  ]
+}

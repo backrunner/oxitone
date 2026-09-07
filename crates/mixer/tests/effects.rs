@@ -7,7 +7,7 @@ use oxitone_mixer::builtin_effect_plugins;
 const SR: f64 = 48_000.0;
 const BLOCK: u32 = 128;
 
-const EXPECTED: [(&str, u64); 14] = [
+const EXPECTED: [(&str, u64); 26] = [
     ("oxitone.eq", 0),
     ("oxitone.limit", 264), // 5 ms lookahead (240) + 2x stage (24)
     ("oxitone.clipper", 24),
@@ -22,6 +22,18 @@ const EXPECTED: [(&str, u64); 14] = [
     ("oxitone.utility", 0),
     ("oxitone.distortion", 36),
     ("oxitone.multiband", 0),
+    ("oxitone.nonlinear-filter", 24),
+    ("oxitone.compactor", 0),
+    ("oxitone.multiband-dynamics", 0),
+    ("oxitone.resonator", 0),
+    ("oxitone.frequency-shifter", 128),
+    ("oxitone.pitch-shifter", 1208),
+    ("oxitone.flanger", 0),
+    ("oxitone.convolver", 256),
+    ("oxitone.bitcrush", 0),
+    ("oxitone.tape", 264),
+    ("oxitone.spreader", 0),
+    ("oxitone.limiter", 276),
 ];
 
 fn host() -> HostContext {

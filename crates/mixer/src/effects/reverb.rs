@@ -61,7 +61,10 @@ impl Plugin for ReverbPlugin {
                         ParameterSmoothing::Linear,
                         ParameterMapping::Linear,
                     ),
-                ],
+                ]
+                .into_iter()
+                .chain(super::wet_shape::specs())
+                .collect(),
                 PluginCapabilities {
                     sidechain_input: false,
                     reports_tail: true,
@@ -149,6 +152,7 @@ struct ReverbInstance {
     predelay: [Line; 2],
     channels: [ReverbChannel; 2],
     tail_remaining: u64,
+    shape: super::wet_shape::WetShape,
 }
 
 impl ReverbInstance {
@@ -180,6 +184,7 @@ impl ReverbInstance {
             predelay: [Line::new(predelay_len), Line::new(predelay_len)],
             channels: [make_channel(0), make_channel(STEREO_SPREAD)],
             tail_remaining: 0,
+            shape: super::wet_shape::WetShape::new(sample_rate),
         }
     }
 
@@ -250,6 +255,7 @@ impl PluginInstance for ReverbInstance {
                 output[n] = wet;
             }
         }
+        self.shape.process(ctx);
         if block_peak > 1e-6 {
             self.tail_remaining = self.max_tail_frames();
         } else {
@@ -271,6 +277,7 @@ impl PluginInstance for ReverbInstance {
             }
         }
         self.tail_remaining = 0;
+        self.shape.reset();
     }
 
     fn tail_frames(&self) -> u64 {

@@ -40,6 +40,7 @@ mod plugin_details;
 #[cfg(test)]
 mod plugin_details_tests;
 mod plugin_dial;
+mod plugin_effect_layout;
 mod plugin_layout;
 mod plugin_layout_builtin;
 mod plugin_layout_registry;
