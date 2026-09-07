@@ -64,6 +64,7 @@ fn sample() -> SampleRef {
         frames: 192_000,
         edits: None,
         musical_length_beats: None,
+        provenance: None,
     }
 }
 

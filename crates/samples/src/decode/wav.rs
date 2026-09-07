@@ -102,7 +102,8 @@ fn parse_smpl(body: &[u8], frames: u64) -> Option<LoopPoints> {
             continue;
         }
         let start = le_u32(&body[base + 8..base + 12]) as u64;
-        let end = (le_u32(&body[base + 12..base + 16]) as u64).min(frames);
+        // RIFF smpl stores an inclusive endpoint; internal loops are half-open.
+        let end = (le_u32(&body[base + 12..base + 16]) as u64 + 1).min(frames);
         if start < end {
             return Some(LoopPoints {
                 start_frame: start,

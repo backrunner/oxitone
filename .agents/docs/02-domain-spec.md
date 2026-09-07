@@ -135,12 +135,13 @@ revision，SampleClip draft 可重试；ID 生成器可消耗序号。`fitBars` 
 覆盖 step/linear/exponential tempo map，以及替代它的 tempo lane（含 loop/lastBeat），
 不读取音频资产、不创建 engine。音乐长度已声明时仍优先使用该长度。
 
-文件导入入口为 `@oxitone/samples` 的同步 `importSample(path, { assetBaseDir? })`。
+文件导入入口为 `@oxitone/samples` 的同步 `importSample(path, { assetBaseDir?, cacheDir? })`。
 它通过版本化 native 命令让 Rust 读取、识别和完整解码源文件，返回可传给 `addSample`
-的 descriptor（frames 为 bigint），附带独立的 source/decoder provenance。默认 URI 是
-绝对本地路径；指定 base 时输入相对该目录解析，并返回目录内的相对 URI。导入不创建
-engine、不打开音频设备、不写文件，也不保留 PCM；prepare 再次校验 hash 并解码。
-压缩资源落盘缓存和 provenance 的项目格式持久化仍待实现。
+的 descriptor（frames 为 bigint），附带随 SampleRef 持久化的 source/decoder provenance。
+默认只读导入；指定 cacheDir 时发布内容寻址的 float32 WAV（详见 `06-format-and-export.md`）。
+默认 URI 是绝对本地路径；指定 base 时输入相对该目录解析，并返回目录内的相对 URI。
+导入不创建 engine、不打开音频设备，PCM 不跨 native 边界；prepare 校验实际播放资产的
+hash 并解码。缓存保留原采样率和有效 loop，不烘焙 Sample edits。
 
 ## Mixer 与 routing
 

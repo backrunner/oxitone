@@ -62,7 +62,7 @@ pub fn build_wav(
         smpl.extend_from_slice(&0u32.to_le_bytes());
         smpl.extend_from_slice(&0u32.to_le_bytes());
         smpl.extend_from_slice(&start.to_le_bytes());
-        smpl.extend_from_slice(&end.to_le_bytes());
+        smpl.extend_from_slice(&(end - 1).to_le_bytes());
         smpl.extend_from_slice(&0u32.to_le_bytes());
         smpl.extend_from_slice(&0u32.to_le_bytes());
         push_chunk(&mut body, b"smpl", &smpl);
@@ -155,5 +155,6 @@ pub fn sample_ref_for(
         frames,
         edits: None,
         musical_length_beats: None,
+        provenance: None,
     }
 }

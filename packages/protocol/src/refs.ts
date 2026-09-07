@@ -2,6 +2,7 @@ import { z } from "zod";
 import { beatWireSchema } from "./beat.js";
 import { entityIdSchema, frameWireSchema } from "./primitives.js";
 import { fadeSpecSchema } from "./timeline.js";
+import { sampleFormatSchema, sampleProvenanceSchema } from "./sample-provenance.js";
 
 export const trackSpecSchema = z.object({
   id: entityIdSchema,
@@ -32,12 +33,13 @@ export const sampleRefSchema = z.object({
   id: entityIdSchema,
   assetUri: z.string().min(1),
   sha256: z.string().regex(/^[0-9a-f]{64}$/, "sha256 must be lowercase hex"),
-  format: z.enum(["wav", "aiff", "flac", "mp3", "mp4", "m4a"]),
+  format: sampleFormatSchema,
   sampleRate: z.number().int().positive(),
   channels: z.union([z.literal(1), z.literal(2)]),
   frames: frameWireSchema,
   edits: sampleEditSpecSchema.optional(),
   musicalLengthBeats: beatWireSchema.optional(),
+  provenance: sampleProvenanceSchema.optional(),
 });
 export type SampleRef = z.infer<typeof sampleRefSchema>;
 

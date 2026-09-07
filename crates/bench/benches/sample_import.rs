@@ -1,8 +1,11 @@
 //! Control-thread file read + SHA-256 + decode + PCM disposal (warm filesystem cache).
-use criterion::{black_box, criterion_group, criterion_main, Criterion, Throughput};
-use oxitone_core::{wire::InspectSampleRequest, PROTOCOL_VERSION};
+use criterion::{black_box, criterion_group, criterion_main, BatchSize, Criterion, Throughput};
+use oxitone_core::{
+    wire::{CacheSampleRequest, InspectSampleRequest},
+    PROTOCOL_VERSION,
+};
 use oxitone_render::{render_wav::BitDepth, wav::WavWriter};
-use oxitone_samples::inspect_sample;
+use oxitone_samples::{cache_sample, inspect_sample};
 
 fn sample_import(c: &mut Criterion) {
     let directory =
@@ -33,6 +36,27 @@ fn sample_import(c: &mut Criterion) {
             b.iter(|| black_box(inspect_sample(black_box(&request)).unwrap()));
         });
     }
+    group.finish();
+    let request = CacheSampleRequest {
+        protocol_version: PROTOCOL_VERSION.into(),
+        path: directory.join("stereo_pcm16_1s.wav").display().to_string(),
+        cache_dir: directory.join("assets").display().to_string(),
+    };
+    let cached = cache_sample(&request).unwrap();
+    let mut group = c.benchmark_group("samples/cache");
+    group.throughput(Throughput::Elements(48000));
+    group.bench_function("stereo_pcm16_1s_reuse", |b| {
+        b.iter(|| black_box(cache_sample(black_box(&request)).unwrap()));
+    });
+    group.bench_function("stereo_pcm16_1s_publish", |b| {
+        b.iter_batched(
+            || {
+                std::fs::remove_file(&cached.path).unwrap();
+            },
+            |()| black_box(cache_sample(black_box(&request)).unwrap()),
+            BatchSize::PerIteration,
+        );
+    });
     group.finish();
     std::fs::remove_dir_all(directory).unwrap();
 }

@@ -11,6 +11,8 @@ import {
   renderOptionsSchema,
   inspectSampleRequestSchema,
   sampleInfoSchema,
+  cacheSampleRequestSchema,
+  cachedSampleInfoSchema,
   beatDurationQuerySchema,
   beatDurationResultSchema,
 } from "../index.js";
@@ -31,6 +33,8 @@ export function generateSchemas(): void {
   writeSchema("schemas/render-options.schema.json", renderOptionsSchema);
   writeSchema("schemas/inspect-sample-request.schema.json", inspectSampleRequestSchema);
   writeSchema("schemas/sample-info.schema.json", sampleInfoSchema);
+  writeSchema("schemas/cache-sample-request.schema.json", cacheSampleRequestSchema);
+  writeSchema("schemas/cached-sample-info.schema.json", cachedSampleInfoSchema);
   writeSchema("schemas/beat-duration-query.schema.json", beatDurationQuerySchema);
   writeSchema("schemas/beat-duration-result.schema.json", beatDurationResultSchema);
   writeSchema("schemas/plugin-manifest.schema.json", pluginManifestSchema);

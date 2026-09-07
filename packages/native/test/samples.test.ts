@@ -18,4 +18,20 @@ describe("versioned sample inspection command", () => {
       }
     }
   });
+  it("validates cache commands and protocol before accessing source or destination", () => {
+    const binding = loadNativeBinding();
+    for (const [request, code] of [
+      ["not json", ErrorCode.InvalidProject],
+      [JSON.stringify({ protocolVersion: "1.0", path: "missing" }), ErrorCode.InvalidProject],
+      [JSON.stringify({ protocolVersion: "99.0", path: "", cacheDir: "" }), ErrorCode.ProtocolVersionUnsupported],
+      [JSON.stringify({ protocolVersion: "1.0", path: "missing", cacheDir: "" }), ErrorCode.InvalidProject],
+    ]) {
+      try {
+        binding.cacheSample(request!);
+        expect.unreachable("invalid cache request succeeded");
+      } catch (error) {
+        expect(JSON.parse((error as Error).message)).toMatchObject({ code });
+      }
+    }
+  });
 });

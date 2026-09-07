@@ -813,6 +813,65 @@
               "denominator"
             ],
             "additionalProperties": false
+          },
+          "provenance": {
+            "type": "object",
+            "properties": {
+              "sourceSha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "sourceFormat": {
+                "type": "string",
+                "enum": [
+                  "wav",
+                  "aiff",
+                  "flac",
+                  "mp3",
+                  "mp4",
+                  "m4a"
+                ]
+              },
+              "sourceSampleRate": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 4294967295
+              },
+              "sourceChannels": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 255
+              },
+              "sourceBitDepth": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 255
+              },
+              "decoder": {
+                "type": "string",
+                "minLength": 1
+              },
+              "channelLayoutAction": {
+                "type": "string",
+                "enum": [
+                  "kept",
+                  "downmixed-to-stereo"
+                ]
+              },
+              "cacheEncoding": {
+                "type": "string",
+                "const": "wav-f32-v1"
+              }
+            },
+            "required": [
+              "sourceSha256",
+              "sourceFormat",
+              "sourceSampleRate",
+              "sourceChannels",
+              "decoder",
+              "channelLayoutAction"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [

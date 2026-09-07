@@ -99,6 +99,24 @@ pub(super) fn validate_clips(snapshot: &ProjectSnapshot) -> Result<(), OxitoneEr
     }
     for (i, sample) in snapshot.samples.iter().enumerate() {
         let path = format!("$.samples[{i}]");
+        if let Some(provenance) = &sample.provenance {
+            if provenance.source_sha256.len() != 64
+                || !provenance
+                    .source_sha256
+                    .bytes()
+                    .all(|c| c.is_ascii_digit() || (b'a'..=b'f').contains(&c))
+                || provenance.source_sample_rate == 0
+                || provenance.source_channels == 0
+                || provenance.source_bit_depth == Some(0)
+                || provenance.decoder.is_empty()
+            {
+                return Err(OxitoneError::with_path(
+                    codes::INVALID_PROJECT,
+                    "invalid sample provenance",
+                    format!("{path}.provenance"),
+                ));
+            }
+        }
         if sample.frames == 0 || sample.sample_rate == 0 || ![1, 2].contains(&sample.channels) {
             return Err(OxitoneError::with_path(
                 codes::INVALID_PROJECT,

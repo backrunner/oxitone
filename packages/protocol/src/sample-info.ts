@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { sampleRefSchema } from "./refs.js";
+import { sampleProvenanceSchema } from "./sample-provenance.js";
 
 /** Control-thread inspection request; no engine or project is required. */
 export const inspectSampleRequestSchema = z.object({
@@ -19,3 +20,18 @@ export const sampleInfoSchema = sampleRefSchema.pick({
   channelLayoutAction: z.enum(["kept", "downmixed-to-stereo"]),
 });
 export type SampleInfo = z.infer<typeof sampleInfoSchema>;
+
+/** Explicit import-time WAV cache publication; independent of any engine. */
+export const cacheSampleRequestSchema = inspectSampleRequestSchema.extend({
+  cacheDir: inspectSampleRequestSchema.shape.path,
+});
+export type CacheSampleRequest = z.infer<typeof cacheSampleRequestSchema>;
+
+export const cachedSampleInfoSchema = sampleInfoSchema.pick({
+  protocolVersion: true, sha256: true, sampleRate: true, channels: true, frames: true,
+}).extend({
+  path: inspectSampleRequestSchema.shape.path,
+  format: z.literal("wav"),
+  provenance: sampleProvenanceSchema,
+});
+export type CachedSampleInfo = z.infer<typeof cachedSampleInfoSchema>;

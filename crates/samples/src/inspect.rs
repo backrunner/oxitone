@@ -6,33 +6,42 @@ use oxitone_core::wire::{
 };
 use oxitone_core::{codes, version::check_protocol_version, OxitoneError, PROTOCOL_VERSION};
 
-use crate::{decode_bytes, ChannelLayoutAction};
+use crate::{decode_bytes, ChannelLayoutAction, DecodedSample};
 
 /// Inspect an asset without creating a graph, writing a cache, or returning PCM.
 pub fn inspect_sample(request: &InspectSampleRequest) -> Result<SampleInfo, OxitoneError> {
     check_protocol_version(&request.protocol_version)?;
-    if request.path.is_empty() || request.path.contains('\0') {
+    validate_path(&request.path, "path")?;
+    let decoded = read_sample(Path::new(&request.path))?;
+    Ok(sample_info(&decoded))
+}
+
+pub(crate) fn validate_path(value: &str, field: &str) -> Result<(), OxitoneError> {
+    if value.is_empty() || value.contains('\0') {
         return Err(OxitoneError::with_path(
             codes::INVALID_PROJECT,
             "sample path must be nonempty and contain no NUL",
-            "path",
+            field,
         ));
     }
-    let path = Path::new(&request.path);
+    Ok(())
+}
+
+pub(crate) fn read_sample(path: &Path) -> Result<DecodedSample, OxitoneError> {
     let bytes = std::fs::read(path).map_err(|error| {
         OxitoneError::with_path(
             codes::ASSET_UNAVAILABLE,
             format!("failed to read sample: {error}"),
-            &request.path,
+            path.display().to_string(),
         )
     })?;
-    inspect_bytes(&bytes, path).map_err(|mut error| {
-        error.path = Some(request.path.clone());
+    decode_detected(&bytes, path).map_err(|mut error| {
+        error.path = Some(path.display().to_string());
         error
     })
 }
 
-fn inspect_bytes(bytes: &[u8], path: &Path) -> Result<SampleInfo, OxitoneError> {
+fn decode_detected(bytes: &[u8], path: &Path) -> Result<DecodedSample, OxitoneError> {
     let format = detect_format(bytes, path).ok_or_else(|| {
         OxitoneError::new(
             codes::SAMPLE_FORMAT_UNSUPPORTED,
@@ -54,6 +63,11 @@ fn inspect_bytes(bytes: &[u8], path: &Path) -> Result<SampleInfo, OxitoneError> 
             "sample has no usable audio frames",
         ));
     }
+    Ok(decoded)
+}
+
+pub(crate) fn sample_info(decoded: &DecodedSample) -> SampleInfo {
+    let format = decoded.metadata.format;
     let decoder = decoded
         .metadata
         .decoder
@@ -63,7 +77,7 @@ fn inspect_bytes(bytes: &[u8], path: &Path) -> Result<SampleInfo, OxitoneError> 
             SampleFormat::Aiff => "oxitone-aiff-v1".into(),
             _ => "symphonia-0.5".into(),
         });
-    Ok(SampleInfo {
+    SampleInfo {
         protocol_version: PROTOCOL_VERSION.into(),
         sha256: decoded.metadata.sha256.clone(),
         format,
@@ -77,7 +91,12 @@ fn inspect_bytes(bytes: &[u8], path: &Path) -> Result<SampleInfo, OxitoneError> 
             ChannelLayoutAction::Kept => SampleChannelLayoutAction::Kept,
             ChannelLayoutAction::DownmixedToStereo => SampleChannelLayoutAction::DownmixedToStereo,
         },
-    })
+    }
+}
+
+#[cfg(test)]
+fn inspect_bytes(bytes: &[u8], path: &Path) -> Result<SampleInfo, OxitoneError> {
+    decode_detected(bytes, path).map(|decoded| sample_info(&decoded))
 }
 
 fn detect_format(bytes: &[u8], path: &Path) -> Option<SampleFormat> {

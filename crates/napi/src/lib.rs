@@ -1162,6 +1162,7 @@ mod tests {
             frames: 128,
             edits: None,
             musical_length_beats: None,
+            provenance: None,
         });
         snapshot.sample_clips.push(SampleClipSpec {
             id: "scl_a".into(),

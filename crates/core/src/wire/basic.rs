@@ -248,6 +248,8 @@ pub struct SampleRef {
     pub edits: Option<SampleEditSpec>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub musical_length_beats: Option<Beat>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub provenance: Option<super::SampleProvenance>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

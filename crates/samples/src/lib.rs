@@ -12,11 +12,15 @@
 //! (content hash, edit spec hash, target rate).
 
 pub mod cache;
+mod cache_file;
+mod cache_wav;
 mod decode;
 mod edit;
+mod import;
 mod inspect;
 pub mod resample;
 mod types;
+pub use import::cache_sample;
 pub use inspect::inspect_sample;
 
 #[cfg(test)]

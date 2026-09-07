@@ -118,6 +118,7 @@ fn slicer_snapshot(state: Value) -> (ProjectSnapshot, oxitone_graph::PluginRegis
         frames: 192_000,
         edits: None,
         musical_length_beats: None,
+        provenance: None,
     });
     s.channels[0].instrument.plugin_id = "oxitone.slicer".to_string();
     s.channels[0].instrument.state = Some(state);

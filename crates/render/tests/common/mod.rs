@@ -284,6 +284,7 @@ pub fn sample_asset(dir: &Path, id: &str, samples: &[f32], musical_beats: (i64, 
         frames: samples.len() as u64,
         edits: None,
         musical_length_beats: Some(beat(musical_beats.0, musical_beats.1)),
+        provenance: None,
     }
 }
 

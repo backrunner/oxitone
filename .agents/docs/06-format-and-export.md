@@ -53,17 +53,32 @@ URI、`..`、反斜杠和经 symlink 逃出项目目录的资源。资源缺失/
 
 编辑只写 `SampleEditSpec`，保持原始资源不可变。`normalize`、fade、crossfade、trim 等在 prepare/offline cache 阶段应用；实时播放引用已经准备好的 PCM segment。
 
-当前交付的是只读导入入口：`@oxitone/samples#importSample` 调用 Rust `inspectSample`，
+`@oxitone/samples#importSample` 默认调用 Rust `inspectSample` 进行只读导入，
 按文件签名识别 WAV/AIFF/FLAC/MP3/MP4/M4A，完整解码后报告源文件 SHA-256、解码维度、
 decoder 名称及声道转换。PCM 的采样率保持原值，SRC/trim 在 prepare 应用；大于 2 个
 声道按既有降混规则输出 stereo，帧数表示解码结果（压缩格式可包含 codec padding）。
 WAV/AIFF decoder 标识为 `oxitone-wav-v1`/`oxitone-aiff-v1`，压缩格式沿用
 `symphonia 0.5/<codec>`。文件系统路径支持 Unicode 和空格。
 
-此入口不写原文件或缓存 WAV；每次调用暂存完整解码 PCM 后释放，prepare 会再次解码。
-`provenance` 返回给调用方，但当前项目 `SampleRef` 不保留该字段。规范化 WAV 缓存
-落盘与 provenance 持久化仍未交付。原子项目保存/加载现由上文入口提供；它保留源
-编码字节，不替代标准化导入。显式 `assetBaseDir` 可用于 compile、Session.update 和 render。
+指定 `importSample(path, { cacheDir, assetBaseDir? })` 时，Rust 控制线程把任意支持的
+源格式解码为 `wav-f32-v1`：原采样率、mono/stereo、little-endian float32，无增益归一化、
+裁剪、dither、SRC 或 edits；保留解码后的精确 PCM 与有效 WAV forward loop。WAV `smpl`
+的 inclusive end 在读取时转成内部半开区间，写缓存时反向转换。非有限 PCM 拒绝，
+RIFF 超过 u32 长度报 `WavTooLarge`。文件名为 `<WAV字节SHA-256>.wav`。
+缓存使用同目录 create-new 临时文件、flush/fsync、hard-link 原子发布和目录 fsync；
+不覆盖原文件或已有资产。并发相同导入收敛到同一文件；已有损坏文件、symlink 或非普通
+文件以 `AssetUnavailable` 拒绝，不静默修复。失败可能留下已发布但未引用的完整资源，
+正常错误返回会清理临时文件，进程被强杀时可能留下临时文件；无自动垃圾回收。
+
+两种导入都返回并持久化可选 `SampleRef.provenance`：sourceSha256/sourceFormat/
+sourceSampleRate/sourceChannels/sourceBitDepth?、decoder、channelLayoutAction，缓存导入
+另带 `cacheEncoding: 'wav-f32-v1'`。不保存机器路径；旧项目省略此字段仍有效。
+SampleRef 的顶层 hash/format 始终描述实际播放资产，provenance 只是来源记录，不用于
+prepare 资源查找。缓存导入后可删除源文件，保存/移动/恢复工程仍只依赖缓存 WAV。
+缓存目录相对 assetBaseDir（或 cwd）解析；指定 base 时输出必须在其内部，源文件可在
+外部。默认只读导入仍要求源文件位于 base 内。每次导入重新读取并解码源文件以发现变化；
+缓存文件复用避免重复发布，prepare 使用 WAV。PCM 始终留在 Rust，显式 assetBaseDir
+可用于 compile、Session.update 和 render。
 
 ## WAV 导出
 

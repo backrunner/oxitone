@@ -202,11 +202,22 @@ interface SampleInfo {
 }
 ```
 
-请求与响应均使用协议 1.0，新增独立命令不改变 ProjectSnapshot。先检查版本，再读文件。
+请求与响应均使用协议 1.0。先检查版本，再读文件。
 空/NUL 路径或错误请求结构报 `InvalidProject`；文件不可读报 `AssetUnavailable`；
 未知容器、无法解码或零帧音频报 `SampleFormatUnsupported`，文件相关错误带 `details.path`。
 prepare 仍按原始文件 hash 校验，源文件修改后必须重新导入。PCM 始终留在 Rust 控制线程，
 不进入 JSON，也不触发 audio callback。
+
+`cacheSample(path, cacheDir)` 为独立 native facade；N-API 输入为
+`{ protocolVersion, path, cacheDir }`，输出为
+`{ protocolVersion, path, sha256, format: 'wav', sampleRate, channels, frames, provenance }`。
+输出 path 是绝对缓存文件路径，frames 为 wire u64。空/NUL cacheDir 以 InvalidProject
+拒绝，缓存 I/O/hash/symlink 错误为 AssetUnavailable，RIFF 溢出为 WavTooLarge。
+`importSample` 的 cacheDir 选项把该结果转换为 bigint frames 和 assetUri。
+`SampleOptions`/`SampleRef` 新增可选 provenance，含 sourceSha256/sourceFormat/
+sourceSampleRate/sourceChannels/sourceBitDepth?、decoder、channelLayoutAction、
+cacheEncoding?（当前唯一值 wav-f32-v1）。Sample.provenance 返回防御性副本。
+该字段通过 TS/Rust snapshot、可编辑恢复和目录保存/读取保留，不改变 DSP。
 
 `@oxitone/core` 的混音 builder 复用以下协议 1.0 wire contracts：
 

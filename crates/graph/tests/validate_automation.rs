@@ -38,6 +38,7 @@ fn add_sample(snapshot: &mut ProjectSnapshot) {
         frames: 192_000,
         edits: None,
         musical_length_beats: None,
+        provenance: None,
     });
     snapshot.sample_clips.push(SampleClipSpec {
         id: "scl_0001".to_string(),

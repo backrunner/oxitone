@@ -8,10 +8,16 @@ conventional commits (`type(scope): description`).
 
 ### Added
 
+- Explicit normalized sample caching via `importSample(path, { cacheDir })` and
+  native `cacheSample`: Rust publishes immutable, content-addressed float32 WAVs
+  with original sample rate, decoded PCM and forward loops. Source hashes, format,
+  decoder and channel provenance now persist through project save/load and native
+  snapshots. Corrupt cache files are rejected; interrupted writes are cleaned up.
+
 - Atomic portable project save/load through Project.save and snapshot file helpers:
   versioned canonical manifests, content-addressed source assets, SHA-256 verification,
   fsync and atomic publication. Directory moves preserve native render output; load
-  returns a snapshot and asset base. Compressed WAV caching remains pending.
+  returns a snapshot and asset base. Explicit import-time caching is available separately.
 - `Project.fromSnapshot` and `Project.load` restore editable builders and retain the
   resource directory for compile/render/save. Exact beats, note IDs/order, plugin state,
   routes and optional defaults survive round-trips; new entities avoid restored IDs.

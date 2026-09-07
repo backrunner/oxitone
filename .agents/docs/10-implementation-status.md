@@ -1,4 +1,4 @@
-# 计划与实现核对（更新至 2026-09-06）
+# 计划与实现核对（更新至 2026-09-07）
 
 最初以 `9423ad3` 为核对基线；下表更新为当前实现，后文保留各阶段证据。
 提交继续使用 `BackRunner <dev@backrunner.top>` 与 `type(scope): description`。
@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | M0 工程与协议 | pnpm/Cargo workspace、版本协议、canonical fixtures、N-API smoke tests | `.github/workflows` 缺失；干净 macOS 环境安装/构建门禁未建立 |
 | M1 时间轴/MIDI | Project/Track/Pattern/Clip、Chord/Arp、tempo/time-signature、Track tempo/enabled/midiChannel、确定性 SMF writer 与边界测试 | 当前已识别的 authoring 缺口已关闭；持续维护确定性/边界回归 |
-| M2 音源/采样 | Rust synth/Sampler/Slicer、解码/编辑/SRC、SampleClip stretch/repitch、C ABI、TS Sample/Clip/fit builders 与 @oxitone/samples 只读导入 | 压缩素材的标准化 WAV 缓存、provenance 持久化、内置音源便捷入口 |
+| M2 音源/采样 | Rust synth/Sampler/Slicer、解码/编辑/SRC、SampleClip stretch/repitch、C ABI、TS Sample/Clip/fit builders、只读导入及标准化 WAV 缓存/provenance 持久化 | 内置音源便捷入口；新核实 Slicer tempoSync repitch 尚未接入宿主 tempo 更新 |
 | M3 Mixer/Automation/导出 | TS mixer/insert authoring，Rust mixer/PDC/12 effects、完整 insert 自动化/host 参数路径、tempo bake、WAV/stem/loudness 与回归测试 | 全规格 golden/PDC/export 的自动化发布门禁仍需建立和复核 |
 | M4 实时与设备 | CoreAudio HAL、render-ahead/direct、transport/loop、设备适配/诊断、Session 换图及 bar/beat/marker/timecode 入口、换图回收与模拟设备测试 | 修正循环负载后的 10/60 分钟 soak、真实设备切换/拔插和 callback 指标仍需验收 |
 | M5 npm/DX/插件 | CLI render/export-midi/doctor、显式动态插件注册/校验/故障计数，最新提交有 C/Rust/N-API 测试 | 平台包/发布/签名公证、逐节点 deadline watchdog、示例/API reference/迁移说明；`oxitone` 当前仅导出底层 facade，未提供仅安装它即可使用 Project 的包结构 |
@@ -185,7 +185,25 @@
   worker p99 直方图桶上界 1.049 ms，deadline 2.667 ms，ring 观测达到 512 frames。
   这不关闭真实 CoreAudio、10/60 分钟长测、设备拔插或资源预算的验收缺口。
 
-当前剩余重点：预设；标准化 WAV 导入
-缓存/provenance 与内置音源便捷入口；macOS CI/npm 分发/示例；Preview runner/GPUI；
+## 标准化采样缓存与来源持久化（2026-09-07）
+
+- `importSample(path, { cacheDir, assetBaseDir? })` 与版本化 native `cacheSample`
+  在 Rust 控制线程生成内容寻址的 float32 WAV；原采样率、解码 PCM、有效 forward loop
+  保留，源文件不变。发布使用 temp/fsync/hard-link，拒绝损坏/链接缓存，失败清理临时文件。
+- 两种导入的 provenance 现在经 SampleRef、TS/Rust snapshot、可编辑恢复和项目文件
+  保存；原 hash/format 与缓存 hash/format 分开，无机器路径。实际 AAC 文件转码后删除
+  源文件、移动并再次保存工程，原始/缓存/恢复后的 native WAV 逐字节一致。
+- 修正 WAV smpl 的 inclusive endpoint 到内部半开区间转换，避免少播放最后一帧。
+  覆盖 mono/stereo/downmix、AIFF、并发发布、写入中断、hash 损坏和非法 metadata。
+- `pnpm schemas`、release native build、lint/typecheck、191 TS tests、fmt 和
+  `cargo test --workspace` 的 406 tests 全部通过，无 skip/ignore。
+  本机全局 pnpm 11.25.0 的自动切换缓存损坏，使用任务缓存中安装的仓库指定 11.11.0
+  完成检查，未修改项目 packageManager 或全局安装。
+- [控制线程基准](../../benchmarks/results/2026-09-07-sample-cache.json)：Apple M4 /
+  48 kHz stereo PCM16 1 秒，30 samples；缓存复用 10.49 ms、首次发布 7.25 ms。
+  包含完整读/解码、WAV 写入、hash 与 fsync；复用另校验已有文件。首次基线，主机并发
+  负载下测量，不代表 realtime 或设备验收；callback、设备、xrun 未测。
+
+当前剩余重点：预设；内置音源便捷入口和 Slicer tempoSync；macOS CI/npm 分发/示例；Preview runner/GPUI；
 持续有声负载及设备拔插、资源预算/watchdog、fuzz/sanitizer/SBOM/签名公证等发布门禁。
 这些项仍未完成，逐项实现和记录出口证据后才能关闭对应里程碑。

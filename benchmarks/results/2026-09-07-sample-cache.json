@@ -1,0 +1,25 @@
+{
+  "schema": "oxitone.focused-benchmark.v1",
+  "date": "2026-09-07",
+  "change": "Persistent normalized WAV sample cache and source provenance",
+  "baseCommit": "5d5c773",
+  "machine": { "cpu": "Apple M4", "os": "macOS 27.0 (26A5425a)", "arch": "aarch64-apple-darwin", "cargo": "1.98.0" },
+  "config": {
+    "sampleRate": 48000, "channels": 2, "blockSize": null, "frames": 48000,
+    "sourceBitDepth": 16, "outputEncoding": "wav-f32-v1", "sampleCount": 30,
+    "warmupSeconds": 1, "measurementTargetSeconds": 3,
+    "filesystem": "BRData volume, warm source cache, concurrent host load",
+    "device": null, "callbackP95Ns": null, "callbackP99Ns": null, "xruns": null
+  },
+  "command": "cargo bench -p oxitone-bench --bench sample_import -- samples/cache --warm-up-time 1 --measurement-time 3 --sample-size 30",
+  "scenarios": [
+    { "id": "samples/cache/stereo_pcm16_1s_reuse", "slopeNs": 10494751.355261765, "confidence95Ns": [9740188.68096264, 11230069.604730664] },
+    { "id": "samples/cache/stereo_pcm16_1s_publish", "slopeNs": 7254283.665679535, "confidence95Ns": [6991323.4641929185, 7649233.620441577] }
+  ],
+  "notes": [
+    "Includes source read/hash/decode, WAV serialization, content hash, temporary file write, file fsync, publication and directory fsync. PCM never crosses N-API.",
+    "Reuse validates the existing asset's hash and does not overwrite it. Each import redecodes the source; there is no source-path metadata index.",
+    "Publish removes the prior output outside each timed iteration. Criterion extended collection to obtain all 30 samples.",
+    "First control-thread baseline, no realtime path or device measurements; not a soak acceptance result."
+  ]
+}

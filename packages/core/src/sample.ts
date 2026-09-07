@@ -26,6 +26,7 @@ export interface SampleOptions {
   frames: bigint | number;
   edits?: SampleEditSpec;
   musicalLengthBeats?: number;
+  provenance?: SampleRef["provenance"];
 }
 
 /** Immutable audio asset reference; decoding and editing happen in Rust prepare. */
@@ -78,6 +79,7 @@ export class Sample {
   get channels(): 1 | 2 { return this.spec.channels; }
   get frames(): bigint { return BigInt(this.spec.frames); }
   get format(): SampleRef["format"] { return this.spec.format; }
+  get provenance(): SampleRef["provenance"] { return structuredClone(this.spec.provenance); }
   get musicalLengthBeats(): number | undefined {
     return this.spec.musicalLengthBeats === undefined
       ? undefined

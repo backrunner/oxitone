@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "protocolVersion": {
+      "type": "string"
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "cacheDir": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "protocolVersion",
+    "path",
+    "cacheDir"
+  ],
+  "additionalProperties": false
+}

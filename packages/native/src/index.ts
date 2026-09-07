@@ -22,12 +22,15 @@ import {
   entityIdSchema,
   inspectSampleRequestSchema,
   sampleInfoSchema,
+  cacheSampleRequestSchema,
+  cachedSampleInfoSchema,
   checkProtocolVersion,
   PROTOCOL_VERSION,
   beatDurationQuerySchema,
   beatDurationResultSchema,
   beatToWire,
   type SampleInfo,
+  type CachedSampleInfo,
   type RegisterPluginOptions,
   type RegisteredPlugin,
   type PluginDiagnostics,
@@ -48,6 +51,7 @@ import { loadNativeBinding, type NativeBinding } from "./load.js";
 
 export type {
   SampleInfo,
+  CachedSampleInfo,
   RegisterPluginOptions,
   RegisteredPlugin,
   PluginManifest,
@@ -87,6 +91,20 @@ export function inspectSample(path: string): SampleInfo {
   }
   const response = call((binding) => binding.inspectSample(JSON.stringify(request.data)));
   const info = sampleInfoSchema.parse(JSON.parse(response));
+  checkProtocolVersion(info.protocolVersion);
+  return info;
+}
+
+/** Decode and atomically publish an immutable float32 WAV on the control thread. */
+export function cacheSample(path: string, cacheDir: string): CachedSampleInfo {
+  const request = cacheSampleRequestSchema.safeParse({ protocolVersion: PROTOCOL_VERSION, path, cacheDir });
+  if (!request.success) {
+    throw new OxitoneError(ErrorCode.InvalidProject, "invalid sample cache request", {
+      details: { path: String(request.error.issues[0]?.path[0] ?? "path") },
+    });
+  }
+  const response = call((binding) => binding.cacheSample(JSON.stringify(request.data)));
+  const info = cachedSampleInfoSchema.parse(JSON.parse(response));
   checkProtocolVersion(info.protocolVersion);
   return info;
 }

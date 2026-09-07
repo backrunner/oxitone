@@ -16,7 +16,9 @@ describe("file sample import through Rust", () => {
     expect(imported).toEqual({
       assetUri: path, sha256: createHash("sha256").update(bytes).digest("hex"),
       format: "wav", channels: 1, sampleRate: 48_000, frames: 4800n,
-      provenance: { sourceChannels: 1, sourceBitDepth: 16, decoder: "oxitone-wav-v1", channelLayoutAction: "kept" },
+      provenance: { sourceSha256: createHash("sha256").update(bytes).digest("hex"),
+        sourceFormat: "wav", sourceSampleRate: 48_000,
+        sourceChannels: 1, sourceBitDepth: 16, decoder: "oxitone-wav-v1", channelLayoutAction: "kept" },
     });
     expect(inspectSample(path)).toMatchObject({ protocolVersion: PROTOCOL_VERSION, frames: "4800" });
     expect(readFileSync(path)).toEqual(bytes);
@@ -70,7 +72,7 @@ describe("file sample import through Rust", () => {
     const project = new Project();
     const sample = project.addSample(imported);
     project.addTrack().use(project.addChannel()).sample(sample).at({ bar: 1 });
-    expect(project.snapshot().samples[0]).not.toHaveProperty("provenance");
+    expect(project.snapshot().samples[0]?.provenance).toEqual(imported.provenance);
     const session = await project.compile();
     await session.dispose();
   });

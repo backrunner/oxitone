@@ -8,6 +8,7 @@ import type * as generated from "@oxitone/native-generated";
 export interface NativeBinding {
   resolveBeatDuration: typeof generated.resolveBeatDuration;
   inspectSample: typeof generated.inspectSample;
+  cacheSample: typeof generated.cacheSample;
   createEngine: typeof generated.createEngine;
   compile: typeof generated.compile;
   registerPlugin: typeof generated.registerPlugin;
