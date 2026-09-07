@@ -91,6 +91,17 @@ impl Preview {
             )
             .child(
                 theme
+                    .button("shortcut-help", "Keys ?")
+                    .mr_2()
+                    .flex_shrink_0()
+                    .on_click(cx.listener(|this, _, window, cx| {
+                        this.show_shortcuts = !this.show_shortcuts;
+                        this.workspace_focus.focus(window);
+                        cx.notify();
+                    })),
+            )
+            .child(
+                theme
                     .button(
                         "scopes",
                         if self.show_scopes {

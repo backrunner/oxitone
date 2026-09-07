@@ -70,7 +70,14 @@ pub fn view(
             }),
         )
         .on_key_down(cx.listener(|this, event: &KeyDownEvent, _, cx| {
-            if crate::mixer_actions::scroll_details(&this.workspace.inspector, &event.keystroke.key)
+            let m = event.keystroke.modifiers;
+            if !m.alt
+                && !m.platform
+                && !m.control
+                && crate::mixer_actions::scroll_details(
+                    &this.workspace.inspector,
+                    &event.keystroke.key,
+                )
             {
                 cx.stop_propagation();
                 cx.notify();

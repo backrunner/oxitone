@@ -1,0 +1,25 @@
+{
+  "schema": "oxitone.focused-benchmark.v1",
+  "date": "2026-09-07",
+  "change": "Precise preview positioning, cue playback and shared transport shortcuts",
+  "baseCommit": "05960b1",
+  "machine": { "cpu": "Apple M4", "os": "macOS 27.0 (26A5425a)", "arch": "aarch64-apple-darwin", "cargo": "1.98.0" },
+  "config": {
+    "sampleRate": 48000, "blockSize": 128, "outputChannels": 2,
+    "channels": 4, "masterLimiter": true,
+    "sampleCount": 30, "warmupSeconds": 1, "measurementTargetSeconds": 3,
+    "device": null, "cpuUtilization": null, "callbackP95Ns": null, "callbackP99Ns": null, "xruns": null
+  },
+  "command": "cargo bench -p oxitone-bench --bench preview -- --warm-up-time 1 --measurement-time 3 --sample-size 30",
+  "scenarios": [
+    { "id": "preview/4_channels_128/baseline", "slopeNs": 30809.349761032896, "confidence95Ns": [30518.73200429306, 31081.694708781746] },
+    { "id": "preview/4_channels_128/telemetry", "slopeNs": 34488.594881672936, "confidence95Ns": [33533.00891585646, 35981.77296501507] }
+  ],
+  "notes": [
+    "Preview windows and build/test processes were stopped during this run. DSP and benchmark sources are unchanged; Cargo reused the existing benchmark binary, which does not link the viewer.",
+    "Criterion reports a historical baseline improvement of -3.45% and telemetry regression of +6.88%. Telemetry includes four high-severe outliers and a wide confidence interval. This does not establish causation by the UI/control-thread changes.",
+    "Four channels; playback restarts every 180 blocks. Telemetry queues are consumed every 12 blocks, approximately 30 Hz.",
+    "This microbenchmark excludes GPUI input/layout/painting, plugin windows, transport command latency and device I/O. It does not measure UI frame rate, callback p95/p99 or xrun endurance.",
+    "Separate transport smoke uses GPUI keyboard dispatch and pointer controllers with measured bounds, the real engine and simulated output. It verifies cue/loop/Go/multiwindow controls and an unchanged authoring snapshot; it does not validate physical mouse hit testing or device playback."
+  ]
+}

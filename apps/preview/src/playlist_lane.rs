@@ -90,10 +90,13 @@ pub fn rows(
                         clip.clone(),
                         tint,
                     )))
-                    .on_click(cx.listener(move |this, _, _, cx| {
-                        this.selected_clip = Some(id.clone());
-                        cx.notify();
-                    })),
+                    .on_mouse_down(
+                        MouseButton::Left,
+                        cx.listener(move |this, _, _, cx| {
+                            this.selected_clip = Some(id.clone());
+                            cx.notify();
+                        }),
+                    ),
             );
         }
         for clip in project
@@ -151,15 +154,25 @@ pub fn rows(
                     .bg(rgb(theme.gold)),
             );
         }
-        lane = lane.child(
-            div()
-                .absolute()
-                .left(px(cursor))
-                .top_0()
-                .w(px(1.))
-                .h_full()
-                .bg(rgb(theme.gold)),
-        );
+        lane = lane
+            .child(
+                div()
+                    .absolute()
+                    .left(px(project.beat(this.cue_frame) as f32 * zoom))
+                    .top_0()
+                    .w(px(2.))
+                    .h(px(10.))
+                    .bg(rgb(theme.accent)),
+            )
+            .child(
+                div()
+                    .absolute()
+                    .left(px(cursor))
+                    .top_0()
+                    .w(px(1.))
+                    .h_full()
+                    .bg(rgb(theme.gold)),
+            );
         lanes = lanes.child(lane);
         headers = headers.child(
             div()

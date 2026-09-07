@@ -16,7 +16,7 @@ pub fn view(this: &mut Preview, window_width: f32, cx: &mut Context<Preview>) ->
     }
     let zoom = this.zoom;
     let width = (project.end() as f32 * zoom).max(viewport);
-    let cursor = project.beat(this.playback.audible) as f32 * zoom;
+    let cursor = project.beat(this.position_frame()) as f32 * zoom;
     let offset = this.workspace.arrangement.offset();
     let mut ruler = div().relative().h(px(30.)).w(px(width));
     let mut grid_ticks = Vec::new();
@@ -44,13 +44,11 @@ pub fn view(this: &mut Preview, window_width: f32, cx: &mut Context<Preview>) ->
                 .px_1()
                 .text_size(px(10.))
                 .text_color(rgb(theme.muted))
-                .cursor_pointer()
                 .child(if downbeat {
                     format!("{bar}")
                 } else {
                     "·".into()
-                })
-                .on_click(cx.listener(move |this, _, _, _| this.seek(beat as f64))),
+                }),
         );
     }
     let (lanes, headers) = crate::playlist_lane::rows(this, width, cursor, &grid_ticks, cx);
@@ -74,7 +72,14 @@ pub fn view(this: &mut Preview, window_width: f32, cx: &mut Context<Preview>) ->
                 )
                 .text_size(px(10.))
                 .flex_shrink_0()
-                .on_click(cx.listener(move |this, _, _, _| this.seek(beat))),
+                .on_mouse_down(
+                    MouseButton::Left,
+                    cx.listener(move |this, event, window, cx| {
+                        this.workspace_focus.focus(window);
+                        this.timeline_click(beat, event);
+                        cx.notify();
+                    }),
+                ),
         );
     }
     div()
@@ -130,6 +135,16 @@ pub fn view(this: &mut Preview, window_width: f32, cx: &mut Context<Preview>) ->
                         .min_w_0()
                         .relative()
                         .overflow_hidden()
+                        .id("playlist-ruler")
+                        .cursor_crosshair()
+                        .on_mouse_down(
+                            MouseButton::Left,
+                            cx.listener(|this, event, window, cx| {
+                                this.workspace_focus.focus(window);
+                                this.press_playlist(event);
+                                cx.notify();
+                            }),
+                        )
                         .child(div().absolute().left(offset.x).child(ruler)),
                 ),
         )
@@ -157,34 +172,49 @@ pub fn view(this: &mut Preview, window_width: f32, cx: &mut Context<Preview>) ->
                         .track_scroll(&this.workspace.arrangement)
                         // A descendant handles the wheel before GPUI's scroll container
                         // bubbles it, so Shift/zoom never also perform a native scroll.
-                        .child(lanes.id("playlist-lanes").min_h_full().on_scroll_wheel(
-                            cx.listener(|this, event: &ScrollWheelEvent, _, cx| {
-                                let scroll = &this.workspace.arrangement;
-                                let delta = event.delta.pixel_delta(px(24.));
-                                if event.modifiers.platform || event.modifiers.control {
-                                    let old = this.zoom;
-                                    this.zoom =
-                                        (old * (f32::from(delta.y) / 150.).exp()).clamp(0.01, 120.);
-                                    scroll.set_offset(point(
-                                        scroll.offset().x * (this.zoom / old),
-                                        scroll.offset().y,
-                                    ));
-                                } else {
-                                    let delta = if event.modifiers.shift {
-                                        point(delta.x + delta.y, px(0.))
-                                    } else {
-                                        delta
-                                    };
-                                    let max = scroll.max_offset();
-                                    scroll.set_offset(point(
-                                        (scroll.offset().x + delta.x).clamp(-max.width, px(0.)),
-                                        (scroll.offset().y + delta.y).clamp(-max.height, px(0.)),
-                                    ));
-                                }
-                                cx.stop_propagation();
-                                cx.notify();
-                            }),
-                        )),
+                        .child(
+                            lanes
+                                .id("playlist-lanes")
+                                .min_h_full()
+                                .on_mouse_down(
+                                    MouseButton::Left,
+                                    cx.listener(|this, event, window, cx| {
+                                        this.workspace_focus.focus(window);
+                                        this.press_playlist(event);
+                                        cx.notify();
+                                    }),
+                                )
+                                .on_scroll_wheel(cx.listener(
+                                    |this, event: &ScrollWheelEvent, _, cx| {
+                                        let scroll = &this.workspace.arrangement;
+                                        let delta = event.delta.pixel_delta(px(24.));
+                                        if event.modifiers.platform || event.modifiers.control {
+                                            let old = this.zoom;
+                                            this.zoom = (old * (f32::from(delta.y) / 150.).exp())
+                                                .clamp(0.01, 120.);
+                                            scroll.set_offset(point(
+                                                scroll.offset().x * (this.zoom / old),
+                                                scroll.offset().y,
+                                            ));
+                                        } else {
+                                            let delta = if event.modifiers.shift {
+                                                point(delta.x + delta.y, px(0.))
+                                            } else {
+                                                delta
+                                            };
+                                            let max = scroll.max_offset();
+                                            scroll.set_offset(point(
+                                                (scroll.offset().x + delta.x)
+                                                    .clamp(-max.width, px(0.)),
+                                                (scroll.offset().y + delta.y)
+                                                    .clamp(-max.height, px(0.)),
+                                            ));
+                                        }
+                                        cx.stop_propagation();
+                                        cx.notify();
+                                    },
+                                )),
+                        ),
                 )
                 .child(crate::scrollbar::view(
                     "playlist-vertical",

@@ -403,3 +403,31 @@
   +2.43%（噪声阈值内）/+1.73%（回退）；基准二进制未变且不链接 viewer，不能归因于 UI
   或据此宣称界面帧率。仍未测真实设备 callback p95/p99/xrun、并发窗口有声长测。
   桌面锁定，物理鼠标/触控板、原生窗口操作与运行中系统主题切换仍待未锁屏验收。
+
+## Preview 任意位置播放与鼠标/键盘快捷键（2026-09-07）
+
+- Playlist 标尺从按刻度起点定位改为按鼠标坐标精确定位，扩展到 clip/空白轨道；
+  钢琴窗标尺、音符区和 velocity 区均支持单击定位，双击/Option 点击直接播放。
+  定位按当前有效 tempo map 与 Track tempo 换算，考虑 clip 当前重复轮次与截断边界。
+- 新增 viewer cue：单击/Go 记录起点，Space 播放/暂停，Enter 从 cue 重播，Stop/Shift+Space
+  停止并回到 cue。定位到循环区外关闭循环；区外启用循环则定位其起点，避免跳回旧区域。
+  Option 方向键逐拍、加 Shift 逐小节；Command/Control+Home/End 到首尾，[/] 跳 Marker，L 切换循环。
+- G 聚焦 Go，支持 bar.beat.tick（960 ticks）、秒数及 mm:ss；Enter 定位、Shift+Enter 播放，
+  输入屏蔽全局快捷键，完成/取消恢复工作区焦点。播放切换忽略键盘自动重复，定位键可连续重复。
+  音源/效果器窗口通过弱引用共享 transport 快捷键，原有无修饰滚动键保持可用。
+- 顶部 Keys ? 和 ? 快捷键打开内置操作说明，深/浅色与最小窗口布局通过实际 GPUI 截图检查。
+  Native 暂停/停止游标不再减去输出延迟；首次 play 前的 watch 换图保留 frame cursor/state/loop。
+  所有改动位于 viewer/UI/控制线程，不改 authoring snapshot、TS 协议或音频 callback/DSP。
+- 436 项 Rust 工作区测试（含 19 项 viewer）、lint/typecheck、rustfmt 通过，无失败/忽略。
+  新测试覆盖小数定位、拍号/tempo 变化、重复/截断 clip、Marker 顺序、原生 seek→watch→play→pause。
+  最后循环和焦点调整后再次通过 viewer 测试，Release unsigned bundle 已重建、plist 校验通过。
+- 新 `OXITONE_PREVIEW_CAPTURE_TRANSPORT=1` 使用 GPUI 键盘分发、实测布局的鼠标控制器及真实
+  Rust engine + simulated sink，验证定位、play/cue/stop、held-key、输入隔离、循环和多窗口控制，
+  并断言 snapshot 不变；最终 release 在最小窗口通过，旧 piano/Mixer 导航与独立 inspector 冒烟通过。
+  Debug 并行负载下曾报告 simulated underrun，Release 单独运行截图为 0；不据此推断设备长测。
+  GPUI 首次复杂画面有自动扩大 instance buffer 后重绘的日志，最终截图正常；不隐藏该日志。
+- 最终 bundle 的多窗口 watch 冒烟通过：鼓机与 gain 详情均跟随 revision 2，volume 更新到 0.42。
+- [专项基准](../../benchmarks/results/2026-09-07-preview-transport.json)：Apple M4 / 48 kHz /
+  128 frames / 4 Channels，baseline 30.809 µs、telemetry 34.489 µs。Criterion 历史变化
+  -3.45%/+6.88%，telemetry 含 4 个 high-severe outliers；基准二进制未改且不链接 viewer，
+  不用于归因 UI 性能或判断输入延迟。物理鼠标命中、真实设备播放/callback p95/p99/xrun 仍未验收。

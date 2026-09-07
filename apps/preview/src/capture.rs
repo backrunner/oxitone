@@ -1,5 +1,5 @@
 //! Opt-in developer capture of the real GPUI window, even without display-link ticks.
-//! Never changes system appearance or musical state. Normal launches do no extra work.
+//! Never changes system appearance or authoring data. Transport smoke uses simulated audio.
 use crate::ui::Preview;
 use gpui::*;
 
@@ -35,6 +35,11 @@ pub fn schedule(window: &Window, cx: &mut Context<Preview>) {
     let navigation = std::env::var("OXITONE_PREVIEW_CAPTURE_NAVIGATION").is_ok_and(|v| v == "1");
     let plugin = std::env::var("OXITONE_PREVIEW_CAPTURE_PLUGIN").unwrap_or_default();
     let mixer = std::env::var("OXITONE_PREVIEW_CAPTURE_MIXER").unwrap_or_default();
+    let transport = crate::capture_transport::enabled();
+    assert!(
+        !transport || (!navigation && plugin.is_empty() && mixer.is_empty()),
+        "transport capture must run separately from other capture modes"
+    );
     let revision = std::env::var("OXITONE_PREVIEW_CAPTURE_REVISION")
         .ok()
         .map(|v| v.parse::<u64>().expect("capture revision must be u64"))
@@ -48,6 +53,7 @@ pub fn schedule(window: &Window, cx: &mut Context<Preview>) {
         let mut details = Vec::new();
         let mut closed = None;
         let mut ready_frames = 0;
+        let mut transport_smoke = crate::capture_transport::Smoke::default();
         for _ in 0..150 {
             Timer::after(std::time::Duration::from_millis(100)).await;
             let Ok(current) = this.update(cx, |this, _| {
@@ -123,7 +129,17 @@ pub fn schedule(window: &Window, cx: &mut Context<Preview>) {
                     }
                 });
             }
-            if ready_frames >= 14 && current.is_some_and(|v| v >= revision) {
+            if transport {
+                cx.update_window(window_handle, |_, window, cx| {
+                    if let Some(view) = this.upgrade() {
+                        transport_smoke.step(ready_frames, &view, window, cx);
+                    }
+                })
+                .unwrap();
+            }
+            if ready_frames >= if transport { 36 } else { 14 }
+                && current.is_some_and(|v| v >= revision)
+            {
                 if !plugin.is_empty() {
                     this.update(cx, |this, cx| crate::plugin_capture::verify(this, cx))
                         .unwrap();

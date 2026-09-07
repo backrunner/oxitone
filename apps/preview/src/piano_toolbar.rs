@@ -70,7 +70,7 @@ pub fn view(
                         this.loop_end = clip.1;
                         this.loop_enabled = true;
                         this.seek(clip.0);
-                        if this.playback.playing {
+                        if this.is_playing() {
                             this.play();
                         }
                         cx.notify();

@@ -74,6 +74,10 @@ diagnostic、status、transport、query、shutdown；所有帧含 protocolVersio
   和位置输入 focus 共用语义配色；主题不进入 ProjectSnapshot，不触发编译或音频命令。
 - viewer 的 transport 操作走引擎同一 command queue；生效延迟 = ring horizon（见 `03`），UI 据此做预期反馈（按钮立即响应，播放头按 horizon 对齐）。
 - seek 目标支持 bar/beat/marker/timecode 与时间轴点击；点击位置按当前有效 tempo map（含烘焙的 tempo lane）换算。
+- Playlist 标尺、clip/空白轨道与钢琴窗标尺/音符区/velocity 区单击精确定位（不吸附刻度），双击或 Option/Alt 单击从该位置播放；播放中单击保持播放。钢琴位置按 Track tempo 转为全局时间，并跟随当前 clip 的重复轮次，截断部分夹紧到 clip 边界。定位到循环区外会关闭循环，避免播放跳回旧区域。
+- 鼠标或 Go 定位设置播放起点（cue）；Space 播放/暂停，Enter 从 cue 重播，Shift+Space/Stop 停止并回到 cue。Option/Alt+←/→ 逐拍定位，加 Shift 按当前拍号移动一小节；⌘/Ctrl+Home/End 到工程首尾，[/] 到前/后 Marker，L 切换循环，G 聚焦 Go，? 打开快捷键说明。Go 支持 bar.beat.tick（960 ticks/beat），Enter 定位、Shift+Enter 定位并播放；输入期间屏蔽全局播放快捷键，Escape 取消后恢复工作区焦点。
+- 音源/效果器详情窗口共享播放、停止、逐拍/小节和 Marker/循环快捷键，不抢占原有无修饰滚动键。播放类切换忽略键盘自动重复，连续定位键可重复；所有交互只发送 transport 命令。播放按钮/定位标记先显示请求状态，native 状态到达后校正，播放头仍来自引擎。
+- 启用循环时若当前位置在区外，先定位到循环起点。暂停/停止后的定位不减输出延迟；只有播放中采用 audible frame。首次 play 前的有效 watch 换图同样保留 frame cursor/state/loop。
 - Playlist 支持双轴滚动与拖动滚动条，Shift 滚轮横向、⌘/Ctrl 滚轮缩放，Fit 恢复全工程范围；长时间轴按可见范围创建标尺刻度。
 - Piano 支持双轴滚动与拖动滚动条，Shift 滚轮横向、⌘/Ctrl 滚轮缩放时间，Keys ± 调整音高行高，Fit 恢复适配。点击后方向键、Page Up/Down、Home/End 移动视口，± 缩放、F 适配；点击局部拍标尺 seek，Loop clip 使用全局 clip 边界。
 - Mixer 滚轮/触控板与 ‹/› 按钮横向浏览；面板过矮时 Alt 滚轮或纵向滚动条浏览下部；Master 同步纵向位置。点击后左右/Home/End 选择并显示通道，上下/Page Up/Down 纵向浏览；inspector 独立纵向滚动。选择只改变分析 scope。
@@ -113,3 +117,4 @@ voice；启动 realtime session 后改变 sampleRate/blockSize 需重启。大�
 - `OXITONE_PREVIEW_CAPTURE_PLUGIN=instrument|synth|effect|info` 在截图模式打开音源和效果器详情，验证重复打开复用、分步关闭重开和键盘滚动；分别截图第一个音源、第一个 Wavetable、第一个 Channel effect 或其插件信息。关闭主窗口走 AppKit 的正常 should-close 路径，验证详情仍打开时 session 可以退出。`OXITONE_PREVIEW_CAPTURE_REVISION` 指定截图前必须接受的最低 revision（默认 1）。
 - `node scripts/smoke-preview-details.mjs [viewer]` 使用真实鼓机/gain dylib，在详情窗口已打开后修改临时入口的 volume，断言所有窗口跟随 revision 2、音源显示新值并成功截图；不修改示例文件，不启动播放。需要先构建 workspace、鼓机示例动态库与 viewer。
 - `OXITONE_PREVIEW_CAPTURE_MIXER=split|expanded|chain` 搭配 `examples/drum-machine/src/mixer-preview.ts` 验证发送比例/自动化、发送目标与输入反向导航、右侧独立键盘滚动；与 navigation/plugin capture 模式分别运行。该可运行示例独立于原始歌曲导出，包含 Drum/Music bus、Reverb/Delay return、pre/post send 和 sidechain，不伪造 UI 数据。
+- `OXITONE_PREVIEW_CAPTURE_TRANSPORT=1` 必须与其他 capture 冒烟分别运行。它使用真实 GPUI 键盘分发、基于实测布局的鼠标控制器和真实 Rust engine + simulated sink，验证任意定位/双击与 Alt 播放、cue 重播/停止、循环边界、Go 输入隔离、连续定位与多窗口快捷键，断言 snapshot 不变。该模式会播放模拟输出，始终不打开音频设备；普通截图不启动播放。它不证明物理鼠标命中、设备 callback 或 xrun 长测结果。

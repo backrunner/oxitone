@@ -25,6 +25,9 @@ effects changes what that slot's window displays. Removing the slot shows an emp
 state; returning it restores the view. Escape/⌘W or the close button closes just
 that detail window. Closing the main project window ends the session and all details.
 Each window uses the integrated title area and follows system light/dark appearance.
+Space plays/pauses the project, Enter replays from the cue, and Shift+Space stops at
+the cue. Beat/bar, marker, project-boundary and loop shortcuts are shared with the
+main window; unmodified navigation keys still scroll details. See [shortcuts](preview.md).
 
 ## Custom UI for dylib plugins: planned extension
 

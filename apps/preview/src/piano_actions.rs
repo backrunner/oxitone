@@ -67,18 +67,12 @@ impl Preview {
                 offset,
                 scale: max / (track - length),
             });
-        } else if y < RULER && x >= KEY_WIDTH {
+        } else if x >= KEY_WIDTH && x < l.width - SCROLLBAR && y >= 0. && y < l.height - SCROLLBAR {
             if let Some(project) = &self.project {
-                if let Some(clip) = project
-                    .snapshot
-                    .pattern_clips
-                    .iter()
-                    .find(|c| Some(&c.id) == self.selected_clip.as_ref())
-                {
-                    self.seek(
-                        project
-                            .local_to_global(&clip.track_id, clip.start_beat.to_f64() + l.beat(x)),
-                    );
+                if let Some(beat) = self.selected_clip.as_ref().and_then(|id| {
+                    crate::timeline_input::piano_beat(project, id, l.beat(x), self.position_frame())
+                }) {
+                    self.timeline_click(beat, event);
                 }
             }
         }

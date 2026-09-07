@@ -6,7 +6,6 @@ use crate::{
     wire::Frame,
 };
 use gpui::{prelude::*, *};
-use serde_json::json;
 use std::{sync::Arc, time::Duration};
 
 pub struct Preview {
@@ -14,6 +13,10 @@ pub struct Preview {
     pub theme: Theme,
     pub project: Option<Arc<ViewProject>>,
     pub playback: PlaybackStatus,
+    pub cue_frame: u64,
+    pub requested_playing: Option<bool>,
+    pub requested_position: Option<(u64, u64)>,
+    pub show_shortcuts: bool,
     pub analysis: AnalysisMap,
     pub selected_clip: Option<String>,
     pub selected_scope: String,
@@ -72,6 +75,10 @@ impl Preview {
             theme: Theme::from_appearance(window.appearance()),
             project: None,
             playback: PlaybackStatus::default(),
+            cue_frame: 0,
+            requested_playing: None,
+            requested_position: None,
+            show_shortcuts: false,
             analysis: AnalysisMap::new(),
             selected_clip: None,
             selected_scope: "mix_master".into(),
@@ -123,7 +130,11 @@ impl Preview {
                     self.diagnostic = None;
                     self.status = "Code up to date".into();
                 }
-                UiEvent::Diagnostic(diagnostic) => self.diagnostic = Some(diagnostic),
+                UiEvent::Diagnostic(diagnostic) => {
+                    self.requested_playing = None;
+                    self.requested_position = None;
+                    self.diagnostic = Some(diagnostic);
+                }
                 UiEvent::Status(status) => {
                     if status == "watching"
                         && self
@@ -140,7 +151,7 @@ impl Preview {
                     }
                     .into();
                 }
-                UiEvent::Playback(status) => self.playback = status,
+                UiEvent::Playback(status) => self.observe_transport(status),
                 UiEvent::Shutdown => cx.quit(),
             }
         }
@@ -171,24 +182,6 @@ impl Preview {
             .commands
             .send(Command::Frame(Frame::Transport { command }, None));
     }
-    pub fn seek(&self, beat: f64) {
-        self.transport(json!({"command":"seek","beat":beat_wire(beat)}));
-    }
-    pub fn play(&self) {
-        let mut command = json!({"command":"play"});
-        if self.loop_enabled {
-            if let Some(project) = &self.project {
-                let frame = |beat| {
-                    project
-                        .plan
-                        .tempo
-                        .beat_to_frame(oxitone_core::Beat::from_f64(beat).unwrap())
-                };
-                command["loopRegion"] = json!({"startFrame":frame(self.loop_start).to_string(),"endFrame":frame(self.loop_end).to_string()});
-            }
-        }
-        self.transport(command);
-    }
 }
 
 impl Render for Preview {
@@ -197,19 +190,8 @@ impl Render for Preview {
         let mut root = div()
             .id("preview-workspace")
             .track_focus(&self.workspace_focus)
-            .on_key_down(cx.listener(|this, event: &KeyDownEvent, _, cx| {
-                if event.keystroke.key == "space"
-                    && !event.keystroke.modifiers.platform
-                    && !event.keystroke.modifiers.control
-                {
-                    if this.playback.playing {
-                        this.transport(json!({"command":"pause"}));
-                    } else {
-                        this.play();
-                    }
-                    cx.stop_propagation();
-                }
-            }))
+            .on_key_down(cx.listener(Self::workspace_key))
+            .relative()
             .size_full()
             .flex()
             .flex_col()
@@ -265,7 +247,9 @@ impl Render for Preview {
                     )),
             );
         }
-        root.child(self.footer())
+        root.child(self.footer()).when(self.show_shortcuts, |d| {
+            d.child(crate::shortcut_help::view(self, cx))
+        })
     }
 }
 
@@ -274,8 +258,4 @@ pub fn alpha(value: u32, alpha: f32) -> Rgba {
         a: alpha,
         ..rgb(value)
     }
-}
-fn beat_wire(beat: f64) -> serde_json::Value {
-    let beat = oxitone_core::Beat::from_f64(beat.max(0.0)).unwrap();
-    serde_json::to_value(beat).unwrap()
 }

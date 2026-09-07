@@ -107,16 +107,23 @@ palettes. Appearance changes are display-only and do not rebuild the music.
   actual note thumbnails, including repeats and Track tempo overrides. It initially
   fits the project; **Fit** restores this view. Scroll in both axes, Shift-scroll
   horizontally, or ⌘/Ctrl-scroll to zoom. Both scrollbars can be dragged.
-- Click a pattern clip to inspect its notes. The piano roll fits the phrase and keeps
+- Click a pattern clip to locate the playhead and inspect its notes. The piano roll fits the phrase and keeps
   its keyboard, local beat ruler and velocity lane pinned. Scroll to reach all 128
   MIDI keys; Shift-scroll moves through time and ⌘/Ctrl-scroll zooms time. **Keys ±**
   changes row height. After clicking the grid, use arrows, Page Up/Down and Home/End
   to navigate, **±** to zoom, and **F** to fit. Both scrollbars support dragging.
-- Play/Pause and Stop control the native transport. Click a ruler beat or marker to
-  seek. The Go field accepts `bar.beat` (both start at 1), `mm:ss`, or seconds with
-  an `s` suffix; press Enter. The transport display includes bar.beat.tick and time.
+- Click anywhere in the Playlist ruler/clips/empty lanes or piano ruler/note/velocity
+  area to locate precisely, without snapping to a tick. Playback continues if running.
+  Double-click or Option/Alt-click there (or a marker) to play from that position.
+  Piano positions follow the current clip repetition and Track tempo, clamped to a
+  truncated clip's end; outside the clip they use its first repetition.
+- Locating sets the **cue**, marked at the top of the Playlist lanes. **Stop** returns
+  to that cue; Pause keeps the current position. The Go field accepts `bar.beat.tick`
+  (bar/beat start at 1, ticks are 0–959), `mm:ss`, or seconds with an `s` suffix.
+  Enter locates; Shift+Enter locates and plays. Escape cancels and restores shortcuts.
 - Loop toggles the current range; **Loop clip** uses the selected clip's range.
-  Space plays/pauses when the Go input is not being edited.
+  Locating outside an enabled loop turns it off. Enabling a loop while outside it
+  moves to the loop start. **Keys ?** in the header opens the shortcut guide.
 - Click a Channel or bus strip to select the waveform, Hann-512 spectrum and Mid/Side
   stereo scope. Level, pan, mute/solo, inserts and send routes are read-only values
   from source. Peak/RMS and note-gate highlights come from native playback telemetry.
@@ -141,6 +148,24 @@ palettes. Appearance changes are display-only and do not rebuild the music.
   detail window. See [plugin windows and custom-UI plans](plugin-ui.md).
 - The footer shows native load, estimated output/graph latency, xruns and dynamic
   plugin faults. Error diagnostics include code/path where available.
+
+| Shortcut | Action |
+| --- | --- |
+| Space | Play / pause |
+| Enter | Replay from cue |
+| Shift+Space | Stop and return to cue |
+| Option/Alt+Left / Right | Locate one beat backward / forward |
+| Option/Alt+Shift+Left / Right | Move by one bar using the current time signature |
+| Command/Ctrl+Home / End | Locate project start / end |
+| `[` / `]` | Previous / next marker |
+| L | Toggle loop |
+| G | Focus Go field |
+| ? | Show shortcut guide; Escape closes it |
+
+Playback, cue, beat/bar, marker and loop shortcuts also work in plugin windows.
+The Go field consumes typing without triggering playback shortcuts. Held toggle keys
+do not repeatedly start/stop playback; navigation keys can repeat. Plain arrow/Home/End
+keys retain their piano, Mixer and detail-panel scrolling behavior.
 
 Meters and scopes refresh around 30 Hz. Fixed rings can drop analysis frames when
 the UI falls behind; the strips report drops. Master scope true peak is a 4× estimate
@@ -188,6 +213,13 @@ watch smoke with `node scripts/smoke-preview-details.mjs` (optionally pass a vie
 path). It changes a private temporary entry after the windows open, verifies the new
 parameter value and revision in both windows, and writes `target/plugin-details-watch.png`.
 It removes the temporary entry and leaves the example source intact.
+
+`OXITONE_PREVIEW_CAPTURE_TRANSPORT=1` runs separately from the other smoke modes.
+With the drum example it checks precise pointer controllers using measured bounds,
+real GPUI keyboard dispatch, cue/loop behavior, position entry and plugin-window
+transport shortcuts. It uses the real Rust engine with a simulated sink and never
+opens an audio device; ordinary captures do not start playback. This checks control
+semantics, not physical mouse hit testing or device/xrun endurance.
 
 These options only apply when `OXITONE_PREVIEW_CAPTURE` is present. Appearance is
 overridden on that window; system preferences stay intact. The opt-in redraw driver

@@ -32,6 +32,7 @@ pub struct PluginWindow {
     pub scroll_drag: Option<(f32, f32, f32)>,
     pub copied: bool,
     pub parameter_specs: bool,
+    owner: WeakEntity<Preview>,
     focus: FocusHandle,
     _subscriptions: Vec<Subscription>,
 }
@@ -69,6 +70,7 @@ impl PluginWindow {
             scroll_drag: None,
             copied: false,
             parameter_specs: false,
+            owner: owner.downgrade(),
             focus,
             _subscriptions: vec![project_changes, appearance_changes],
         }
@@ -162,6 +164,16 @@ impl Render for PluginWindow {
                 let key = event.keystroke.key.as_str();
                 if key == "escape" || (key == "w" && event.keystroke.modifiers.platform) {
                     window.remove_window();
+                    cx.stop_propagation();
+                    return;
+                }
+                if let Some(shortcut) = crate::shortcuts::playback(&event.keystroke) {
+                    if !event.is_held || shortcut.repeats() {
+                        let _ = this.owner.update(cx, |owner, cx| {
+                            owner.playback_shortcut(shortcut);
+                            cx.notify();
+                        });
+                    }
                     cx.stop_propagation();
                     return;
                 }

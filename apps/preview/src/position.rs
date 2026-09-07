@@ -4,7 +4,7 @@ use gpui::{prelude::*, *};
 use oxitone_core::Beat;
 
 pub fn resolve(project: &ViewProject, text: &str) -> Result<u64, String> {
-    let invalid = || "Use bar.beat (1.1), seconds (12s) or mm:ss (0:12.5)".to_owned();
+    let invalid = || "Use bar.beat.tick (1.1.480), seconds (12s) or mm:ss (0:12.5)".to_owned();
     let text = text.trim();
     if let Some((minutes, seconds)) = text.split_once(':') {
         let minutes = minutes.parse::<u32>().map_err(|_| invalid())?;
@@ -25,7 +25,17 @@ pub fn resolve(project: &ViewProject, text: &str) -> Result<u64, String> {
             .seconds_to_frame(seconds.parse().map_err(|_| invalid())?)
             .map_err(|e| e.message);
     }
-    let (bar, beat) = text.split_once('.').unwrap_or((text, "1"));
+    let mut parts = text.split('.');
+    let bar = parts.next().unwrap_or("");
+    let beat = parts.next().unwrap_or("1");
+    let tick = parts
+        .next()
+        .unwrap_or("0")
+        .parse::<u32>()
+        .map_err(|_| invalid())?;
+    if parts.next().is_some() || tick >= 960 {
+        return Err(invalid());
+    }
     let bar = bar.parse::<u32>().map_err(|_| invalid())?;
     let beat = beat.parse::<u32>().map_err(|_| invalid())?;
     if bar == 0 || beat == 0 {
@@ -36,7 +46,7 @@ pub fn resolve(project: &ViewProject, text: &str) -> Result<u64, String> {
         .time_signatures
         .bar_beat_to_beat(
             bar,
-            Beat::new(i64::from(beat) - 1, 1).map_err(|e| e.message)?,
+            Beat::new((i64::from(beat) - 1) * 960 + i64::from(tick), 960).map_err(|e| e.message)?,
         )
         .map_err(|e| e.message)?;
     Ok(project.plan.tempo.beat_to_frame(position))
@@ -72,16 +82,29 @@ pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
             cx.listener(|this, _, window, _| this.position_focus.focus(window)),
         )
         .on_key_down(cx.listener(|this, event: &KeyDownEvent, window, cx| {
+            if event.is_held && event.keystroke.key == "enter" {
+                cx.stop_propagation();
+                return;
+            }
             match event.keystroke.key.as_str() {
                 "enter" => {
                     if let Some(project) = &this.project {
                         match resolve(project, &this.position_text) {
                             Ok(frame) => {
-                                this.transport(
-                                    serde_json::json!({"command":"seek","frame":frame.to_string()}),
-                                );
+                                if event.keystroke.modifiers.shift {
+                                    this.play_from(frame);
+                                } else {
+                                    this.locate_frame(frame);
+                                }
                                 this.position_text.clear();
-                                window.blur();
+                                if this
+                                    .diagnostic
+                                    .as_ref()
+                                    .is_some_and(|d| d.code == "PreviewPositionInvalid")
+                                {
+                                    this.diagnostic = None;
+                                }
+                                this.workspace_focus.focus(window);
                             }
                             Err(message) => {
                                 this.diagnostic = Some(crate::model::Diagnostic {
@@ -95,7 +118,7 @@ pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
                 }
                 "escape" => {
                     this.position_text.clear();
-                    window.blur();
+                    this.workspace_focus.focus(window);
                 }
                 "backspace" => {
                     this.position_text.pop();

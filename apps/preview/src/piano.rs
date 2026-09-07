@@ -64,7 +64,7 @@ pub fn view(this: &mut Preview, width: f32, cx: &mut Context<Preview>) -> impl I
                     .is_some_and(|a| a.sounding(actual as u8))
             });
     }
-    let global = project.beat(this.playback.audible);
+    let global = project.beat(this.position_frame());
     let phase = (global >= start && global < end && clip.enabled != Some(false)).then(|| {
         (project.global_to_local(&clip.track_id, global) - clip.start_beat.to_f64())
             .rem_euclid(local_length)
@@ -133,6 +133,6 @@ pub fn view(this: &mut Preview, width: f32, cx: &mut Context<Preview>) -> impl I
             .items_center()
             .text_size(px(10.))
             .text_color(rgb(theme.muted))
-            .child("Pattern beats · Scroll keys / Shift-scroll time · ⌘ scroll zoom · Read only"),
+            .child("Click to locate · Double-click to play · Scroll to browse · ? shortcuts"),
     )
 }

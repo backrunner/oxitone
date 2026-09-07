@@ -1,6 +1,5 @@
 use crate::ui::*;
 use gpui::{prelude::*, *};
-use serde_json::json;
 
 impl Preview {
     pub(crate) fn transport_bar(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -8,7 +7,7 @@ impl Preview {
         let beat = self
             .project
             .as_ref()
-            .map_or(0.0, |p| p.beat(self.playback.audible));
+            .map_or(0.0, |p| p.beat(self.position_frame()));
         let (bar, within) = self
             .project
             .as_ref()
@@ -23,7 +22,7 @@ impl Preview {
             .as_ref()
             .map_or(120.0, |p| p.plan.tempo.bpm_at_beat(beat));
         let seconds = self.project.as_ref().map_or(0.0, |p| {
-            self.playback.audible as f64 / f64::from(p.snapshot.sample_rate)
+            self.position_frame() as f64 / f64::from(p.snapshot.sample_rate)
         });
         let mut controls =
             div()
@@ -34,24 +33,26 @@ impl Preview {
                     theme
                         .button(
                             "play",
-                            if self.playback.playing {
+                            if self.is_playing() {
                                 "Pause"
                             } else {
                                 "▶ Play"
                             },
                         )
                         .bg(rgb(theme.selected))
-                        .on_click(cx.listener(|this, _, _, _| {
-                            if this.playback.playing {
-                                this.transport(json!({"command":"pause"}));
-                            } else {
-                                this.play();
-                            }
+                        .on_click(cx.listener(|this, _, window, cx| {
+                            this.workspace_focus.focus(window);
+                            this.toggle_playback();
+                            cx.notify();
                         })),
                 )
-                .child(theme.button("stop", "■ Stop").on_click(
-                    cx.listener(|this, _, _, _| this.transport(json!({"command":"stop"}))),
-                ))
+                .child(theme.button("stop", "■ Stop").on_click(cx.listener(
+                    |this, _, window, cx| {
+                        this.workspace_focus.focus(window);
+                        this.stop_at_cue();
+                        cx.notify();
+                    },
+                )))
                 .child(
                     theme
                         .button(
@@ -62,11 +63,9 @@ impl Preview {
                                 "Loop off"
                             },
                         )
-                        .on_click(cx.listener(|this, _, _, cx| {
-                            this.loop_enabled = !this.loop_enabled;
-                            if this.playback.playing {
-                                this.play();
-                            }
+                        .on_click(cx.listener(|this, _, window, cx| {
+                            this.workspace_focus.focus(window);
+                            this.toggle_loop();
                             cx.notify();
                         })),
                 )

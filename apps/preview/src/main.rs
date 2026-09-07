@@ -6,6 +6,7 @@ mod capture_mixer;
 mod capture_navigation;
 #[cfg(target_os = "macos")]
 mod capture_surface;
+mod capture_transport;
 mod chrome;
 mod engine;
 mod mixer;
@@ -28,6 +29,9 @@ mod piano_actions;
 mod piano_layout;
 mod piano_paint;
 mod piano_toolbar;
+mod playback_controls;
+#[cfg(test)]
+mod playback_tests;
 mod playlist_lane;
 mod plugin_capture;
 mod plugin_catalog;
@@ -42,11 +46,14 @@ mod plugin_window_view;
 mod position;
 mod scopes;
 mod scrollbar;
+mod shortcut_help;
+mod shortcuts;
 #[cfg(test)]
 mod tests;
 mod theme;
 #[cfg(test)]
 mod theme_tests;
+mod timeline_input;
 mod ui;
 mod ui_icons;
 mod window_chrome;
@@ -73,7 +80,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     let backend = backend::Backend::start(
         socket.ok_or("--socket is required; launch with oxitone preview <entry.ts>")?,
-        headless,
+        headless || capture_transport::enabled(),
     )?;
     if headless {
         while !backend.stopped() {

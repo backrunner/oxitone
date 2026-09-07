@@ -167,6 +167,11 @@ impl Engine {
         if let Some(session) = &self.session {
             session.replace_graph(graph)?;
         } else {
+            if let Some(previous) = &self.graph {
+                graph.seek(previous.transport().cursor);
+                graph.transport_mut().state = previous.transport().state;
+                graph.transport_mut().loop_region = previous.transport().loop_region;
+            }
             self.graph = Some(graph);
         }
         self.plugins = loaded;
@@ -197,10 +202,15 @@ impl Engine {
                 let cursor = session.cursor();
                 let latency = session.output_latency().map_or(0, |l| l.frames)
                     + self.current.as_ref().map_or(0, |p| p.graph_latency);
+                let playing = session.transport_state() == TransportState::Playing;
                 PlaybackStatus {
                     cursor,
-                    audible: cursor.saturating_sub(latency),
-                    playing: session.transport_state() == TransportState::Playing,
+                    audible: if playing {
+                        cursor.saturating_sub(latency)
+                    } else {
+                        cursor
+                    },
+                    playing,
                     load: stats.engine_load,
                     xruns: stats.xruns,
                     latency,
