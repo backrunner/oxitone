@@ -1,0 +1,932 @@
+{
+  "schema": "oxitone-song-production-v1",
+  "date": "2026-09-08",
+  "baseCommit": "f19b83b",
+  "machine": {
+    "cpu": "Apple M4",
+    "arch": "arm64",
+    "os": "27.0.0",
+    "node": "v26.5.0"
+  },
+  "scope": "Melodic dubstep build/drop drum layers, complementary chord timbres, separate piano ornaments, section-aware limiter gain. Existing Rust DSP and assets; offline only.",
+  "commands": [
+    "pnpm --filter @oxitone/example-drums build",
+    "pnpm example:songs",
+    "pnpm --filter @oxitone/example-drums songs:stems",
+    "pnpm example:songs:wasm",
+    "cargo run --release -p oxitone-bench --bin song-profile -- target/examples/full-songs/after-the-horizon.snapshot.json target/examples/full-songs/drums.json 24 80",
+    "pnpm lint",
+    "pnpm typecheck",
+    "cargo fmt --all --check",
+    "cargo test --workspace",
+    "pnpm --filter @oxitone/example-drums test",
+    "oxitone build examples/drum-machine/src/full/melodic-dubstep.ts -o target/examples/after-the-horizon.mjs"
+  ],
+  "checks": {
+    "lint": "passed",
+    "typecheck": "passed",
+    "cargoFmt": "passed",
+    "rust": {
+      "passed": 486,
+      "failed": 0,
+      "ignored": 1
+    },
+    "demoTests": 9,
+    "diffCheck": "passed",
+    "audioDevicesOpened": 0
+  },
+  "research": {
+    "sourceDocument": "examples/drum-machine/src/full/PRODUCTION.md",
+    "urls": [
+      "https://www.youtube.com/watch?v=T9bK23ezyA8",
+      "https://www.youtube.com/watch?v=Cb-sT89x0-U",
+      "https://www.youtube.com/watch?v=nHwhWUuEfVQ",
+      "https://www.youtube.com/watch?v=F-dnLcxXE54",
+      "https://www.edmprod.com/how-to-make-dubstep/"
+    ],
+    "access": "Tutorial metadata, chapter lists and public storyboard frames; full EDMProd written guide. No audio audition, full-video viewing or FLP access; captions empty and linked FLP returned HTTP 503."
+  },
+  "arrangement": {
+    "bars": 104,
+    "bpm": 140,
+    "key": "F# minor",
+    "tracks": 36,
+    "instrumentChannels": 36,
+    "mixerBuses": 16,
+    "notes": 5239,
+    "dropHook": "Original pitches, starts, lengths and velocities unchanged; regression tests cover both drops.",
+    "piano": {
+      "chordChannel": 0.9,
+      "ornamentChannel": 0.5,
+      "previousSharedChannel": 1.15,
+      "themeVelocityMultiplier": 0.7,
+      "previousThemeVelocityMultiplier": 0.82,
+      "grandChannel": 0.52,
+      "previousGrandChannel": 0.75
+    },
+    "limiterInputDb": {
+      "drops": 8,
+      "introAndBuilds": 16,
+      "break": 12,
+      "reprise": 10,
+      "outro": 14
+    }
+  },
+  "native": {
+    "title": "After the Horizon / 地平线之后",
+    "durationSeconds": 181.28570833333333,
+    "sampleRate": 48000,
+    "blockSize": 128,
+    "integratedLufs": -13.071944112868263,
+    "truePeakDbfs": -2.2142868750071623,
+    "peakDbfs": -2.2370979641622433,
+    "renderSeconds": 135.020301875,
+    "realtimeMultiple": 1.3426552286451423,
+    "sha256": "420ded86e67af913523a641c72c802cb2640591d354c39acd3813194719b9e34",
+    "snapshotSha256": "d9fdc20d2381040a7dce06bd8173324d0da203cbe89115ac4e56a1476f614dd5",
+    "sectionLevels": [
+      {
+        "name": "First light / Soft Piano",
+        "startBar": 1,
+        "bars": 8,
+        "rmsDbfs": -21.845685156114275,
+        "peakDbfs": -3.039585530402448,
+        "crestDb": 18.806099625711827,
+        "dc": -2.0090714690320506e-7,
+        "stereoCorrelation": 0.39358449966232784,
+        "lowSideToMidDb": -3.820536916122526,
+        "bandRmsDbfs": {
+          "below150": -30.04378908183895,
+          "150to1000": -24.971444977575842,
+          "1000to6000": -30.791881803570135,
+          "above6000": -46.18594926605117
+        }
+      },
+      {
+        "name": "Lift / Build I",
+        "startBar": 9,
+        "bars": 16,
+        "rmsDbfs": -17.22208716387843,
+        "peakDbfs": -2.2370972943558436,
+        "crestDb": 14.984989869522588,
+        "dc": 0.000002217911427214129,
+        "stereoCorrelation": 0.7319932590104942,
+        "lowSideToMidDb": -9.922586054532385,
+        "bandRmsDbfs": {
+          "below150": -25.288563022588267,
+          "150to1000": -21.209089660744667,
+          "1000to6000": -25.51296413223687,
+          "above6000": -30.97642509131446
+        }
+      },
+      {
+        "name": "Open sky / Drop I",
+        "startBar": 25,
+        "bars": 16,
+        "rmsDbfs": -12.72907887242518,
+        "peakDbfs": -2.2941319466457397,
+        "crestDb": 10.43494692577944,
+        "dc": 0.0004076326683553938,
+        "stereoCorrelation": 0.8567095702728357,
+        "lowSideToMidDb": -22.360734302633134,
+        "bandRmsDbfs": {
+          "below150": -16.002275854021185,
+          "150to1000": -19.47868540333966,
+          "1000to6000": -21.45305544353882,
+          "above6000": -28.95905780669507
+        }
+      },
+      {
+        "name": "Weightless / Break",
+        "startBar": 41,
+        "bars": 16,
+        "rmsDbfs": -17.59672451883306,
+        "peakDbfs": -3.7243075163293042,
+        "crestDb": 13.872417002503756,
+        "dc": -0.0000011861061321537602,
+        "stereoCorrelation": 0.9143731867857311,
+        "lowSideToMidDb": -22.46045806965601,
+        "bandRmsDbfs": {
+          "below150": -18.895486158727444,
+          "150to1000": -25.89963009480406,
+          "1000to6000": -31.9774723498338,
+          "above6000": -42.89081872906135
+        }
+      },
+      {
+        "name": "Signal / Build II",
+        "startBar": 57,
+        "bars": 16,
+        "rmsDbfs": -17.717944271593144,
+        "peakDbfs": -2.4138257838179236,
+        "crestDb": 15.30411848777522,
+        "dc": 0.000001496292122373567,
+        "stereoCorrelation": 0.7634258986661742,
+        "lowSideToMidDb": -11.707494607312505,
+        "bandRmsDbfs": {
+          "below150": -25.92049918638011,
+          "150to1000": -21.843384648513613,
+          "1000to6000": -25.791276577434527,
+          "above6000": -30.98674522663876
+        }
+      },
+      {
+        "name": "Beyond / Drop II",
+        "startBar": 73,
+        "bars": 16,
+        "rmsDbfs": -12.760070288674788,
+        "peakDbfs": -2.4390507208993566,
+        "crestDb": 10.321019567775432,
+        "dc": 0.00046115360815508256,
+        "stereoCorrelation": 0.8578904182100896,
+        "lowSideToMidDb": -22.18971337267655,
+        "bandRmsDbfs": {
+          "below150": -16.188634435400942,
+          "150to1000": -19.29816682382438,
+          "1000to6000": -21.472278330666,
+          "above6000": -28.84757368393081
+        }
+      },
+      {
+        "name": "Afterglow / Reprise",
+        "startBar": 89,
+        "bars": 8,
+        "rmsDbfs": -15.797467942038178,
+        "peakDbfs": -2.455074744209344,
+        "crestDb": 13.342393197828834,
+        "dc": 0.000008060265145450587,
+        "stereoCorrelation": 0.9582026729284943,
+        "lowSideToMidDb": -25.636725346352193,
+        "bandRmsDbfs": {
+          "below150": -17.210218431811338,
+          "150to1000": -23.812641453225844,
+          "1000to6000": -30.976517286512156,
+          "above6000": -36.04727130895191
+        }
+      },
+      {
+        "name": "Horizon / Outro",
+        "startBar": 97,
+        "bars": 8,
+        "rmsDbfs": -18.61310203562415,
+        "peakDbfs": -2.46902168065962,
+        "crestDb": 16.14408035496453,
+        "dc": 1.6233051580261328e-7,
+        "stereoCorrelation": 0.7922754983383198,
+        "lowSideToMidDb": -16.268339175413807,
+        "bandRmsDbfs": {
+          "below150": -20.619797087751675,
+          "150to1000": -25.744446562518576,
+          "1000to6000": -30.97469769004164,
+          "above6000": -37.98770429964347
+        }
+      }
+    ],
+    "impacts": [
+      {
+        "startBar": 25,
+        "preDropGap": {
+          "rmsDbfs": -76.6785432955945,
+          "midRmsDbfs": -78.59602897065267,
+          "peakDbfs": -55.349480351896105
+        },
+        "arrival": {
+          "rmsDbfs": -12.50764297554706,
+          "midRmsDbfs": -16.525243904818453,
+          "peakDbfs": -2.473177783947257
+        },
+        "arrivalLiftDb": 64.17090032004744,
+        "snareMedianMidLiftDb": 0.6619796056310561,
+        "minSnareMidLiftDb": 0.19132056408577824,
+        "maxSnareMidLiftDb": 2.171871298333219,
+        "snareHits": 16
+      },
+      {
+        "startBar": 73,
+        "preDropGap": {
+          "rmsDbfs": -76.61439641820502,
+          "midRmsDbfs": -78.6233607508804,
+          "peakDbfs": -56.03997539927981
+        },
+        "arrival": {
+          "rmsDbfs": -12.453995623474688,
+          "midRmsDbfs": -16.434651142805546,
+          "peakDbfs": -2.4719279914901766
+        },
+        "arrivalLiftDb": 64.16040079473034,
+        "snareMedianMidLiftDb": 0.9530941485929185,
+        "minSnareMidLiftDb": 0.2760026343474493,
+        "maxSnareMidLiftDb": 2.413745520322756,
+        "snareHits": 16
+      }
+    ],
+    "diagnostics": [
+      {
+        "pluginId": "example.drums",
+        "pluginVersion": "1.0.0",
+        "faults": 0
+      }
+    ]
+  },
+  "baseline": {
+    "commit": "f19b83b",
+    "sha256": "2282307a08cbeac6a15c53ea42df79f896d42cdbb908b26096fc43d9dd229544",
+    "integratedLufs": -12.06677784976253,
+    "truePeakDbfs": -1.4054296986643577,
+    "tracks": 24,
+    "sectionLevels": [
+      {
+        "name": "First light / Soft Piano",
+        "startBar": 1,
+        "bars": 8,
+        "rmsDbfs": -17.885675601518173,
+        "peakDbfs": -2.4549057861037755,
+        "crestDb": 15.430769815414397,
+        "dc": 0.0000021750232750437304,
+        "stereoCorrelation": 0.43667556249479117,
+        "lowSideToMidDb": -4.128989862204672,
+        "bandRmsDbfs": {
+          "below150": -26.139867105253725,
+          "150to1000": -20.96719531700499,
+          "1000to6000": -26.939529753632012,
+          "above6000": -42.42479334949515
+        }
+      },
+      {
+        "name": "Lift / Build I",
+        "startBar": 9,
+        "bars": 16,
+        "rmsDbfs": -15.720936922039987,
+        "peakDbfs": -1.7782524764749787,
+        "crestDb": 13.942684445565009,
+        "dc": -0.000009609208452924681,
+        "stereoCorrelation": 0.7371457950901348,
+        "lowSideToMidDb": -10.649236388200052,
+        "bandRmsDbfs": {
+          "below150": -22.386268047851146,
+          "150to1000": -20.293599269295058,
+          "1000to6000": -25.074234621395583,
+          "above6000": -27.46009147329446
+        }
+      },
+      {
+        "name": "Open sky / Drop I",
+        "startBar": 25,
+        "bars": 16,
+        "rmsDbfs": -12.253458615008261,
+        "peakDbfs": -1.9307449365726659,
+        "crestDb": 10.322713678435596,
+        "dc": 0.001040421501652486,
+        "stereoCorrelation": 0.8415949656310795,
+        "lowSideToMidDb": -22.1520230873624,
+        "bandRmsDbfs": {
+          "below150": -15.204630844958949,
+          "150to1000": -19.40085969704433,
+          "1000to6000": -21.065164595075395,
+          "above6000": -29.14326946202445
+        }
+      },
+      {
+        "name": "Weightless / Break",
+        "startBar": 41,
+        "bars": 16,
+        "rmsDbfs": -13.867526041087066,
+        "peakDbfs": -2.4548494674655954,
+        "crestDb": 11.412676573621471,
+        "dc": 0.00013403266868221043,
+        "stereoCorrelation": 0.8193823958180008,
+        "lowSideToMidDb": -17.58656597833727,
+        "bandRmsDbfs": {
+          "below150": -15.855331307554252,
+          "150to1000": -20.618146453254,
+          "1000to6000": -26.54111633823648,
+          "above6000": -40.936605841484095
+        }
+      },
+      {
+        "name": "Signal / Build II",
+        "startBar": 57,
+        "bars": 16,
+        "rmsDbfs": -16.09434453377044,
+        "peakDbfs": -1.4700663415818536,
+        "crestDb": 14.624278192188585,
+        "dc": -0.000013821403163886207,
+        "stereoCorrelation": 0.7495075346403864,
+        "lowSideToMidDb": -11.609291274645583,
+        "bandRmsDbfs": {
+          "below150": -22.769971768826693,
+          "150to1000": -20.857914400724216,
+          "1000to6000": -25.249075643598925,
+          "above6000": -27.462922088154983
+        }
+      },
+      {
+        "name": "Beyond / Drop II",
+        "startBar": 73,
+        "bars": 16,
+        "rmsDbfs": -12.4137490779705,
+        "peakDbfs": -2.019622417820716,
+        "crestDb": 10.394126660149784,
+        "dc": 0.0009720503228781686,
+        "stereoCorrelation": 0.8392446219304684,
+        "lowSideToMidDb": -21.78546277148877,
+        "bandRmsDbfs": {
+          "below150": -15.606800344933305,
+          "150to1000": -19.236068131868077,
+          "1000to6000": -21.115219950177412,
+          "above6000": -29.081575173496095
+        }
+      },
+      {
+        "name": "Afterglow / Reprise",
+        "startBar": 89,
+        "bars": 8,
+        "rmsDbfs": -11.962141232642427,
+        "peakDbfs": -1.9196525900632153,
+        "crestDb": 10.042488642579212,
+        "dc": 0.0004265140770075947,
+        "stereoCorrelation": 0.8909562906492342,
+        "lowSideToMidDb": -20.273673072164257,
+        "bandRmsDbfs": {
+          "below150": -13.663464065634091,
+          "150to1000": -19.317527282656897,
+          "1000to6000": -25.739008196122466,
+          "above6000": -33.441276980382185
+        }
+      },
+      {
+        "name": "Horizon / Outro",
+        "startBar": 97,
+        "bars": 8,
+        "rmsDbfs": -16.04225531260567,
+        "peakDbfs": -2.4476807520004287,
+        "crestDb": 13.59457456060524,
+        "dc": -0.00005544352634835894,
+        "stereoCorrelation": 0.7021994572994816,
+        "lowSideToMidDb": -13.807442681642215,
+        "bandRmsDbfs": {
+          "below150": -18.618210830072414,
+          "150to1000": -21.92148145124922,
+          "1000to6000": -27.86614427589855,
+          "above6000": -43.150102503181486
+        }
+      }
+    ],
+    "impacts": [
+      {
+        "startBar": 25,
+        "preDropGap": {
+          "rmsDbfs": -19.067474589722714,
+          "midRmsDbfs": -23.78819370529373,
+          "peakDbfs": -5.389604677386865
+        },
+        "arrival": {
+          "rmsDbfs": -12.8364093970466,
+          "midRmsDbfs": -16.40302140468876,
+          "peakDbfs": -2.470704525277853
+        },
+        "arrivalLiftDb": 6.231065192676114,
+        "snareMedianMidLiftDb": -1.1081177403446265,
+        "minSnareMidLiftDb": -1.4845001107018199,
+        "maxSnareMidLiftDb": -0.44174934011883593,
+        "snareHits": 16
+      },
+      {
+        "startBar": 73,
+        "preDropGap": {
+          "rmsDbfs": -18.83901710674507,
+          "midRmsDbfs": -23.56958397880512,
+          "peakDbfs": -4.2592144229100946
+        },
+        "arrival": {
+          "rmsDbfs": -12.730975115723094,
+          "midRmsDbfs": -16.24715117529715,
+          "peakDbfs": -2.437254733282491
+        },
+        "arrivalLiftDb": 6.108041991021977,
+        "snareMedianMidLiftDb": -1.0363124525632692,
+        "minSnareMidLiftDb": -1.3962037520647463,
+        "maxSnareMidLiftDb": -0.4795843456739384,
+        "snareHits": 16
+      }
+    ],
+    "buses": [
+      {
+        "name": "Master",
+        "startBar": 1,
+        "bars": 8,
+        "rmsDbfs": -12.229850561815024,
+        "peakDbfs": -2.2743513257981336,
+        "crestDb": 9.955499236016891,
+        "dc": 0.001037671533536387,
+        "stereoCorrelation": 0.8408729218924162,
+        "lowSideToMidDb": -22.14379574153157,
+        "bandRmsDbfs": {
+          "below150": -15.166352614233968,
+          "150to1000": -19.402235222163743,
+          "1000to6000": -21.040049504325662,
+          "above6000": -29.147342464744185
+        }
+      },
+      {
+        "name": "Kick · detector",
+        "startBar": 1,
+        "bars": 8,
+        "rmsDbfs": -29.12161645764032,
+        "peakDbfs": -11.71679699965948,
+        "crestDb": 17.404819457980842,
+        "dc": 3.403956662736311e-9,
+        "stereoCorrelation": 1,
+        "lowSideToMidDb": -226.8312399366613,
+        "bandRmsDbfs": {
+          "below150": -31.35290625230602,
+          "150to1000": -34.73161884890477,
+          "1000to6000": -46.69030439357552,
+          "above6000": -55.62278309366678
+        }
+      },
+      {
+        "name": "Snare / tops",
+        "startBar": 1,
+        "bars": 8,
+        "rmsDbfs": -33.09836290846915,
+        "peakDbfs": -6.691689526512102,
+        "crestDb": 26.40667338195705,
+        "dc": -9.847689905907011e-7,
+        "stereoCorrelation": 0.9980883959554802,
+        "lowSideToMidDb": -21.988804643030807,
+        "bandRmsDbfs": {
+          "below150": -43.97858474630166,
+          "150to1000": -43.214039847248515,
+          "1000to6000": -42.458355402912375,
+          "above6000": -38.57474440084144
+        }
+      },
+      {
+        "name": "Drum room · early reflections",
+        "startBar": 1,
+        "bars": 8,
+        "rmsDbfs": -75.76204666953238,
+        "peakDbfs": -49.6915671622368,
+        "crestDb": 26.07047950729558,
+        "dc": -9.655741302181205e-10,
+        "stereoCorrelation": 0.015036790027428009,
+        "lowSideToMidDb": -2.846601985722081,
+        "bandRmsDbfs": {
+          "below150": -101.40670071468934,
+          "150to1000": -92.82829033948587,
+          "1000to6000": -83.24961817184382,
+          "above6000": -80.61942873990597
+        }
+      },
+      {
+        "name": "Sub · short kick duck",
+        "startBar": 1,
+        "bars": 8,
+        "rmsDbfs": -21.550737417387204,
+        "peakDbfs": -17.62111449266573,
+        "crestDb": 3.9296229247214747,
+        "dc": 0.0000305799878604125,
+        "stereoCorrelation": 1,
+        "lowSideToMidDb": -236.2532800737333,
+        "bandRmsDbfs": {
+          "below150": -21.93086611523393,
+          "150to1000": -33.74106650403157,
+          "1000to6000": -50.04851325710615,
+          "above6000": -67.57728022819664
+        }
+      },
+      {
+        "name": "Bassline · harmonic foundation",
+        "startBar": 1,
+        "bars": 8,
+        "rmsDbfs": -33.56546249162615,
+        "peakDbfs": -20.918955537028904,
+        "crestDb": 12.646506954597246,
+        "dc": -5.0073928300573e-7,
+        "stereoCorrelation": 1,
+        "lowSideToMidDb": -222.97019809331502,
+        "bandRmsDbfs": {
+          "below150": -35.213948095653535,
+          "150to1000": -40.181388860789795,
+          "1000to6000": -52.04732683676359,
+          "above6000": -69.06777116912686
+        }
+      },
+      {
+        "name": "Mid bass · kick sidechain",
+        "startBar": 1,
+        "bars": 8,
+        "rmsDbfs": -31.49263454399263,
+        "peakDbfs": -14.281160345221613,
+        "crestDb": 17.211474198771015,
+        "dc": 0.0000014296612550779844,
+        "stereoCorrelation": 0.999458196011319,
+        "lowSideToMidDb": -40.33077519088883,
+        "bandRmsDbfs": {
+          "below150": -39.834127917569305,
+          "150to1000": -34.73618995670646,
+          "1000to6000": -40.01425895840136,
+          "above6000": -54.11665752620614
+        }
+      },
+      {
+        "name": "Music · rhythmic duck",
+        "startBar": 1,
+        "bars": 8,
+        "rmsDbfs": -21.799017198343268,
+        "peakDbfs": -4.447661769310054,
+        "crestDb": 17.351355429033212,
+        "dc": -3.347743479384537e-7,
+        "stereoCorrelation": 0.5696792546913165,
+        "lowSideToMidDb": -5.3467310559399985,
+        "bandRmsDbfs": {
+          "below150": -34.89823739040487,
+          "150to1000": -26.84430975809493,
+          "1000to6000": -26.890349068747387,
+          "above6000": -35.839096495662986
+        }
+      }
+    ]
+  },
+  "currentBuses": {
+    "meaning": "Bars 25–32, direct master contribution before master inserts/fader, with real sidechain and ducking. Send-only buses have zero direct contribution. Old snare/tops were combined; not identical grouping to the new independent snare bus.",
+    "buses": [
+      {
+        "name": "Master",
+        "startBar": 1,
+        "bars": 8,
+        "rmsDbfs": -12.719975218339034,
+        "peakDbfs": -2.439323578993017,
+        "crestDb": 10.280651639346017,
+        "dc": 0.00040589393713433254,
+        "stereoCorrelation": 0.8569186544911959,
+        "lowSideToMidDb": -22.379386644625793,
+        "bandRmsDbfs": {
+          "below150": -15.973431435688335,
+          "150to1000": -19.488194279320837,
+          "1000to6000": -21.45535471803859,
+          "above6000": -28.984990953383726
+        }
+      },
+      {
+        "name": "Kick · detector",
+        "startBar": 1,
+        "bars": 8,
+        "rmsDbfs": -24.380797628658065,
+        "peakDbfs": -7.920073730529831,
+        "crestDb": 16.460723898128236,
+        "dc": 5.173934447573503e-9,
+        "stereoCorrelation": 1,
+        "lowSideToMidDb": -232.05760611474057,
+        "bandRmsDbfs": {
+          "below150": -26.12654007422689,
+          "150to1000": -30.778455255925053,
+          "1000to6000": -43.56874441323615,
+          "above6000": -52.2377976710726
+        }
+      },
+      {
+        "name": "Snare · body / crack / tail",
+        "startBar": 1,
+        "bars": 8,
+        "rmsDbfs": -24.566134573271484,
+        "peakDbfs": -1.406446808311019,
+        "crestDb": 23.159687764960463,
+        "dc": -0.0000011016202112111307,
+        "stereoCorrelation": 0.9942328567919358,
+        "lowSideToMidDb": -32.31312188909355,
+        "bandRmsDbfs": {
+          "below150": -31.088776427157853,
+          "150to1000": -29.336078256611454,
+          "1000to6000": -32.862604980857775,
+          "above6000": -37.36260571207691
+        }
+      },
+      {
+        "name": "Tops · hats / ride / shaker",
+        "startBar": 1,
+        "bars": 8,
+        "rmsDbfs": -34.80171224063718,
+        "peakDbfs": -9.874113635587477,
+        "crestDb": 24.927598605049702,
+        "dc": -9.663890371172167e-10,
+        "stereoCorrelation": 0.9717569915663653,
+        "lowSideToMidDb": -19.602852090707426,
+        "bandRmsDbfs": {
+          "below150": -67.72919643529582,
+          "150to1000": -52.87226658341104,
+          "1000to6000": -40.73954903785604,
+          "above6000": -40.32002114544278
+        }
+      },
+      {
+        "name": "Drum room · gated-size space",
+        "startBar": 1,
+        "bars": 8,
+        "rmsDbfs": -49.284392781784405,
+        "peakDbfs": -26.603823393262655,
+        "crestDb": 22.68056938852175,
+        "dc": 4.259246725943397e-9,
+        "stereoCorrelation": -0.20368752712000288,
+        "lowSideToMidDb": 4.549366142429965,
+        "bandRmsDbfs": {
+          "below150": -67.11069092388597,
+          "150to1000": -59.13654547555586,
+          "1000to6000": -53.4170212146363,
+          "above6000": -58.01727574093241
+        }
+      },
+      {
+        "name": "Sub · short kick duck",
+        "startBar": 1,
+        "bars": 8,
+        "rmsDbfs": -21.58565824795657,
+        "peakDbfs": -17.62111449266573,
+        "crestDb": 3.9645437552908405,
+        "dc": 0.000014578967831343507,
+        "stereoCorrelation": 1,
+        "lowSideToMidDb": -236.2178258017246,
+        "bandRmsDbfs": {
+          "below150": -21.966320387242938,
+          "150to1000": -33.77017718431746,
+          "1000to6000": -50.076923801296076,
+          "above6000": -67.60567291730138
+        }
+      },
+      {
+        "name": "Bassline · harmonic foundation",
+        "startBar": 1,
+        "bars": 8,
+        "rmsDbfs": -33.623813791429775,
+        "peakDbfs": -20.918955537028904,
+        "crestDb": 12.704858254400872,
+        "dc": 6.584587184323167e-7,
+        "stereoCorrelation": 1,
+        "lowSideToMidDb": -222.90945520175399,
+        "bandRmsDbfs": {
+          "below150": -35.27469098721446,
+          "150to1000": -40.23545565403471,
+          "1000to6000": -52.08791853040558,
+          "above6000": -69.10735939170061
+        }
+      },
+      {
+        "name": "Mid bass · kick sidechain",
+        "startBar": 1,
+        "bars": 8,
+        "rmsDbfs": -31.713243272696438,
+        "peakDbfs": -14.267770127635922,
+        "crestDb": 17.445473145060518,
+        "dc": 0.0000016632880005224386,
+        "stereoCorrelation": 0.9994754674674886,
+        "lowSideToMidDb": -40.46471734061906,
+        "bandRmsDbfs": {
+          "below150": -40.04462953815343,
+          "150to1000": -34.93574284643688,
+          "1000to6000": -40.293347123109335,
+          "above6000": -54.630101429199456
+        }
+      },
+      {
+        "name": "Music · rhythmic duck",
+        "startBar": 1,
+        "bars": 8,
+        "rmsDbfs": -21.75496724890136,
+        "peakDbfs": -5.793507701442589,
+        "crestDb": 15.96145954745877,
+        "dc": 0.0000014964873331575336,
+        "stereoCorrelation": 0.5750791903207325,
+        "lowSideToMidDb": -5.434881838612618,
+        "bandRmsDbfs": {
+          "below150": -35.05304553270975,
+          "150to1000": -26.908229334893214,
+          "1000to6000": -26.7515228731298,
+          "above6000": -35.65354231972555
+        }
+      }
+    ]
+  },
+  "limiterComparison": {
+    "range": "Bars 25–32, final drum envelope; same fader and ceiling, only limiter input varies. This review preceded section automation, which preserves 8 dB throughout both drops.",
+    "results": [
+      {
+        "inputDb": 8,
+        "path": "target/master-review-8.wav",
+        "durationSeconds": 13.714291666666666,
+        "peakDbfs": -2.4393242645769124,
+        "truePeakDbfs": -2.3699651131200974,
+        "integratedLufs": -10.690209540173976,
+        "snareMedianMidLiftDb": 0.6247395711827322
+      },
+      {
+        "inputDb": 11,
+        "path": "target/master-review-11.wav",
+        "durationSeconds": 13.714291666666666,
+        "peakDbfs": -2.408359593669765,
+        "truePeakDbfs": -2.3699637528579016,
+        "integratedLufs": -10.287216933322215,
+        "snareMedianMidLiftDb": 0.2658786597038123
+      },
+      {
+        "inputDb": 16,
+        "path": "target/master-review-16.wav",
+        "durationSeconds": 13.714291666666666,
+        "peakDbfs": -2.3579751986711517,
+        "truePeakDbfs": -2.356062801860968,
+        "integratedLufs": -10.20151067106519,
+        "snareMedianMidLiftDb": 0.14250924050634772
+      }
+    ]
+  },
+  "nativeProcess": {
+    "snapshot": "target/examples/full-songs/after-the-horizon.snapshot.json",
+    "sampleRate": 48000,
+    "blockSize": 128,
+    "tracks": 36,
+    "instrumentChannels": 36,
+    "mixerBuses": 16,
+    "graphLatencyFrames": 1096,
+    "pluginFaults": 0,
+    "device": "offline memory buffers",
+    "callbackP99Ms": null,
+    "xruns": null,
+    "regions": [
+      {
+        "startBar": 24,
+        "warmupBlocks": 128,
+        "blocks": 4000,
+        "meanMs": 1.8401276625000031,
+        "p95Ms": 1.9985,
+        "p99Ms": 2.07,
+        "maxMs": 4.238958,
+        "peak": 0.7551509737968445,
+        "deadlineMs": 2.6666666666666665,
+        "deadlineExceedances": 6
+      },
+      {
+        "startBar": 80,
+        "warmupBlocks": 128,
+        "blocks": 4000,
+        "meanMs": 1.915145299750002,
+        "p95Ms": 2.068833,
+        "p99Ms": 2.137833,
+        "maxMs": 2.417167,
+        "peak": 0.755186140537262,
+        "deadlineMs": 2.6666666666666665,
+        "deadlineExceedances": 0
+      }
+    ]
+  },
+  "wasm": {
+    "title": "After the Horizon / 地平线之后",
+    "slug": "after-the-horizon",
+    "seconds": 181.28570833333333,
+    "sampleRate": 48000,
+    "blockSize": 128,
+    "samples": 52,
+    "renderSeconds": 214.727249917,
+    "realtimeMultiple": 0.8442603740485055,
+    "p95Ms": 3.3429589999996097,
+    "p99Ms": 3.4496670000007725,
+    "processBlocks": 4000,
+    "processStartBar": 24,
+    "memoryBefore": {
+      "bytes": 598736896,
+      "allocations": 222781,
+      "deallocations": 164459
+    },
+    "memoryAfter": {
+      "bytes": 598736896,
+      "allocations": 222781,
+      "deallocations": 164459
+    },
+    "processAllocations": 0,
+    "processDeallocations": 0,
+    "peakDbfs": -2.2370972943558436,
+    "rmsDbfs": -15.57992179889183,
+    "maxPcmDifference": 4.76837158203125e-7,
+    "sectionLevels": [
+      {
+        "name": "First light / Soft Piano",
+        "rmsDbfs": -21.84568516470083
+      },
+      {
+        "name": "Lift / Build I",
+        "rmsDbfs": -17.222087165301765
+      },
+      {
+        "name": "Open sky / Drop I",
+        "rmsDbfs": -12.729078860038094
+      },
+      {
+        "name": "Weightless / Break",
+        "rmsDbfs": -17.596724517503787
+      },
+      {
+        "name": "Signal / Build II",
+        "rmsDbfs": -17.717944268312973
+      },
+      {
+        "name": "Beyond / Drop II",
+        "rmsDbfs": -12.76007030524961
+      },
+      {
+        "name": "Afterglow / Reprise",
+        "rmsDbfs": -15.797467930325661
+      },
+      {
+        "name": "Horizon / Outro",
+        "rmsDbfs": -18.613102037422593
+      }
+    ]
+  },
+  "preview": {
+    "entry": "/Volumes/BRData/projects/oxitone/target/examples/after-the-horizon.mjs",
+    "state": {
+      "protocolVersion": "1.0",
+      "type": "state",
+      "revision": "1",
+      "seenRevision": "1",
+      "cursor": "0",
+      "audibleFrame": "0",
+      "playing": false,
+      "xruns": 0,
+      "pluginFaults": 0,
+      "tracks": 36,
+      "patterns": 1126
+    },
+    "tracks": 36,
+    "samples": 52,
+    "viewer": "headless simulated sink",
+    "log": "",
+    "rejected": 0,
+    "bundleBytes": 278087,
+    "bundleSha256": "04bfa89f3bc00696ef8067a84750f165684ab164dc7260f7ad2ebe8cba26b621"
+  },
+  "excerpts": [
+    {
+      "path": "target/examples/full-songs/after-the-horizon-build-drop-i.wav",
+      "startBar": 21,
+      "endBarExclusive": 33,
+      "seconds": 20.5714375,
+      "method": "Exact PCM24 slice from the full native master; no normalization or re-render."
+    },
+    {
+      "path": "target/examples/full-songs/after-the-horizon-build-drop-ii.wav",
+      "startBar": 69,
+      "endBarExclusive": 81,
+      "seconds": 20.571416666666668,
+      "method": "Exact PCM24 slice from the full native master; no normalization or re-render."
+    }
+  ],
+  "limitations": [
+    "Objective energy measurements do not establish subjective commercial-release quality; no listening claim.",
+    "Gap/arrival rise is dominated by near-silence in the gap; it does not measure stronger drum sound.",
+    "Snare event windows also contain other mix content and ducking; before windows include some syncopated kicks.",
+    "Timings cover finite offline regions, not hardware callbacks or device endurance; Wasm timing covers Drop I only.",
+    "Wasm Drop I p99 3.45 ms exceeds the 2.67 ms block budget; full offline export is 0.844x realtime. Sustained Wasm realtime playback of this 36-track graph needs optimization. Native finite regions contain 6/0 deadline exceedances.",
+    "Piano sample bytes and installed SDK/native dependencies remain external to the single-file project bundle.",
+    "MIDI alone shares timbre-family channels; it cannot preserve all independent patches, CCs and same-pitch overlaps."
+  ]
+}

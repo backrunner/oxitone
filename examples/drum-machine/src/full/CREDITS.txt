@@ -1,4 +1,10 @@
 Original composition: After the Horizon / 地平线之后.
-All musical parts use Oxitone's native wavetable synth; percussion uses its
-Circuit electronic drum preset through the public C ABI (native and Wasm).
-No third-party recordings or commercial synthesizer presets are included.
+Electronic parts use Oxitone's native wavetable synth; percussion layers combine
+the Circuit drum plugin through the public C ABI with native synthesis.
+Piano recordings: Salamander Grand Piano v3 by Alexander Holm, CC BY 3.0.
+FLAC distribution by sfzinstruments/kinwie:
+https://github.com/sfzinstruments/SalamanderGrandPiano
+Pinned revision: 3382bf9496bba2486f5ab0de55a264d1dfc38404
+License: https://creativecommons.org/licenses/by/3.0/
+Oxitone supplies independent layer mapping, envelopes and mix processing.
+No tutorial project, drum sample or commercial synthesizer preset is redistributed.

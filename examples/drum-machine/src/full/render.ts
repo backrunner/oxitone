@@ -9,6 +9,7 @@ import { outputRoot } from "./paths.js";
 import { drumRegistration, type Section } from "./shared.js";
 import { inspectSections } from "./verify.js";
 import { midiSnapshot } from "./midi-export.js";
+import { inspectImpact } from "./impact-analysis.js";
 
 await mkdir(outputRoot, { recursive: true });
 const reports = [];
@@ -37,9 +38,13 @@ for (const [song, create] of [[dubstep, createDubstepSong]] as const) {
       assert(drop.crestDb > 6, "Drop transients over-compressed");
       assert(drop.lowSideToMidDb < -20, "Drop bass lost its mono foundation");
       assert(drop.rmsDbfs > sectionLevels[index - 1]!.rmsDbfs + 2, "Build no longer lifts into drop");
+      assert(drop.rmsDbfs < sectionLevels[index - 1]!.rmsDbfs + 8, "Build is too quiet relative to drop");
     }
     const phrases: Section[] = Array.from({ length: song.bars / 4 }, (_, i) => [`Phrase ${i + 1}`, i * 4]);
     const phraseLevels = inspectSections(file.path, phrases, song.bpm, song.bars);
+    const impacts = inspectImpact(file.path, song.bpm);
+    assert(impacts.every(i => i.arrivalLiftDb! > 12), "Pre-drop gap no longer clears the downbeat");
+    assert(impacts.every(i => i.snareMedianMidLiftDb > 0), "Snare sustain is buried in the drop mix");
     const diagnostics = getPluginDiagnostics(engine);
     assert(diagnostics.every(d => d.faults === 0), "Native plugin fault");
     const midi = exportMidi(engine, midiSnapshot(snapshot), { path: join(outputRoot, `${song.slug}.mid`) });
@@ -47,7 +52,7 @@ for (const [song, create] of [[dubstep, createDubstepSong]] as const) {
     reports.push({ ...song, ...file, sha256: hashFile(file.path), renderSeconds,
       realtimeMultiple: expectedSeconds / renderSeconds, tracks: snapshot.tracks.length,
       notes: snapshot.patterns.reduce((sum, pattern) => sum + pattern.notes.length, 0),
-      sectionLevels, phraseLevels, midi, plugin, diagnostics });
+      sectionLevels, phraseLevels, impacts, midi, plugin, diagnostics });
     console.log(`${song.title}: ${file.durationSeconds.toFixed(2)} s, ${file.integratedLufs.toFixed(2)} LUFS, ${file.truePeakDbfs.toFixed(2)} dBTP`);
   } finally { dispose(engine); }
 }

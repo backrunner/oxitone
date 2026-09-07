@@ -1,5 +1,6 @@
 import type { createMix } from "./mix.js";
 import { automation } from "./shared.js";
+import { applyBuildMotion } from "./build-motion.js";
 
 type Mix = ReturnType<typeof createMix>;
 const hz = (value: number) => Math.log(value / 20) / Math.log(1000);
@@ -8,14 +9,20 @@ const curve = (points: Map<number, number>) => automation.polyline(
 
 /** Gain recovery follows the actual kick/snare events; spectral motion follows chord attacks. */
 export function applyMotion(mix: Mix, hits: number[], chordAttacks: number[], kicks: number[]) {
+  applyBuildMotion(mix.percussion);
   const ordered = [...new Set(hits)].sort((a, b) => a - b);
-  for (const [bus, floor] of [[mix.music, 0.15], [mix.hall, 0.07], [mix.echo, 0.10], [mix.throws, 0.10]] as const) {
+  for (const [bus, floor] of [[mix.music, 0.1], [mix.hall, 0.05], [mix.echo, 0.08], [mix.throws, 0.08]] as const) {
     const points = new Map<number, number>([[0, 0.5]]);
     for (const [i, beat] of ordered.entries()) {
-      const recovery = Math.min(0.48, (ordered[i + 1] ?? beat + 1) - beat - 0.015);
+      const snare = beat % 4 === 2;
+      const recovery = Math.min(snare ? 0.66 : 0.38, (ordered[i + 1] ?? beat + 1) - beat - 0.015);
       if (beat > 0.012) points.set(beat - 0.012, 0.5);
-      points.set(beat, floor); points.set(beat + recovery * 0.2, floor + 0.02);
+      points.set(beat, floor); points.set(beat + recovery * (snare ? 0.32 : 0.2), floor + 0.02);
       points.set(beat + recovery * 0.58, 0.36); points.set(beat + recovery, 0.5);
+    }
+    for (const end of [96, 288]) {
+      points.set(end - 1.2, 0.5); points.set(end - 0.9, 0);
+      points.set(end - 0.012, 0);
     }
     bus.automate("level", curve(points));
   }
@@ -52,9 +59,9 @@ export function applyMotion(mix: Mix, hits: number[], chordAttacks: number[], ki
   // Release the roll and pad before the downbeat; the new kick arrives into a pocket.
   const liftGain = new Map<number, number>([[0, 0.095]]), padGain = new Map<number, number>([[0, 0.08]]);
   for (const end of [96, 288]) {
-    liftGain.set(end - 2, 0.095); liftGain.set(end - 0.55, 0); liftGain.set(end, 0);
+    liftGain.set(end - 2, 0.095); liftGain.set(end - 0.9, 0); liftGain.set(end, 0);
     liftGain.set(end + 0.01, 0.095);
-    padGain.set(end - 2, 0.08); padGain.set(end - 0.5, 0); padGain.set(end, 0); padGain.set(end + 0.25, 0.08);
+    padGain.set(end - 2, 0.08); padGain.set(end - 0.9, 0); padGain.set(end, 0); padGain.set(end + 0.25, 0.08);
   }
   mix.lift.automate("level", curve(liftGain)); mix.air.automate("level", curve(padGain));
   const throws = new Map<number, number>([[0, 0]]);

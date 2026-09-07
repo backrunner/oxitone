@@ -24,7 +24,36 @@
 
 ## 审查与性能记录的解释
 
-当前 demo 与 CLI（2026-09-08，钢琴和低频分层）：
+当前 demo（2026-09-08，build/drop 鼓组与段落平衡）：
+
+- 保留 F# minor、140 BPM、104 bars 和两个 Drop 的全部主旋律音符，扩展为 36 轨、
+  36 instrument channels、16 mixer buses、5239 notes。底鼓主体/攻击、军鼓 crack/
+  185 Hz body/noise tail/错位 clap 分层，tops 和 build 独立总线；ride/shaker、tom
+  fills、crash/reverse、递进滚奏与 tonal riser 发展过渡，新增 pulse/edge 和弦音色。
+- 滚奏由四分音符加速至三十二分音符，调音升高、尾音缩短、低频收紧，Drop 前一拍
+  留出短暂空隙。钢琴装饰音独立到 0.5 level（原共享 1.15），降低力度并收暗音色。
+  Limiter 在 Drop 使用 8 dB 输入；intro/build 16、break 12、reprise 10、outro 14 dB，
+  在空隙中切换，避免既压平鼓组、又让安静段落过弱。研究来源与访问限制见
+  [制作说明](../../examples/drum-machine/src/full/PRODUCTION.md)。
+- Native 全曲 181.286 s、−13.07 LUFS、−2.21 dBTP；Build→Drop section RMS 增幅
+  4.49/4.96 dB，Drop crest 10.43/10.32 dB、low side/mid <−22.1 dB。全曲军鼓
+  150 Hz–6 kHz 窗口的中位增幅从 −1.11/−1.04 改善到 +0.66/+0.95 dB；其余声部
+  与 ducking 也参与该值。独立 kick bus RMS 从 −29.12 到 −24.38 dBFS，当前独立
+  snare/tops 为 −24.57/−34.80 dBFS；旧 snare/tops 混在一起，不作相同分组比较。
+- 新增段落差值 2–8 dB、gap/arrival >12 dB、军鼓中位窗口增幅 >0、独立鼓总线
+  能量门禁；保留原 PCM/true peak/mono bass/原旋律回归。片段直接裁切最终 PCM，
+  没有额外归一化；单文件 bundle 已更新，原生 headless preview 接受 36 轨/52 samples，
+  初始停止、零 rejected/plugin faults。当前证据见
+  [鼓组与过渡归档](../../benchmarks/results/2026-09-08-horizon-drum-energy.json)。
+- lint/typecheck、rustfmt、486 项 Rust 测试（0 failed/1 ignored）、9 项 demo 测试通过。
+  Native 两段各 4000 blocks 的 p95/p99 为 2.00/2.07、2.07/2.14 ms；超过 2.67 ms
+  单块预算的次数为 6/0。Wasm Drop I p95/p99 为 3.34/3.45 ms，已超单块预算；
+  全曲离线导出 Native/Wasm 为 1.343×/0.844× realtime，Wasm 密集段持续实时能力
+  尚不达标，不能用正确导出替代性能验收。没有打开系统音频设备，callback/xrun 未测。
+- Wasm 52 份资产全曲 PCM 对拍最大差 4.77e−7；4000 blocks 内 598,736,896-byte
+  linear memory 与分配/释放计数不变。没有放宽引擎 DSP、安全或内存边界。
+
+历史 demo 与 CLI（2026-09-08，钢琴和低频分层）：
 
 - `oxitone` 已安装到当前开发机 `~/.local/bin`；`pnpm install:cli` 可重建链接。
   `oxitone build entry.ts -o project.mjs [--watch]` 将本地 TS/JS/JSON 与静态 import

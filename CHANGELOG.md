@@ -8,6 +8,12 @@ conventional commits (`type(scope): description`).
 
 ### Added
 
+- Rework the melodic dubstep build/drop into 36 tracks: layered kick/snare bodies
+  and attacks, sustained snare tail/claps, ride/shaker/tom/crash/reverse parts,
+  accelerating tuned rolls and rising build textures. Add pulse/edge chord timbres,
+  independent quieter piano ornaments, section-aware limiter input and offline
+  drum/transition energy analysis with regression bounds.
+
 - Recorded `softPiano`/`grandPiano` bank helpers, backed by the existing Rust
   multisampler. The demo prepares a hash-pinned CC BY 3.0 Salamander bank explicitly,
   uses piano in its quieter sections, and develops a stronger sub/harmonic bassline,

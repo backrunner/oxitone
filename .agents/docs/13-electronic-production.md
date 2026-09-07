@@ -98,7 +98,7 @@ acceptance; the insert ceiling alone is not the delivery ceiling.
 
 The offline render checks finite PCM, duration, −18…−9 integrated LUFS, <−0.8 dBTP,
 positive section correlation, small DC, drop crest >6 dB and low side/mid <−20 dB.
-Each drop must exceed its build's section RMS by 2 dB. Four-bar energy measurements
+Each drop must exceed its build's section RMS by 2–8 dB. Four-bar energy measurements
 are included in report.json. These are regression bounds, not a loudness target
 for every project or proof of subjective mix quality. Final evidence is archived
 in the benchmark archive; the earlier 20-track version is recorded in
@@ -135,6 +135,27 @@ Public technique references, used for principles rather than copied patches:
 - Au5, [1 Minute Reese](https://www.youtube.com/watch?v=W87uuuGcq9c): Reese layering.
 - [Virtual Riot / Modestep interview](https://splice.com/blog/virtual-riot/):
   drum fills, one-shots, top detail and processing experimentation.
+
+### Build/drop percussion revision
+
+The 36-track melodic dubstep revision preserves the hook while adding separate
+kick attack, snare body/noise tail/staggered clap, ride/shaker/tom/crash/reverse,
+build pulse/roll/riser and pulse/edge chord layers. Snare stays on beat 3, with
+independent tops and snare processing. Build rolls subdivide 1→1/2→1/4→1/8 beats;
+snare tuning rises, tails shorten, low end recedes, and the last beat leaves a
+short gap before the drop. Piano ornaments use a separate quieter, darker channel.
+All sound generation still uses existing Rust instruments/effects and the C ABI
+drum implementation; no protocol, RT DSP or wavetable anti-alias behavior changes.
+
+Offline acceptance adds separate kick/snare/tops bus analysis and event windows
+for the pre-drop gap, downbeat and 15–200 ms snare sustain, supplementing whole-song
+LUFS and section crest. Require >12 dB gap/arrival rise and positive median
+150 Hz–6 kHz snare-window contrast in both drops. Limiter input is 8 dB in drops;
+section automation restores quieter passages (intro/build 16, break 12, reprise 10,
+outro 14 dB), switching down inside the gap instead of over-limiting the drum stack.
+Research/implementation rationale and the limits of the
+available tutorial material are explicit in `examples/drum-machine/src/full/PRODUCTION.md`.
+Current evidence: `benchmarks/results/2026-09-08-horizon-drum-energy.json`.
 
 Capability references:
 - [Serum 2](https://xferrecords.com/products/serum-2): continuous frame positions,

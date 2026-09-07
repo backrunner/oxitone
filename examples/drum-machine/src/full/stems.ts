@@ -24,8 +24,12 @@ try {
     const stem = stems.find(s => s.name === name);
     assert(stem && stem.level.rmsDbfs > -42, `${name} is missing or too quiet before master processing`);
   }
+  for (const [name, floor] of [["Kick · detector", -28], ["Snare · body / crack / tail", -27],
+    ["Tops · hats / ride / shaker", -38]] as const) {
+    assert(stems.find(s => s.name === name)!.level.rmsDbfs > floor, `${name} lost its independent drum energy`);
+  }
   await writeFile(join(path, "report.json"), `${JSON.stringify({ ...result, files: stems }, null, 2)}\n`);
-  console.log(stems.filter(s => /bass|Sub|Music|Master/i.test(s.name)).map(s => ({
+  console.log(stems.filter(s => /bass|Sub|Music|Master|Kick|Snare|Tops/i.test(s.name)).map(s => ({
     name: s.name, rmsDbfs: s.level.rmsDbfs, bandRmsDbfs: s.level.bandRmsDbfs,
   })));
 } finally { dispose(engine); }

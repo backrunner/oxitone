@@ -5,12 +5,15 @@ of music plus a three-second export tail. Soft Piano opens the theme; Grand Pian
 supports the breakdown. Electronic parts use native synthesis and Circuit drums.
 The lofi demo is retired.
 
-The 24-track arrangement preserves every main lead note in both drops. A sustained
+The 36-track arrangement preserves every main lead note in both drops. A sustained
 mono sub has its own short kick-duck envelope; a separate harmonic bassline makes
 the root audible above the sub range. FM turbine, vowel motion, sync stabs and
 Reese layers alternate their rhythmic roles. Middle-register supersaws, central
 chord body, plucks, glass replies and a final harmonic halo develop the energy.
-The snare has a clap layer; shorter kicks leave space for bass recovery. Eight-bar
+The snare combines crack, body, noise tail and staggered clap layers. Kick attack,
+ride/shaker drive, tom fills, crashes/reverses and independent accelerating build
+rolls develop the transitions. Pulse chord sheen and distorted harmonic accents
+support the saw stack; piano ornaments have their own quieter channel. Eight-bar
 turnarounds expose bass fills and delay tails. MIDI channel sharing is applied only
 to an export copy; normal playback/preview has no 16-track limit. Shared MIDI
 families cannot reproduce independent synth patches, CCs or overlapping same pitches.
@@ -19,6 +22,9 @@ families cannot reproduce independent synth patches, CCs or overlapping same pit
   resource mapping. `softPiano`/`grandPiano` helpers use Rust multisampler playback.
 - `synth-patches.ts` / `bass-patches.ts`: independent source patches. FM and warp
   are separated to avoid compounding conservative wavetable bandlimiting.
+- `drum-patches.ts` / `drum-mix.ts` / `drum-arrangement.ts`: complementary percussion
+  layers, their separate buses and half-time/build phrasing. `build-motion.ts`
+  controls roll tuning/tails, rising tone and pre-drop contrast.
 - `mix.ts`: sub/bassline/midbass separation, EQ, distortion, Multiband Dynamics,
   nonlinear filter, tape, room convolution, ducked hall/echo and master limiting.
 - `motion.ts` / `phrasing.ts`: filter envelopes, kick recovery, bass/drum/chord cells
@@ -51,7 +57,15 @@ mono low-end and broad overlapping spectral bands. Wasm uploads the same sample
 bytes, renders the full song and compares native PCM. Timing is a separate check:
 offline exports do not establish sustained realtime performance or subjective
 commercial-release quality. See the current evidence in
-[the piano/bass archive](../../../../benchmarks/results/2026-09-08-horizon-piano-bass.json).
+[the drum-energy archive](../../../../benchmarks/results/2026-09-08-horizon-drum-energy.json).
+The previous piano/bass version remains archived separately. Research sources,
+access limitations and production decisions are recorded in [PRODUCTION.md](PRODUCTION.md).
+
+The current 36-track graph renders correctly in both runtimes, but its measured
+Wasm Drop I p99 is 3.45 ms against a 2.67 ms block budget; sustained Wasm realtime
+playback needs further optimization. Native p99 is 2.07/2.14 ms, with 6/0 isolated
+deadline exceedances in the two 4,000-block regions. These are offline process
+measurements, not physical-device callback or endurance acceptance.
 
 ```sh
 pnpm install:cli
