@@ -1,12 +1,14 @@
-import { Project, wavetable } from "@oxitone/core";
+import { Project } from "@oxitone/core";
 import type { InstrumentRef } from "@oxitone/protocol";
 import { drumInstrument } from "../song.js";
 import { uprightPiano } from "./piano.js";
 import { automation, bar, fx, note, preview, sections, type Hit } from "./shared.js";
+import { windowHook } from "./themes.js";
+import { warmBass, tapeGlass, eveningPad } from "./synth-patches.js";
 
 export const lofi = { slug: "rain-on-the-window", title: "Rain on the Window / 窗边雨", bpm: 80, bars: 60,
-  sections: [["Rain / Intro", 0], ["Streetlights / A", 8], ["Empty platform / Bridge", 24],
-    ["Last train / B", 32], ["Home / Reprise", 48], ["Lights out / Outro", 56]] as const };
+  sections: [["Rain / Intro", 0], ["Streetlights / Verse A", 8], ["Window / Hook I", 16], ["Empty platform / Bridge", 24],
+    ["Last train / Verse B", 32], ["Window / Hook II", 40], ["Home / Reprise", 48], ["Lights out / Outro", 56]] as const };
 
 /** Three-minute original in D minor: voiced ninths, swung drums, piano answers and an outro. */
 export function createLofiSong(piano: (project: Project) => InstrumentRef = uprightPiano): Project {
@@ -24,36 +26,32 @@ export function createLofiSong(piano: (project: Project) => InstrumentRef = upri
   const keys = p.addChannel({ name: "VSCO upright · 3 dynamics", instrument: piano(p), mixerChannelId: keysBus.id, level: 1.5 });
   const drums = p.addChannel({ name: "Native lofi kit", instrument: drumInstrument(), mixerChannelId: drumBus.id, level: 0.6 });
   const bass = p.addChannel({ name: "Sine / triangle bass", mixerChannelId: bassBus.id, level: 0.44,
-    instrument: wavetable({ oscA: { wave: "sine" }, oscB: { wave: "triangle" }, mix: 0.22,
-      filter: { cutoff: 520 }, amp: { attack: 0.008, decay: 0.22, sustain: 0.66, release: 0.12 } }) });
-  const bell = p.addChannel({ name: "Muted glass", mixerChannelId: melodyBus.id, level: 0.13, pan: 0.26,
-    instrument: wavetable({ oscA: { wave: "sine" }, oscB: { wave: "triangle", pitch: 12 }, mix: 0.15,
-      filter: { cutoff: 3100 }, amp: { attack: 0.004, decay: 0.38, sustain: 0.08, release: 0.3 } }) });
+    instrument: warmBass() });
+  const bell = p.addChannel({ name: "Tape glass · hook", mixerChannelId: melodyBus.id, level: 0.24, pan: 0.16,
+    instrument: tapeGlass() });
   const pad = p.addChannel({ name: "Evening air", mixerChannelId: melodyBus.id, level: 0.065, pan: -0.2,
-    instrument: wavetable({ oscA: { wave: "triangle", unison: 3, detune: 9, spread: 0.8 },
-      filter: { cutoff: 1400 }, amp: { attack: 0.65, decay: 0.3, sustain: 0.7, release: 0.7 } }) });
+    instrument: eveningPad() });
   const kt = p.addTrack("Piano · Dm9 / Bbmaj9 / Fmaj9 / Cadd9").use(keys);
   const mt = p.addTrack("Piano · answering melody").use(keys);
   const dt = p.addTrack("Drums · swung pocket").use(drums); dt.midiChannel = 10;
   const bt = p.addTrack("Bass").use(bass), gt = p.addTrack("Glass motif").use(bell), pt = p.addTrack("Air").use(pad);
   const chords = [[50, 57, 60, 64, 65], [46, 53, 57, 60, 62], [53, 57, 60, 64, 67], [48, 55, 60, 62, 64]];
   const roots = [38, 34, 41, 36];
-  const motif = [[77, 76, 72, 69], [74, 72, 69, 65], [72, 76, 79, 76], [74, 72, 67, 64]];
   for (let b = 0; b < lofi.bars; b++) {
     const bridge = b >= 24 && b < 32, outro = b >= 56, intro = b < 8;
     const index = b >= 58 ? 0 : Math.floor(b / 2) % 4, chord = chords[index]!, root = roots[index]!;
     const final = b === 59, sparse = intro || bridge || outro;
+    const chorus = b >= 16 && b < 24 || b >= 40 && b < 48;
     const ks: Hit[] = [];
     for (const start of final ? [0] : sparse ? [0.04] : [0.04, 2.56]) {
       chord.forEach((pitch, i) => ks.push(note(pitch, start + i * 0.018, final ? 2.4 : sparse ? 2.85 : 1.06,
         0.38 + i * 0.031 + (b % 3) * 0.022)));
     }
     bar(kt, b, ks, `${["Dm9", "Bbmaj9", "Fmaj9", "Cadd9"][index]} · ${sparse ? "open" : "pocket"}`);
-    if (b >= 4 && !final && b % 4 !== 3) {
-      const pitches = motif[index]!;
-      bar(mt, b, pitches.map((pitch, i) => note(pitch + (b >= 40 && b < 48 ? 0 : -12),
-        [0.55, 1.32, 2.55, 3.3][i]!, i === 3 ? 0.52 : 0.38, [0.62, 0.48, 0.57, 0.43][i]!)), "Piano answer");
-    }
+    if (b >= 8 && b < 56 && !bridge) bar(mt, b, windowHook(b, chorus ? -1 : 0), chorus ? "Window · piano harmony" : "Window · eight-bar theme");
+    if (intro && b >= 4 && b % 2 === 0 || bridge && b % 2 === 0) bar(mt, b, windowHook(b).slice(0, 2), "Window · fragment");
+    if (b === 56) bar(mt, b, windowHook(0), "Window · farewell");
+    if (b === 58) bar(mt, b, [note(74, 0.5, 3, 0.5)], "D · home");
     if (b >= 8 && b < 56 && (!bridge || b >= 28)) {
       bar(bt, b, [0, 1.8, 2.65, ...(b % 2 ? [3.5] : [])].map((start, i) =>
         note(root + (i === 3 ? 7 : 0), start, i === 0 ? 1.3 : 0.42, 0.76)), "Bass pocket");
@@ -68,9 +66,8 @@ export function createLofiSong(piano: (project: Project) => InstrumentRef = upri
       if ([23, 47, 55].includes(b)) for (const t of [3.5, 3.75]) hits.push(note(38, t, 0.08, 0.38));
       bar(dt, b, hits, intro || outro ? "Brushes" : "Dusty swing");
     }
-    if ((b >= 16 && b < 24 || b >= 40 && b < 56) && b % 2 === 1) {
-      bar(gt, b, [note(motif[index]![0]!, 1.7, 0.36, 0.52), note(motif[index]![2]!, 3.2, 0.44, 0.4)], "Glass response");
-    }
+    if (chorus) bar(gt, b, windowHook(b).map(hit => ({ ...hit, velocity: hit.velocity * (b >= 40 ? 1 : 0.88) })), "Window · glass hook");
+    if (b >= 48 && b < 56 && b % 2) bar(gt, b, [note(chord[2]! + 12, 3, 0.7, 0.4)], "Glass · afterthought");
     if (b >= 24 && b < 56 && b % 2 === 0) bar(pt, b,
       chord.slice(1, 4).map(pitch => note(pitch + 12, 0, 3.7, 0.5)), "Air voicing");
   }

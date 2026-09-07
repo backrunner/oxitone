@@ -20,6 +20,29 @@
 
 ## 审查与性能记录的解释
 
+合成器、可视化与旋律发展（2026-09-07）：
+
+- 原生 Wavetable 新增同相位 wave morph、Organ/Glass、unison phase/spread、Sub/Noise
+  与逐声部四形状 LFO 的五条路由；46 个 descriptor 参数，旧默认参数输出保持兼容。
+- SDK options、native validation、automation 参数路径与共享 UI schema 同步更新。
+  新增 oscillator/filterResponse/lfoCurve/modulation 四类 GPUI source 可视化；两页展示
+  A/B/filter/output 与 LFO/routes/两组 ADSR，亮暗主题与显示专用 2D/3D 切换。
+- 两首 demo 重写为八小节 hook、重复与回答、主题碎片/回归、tonic outro；第二次
+  dubstep Drop 增加 Prism 副旋律与更开的和弦。七组新音色预设全部走 Rust DSP。
+- `pnpm build/lint/typecheck/test/schemas`、`cargo fmt --all --check`、`cargo test --workspace`
+  通过（222 TS / 456 Rust tests）；后续布局收紧、DSP 测试拆分也通过各自定向检查。
+  覆盖各调制路径实际改变 PCM、默认兼容、noise/reset 确定性、64/128/256 block parity、
+  非对齐起音、mono/legato glide、65-note 抢占/参数事件/seek 的 allocations=frees=0。
+- `node scripts/smoke-preview-panels.mjs --synth` 通过：合成器可视化与实际 dylib 效果器
+  多窗口在 syntax/runtime/native 拒绝时保留 last-good；坏参数绑定保留合法布局，
+  修复后同时更新参数、Mix 与布局。实际 demo 亮暗主题/调制页截图保存在 target。
+- 最终全曲 183.00 / 181.286 s、−17.48 / −16.15 LUFS、−4.22 / −3.60 dBTP；
+  各段有声、无削波、native drum faults=0。基准与音频 hash 见
+  [记录](../../benchmarks/results/2026-09-07-synth-motion.json)。音频和截图不进 Git。
+- 此轮是六种内置波形与单 LFO 的增量能力，未实现 Serum 全功能、任意波表导入、FM、
+  tempo-map-following LFO、effective plugin telemetry 或原生 UI companion；M4/M7
+  设备长测与发布验收状态不变。旋律结构测试不代替人的听感判断。
+
 本轮新增两首完整 demo 与钢琴（2026-09-07）：
 
 - `examples/drum-machine/src/full/`：Lofi 80 BPM / 60 bars / 183 s，Melodic Dubstep

@@ -9,10 +9,28 @@ playback, effects, mixing and export run in Rust.
 | After the Horizon / 地平线之后 | Melodic dubstep, F# minor | 140 BPM / 104 bars | 3:01.29 |
 
 Durations include a three-second export tail. These are complete arrangements:
-lofi has intro, A, bridge, B, reprise and outro; dubstep has piano intro, two builds,
+lofi has intro, two verses, two hooks, bridge, reprise and outro; dubstep has piano intro, two builds,
 two half-time drops, breakdown, reprise and outro. Piano themes return in different
 instrument layers. Named patterns/markers expose the form in arrangement and piano
 roll; mixer returns and kick sidechain sends expose the routing.
+
+`themes.ts` contains the original eight-bar melodies. Lofi repeats the A–C–D cell,
+leaves space for answers, then hands the hook from upright piano to tape-glass lead.
+Dubstep repeats a syncopated C#–C#–E–F# cell from the piano intro through both drops;
+Drop II adds a Prism countermelody and longer chord accents. Breakdown fragments,
+build cutouts and final tonic notes make the sections distinct.
+
+`synth-patches.ts` provides seven reusable native patches: warm bass, tape glass,
+evening pad, wide sky chords, horizon lead, moving mid bass and sky pad. They use
+same-phase waveform morphing, deterministic unison phase spread, subtle pitch motion,
+filter/position modulation and quiet noise layers. The dubstep sub remains a separate
+mono sine track. LFO rates are specified in Hz from the fixed song tempo.
+
+Wavetable plugin windows show Oscillators and Modulation pages with 2D/3D
+source waves, filter response and routing depth. These are source parameter views;
+they update after successful code changes, not continuously from a playing voice.
+The synth currently uses six built-in cycles and one note-triggered LFO; arbitrary
+wavetable import, FM and tempo-map-following LFO sync are not implemented.
 
 From the repository root:
 

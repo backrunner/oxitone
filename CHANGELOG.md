@@ -8,6 +8,14 @@ conventional commits (`type(scope): description`).
 
 ### Added
 
+- Wavetable morph targets/position, organ/glass cycles, unison start phase/spread,
+  sine sub/noise layers and a note-triggered LFO with pitch/filter/position/amp routes.
+  Native DSP keeps fixed voice state; neutral defaults preserve existing patches.
+- Descriptor-bound oscillator, filter-response, LFO-curve and modulation-route UI
+  components, with compact native synth pages and display-only 2D/3D wave switching.
+  Full-length demos now develop eight-bar hooks, richer synth layers and a distinct
+  second dubstep drop with countermelody and a tonic ending.
+
 - Two full-length SDK compositions: 80 BPM lofi (3:03) and 140 BPM melodic dubstep
   (3:01), with acoustic piano, native drum dylib, section markers, effect returns,
   sidechain ducking, WAV/MIDI export and source-watched GPUI preview entries.

@@ -1,0 +1,238 @@
+{
+  "schema": "oxitone.focused-benchmark.v1",
+  "date": "2026-09-07",
+  "change": "Native wavetable motion, GPUI synth source visualizations and full-song theme development",
+  "baseCommit": "17df978",
+  "machine": {
+    "cpu": "Apple M4",
+    "os": "macOS 27.0 (26A5425a)",
+    "arch": "aarch64-apple-darwin",
+    "rustc": "1.98.0",
+    "llvm": "22.1.8"
+  },
+  "config": {
+    "sampleRate": 48000,
+    "blockSize": 128,
+    "outputChannels": 2,
+    "voices": [
+      8,
+      32
+    ],
+    "noteKeys": [
+      48,
+      79
+    ],
+    "noteVelocity": 0.6,
+    "noteFrameOffset": 17,
+    "patches": "default versus full (7+3 unison, morph, sub/noise, all five LFO routes); see crates/bench/benches/synth_motion.rs",
+    "warmupSeconds": 1,
+    "measurementTargetSeconds": 2,
+    "sampleCount": 20,
+    "device": null,
+    "cpuUtilization": null,
+    "callbackP95Ns": null,
+    "callbackP99Ns": null,
+    "xruns": null
+  },
+  "command": "cargo bench -p oxitone-bench --bench synth_motion -- --warm-up-time 1 --measurement-time 2 --sample-size 20",
+  "scenarios": [
+    {
+      "id": "default_32_voices_128",
+      "slopeNs": 59237.7170413343,
+      "confidence95Ns": [
+        49833.72488819145,
+        70902.88056739345
+      ]
+    },
+    {
+      "id": "default_8_voices_128",
+      "slopeNs": 13688.785208544672,
+      "confidence95Ns": [
+        13373.047666662786,
+        14015.222690195784
+      ]
+    },
+    {
+      "id": "full_32_voices_128",
+      "slopeNs": 620274.1304131409,
+      "confidence95Ns": [
+        512647.107501864,
+        726592.2163485163
+      ]
+    },
+    {
+      "id": "full_8_voices_128",
+      "slopeNs": 48196.15789598978,
+      "confidence95Ns": [
+        47459.442644269264,
+        49574.32739392865
+      ]
+    }
+  ],
+  "songs": [
+    {
+      "slug": "rain-on-the-window",
+      "bpm": 80,
+      "bars": 60,
+      "durationSeconds": 183,
+      "integratedLufs": -17.47606006541252,
+      "truePeakDbfs": -4.2165681097439975,
+      "peakDbfs": -4.220551479765259,
+      "sha256": "ce12e3c943fb6ff10db0fddf6ebc0b49e2dda1052f516a3984ed3e1eb3881d46",
+      "renderSeconds": 30.562902917,
+      "tracks": 6,
+      "notes": 1514,
+      "sectionLevels": [
+        {
+          "name": "Rain / Intro",
+          "startBar": 1,
+          "bars": 8,
+          "rmsDbfs": -26.322497336743247,
+          "peakDbfs": -5.74295290571596
+        },
+        {
+          "name": "Streetlights / Verse A",
+          "startBar": 9,
+          "bars": 8,
+          "rmsDbfs": -18.160702560497025,
+          "peakDbfs": -4.220593561442531
+        },
+        {
+          "name": "Window / Hook I",
+          "startBar": 17,
+          "bars": 8,
+          "rmsDbfs": -18.093490806509458,
+          "peakDbfs": -4.220563262614344
+        },
+        {
+          "name": "Empty platform / Bridge",
+          "startBar": 25,
+          "bars": 8,
+          "rmsDbfs": -21.530761260673433,
+          "peakDbfs": -4.220608710896258
+        },
+        {
+          "name": "Last train / Verse B",
+          "startBar": 33,
+          "bars": 8,
+          "rmsDbfs": -18.157755482387287,
+          "peakDbfs": -4.2205918781715255
+        },
+        {
+          "name": "Window / Hook II",
+          "startBar": 41,
+          "bars": 8,
+          "rmsDbfs": -18.061390476995626,
+          "peakDbfs": -4.220551479765259
+        },
+        {
+          "name": "Home / Reprise",
+          "startBar": 49,
+          "bars": 8,
+          "rmsDbfs": -18.24886225777457,
+          "peakDbfs": -4.220583461821391
+        },
+        {
+          "name": "Lights out / Outro",
+          "startBar": 57,
+          "bars": 4,
+          "rmsDbfs": -26.117169479555663,
+          "peakDbfs": -6.547861327535499
+        }
+      ],
+      "nativeDrumFaults": 0
+    },
+    {
+      "slug": "after-the-horizon",
+      "bpm": 140,
+      "bars": 104,
+      "durationSeconds": 181.28570833333333,
+      "integratedLufs": -16.145462544663324,
+      "truePeakDbfs": -3.6011791527296984,
+      "peakDbfs": -3.5784844776491687,
+      "sha256": "94e716e4c6a59542b19d32a7a49e060e441051dacd696c82c1b5d12370d45351",
+      "renderSeconds": 49.563238874999996,
+      "tracks": 10,
+      "notes": 2536,
+      "sectionLevels": [
+        {
+          "name": "First light / Piano",
+          "startBar": 1,
+          "bars": 8,
+          "rmsDbfs": -18.474508109064573,
+          "peakDbfs": -4.027055295333117
+        },
+        {
+          "name": "Lift / Build I",
+          "startBar": 9,
+          "bars": 16,
+          "rmsDbfs": -18.927175426975218,
+          "peakDbfs": -3.5784844776491687
+        },
+        {
+          "name": "Open sky / Drop I",
+          "startBar": 25,
+          "bars": 16,
+          "rmsDbfs": -15.975454781344865,
+          "peakDbfs": -3.8909916169064704
+        },
+        {
+          "name": "Weightless / Break",
+          "startBar": 41,
+          "bars": 16,
+          "rmsDbfs": -20.03684025478806,
+          "peakDbfs": -4.027117850376836
+        },
+        {
+          "name": "Signal / Build II",
+          "startBar": 57,
+          "bars": 16,
+          "rmsDbfs": -18.92711853292086,
+          "peakDbfs": -3.918954537325617
+        },
+        {
+          "name": "Beyond / Drop II",
+          "startBar": 73,
+          "bars": 16,
+          "rmsDbfs": -15.924356992429216,
+          "peakDbfs": -3.934089456149559
+        },
+        {
+          "name": "Afterglow / Reprise",
+          "startBar": 89,
+          "bars": 8,
+          "rmsDbfs": -17.807113014519093,
+          "peakDbfs": -3.855898973693361
+        },
+        {
+          "name": "Horizon / Outro",
+          "startBar": 97,
+          "bars": 8,
+          "rmsDbfs": -22.750877658072465,
+          "peakDbfs": -4.701899437314581
+        }
+      ],
+      "nativeDrumFaults": 0
+    }
+  ],
+  "validation": {
+    "typescriptTests": 222,
+    "rustTests": 456,
+    "allocationCount": 0,
+    "freeCount": 0,
+    "blockSizeParity": [
+      64,
+      128,
+      256
+    ],
+    "nativePanelWatch": "syntax/runtime/native rejection, bad visual binding, source/Mix/layout recovery"
+  },
+  "notes": [
+    "Prepared native synth process microbench; excludes asset loading, graph/mixer, N-API and device callbacks.",
+    "Measurements ran on a shared machine. Concurrent rustc processes were observed during this repeat; the wide 32-voice confidence intervals are retained, not treated as a code regression or a realtime acceptance result.",
+    "An earlier full 32-voice measurement was 186220 ns (95% CI 181240–194271 ns); this is background-load sensitivity, not a controlled A/B comparison.",
+    "Full songs use native drums, the CC0 VSCO upright bank, effects/returns/sidechains and seven new synth patches. Every section is audible and true peak remains below 0 dBTP.",
+    "WAV SHA-256 and stereo 48 kHz PCM24 frame duration were verified against final files. Large audio/image artifacts remain under ignored target.",
+    "Plugin visuals show source/default parameters, not live per-voice modulation. No physical-device soak was performed."
+  ]
+}
