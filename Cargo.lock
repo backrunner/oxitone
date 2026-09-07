@@ -3486,6 +3486,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxitone-wasm"
+version = "0.1.0"
+dependencies = [
+ "oxitone-core",
+ "oxitone-example-drums",
+ "oxitone-graph",
+ "oxitone-render",
+ "oxitone-samples",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "parking"
 version = "2.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

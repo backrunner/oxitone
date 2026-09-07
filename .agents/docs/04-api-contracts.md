@@ -1,6 +1,18 @@
 # Oxitone TypeScript / Rust API 契约
 
+新增 `@oxitone/web`：复用本文件 ProjectSnapshot 与 authoring 合约，通过独立 ABI v1
+提供 WasmEngine 和 WebAudioSession。内存资产、帧游标、WAV/MIDI bytes、生命周期、
+浏览器宿主约束和错误边界见 `12-wasm-web-audio.md` 与 `docs/web.md`；N-API 的
+路径/设备方法保持原生语义，不做隐式浏览器降级。
+
 以下是 Phase 1 的公共形状。实现时建议用 zod/JSON schema 或等价的运行时校验生成 Rust 类型；手写类型必须与 schema 同步。
+
+`EngineOptions.audioBackend?: 'device' | 'simulated'` 默认为 device；simulated 使用现有
+Rust realtime worker/ring/sink，按 graph 的采样率和 blockSize 消费 PCM，不打开 CoreAudio。
+simulated 的设备 latency/safety offset 为 0，outputDeviceId 不使用。原生 createEngine
+response 回显 audioBackend；TS facade 请求 simulated 时必须收到确认，否则在播放前释放
+引擎并报 ProtocolVersionUnsupported（防止旧 addon 忽略新字段后误开系统设备）。
+所有自动测试必须选模拟/无设备 sink；真实扬声器输出不作为自动测试环节。
 
 ## 基础类型
 
@@ -415,6 +427,7 @@ export interface EngineOptions {
   latencyMode?: 'buffered'|'direct'; // default 'buffered'
   allowPlugins?: 'signed-only'|'any';
   outputDeviceId?: string;    // 缺省跟随系统默认输出
+  audioBackend?: 'device'|'simulated'; // default device; simulated 不打开任何系统输出
   deviceRatePolicy?: 'adapt-device'|'resample';     // default 'adapt-device'
   deviceChangePolicy?: 'follow-default'|'pause';    // default 'follow-default'
   metronome?: { enabled: boolean; level?: number }; // accent 规则来自 time signature map

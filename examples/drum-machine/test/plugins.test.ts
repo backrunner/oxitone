@@ -13,7 +13,7 @@ it("controls real dynamic plugins through both native and Project/Session APIs",
   const output = mkdtempSync(join(tmpdir(), "oxitone-drums-"));
   const engine = createEngine({ allowPlugins: "any" });
   try {
-    const plugins = buildPlugins(output);
+    const plugins = await buildPlugins(output);
     for (const options of plugins) registerPlugin(engine, options);
     expect(verifyPlugins(engine, output).diagnostics.every((plugin) => plugin.faults === 0)).toBe(true);
     const project = createDrumSong();

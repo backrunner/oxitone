@@ -1,0 +1,34 @@
+{
+  "name": "@oxitone/web",
+  "version": "0.1.0",
+  "description": "Shared Oxitone Rust engine for Wasm runtimes and Web Audio",
+  "type": "module",
+  "license": "Apache-2.0",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./worker": "./dist/worker.js",
+    "./worklet": "./dist/worklet.js",
+    "./oxitone.wasm": "./dist/oxitone.wasm"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "prepack": "node ../../scripts/build-wasm.mjs && pnpm build",
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint src test",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@oxitone/core": "workspace:*",
+    "@oxitone/protocol": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "vitest": "^3.2.0"
+  }
+}

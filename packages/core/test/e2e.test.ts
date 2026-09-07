@@ -2,7 +2,7 @@
  * End-to-end: `@oxitone/core` builders → facade → real native addon
  * (`.node`). Covers compile, renderWav (header/determinism/loudness),
  * mixer-channel stems, transport + setParameter error paths, realtime
- * device playback (device list, latency breakdown, diagnostics), and the
+ * simulated playback (latency breakdown, diagnostics), and the
  * exportMidi regression path.
  */
 import { existsSync, mkdtempSync, readFileSync } from "node:fs";
@@ -164,7 +164,7 @@ describe("native e2e (real .node)", () => {
 
   it("keeps transport and setParameter error paths stable", async () => {
     const { project, channelId } = buildProject();
-    const engine = createEngine();
+    const engine = createEngine({ audioBackend: "simulated", renderAheadBlocks: 16 });
     try {
       // Not compiled yet: stable codes for both commands.
       expect(codeOf(() => enqueueTransport(engine, { command: "play" }))).toBe(
@@ -202,15 +202,13 @@ describe("native e2e (real .node)", () => {
     }
   });
 
-  it("reports real output devices and requires playback for latency", async () => {
+  it("reports simulated output latency and processes PCM without opening a system device", async () => {
     const devices = listOutputDevices();
-    expect(devices.length).toBeGreaterThan(0);
-    const defaultDevice = devices.find((device) => device.isDefault);
-    expect(defaultDevice).toBeDefined();
-    expect(defaultDevice!.nominalSampleRates).toContain(48_000);
+    // Device enumeration is read-only and may be empty on a headless machine.
+    expect(Array.isArray(devices)).toBe(true);
 
     const { project } = buildProject();
-    const engine = createEngine();
+    const engine = createEngine({ audioBackend: "simulated", renderAheadBlocks: 16 });
     try {
       // Not playing yet: latency is unavailable with a stable code.
       expect(codeOf(() => getOutputLatency(engine))).toBe(ErrorCode.DeviceUnavailable);
@@ -230,7 +228,7 @@ describe("native e2e (real .node)", () => {
       expect(BigInt(latency.frames)).toBe(parts);
       expect(latency.seconds).toBeCloseTo(Number(latency.frames) / 48_000, 6);
 
-      // Realtime playback runs on the default device without underruns.
+      // The same renderer/worker runs against the simulated sink only.
       await new Promise((resolve) => setTimeout(resolve, 300));
       const diagnostics = getDiagnostics(engine);
       expect(diagnostics.blocks).toBeGreaterThan(0);

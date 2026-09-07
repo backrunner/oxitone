@@ -13,7 +13,7 @@ const output = resolve(process.argv[2] ?? fileURLToPath(new URL("../../../target
 await mkdir(join(output, "verification"), { recursive: true });
 const engine = createEngine({ allowPlugins: "any" });
 try {
-  const plugins = buildPlugins(join(output, "plugins")).map((options) => registerPlugin(engine, options));
+  const plugins = (await buildPlugins(join(output, "plugins"))).map((options) => registerPlugin(engine, options));
   const verification = verifyPlugins(engine, join(output, "verification"));
   const project = createDrumSong();
   const snapshot = project.snapshot();

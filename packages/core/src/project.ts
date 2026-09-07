@@ -1,4 +1,4 @@
-import { resolve } from "node:path";
+import { resolve } from "#platform-path";
 import {
   ErrorCode,
   ID_PREFIXES,
@@ -24,7 +24,7 @@ import { ProjectTimeline } from "./project-timeline.js";
 import { snapshotProject } from "./project-snapshot.js";
 import { Track } from "./track.js";
 import type { BarBeatPosition } from "./time-signature.js";
-import { saveProject, loadProject, type SaveProjectOptions } from "./project-files.js";
+import { saveProject, loadProject, type SaveProjectOptions } from "#project-files";
 import { parseRestorableSnapshot } from "./project-restore.js";
 import { restoreEntities } from "./project-hydrate.js";
 

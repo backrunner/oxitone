@@ -76,9 +76,9 @@ fn io_err(path: &Path, error: impl std::fmt::Display) -> OxitoneError {
 
 /// Streaming stereo WAV writer: header placeholder up front, sizes patched
 /// on `finish`.
-pub struct WavWriter {
+pub struct WavWriter<W: Write + Seek = BufWriter<File>> {
     path: std::path::PathBuf,
-    writer: BufWriter<File>,
+    writer: W,
     depth: WavBitDepth,
     dither: Option<TpdfDither>,
     frames: u64,
@@ -99,7 +99,27 @@ impl WavWriter {
         max_block: usize,
     ) -> Result<Self, OxitoneError> {
         let file = File::create(path).map_err(|e| io_err(path, e))?;
-        let mut writer = BufWriter::new(file);
+        Self::from_writer(
+            BufWriter::new(file),
+            path,
+            sample_rate,
+            depth,
+            dither_seed,
+            max_block,
+        )
+    }
+}
+
+impl<W: Write + Seek> WavWriter<W> {
+    /// Write to a seekable memory or file sink; the encoding is identical.
+    pub fn from_writer(
+        mut writer: W,
+        path: &Path,
+        sample_rate: u32,
+        depth: WavBitDepth,
+        dither_seed: Option<u64>,
+        max_block: usize,
+    ) -> Result<Self, OxitoneError> {
         write_header(&mut writer, sample_rate, depth, 0).map_err(|e| io_err(path, e))?;
         let dither = match depth {
             WavBitDepth::Float32 => None,
@@ -165,14 +185,18 @@ impl WavWriter {
     }
 
     /// Patch the RIFF/fmt/data sizes and flush. Enforces the size limit.
-    pub fn finish(mut self) -> Result<u64, OxitoneError> {
+    pub fn finish(self) -> Result<u64, OxitoneError> {
+        let frames = self.frames;
+        self.into_inner()?;
+        Ok(frames)
+    }
+
+    /// Finalize the header and return the sink (e.g. Cursor<Vec<u8>>).
+    pub fn into_inner(mut self) -> Result<W, OxitoneError> {
         check_wav_size(self.frames, 2, self.depth)?;
         let data_bytes = self.frames * 2 * self.depth.bytes_per_sample();
         self.writer.flush().map_err(|e| io_err(&self.path, e))?;
-        let mut file = self
-            .writer
-            .into_inner()
-            .map_err(|e| io_err(&self.path, format!("flush failed: {e}")))?;
+        let mut file = self.writer;
         file.seek(SeekFrom::Start(0))
             .map_err(|e| io_err(&self.path, e))?;
         // Patch RIFF chunk size and data chunk size.
@@ -185,7 +209,7 @@ impl WavWriter {
         file.write_all(&(data_bytes as u32).to_le_bytes())
             .map_err(|e| io_err(&self.path, e))?;
         file.flush().map_err(|e| io_err(&self.path, e))?;
-        Ok(self.frames)
+        Ok(file)
     }
 }
 

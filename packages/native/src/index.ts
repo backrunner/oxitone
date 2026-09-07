@@ -120,9 +120,13 @@ export function createEngine(options?: EngineOptions): EngineHandle {
   if (typeof created !== "object" || created === null) {
     throw new OxitoneError(ErrorCode.RealtimeFault, "malformed createEngine response");
   }
-  const { engineId, protocolVersion } = created as Record<string, unknown>;
+  const { engineId, protocolVersion, audioBackend } = created as Record<string, unknown>;
   if (typeof engineId !== "string" || typeof protocolVersion !== "string") {
     throw new OxitoneError(ErrorCode.RealtimeFault, "malformed createEngine response");
+  }
+  if (options?.audioBackend === "simulated" && audioBackend !== "simulated") {
+    call((binding) => binding.dispose(engineId));
+    throw new OxitoneError(ErrorCode.ProtocolVersionUnsupported, "native addon does not support simulated audio; rebuild it before testing");
   }
   return { id: engineId, protocolVersion };
 }

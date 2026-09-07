@@ -1,4 +1,4 @@
-import { resolve } from "node:path";
+import { resolve } from "#platform-path";
 import { presetSchema, ErrorCode, OxitoneError, type Preset, type ChannelPreset, type InstrumentRef,
   type EffectRef, type SampleRef, type EngineOptions, type RegisterPluginOptions } from "@oxitone/protocol";
 import { compile, createEngine, dispose, getPluginInfo, registerPlugin } from "@oxitone/native";

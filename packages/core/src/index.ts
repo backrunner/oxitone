@@ -2,7 +2,7 @@ export { Project } from "./project.js";
 export type { PluginUiManifest, PluginUiControl } from "@oxitone/protocol";
 export { createPluginPreset, createChannelPreset, validatePreset, applyPreset, presetInstrument, presetEffect } from "./preset.js";
 export type { Preset, ChannelPreset, InstrumentPreset, EffectPreset, PresetMetadata, PresetRuntimeOptions } from "./preset.js";
-export { savePreset, loadPreset } from "./preset-files.js";
+export { savePreset, loadPreset } from "#preset-files";
 export type { LoadedPreset } from "./preset-files.js";
 export type { Marker, ProjectOptions } from "./project.js";
 export type { ProjectCompileOptions } from "./project-playback.js";
@@ -32,7 +32,7 @@ export { TempoMap } from "./tempo-map.js";
 export type { TempoCurve, TempoSegmentInput } from "./tempo-map.js";
 export { TimeSignatureMap } from "./time-signature.js";
 export type { BarBeatPosition } from "./time-signature.js";
-export { loadProject, saveProject } from "./project-files.js";
+export { loadProject, saveProject } from "#project-files";
 export type { LoadedProject, SaveProjectOptions } from "./project-files.js";
 export {
   AutomationSource,

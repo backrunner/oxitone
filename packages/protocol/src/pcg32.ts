@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { sha256 } from "@noble/hashes/sha2.js";
 
 /**
  * pcg32-v1: the versioned deterministic PRNG used by `chance` automation and
@@ -70,8 +70,8 @@ function encodePart(part: Hash64Part): string {
  */
 export function hash64(...parts: Hash64Part[]): bigint {
   const input = parts.map(encodePart).join("|");
-  const digest = createHash("sha256").update(input, "utf8").digest();
-  return digest.readBigUInt64BE(0);
+  const digest = sha256(new TextEncoder().encode(input));
+  return new DataView(digest.buffer, digest.byteOffset, digest.byteLength).getBigUint64(0);
 }
 
 /** Byte encoding shared with the Rust side; exposed for fixtures/tests. */

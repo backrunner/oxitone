@@ -10,6 +10,10 @@
   "scripts": {
     "build": "pnpm -r --filter './packages/*' --filter './examples/*' run build",
     "build:native": "pnpm --filter @oxitone/native-generated run build",
+    "build:wasm": "node scripts/build-wasm.mjs",
+    "example:web": "pnpm --filter @oxitone/example-web start",
+    "example:songs:wasm": "node scripts/render-wasm-songs.mjs",
+    "test:web": "node examples/web/scripts/smoke.mjs && node examples/web/scripts/watch-smoke.mjs",
     "lint": "pnpm -r --filter './packages/*' --filter './examples/*' run lint",
     "typecheck": "pnpm -r --filter './packages/*' --filter './examples/*' run typecheck",
     "test": "pnpm -r --filter './packages/*' --filter './examples/*' run test",

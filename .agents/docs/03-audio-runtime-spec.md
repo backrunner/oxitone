@@ -1,5 +1,13 @@
 # Oxitone 音频运行时规格
 
+共享运行时另有 import-free Wasm host，使用相同 RenderGraph/process 和内存 WAV sink。
+Web Audio 的 Rust Worker 产出 PCM，AudioWorklet 只搬运共享 ring 数据；此宿主的边界、
+flush/underrun、内存上限和普通编译失败保留旧图语义见 `12-wasm-web-audio.md`。
+不把浏览器设备适配、GPUI 或任意 Mach-O dylib 称为 Wasm DSP 能力。
+
+自动测试不能打开系统输出设备。N-API 的 audioBackend=simulated 显式选择现有模拟 sink，
+Web Audio 测试强制 sinkId:{type:'none'} 并校验可用性；保留真实 DSP/PCM 验证，不播放扬声器。
+
 ## 时间和调度
 
 Rust 将 tempo map 编译成可查询的 beat <-> sample-frame segments。使用 64-bit sample frames 和 64-bit fixed/rational beat，禁止用累计 f32 seconds 作为 transport 游标。每个 audio block 计算 `[frameStart, frameEnd)`，调度该区间内的 note-on、note-off、parameter、transport 事件；事件按 frame、优先级（stop/note-off/param/note-on）、序号排序。

@@ -1,5 +1,10 @@
 # Oxitone Plugin ABI 与动态加载
 
+Wasm host 静态链接自带 `example.drums`，调用相同 `oxitone_plugin_entry_v1` 和
+`plugins::from_entry` 校验/适配路径。Wasm 目标不编译 libloading/CoreAudio；
+原生 .dylib 不能上传后执行。第三方需重编译并静态集成；动态 Wasm plugin linker
+不在当前交付中，详见 `12-wasm-web-audio.md`。
+
 本文定义第三方 Instrument/Effect 的注册、C ABI 和生命周期。实现位于
 `oxitone-graph::abi_c`（记录与 descriptor 校验）、`oxitone-render::plugins`
 （加载和实例）、`oxitone-napi` 和 `oxitone` TypeScript facade。

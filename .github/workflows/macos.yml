@@ -44,6 +44,7 @@ jobs:
           export PATH="$HOME/.cargo/bin:$PATH"
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
           rustup toolchain install stable --profile minimal --component rustfmt
+          rustup target add wasm32-unknown-unknown --toolchain stable
           rustup override set stable
           node -e 'if (process.arch !== process.env.EXPECTED_ARCH) process.exit(1)'
           mkdir -p target/ci
@@ -58,6 +59,8 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Build native addon, SDK and examples
         run: pnpm build
+      - name: Build import-free Wasm engine
+        run: pnpm build:wasm
       - name: Build GPUI viewer and development bundle
         run: node scripts/build-preview.mjs --debug
       - name: Verify generated schemas
@@ -69,9 +72,18 @@ jobs:
       - run: pnpm typecheck
       - run: cargo fmt --all --check
       - run: cargo test --workspace --locked
-      - name: Set up virtual CoreAudio output
-        run: bash scripts/ci/setup-audio.sh
       - run: pnpm test
+      - name: Verify Web Audio output in Chromium
+        run: |
+          pnpm --filter @oxitone/example-web exec playwright install chromium
+          OXITONE_WEB_PORT=4175 pnpm example:web > target/ci/web-server.log 2>&1 &
+          web_server_pid=$!
+          trap 'kill "$web_server_pid" 2>/dev/null || true' EXIT
+          for _attempt in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:4175/ > /dev/null; then break; fi
+            sleep 1
+          done
+          pnpm test:web
       - name: Run portable offline examples
         run: |
           pnpm example
@@ -91,5 +103,7 @@ jobs:
           path: |
             target/ci
             target/criterion
+            target/examples/wasm/*.json
+            target/examples/wasm/*.png
             target/examples/offline/*.json
             target/examples/drum-machine/report.json

@@ -2,8 +2,14 @@
 mod instance;
 mod validate;
 
-use libloading::Library;
-use oxitone_core::wire::{AllowPlugins, RegisterPluginOptions, RegisteredPlugin};
+use oxitone_core::wire::RegisteredPlugin;
+#[cfg(not(target_family = "wasm"))]
+use oxitone_core::wire::{AllowPlugins, RegisterPluginOptions};
+#[cfg(not(target_family = "wasm"))]
+pub type NativeLibrary = libloading::Library;
+/// Wasm supports static entries only; a dynamic-library owner cannot be constructed.
+#[cfg(target_family = "wasm")]
+pub enum NativeLibrary {}
 use oxitone_core::{codes, OxitoneError};
 use oxitone_graph::abi_c::OxiPluginEntryV1;
 use oxitone_graph::{HostContext, Plugin, PluginDescriptor, PluginInstance};
@@ -23,7 +29,7 @@ pub(super) struct LoadedPlugin {
     entry: OxiPluginEntryV1,
     faults: AtomicU64,
     // Every instance retains this owner until after dispose has run.
-    _library: Option<Library>,
+    _library: Option<NativeLibrary>,
 }
 
 // SAFETY: ABI entry metadata is immutable, factories support independent
@@ -52,6 +58,7 @@ pub fn library_hash(path: &Path) -> Result<String, OxitoneError> {
     Ok(format!("{:x}", hash.finalize()))
 }
 
+#[cfg(not(target_family = "wasm"))]
 fn verify_signature(path: &Path) -> Result<(), OxitoneError> {
     #[cfg(target_os = "macos")]
     {
@@ -76,6 +83,7 @@ fn verify_signature(path: &Path) -> Result<(), OxitoneError> {
 /// The library and its dependencies must obey the C ABI, including valid
 /// pointers, exclusive instance access, realtime-safe process/reset and no
 /// unwinding across C calls. Loading arbitrary native code cannot be sandboxed.
+#[cfg(not(target_family = "wasm"))]
 pub unsafe fn load_plugin(
     options: &RegisterPluginOptions,
     policy: AllowPlugins,
@@ -97,7 +105,7 @@ pub unsafe fn load_plugin(
     }
     // SAFETY: caller explicitly trusts this native module. Library lifetime
     // is transferred to LoadedPlugin, shared by all of its instances.
-    let library = unsafe { Library::new(&path) }
+    let library = unsafe { NativeLibrary::new(&path) }
         .map_err(|e| OxitoneError::new(codes::ASSET_UNAVAILABLE, e.to_string()))?;
     let entry = unsafe {
         let symbol = library
@@ -118,7 +126,7 @@ pub unsafe fn from_entry(
     entry: *const OxiPluginEntryV1,
     manifest: &oxitone_core::wire::PluginManifest,
     sha256: String,
-    library: Option<Library>,
+    library: Option<NativeLibrary>,
 ) -> Result<Arc<CPlugin>, OxitoneError> {
     let (entry, descriptor) = unsafe { validate::entry(entry, manifest)? };
     Ok(Arc::new(CPlugin {

@@ -15,6 +15,8 @@ Before changing code, read the applicable document in `.agents/docs/` and apply 
 - Use `apply_patch` for manual edits. Do not commit build output (`target`, `dist`, native binaries, or
   `node_modules`) unless a release task explicitly requests an artifact.
 - Use conventional commits: `xxx(comp): desc` with a lowercase type and scope.
+- Tests must not open system audio outputs or play through speakers. Use offline PCM/WAV checks,
+  simulated native sinks and browser no-device sinks; browser tests must fail if a silent sink is unavailable.
 - Required checks for implementation changes are `pnpm lint`, `pnpm typecheck`, `cargo fmt --all --check`,
   `cargo test --workspace`, and the focused benchmark. Narrow docs-only changes may skip code checks.
 

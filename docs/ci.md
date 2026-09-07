@@ -12,15 +12,17 @@ examples (including the dynamic drum/effect chain) and focused Slicer, insert,
 dynamic-effect, drum DSP and preview-telemetry benchmarks. Preview tests use a real
 Unix socket and simulated sink to check watch, transport, rejection and recovery.
 No native build output is reused from
-the developer checkout. Failures stop the job; tests are not skipped or ignored.
+the developer checkout. Failures stop the job. The existing opt-in GPUI layout
+benchmark is ignored by the normal Rust test run; functional tests are not skipped.
 
-Hosted runners have no physical output device. The CI-only audio setup installs
-BlackHole 2ch and SwitchAudioSource, restarts CoreAudio and explicitly selects the
-virtual output. This preserves the device smoke test's actual native play/latency
-assertions. The script refuses to configure a machine outside a macOS CI environment.
-It is not part of installation, build or the user-facing example.
+Tests never open system audio outputs. Native facade transport/latency tests use
+`audioBackend: 'simulated'`, exercising the Rust worker, ring and PCM callback without
+CoreAudio. Browser tests require `AudioContext({sinkId: {type: 'none'}})` and fail if
+the no-device sink is unavailable; Chromium is also launched with `--mute-audio`.
+They inspect nonzero PCM upstream of the silent sink, so muting does not weaken DSP
+or AudioWorklet assertions. The CI workflow does not install or select audio devices.
 
-The workflow uploads environment information, selected audio-device name, Criterion
+The workflow uploads environment information, silent browser reports/screenshots, Criterion
 results and example snapshot/report JSON. Large WAVs and native binaries are not
 published as release artifacts. Hosted-runner timing is diagnostic: the jobs do not
 compare noisy virtualized measurements with the Apple M4 physical baseline.

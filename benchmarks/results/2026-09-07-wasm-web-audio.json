@@ -1,0 +1,506 @@
+{
+  "date": "2026-09-07",
+  "wasm": {
+    "runtime": "v26.5.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M4",
+    "imports": [],
+    "songs": [
+      {
+        "title": "Rain on the Window / 窗边雨",
+        "slug": "rain-on-the-window",
+        "seconds": 183,
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "samples": 39,
+        "renderSeconds": 28.687040458000002,
+        "realtimeMultiple": 6.3791871548382915,
+        "p95Ms": 0.4847090000002936,
+        "p99Ms": 0.506375000000844,
+        "processBlocks": 4000,
+        "memoryBefore": {
+          "bytes": 476184576,
+          "allocations": 44635,
+          "deallocations": 32938
+        },
+        "memoryAfter": {
+          "bytes": 476184576,
+          "allocations": 44635,
+          "deallocations": 32938
+        },
+        "processAllocations": 0,
+        "processDeallocations": 0,
+        "peakDbfs": -4.220549796502409,
+        "rmsDbfs": -19.41499237204808,
+        "maxPcmDifference": 3.5762786865234375e-7,
+        "sectionLevels": [
+          {
+            "name": "Rain / Intro",
+            "rmsDbfs": -26.322497347999132
+          },
+          {
+            "name": "Streetlights / Verse A",
+            "rmsDbfs": -18.1607025683198
+          },
+          {
+            "name": "Window / Hook I",
+            "rmsDbfs": -18.09349080780121
+          },
+          {
+            "name": "Empty platform / Bridge",
+            "rmsDbfs": -21.53076126787965
+          },
+          {
+            "name": "Last train / Verse B",
+            "rmsDbfs": -18.157755480394474
+          },
+          {
+            "name": "Window / Hook II",
+            "rmsDbfs": -18.06139048408029
+          },
+          {
+            "name": "Home / Reprise",
+            "rmsDbfs": -18.248862260577543
+          },
+          {
+            "name": "Lights out / Outro",
+            "rmsDbfs": -26.1171695018992
+          }
+        ]
+      },
+      {
+        "title": "After the Horizon / 地平线之后",
+        "slug": "after-the-horizon",
+        "seconds": 181.28570833333333,
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "samples": 39,
+        "renderSeconds": 39.995512334000004,
+        "realtimeMultiple": 4.5326512339541445,
+        "p95Ms": 0.7017500000001746,
+        "p99Ms": 0.9697089999972377,
+        "processBlocks": 4000,
+        "memoryBefore": {
+          "bytes": 467533824,
+          "allocations": 71492,
+          "deallocations": 52252
+        },
+        "memoryAfter": {
+          "bytes": 467533824,
+          "allocations": 71492,
+          "deallocations": 52252
+        },
+        "processAllocations": 0,
+        "processDeallocations": 0,
+        "peakDbfs": -3.578482914326622,
+        "rmsDbfs": -18.01526745535491,
+        "maxPcmDifference": 3.5762786865234375e-7,
+        "sectionLevels": [
+          {
+            "name": "First light / Piano",
+            "rmsDbfs": -18.474508108053854
+          },
+          {
+            "name": "Lift / Build I",
+            "rmsDbfs": -18.927175418239393
+          },
+          {
+            "name": "Open sky / Drop I",
+            "rmsDbfs": -15.975454784303976
+          },
+          {
+            "name": "Weightless / Break",
+            "rmsDbfs": -20.036840257140693
+          },
+          {
+            "name": "Signal / Build II",
+            "rmsDbfs": -18.927118534947574
+          },
+          {
+            "name": "Beyond / Drop II",
+            "rmsDbfs": -15.92435699158363
+          },
+          {
+            "name": "Afterglow / Reprise",
+            "rmsDbfs": -17.807113006105936
+          },
+          {
+            "name": "Horizon / Outro",
+            "rmsDbfs": -22.750877660639787
+          }
+        ]
+      }
+    ]
+  },
+  "wasmtime": {
+    "runtime": "wasmtime",
+    "runtimeVersion": "48.0.0",
+    "imports": 0,
+    "peak": 0.15064074099063873,
+    "blocks": 1000,
+    "memoryBefore": [
+      2228224,
+      811,
+      331
+    ],
+    "memoryAfter": [
+      2228224,
+      811,
+      331
+    ],
+    "wavBytes": 288044,
+    "state": {
+      "protocolVersion": "1.0",
+      "sampleRate": 48000,
+      "blockSize": 128,
+      "cursor": "0",
+      "state": "stopped",
+      "latencyFrames": 264,
+      "contentEndFrame": "96000",
+      "faulted": false
+    }
+  },
+  "browser": {
+    "browser": "152.0.7977.76",
+    "songs": [
+      {
+        "song": "glass",
+        "peak": 0.14875850081443787,
+        "rms": 0.035534054562155235,
+        "diagnostics": {
+          "underruns": 0,
+          "bufferedFrames": 2048,
+          "sampleRate": 48000,
+          "running": true
+        },
+        "state": {
+          "protocolVersion": "1.0",
+          "sampleRate": 48000,
+          "blockSize": 128,
+          "cursor": "75008",
+          "state": "playing",
+          "latencyFrames": 264,
+          "contentEndFrame": "1843200",
+          "faulted": false
+        }
+      },
+      {
+        "song": "rain-on-the-window",
+        "peak": 0.3303523063659668,
+        "rms": 0.10055302892501226,
+        "diagnostics": {
+          "underruns": 0,
+          "bufferedFrames": 1792,
+          "sampleRate": 48000,
+          "running": true
+        },
+        "state": {
+          "protocolVersion": "1.0",
+          "sampleRate": 48000,
+          "blockSize": 128,
+          "cursor": "2954240",
+          "state": "playing",
+          "latencyFrames": 564,
+          "contentEndFrame": "8640000",
+          "faulted": false
+        }
+      },
+      {
+        "song": "after-the-horizon",
+        "peak": 0.5911316871643066,
+        "rms": 0.15026083329969103,
+        "diagnostics": {
+          "underruns": 0,
+          "bufferedFrames": 1792,
+          "sampleRate": 48000,
+          "running": true
+        },
+        "state": {
+          "protocolVersion": "1.0",
+          "sampleRate": 48000,
+          "blockSize": 128,
+          "cursor": "2953984",
+          "state": "playing",
+          "latencyFrames": 600,
+          "contentEndFrame": "8557714",
+          "faulted": false
+        }
+      }
+    ],
+    "errors": [],
+    "audioSinks": [
+      {
+        "sink": {
+          "type": "none"
+        },
+        "state": "running"
+      }
+    ],
+    "disposed": true
+  },
+  "watch": {
+    "validUpdate": true,
+    "syntaxFailureRetainsGraph": true,
+    "runtimeFailureRetainsGraph": true,
+    "recovery": true,
+    "diagnostics": {
+      "underruns": 0,
+      "bufferedFrames": 1792,
+      "sampleRate": 48000,
+      "running": true
+    },
+    "audioSinks": [
+      {
+        "sink": {
+          "type": "none"
+        },
+        "state": "running"
+      }
+    ]
+  },
+  "nativeCriterionNanoseconds": {
+    "render_wav_8tracks_20s": {
+      "mean": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 3487572979.2,
+          "upper_bound": 5264182316.5
+        },
+        "point_estimate": 4282156433.3,
+        "standard_error": 461059800.66070664
+      },
+      "median": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 3272999041.5,
+          "upper_bound": 4974077291.5
+        },
+        "point_estimate": 3727891166.5,
+        "standard_error": 420008872.01923126
+      },
+      "median_abs_dev": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 35823414.52650726,
+          "upper_bound": 2096515279.1602135
+        },
+        "point_estimate": 705539459.0145707,
+        "standard_error": 497076673.396343
+      },
+      "slope": null,
+      "std_dev": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 260667404.63125214,
+          "upper_bound": 2085301251.2197428
+        },
+        "point_estimate": 1537759432.9929917,
+        "standard_error": 467190222.0232454
+      }
+    },
+    "graph_block_8tracks": {
+      "mean": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 480852.3566288729,
+          "upper_bound": 602805.3277478319
+        },
+        "point_estimate": 538066.9332861217,
+        "standard_error": 31300.974763204267
+      },
+      "median": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 440195.8041958042,
+          "upper_bound": 534305.0210622711
+        },
+        "point_estimate": 470697.29160839156,
+        "standard_error": 24749.936843399297
+      },
+      "median_abs_dev": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 45239.790942670246,
+          "upper_bound": 169178.23399102027
+        },
+        "point_estimate": 88198.67961506944,
+        "standard_error": 32351.350391137887
+      },
+      "slope": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 550384.1171688718,
+          "upper_bound": 751728.9800219622
+        },
+        "point_estimate": 654502.2757027214,
+        "standard_error": 51349.56745402963
+      },
+      "std_dev": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 104002.29662780651,
+          "upper_bound": 228058.35206030807
+        },
+        "point_estimate": 174519.2671790923,
+        "standard_error": 32029.54171054372
+      }
+    },
+    "wav_writer_float32": {
+      "mean": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 517.7752976782525,
+          "upper_bound": 549.0392244218684
+        },
+        "point_estimate": 531.4738939432125,
+        "standard_error": 8.052205803251718
+      },
+      "median": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 506.85188083743583,
+          "upper_bound": 536.0655932930024
+        },
+        "point_estimate": 523.8456929526453,
+        "standard_error": 8.617743107169591
+      },
+      "median_abs_dev": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 10.821656906717845,
+          "upper_bound": 37.92863867310295
+        },
+        "point_estimate": 27.500729593621877,
+        "standard_error": 6.432625027396727
+      },
+      "slope": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 510.82391499699514,
+          "upper_bound": 531.7376040771846
+        },
+        "point_estimate": 519.5872963736017,
+        "standard_error": 5.362472884244334
+      },
+      "std_dev": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 18.17962742915336,
+          "upper_bound": 66.04934154488835
+        },
+        "point_estimate": 44.735773137562624,
+        "standard_error": 13.289443523607316
+      }
+    },
+    "wav_writer_pcm24": {
+      "mean": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 605.332244850592,
+          "upper_bound": 691.7764626233557
+        },
+        "point_estimate": 646.6116177348673,
+        "standard_error": 22.13570698779625
+      },
+      "median": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 570.2517547752389,
+          "upper_bound": 688.3889219834923
+        },
+        "point_estimate": 607.6943374946525,
+        "standard_error": 33.026184292673214
+      },
+      "median_abs_dev": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 47.402554941892255,
+          "upper_bound": 174.9516883457814
+        },
+        "point_estimate": 102.84805983639576,
+        "standard_error": 33.88131328483726
+      },
+      "slope": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 644.4351999872946,
+          "upper_bound": 784.7150352300645
+        },
+        "point_estimate": 720.2911606606242,
+        "standard_error": 35.78620944555722
+      },
+      "std_dev": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 88.91811192427278,
+          "upper_bound": 151.04837158144636
+        },
+        "point_estimate": 123.61049233231184,
+        "standard_error": 15.968394975171012
+      }
+    },
+    "wav_writer_pcm16_tpdf": {
+      "mean": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 876.9654178499658,
+          "upper_bound": 884.081971105457
+        },
+        "point_estimate": 880.3460155798967,
+        "standard_error": 1.8165892614441397
+      },
+      "median": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 873.995383375732,
+          "upper_bound": 880.632418932096
+        },
+        "point_estimate": 877.658855981417,
+        "standard_error": 2.009899027734972
+      },
+      "median_abs_dev": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 4.173879250035284,
+          "upper_bound": 12.720707958328111
+        },
+        "point_estimate": 7.559294815580469,
+        "standard_error": 2.2224583655981567
+      },
+      "slope": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 875.0351677870744,
+          "upper_bound": 883.8345898759538
+        },
+        "point_estimate": 879.1499253700525,
+        "standard_error": 2.248309640760482
+      },
+      "std_dev": {
+        "confidence_interval": {
+          "confidence_level": 0.95,
+          "lower_bound": 6.967610659555276,
+          "upper_bound": 12.284455573321553
+        },
+        "point_estimate": 10.123886473106204,
+        "standard_error": 1.3565547609419242
+      }
+    }
+  },
+  "checks": {
+    "typescript": 230,
+    "rust": 456,
+    "rustIgnored": 1,
+    "lint": "passed",
+    "typecheck": "passed",
+    "rustfmt": "passed",
+    "actionlint": "passed"
+  },
+  "limits": [
+    "Browser tests use no-device sinks; no hardware output or loopback measurement.",
+    "Desktop Chromium only; background scheduling, mobile and Safari/Firefox are unverified.",
+    "Large graph compilation shares the producer Worker and may drain its PCM ring.",
+    "Native offline historical benchmark regressed; the 20x offline budget is not met in this measured 8-track scenario. Numbers are archived without attributing the change to the Wasm host."
+  ]
+}

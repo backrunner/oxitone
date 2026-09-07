@@ -7,6 +7,11 @@ stable `code` through `OxitoneError`, plus a message and optional details/path.
 
 ## Package entry points
 
+The browser/Wasm entry is `@oxitone/web`. It reuses authoring classes and adds
+`WasmEngine` (memory assets, block processing, WAV/MIDI bytes) and `WebAudioSession`
+(Worker + AudioWorklet playback). See [Wasm and Web Audio](web.md) for setup,
+API examples, watch, platform boundaries and verification.
+
 | Package | Use |
 | --- | --- |
 | `@oxitone/core` | Project, builders, instrument helpers, automation and project files |
@@ -125,6 +130,11 @@ a host change at the same frame. Audio-rate and control-rate behavior comes from
 descriptor; authoring mutations alone do not update an already compiled Session.
 
 ## Sessions, export and CLI
+
+For headless processing/tests, use `project.compile({ audioBackend: 'simulated' })`
+or `createEngine({ audioBackend: 'simulated' })`. Transport, parameters and diagnostics
+use the actual Rust renderer with an in-memory sink, without opening a system audio
+device. An older addon that cannot confirm this mode is rejected before playback.
 
 `await project.compile(options?)` returns a Session. `await project.play(position?,
 loop?)` compiles current authoring and starts device playback. Position supports

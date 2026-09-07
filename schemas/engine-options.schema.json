@@ -45,6 +45,13 @@
     "outputDeviceId": {
       "type": "string"
     },
+    "audioBackend": {
+      "type": "string",
+      "enum": [
+        "device",
+        "simulated"
+      ]
+    },
     "deviceRatePolicy": {
       "type": "string",
       "enum": [

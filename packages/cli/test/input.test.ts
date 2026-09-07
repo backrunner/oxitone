@@ -43,7 +43,7 @@ describe("CLI project inputs", () => {
       await synth.exportMidi({ path: join(root, "sdk.mid") });
       expect(await readFile(join(root, "cli.mid"))).toEqual(await readFile(join(root, "sdk.mid")));
     } finally { await rm(root, { recursive: true, force: true }); }
-  });
+  }, 30_000); // Several real child-process renders; speed is measured by dedicated benchmarks.
 
   it("reports structured load errors and preserves output on rejection", async () => {
     const root = await mkdtemp(join(tmpdir(), "oxitone-cli-invalid-"));

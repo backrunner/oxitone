@@ -21,6 +21,7 @@
     "generate": "tsc -p tsconfig.build.json && node dist/generate.js"
   },
   "dependencies": {
+    "@noble/hashes": "^2.4.0",
     "zod": "^4.1.0"
   },
   "devDependencies": {

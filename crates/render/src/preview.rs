@@ -1,5 +1,5 @@
 //! Opt-in native telemetry. Audio writes bounded preallocated queues only.
-use crate::{realtime::ring::SpscRing, RenderGraph};
+use crate::{ring::SpscRing, RenderGraph};
 use crossbeam_queue::ArrayQueue;
 use oxitone_graph::{NoteEvent, NoteEventKind};
 use std::sync::{

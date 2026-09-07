@@ -1,0 +1,17 @@
+[package]
+name = "oxitone-wasm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+oxitone-core = { path = "../core" }
+oxitone-graph = { path = "../graph" }
+oxitone-render = { path = "../render" }
+oxitone-samples = { path = "../samples" }
+oxitone-example-drums = { path = "../example-drums" }
+serde.workspace = true
+serde_json.workspace = true

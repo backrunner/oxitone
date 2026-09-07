@@ -129,6 +129,14 @@ pub struct MetronomeOptions {
     pub level: Option<f64>,
 }
 
+/// Explicit headless processing uses the real renderer and a simulated sink.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum AudioBackend {
+    Device,
+    Simulated,
+}
+
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EngineOptions {
@@ -144,6 +152,8 @@ pub struct EngineOptions {
     pub allow_plugins: Option<AllowPlugins>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub output_device_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub audio_backend: Option<AudioBackend>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub device_rate_policy: Option<DeviceRatePolicy>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

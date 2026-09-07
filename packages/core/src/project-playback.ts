@@ -21,7 +21,7 @@ import {
   exportMidi as nativeExportMidi,
   registerPlugin as nativeRegisterPlugin,
 } from "@oxitone/native";
-import { resolve } from "node:path";
+import { resolve } from "#platform-path";
 import { Session, withTempEngine, type TransportPosition, type LoopRegion } from "./session.js";
 import type { BarBeatPosition } from "./time-signature.js";
 

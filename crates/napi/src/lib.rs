@@ -25,6 +25,7 @@ use oxitone_render::{
 };
 use serde::Serialize;
 
+mod playback;
 mod plugins;
 mod samples;
 mod timing;
@@ -116,6 +117,10 @@ pub fn create_engine(options_json: Option<String>) -> napi::Result<String> {
             None => None,
         };
         let id = format!("eng_{:016x}", NEXT_ENGINE.fetch_add(1, Ordering::Relaxed));
+        let audio_backend = options
+            .as_ref()
+            .and_then(|options| options.audio_backend)
+            .unwrap_or(oxitone_core::wire::AudioBackend::Device);
         lock_registry().insert(
             id.clone(),
             EngineState {
@@ -132,6 +137,7 @@ pub fn create_engine(options_json: Option<String>) -> napi::Result<String> {
         Ok(serde_json::json!({
             "engineId": id,
             "protocolVersion": PROTOCOL_VERSION,
+            "audioBackend": audio_backend,
         })
         .to_string())
     })
@@ -565,7 +571,7 @@ pub fn enqueue_transport(engine_id: String, command_json: String) -> napi::Resul
                 (Some(_), Some(_)) => unreachable!("checked above"),
             };
             let config = realtime_config(engine.options.as_ref());
-            return match RealtimeSession::start(Box::new(graph), config) {
+            return match crate::playback::start(graph, config, engine.options.as_ref()) {
                 Ok(session) => {
                     let loop_region = loop_region.map(|r| (r.start_frame, r.end_frame));
                     let (state, cursor) = session.transport(TransportCmd::Play {

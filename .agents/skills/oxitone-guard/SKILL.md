@@ -10,8 +10,9 @@ Use this skill for any Oxitone code, API, DSP, plugin, project-format, packaging
 ## Required boundaries
 
 - Keep TypeScript as the authoring/control API. Rust owns decoding, scheduling, DSP, mixing, device I/O,
-  realtime state, and offline rendering. TypeScript must never run from an audio callback.
-- Cross the boundary through a versioned, typed N-API facade. Do not expose Rust structs directly as a
+  realtime state, and offline rendering. Native callbacks run no TypeScript/JavaScript; the Web Audio
+  worklet is a bounded PCM-copy adapter only (see 12-wasm-web-audio.md), with Rust processing in a Worker.
+- Cross the boundary through a versioned, typed N-API or Wasm memory facade. Do not expose Rust structs directly as a
   mutable TypeScript object graph; snapshots and commands must be explicit and serializable.
 - Treat the audio callback as hard realtime: no allocation, locks, blocking I/O, filesystem/network access,
   logging, JSON, promises, or N-API calls. Use preallocated buffers and lock-free queues.
@@ -25,6 +26,8 @@ Use this skill for any Oxitone code, API, DSP, plugin, project-format, packaging
   domain responsibility. Avoid `utils` dumping grounds and boolean-option APIs that hide incompatible modes.
 - Public APIs require docs, stable error codes, and focused tests. Any realtime-path change requires a
   benchmark or an explanation in the change record.
+- Test audio must never reach system output devices or speakers. Native realtime tests use the simulated
+  sink; browser tests require a no-device AudioContext sink and fail closed if unsupported.
 
 ## Change workflow
 

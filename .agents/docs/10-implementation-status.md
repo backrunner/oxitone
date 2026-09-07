@@ -4,6 +4,10 @@
 提交继续使用 `BackRunner <dev@backrunner.top>` 与 `type(scope): description`。
 表格依据源码、正式测试和分发目录核对；“已有”不等于整个里程碑通过验收。
 
+测试约束：自动测试一律使用离线 PCM、原生模拟 sink 或浏览器无设备 sink，不打开或
+切换系统输出设备。历史记录中的 BlackHole/有声设备测试方案已由此规则替代；硬件
+相关验收仍缺少证据，不能用静音模拟测试宣称完成。
+
 | 里程碑 | 已有实现与依据 | 尚未完成或缺少验收证据 |
 | --- | --- | --- |
 | M0 工程与协议 | pnpm/Cargo workspace、版本协议、canonical fixtures、N-API smoke tests、macOS arm64/x64 CI（locked install/build/schema/tests/examples/bench） | 远端 CI 首跑尚无记录；最低 macOS 13 runtime 验收仍待完成 |
@@ -494,3 +498,36 @@
   该二进制没有修改且不链接 viewer，原样归档，不将噪声数字解释为 UI 性能结论。
 - P1 本次交付原生向量组件范围；独立 AppKit/Metal UI companion、图片资源、effective 参数
   遥测、物理桌面操作与真实设备长测仍单独追踪，未声称 VST hosting 或第三方 native UI 隔离。
+
+## Wasm runtime、Web Audio 与静音测试（2026-09-07）
+
+- 新增 `oxitone-wasm` / `@oxitone/web`，同一 Rust graph、调度、合成器、采样、效果链、
+  Mixer、WAV/MIDI 编码运行于 import-free Wasm；自带鼓机静态集成原 C ABI 实现。
+  支持内存资产、transport、参数事件与失败保留旧图；契约、内存上限和生命周期见
+  [Wasm/Web Audio 规格](12-wasm-web-audio.md)，使用方式见 [Web 指南](../../docs/web.md)。
+- Web Audio 使用 Worker 渲染 Rust PCM，AudioWorklet 只消费有界共享 ring；epoch/ACK
+  清理 pause/seek/换图旧 PCM，展示游标跟随实际消费位置。浏览器复用现有 authoring SDK，
+  示例支持系统亮暗色、波形、定位、下载及代码 watch；语法/runtime/graph 失败保留已接受工程。
+- 原生测试明确使用 `audioBackend: 'simulated'`；facade 要求 addon 确认该后端，旧 addon
+  不支持时在播放前拒绝。浏览器测试在页面代码执行前强制 `sinkId: {type: 'none'}` 并校验，
+  不可用即失败，另加 Chromium `--mute-audio`；检查真实 PCM，而不是把渲染器替换为静音。
+  CI 已移除 BlackHole 配置，删除旧设备切换脚本；仓库规则和 guard skill 固化此约束。
+- `pnpm build/lint/typecheck/test/schemas`、`cargo fmt --all --check`、`cargo test --workspace`
+  与 actionlint 通过：230 项 TS 测试（含 8 项真实 Wasm 测试）、456 项 Rust 测试通过，
+  1 项既有 GPUI 布局 benchmark 默认忽略。鼓机测试编译改为异步，避免冷构建阻塞测试 RPC。
+- Wasmtime 48.0.0 验证零 imports、1,000 blocks 非零 PCM、process allocations/frees/
+  memory growth 均为 0，并生成 WAV。Chromium 152.0.7977.76 静音冒烟覆盖浏览器歌曲与
+  两首完整工程、transport、seek、暂停静音、有效/无效换图、dispose；独立 watch 冒烟覆盖
+  合法更新→语法失败→runtime 失败→恢复。两份报告均确认 sink.type=none、抽测 0 underrun。
+- 两首完整 Wasm 导出为 183.000 / 181.286 秒，各导入 39 个钢琴源样本并导出 WAV/MIDI；
+  每段非静音，逐样本对比原生 PCM24 最大误差均为 3.5763e-7。Apple M4 / 48 kHz /
+  128 frames 下各测 4,000 blocks：lofi p95/p99 为 0.485/0.506 ms，dubstep 为
+  0.702/0.970 ms，均无 process 分配/释放/内存增长。完整渲染速度 6.38x / 4.53x realtime，
+  导出前 Wasm 内存约 454 / 446 MiB；音频和截图保留在 `target/examples/wasm`，不提交二进制。
+- [验证与专项基准](../../benchmarks/results/2026-09-07-wasm-web-audio.json) 同时归档原生
+  `render_offline` Criterion：8-track/20s WAV 平均约 4.282 s，未达到 20x 离线目标；
+  最新 8-track block slope 约 654.50 µs。历史基线报告回退，原因尚未确定，不能关闭性能门禁。
+- 本次完成共享引擎和浏览器宿主。GPUI、CoreAudio 与任意 Mach-O dylib 仍属原生宿主，
+  没有动态 Wasm 插件链接器。大工程编译占用 producer Worker，可能耗尽 ring；代码 watch
+  不抢占无限循环。当前浏览器证据仅覆盖桌面 Chromium，Safari/Firefox、移动端、后台调度、
+  长时间稳定性及既有原生发布/硬件验收仍待完成。

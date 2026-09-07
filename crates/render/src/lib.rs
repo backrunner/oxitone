@@ -30,8 +30,11 @@ pub mod params;
 pub mod player;
 pub mod plugins;
 pub mod preview;
+#[cfg(not(target_family = "wasm"))]
 pub mod realtime;
 pub mod render_wav;
+#[path = "realtime/ring.rs"]
+pub mod ring;
 mod slicer_tempo;
 pub mod transport;
 pub mod wav;

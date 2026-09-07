@@ -7,7 +7,7 @@ mod direct;
 pub mod layout;
 #[cfg(test)]
 mod retirement_tests;
-pub mod ring;
+pub use crate::ring;
 mod session;
 mod sink;
 #[cfg(test)]

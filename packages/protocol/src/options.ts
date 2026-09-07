@@ -9,6 +9,7 @@ export const engineOptionsSchema = z.object({
   latencyMode: z.enum(["buffered", "direct"]).optional(),
   allowPlugins: z.enum(["signed-only", "any"]).optional(),
   outputDeviceId: z.string().optional(),
+  audioBackend: z.enum(["device", "simulated"]).optional(),
   deviceRatePolicy: z.enum(["adapt-device", "resample"]).optional(),
   deviceChangePolicy: z.enum(["follow-default", "pause"]).optional(),
   metronome: z

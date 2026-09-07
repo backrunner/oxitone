@@ -11,6 +11,7 @@ members = [
     "crates/render",
     "crates/io-macos",
     "crates/napi",
+    "crates/wasm",
     "crates/bench",
     "crates/example-drums",
     "apps/preview",

@@ -7,9 +7,9 @@ TypeScript 是声明式 authoring layer：负责创建对象、组合 patterns�
 数据流只有一条主路径：
 
 ```text
-TS builders -> validated ProjectSnapshot -> versioned N-API command
+TS builders -> validated ProjectSnapshot -> versioned N-API / Wasm memory command
              -> Rust validator/compiler -> immutable RenderGraph
-             -> realtime block renderer -> CoreAudio / WAV writer
+             -> realtime block renderer -> CoreAudio / shared PCM + Web Audio / WAV writer
              <- TransportSnapshot / meters / diagnostics
 ```
 
@@ -25,6 +25,7 @@ oxitone/
     midi/                 # @oxitone/midi: deterministic SMF Type 1 export
     samples/              # @oxitone/samples: sample metadata/editing facade
     native/               # @oxitone/native: low-level facade and platform binary resolver
+    web/                  # @oxitone/web: Wasm memory ABI client + Worker/AudioWorklet host
     sdk/                  # oxitone: unified public authoring/native/sample entry
     native-generated/     # generated N-API TS declarations; never hand edit
     cli/                  # @oxitone/cli: render/export-midi/doctor and preview/watch runner
@@ -39,6 +40,7 @@ oxitone/
     render/               # oxitone-render: realtime and offline render engines
     io-macos/             # oxitone-io-macos: CoreAudio output adapter
     napi/                 # oxitone-napi: thin versioned bridge only
+    wasm/                 # oxitone-wasm: import-free memory ABI, same Rust engine and static drum plugin
     bench/                # oxitone-bench: criterion + callback harness
     example-drums/        # oxitone-example-drums: unpublished C ABI drum-machine cdylib example
   apps/
@@ -114,6 +116,7 @@ All entities use opaque, globally unique string IDs (`trk_`, `pat_`, `chn_`, `mi
 
 - No MIDI import in Phase 1.
 - No microphone/input capture.
-- No browser audio implementation as a second runtime.
+- No second DSP implementation in JavaScript. Wasm/Web Audio reuse the Rust engine
+  through the host boundary specified in `12-wasm-web-audio.md`.
 - No shared mutable TS/Rust object graph.
 - No GUI editor required for the SDK release.

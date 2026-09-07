@@ -2,12 +2,13 @@
 
 Oxitone is a TypeScript authoring SDK with a Rust audio engine. Write notes,
 instruments, samples, effects and automation in TypeScript; Rust compiles the graph
-and handles playback, WAV rendering and MIDI export. JavaScript never runs in the
-audio callback.
+and handles playback, WAV rendering and MIDI export. The native callback runs no
+JavaScript; the Web Audio worklet only copies pre-rendered PCM from shared memory.
 
 macOS 13+ is the target platform. Apple Silicon is the primary development target;
 the macOS CI matrix also builds and tests Intel. This is an unreleased development
-workspace. `oxitone` is the unified authoring entry; publishing signed platform
+workspace. The shared Rust engine also runs in Wasm runtimes and browsers through
+`@oxitone/web`. `oxitone` is the native unified authoring entry; publishing signed platform
 binaries remains tracked work.
 
 ## Run from a checkout
@@ -54,6 +55,23 @@ automation, persistence and the lower-level native facade.
 
 ## Preview the code as a DAW
 
+For Wasm and Web Audio, see [the web guide](docs/web.md):
+
+```sh
+rustup target add wasm32-unknown-unknown --toolchain stable
+pnpm build:wasm
+pnpm example:web
+```
+
+Open the displayed localhost URL and press Play. The browser demo includes synths,
+the same drum machine, effects, seek/pause, a live output scope, WAV download and
+source watch. Edit `examples/web/src/song.ts`; invalid updates retain the last good
+song. After `pnpm example:songs:prepare && pnpm example:songs`, both full songs and
+the CC0 upright piano are available in the browser; `pnpm example:songs:wasm`
+renders and compares their complete Wasm output under `target/examples/wasm`.
+
+The GPUI viewer continues to use the native host:
+
 ```sh
 pnpm build:preview
 pnpm preview examples/offline/src/preview.ts
@@ -91,9 +109,10 @@ build and must not be edited manually.
 
 [macOS CI](.github/workflows/macos.yml) installs locked dependencies, builds from
 source, checks schema drift, runs all tests, examples and focused benchmarks on
-both architectures. A BlackHole virtual output supplies CoreAudio for device smoke
-tests. Hosted-runner results do not establish physical-device or long-term latency
-acceptance. See [CI details](docs/ci.md).
+both architectures. Native tests use simulated sinks; browser tests require a
+no-device audio sink and fail if it is unavailable. Tests never open system audio
+outputs or change the selected device. These checks do not establish physical-device
+or long-term latency acceptance. See [CI details](docs/ci.md).
 
 [Migration notes](docs/migrations.md), [architecture](.agents/docs/01-architecture.md)
 and [remaining milestones](.agents/docs/10-implementation-status.md) describe the

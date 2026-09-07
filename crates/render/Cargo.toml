@@ -5,7 +5,6 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
-libloading = "0.8"
 semver = "1"
 sha2.workspace = true
 crossbeam-queue = "0.3"
@@ -16,9 +15,12 @@ oxitone-instruments = { path = "../instruments" }
 oxitone-mixer = { path = "../mixer" }
 oxitone-samples = { path = "../samples" }
 oxitone-dsp = { path = "../dsp" }
-oxitone-io-macos = { path = "../io-macos" }
 serde.workspace = true
 serde_json.workspace = true
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+libloading = "0.8"
+oxitone-io-macos = { path = "../io-macos" }
 
 [dev-dependencies]
 sha2.workspace = true
