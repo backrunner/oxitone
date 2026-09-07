@@ -1,0 +1,12 @@
+{
+  "pluginId": "example.drums", "pluginVersion": "1.0.0",
+  "abiMajor": 1, "abiMinor": 0, "minHostVersion": "0.1.0",
+  "kind": "instrument", "inputLayout": "none", "outputLayout": "stereo",
+  "maxPolyphony": 4, "sidechainInput": false, "reportsTail": true,
+  "parameters": [
+    { "id": "volume", "label": "Volume", "unit": "normalized", "min": 0, "max": 1,
+      "default": 0.8, "smoothing": "none", "rate": "audio", "automation": true, "mapping": "linear" },
+    { "id": "decay", "label": "Decay", "unit": "normalized", "min": 0.5, "max": 2,
+      "default": 1, "smoothing": "none", "rate": "control", "automation": true, "mapping": "linear" }
+  ]
+}

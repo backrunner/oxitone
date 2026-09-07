@@ -39,6 +39,7 @@ oxitone/
     io-macos/             # oxitone-io-macos: CoreAudio output adapter
     napi/                 # oxitone-napi: thin versioned bridge only
     bench/                # oxitone-bench: criterion + callback harness
+    example-drums/        # oxitone-example-drums: unpublished C ABI drum-machine cdylib example
   apps/
     preview/              # oxitone-preview: GPUI read-only viewer; links engine crates directly
   schemas/                # JSON schema / protocol fixtures

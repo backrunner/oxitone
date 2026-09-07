@@ -675,6 +675,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxitone-example-drums"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+ "oxitone-graph",
+]
+
+[[package]]
 name = "oxitone-graph"
 version = "0.1.0"
 dependencies = [

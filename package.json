@@ -12,11 +12,12 @@
     "build:native": "pnpm --filter @oxitone/native-generated run build",
     "lint": "pnpm -r --filter './packages/*' --filter './examples/*' run lint",
     "typecheck": "pnpm -r --filter './packages/*' --filter './examples/*' run typecheck",
-    "test": "pnpm -r --filter './packages/*' run test",
+    "test": "pnpm -r --filter './packages/*' --filter './examples/*' run test",
     "test:rust": "cargo test --workspace",
     "fmt:rust": "cargo fmt --all --check",
     "schemas": "pnpm --filter @oxitone/protocol run generate",
-    "example": "pnpm --filter @oxitone/example-offline start"
+    "example": "pnpm --filter @oxitone/example-offline start",
+    "example:drums": "pnpm --filter @oxitone/example-drums start"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

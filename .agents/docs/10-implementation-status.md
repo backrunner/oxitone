@@ -244,3 +244,24 @@
 当前剩余重点：预设；CI 首跑及 npm 单包/平台分发；Preview runner/GPUI；
 持续有声负载及设备拔插、资源预算/watchdog、fuzz/sanitizer/SBOM/签名公证等发布门禁。
 这些项仍未完成，逐项实现和记录出口证据后才能关闭对应里程碑。
+
+## 动态音源/效果器联调与自带鼓机音乐（2026-09-07）
+
+- 增加未发布示例 crate `oxitone-example-drums`，输出真实 Rust cdylib。四个固定
+  原生合成声部支持力度、同 pad 重触发、开闭镲 choke、volume/decay 参数与 reset；
+  无外部采样。C 函数表复用公开 ABI 类型，process/reset/tail 分配与释放计数均为 0。
+- `examples/drum-machine` 经真实 N-API → Rust → drum cdylib → C gain 动态库 → WAV
+  验证：unity 与 dry PCM 一致，音源音量/效果器增益减半均为 6.0205999 dB；初始值、
+  host、automation 的输出一致，automation 覆盖同帧 host，64/128/256 block hash
+  一致，衰减参数影响音频，非法参数拒绝，两插件 fault 均为 0。
+- `pnpm example:drums` 输出原创《Midnight Circuit / 午夜回路》：112 BPM、16 小节、
+  约 36.29 秒，含鼓机、贝斯、和声、旋律、breakdown、过门和淡出；另有鼓机独奏、
+  MIDI（鼓为 channel 10）、snapshot、可恢复项目及报告。恢复 WAV 逐字节一致。
+  原生分析 -17.05 LUFS / -2.05 dBTP，FFmpeg 独立复核 -17.0 LUFS / -2.0 dBTP。
+- release native build、lint、typecheck、fmt、199 TS tests、415 Rust tests 与
+  actionlint 全部通过，无 skip/ignore。根 test 和 macOS CI 纳入动态链验证与示例。
+- [专项基准与验证归档](../../benchmarks/results/2026-09-07-dynamic-drums.json)：
+  Apple M4 / 48 kHz / 128 frames，真实动态 C gain adapter 约 0.301 µs，四声部
+  drum C entry 约 7.33 µs；后者静态链接同一函数表，不含宿主 adapter，置信区间较宽。
+  两项均为 microbenchmark；未测真实设备 callback、worker 长测或 xrun，不关闭
+  上述发布门禁。鼓机为仓库自带开发示例，尚未发布为签名平台包。

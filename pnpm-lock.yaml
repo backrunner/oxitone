@@ -27,6 +27,22 @@ importers:
         specifier: ^8.18.0
         version: 8.69.0(eslint@9.39.5)(typescript@5.9.3)
 
+  examples/drum-machine:
+    dependencies:
+      '@oxitone/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@oxitone/protocol':
+        specifier: workspace:*
+        version: link:../../packages/protocol
+      oxitone:
+        specifier: workspace:*
+        version: link:../../packages/native
+    devDependencies:
+      vitest:
+        specifier: ^3.2.0
+        version: 3.2.7(@types/node@22.20.1)
+
   examples/offline:
     dependencies:
       '@oxitone/core':

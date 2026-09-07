@@ -1,0 +1,20 @@
+[package]
+name = "oxitone-example-drums"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+bench = false
+
+[dependencies]
+oxitone-graph = { path = "../graph" }
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "process"
+harness = false

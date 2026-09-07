@@ -12,6 +12,7 @@ members = [
     "crates/io-macos",
     "crates/napi",
     "crates/bench",
+    "crates/example-drums",
 ]
 
 [workspace.package]

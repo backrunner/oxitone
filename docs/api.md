@@ -161,3 +161,12 @@ Low-level consumers can use `createEngine`,
 from `oxitone`. Third-party plugins register explicitly with `registerPlugin` and
 their manifest/path; loading and validation occur on the control thread. See the
 [plugin ABI specification](../.agents/docs/08-plugin-abi.md).
+
+The [drum-machine example](../examples/drum-machine) demonstrates a complete dynamic
+instrument/effect chain, including host parameter changes, automation, hash checking
+and project restore. Run `pnpm example:drums` after `pnpm build`. Its source builds
+local unsigned development libraries and explicitly selects `allowPlugins: "any"`.
+Instrument parameters use their descriptor IDs (the example uses `volume` and
+`decay`); channel controls such as `level` and `pan` take precedence over instrument
+parameters with the same name. Saved projects retain plugin IDs and versions;
+register the matching libraries on the engine used to render their snapshots.

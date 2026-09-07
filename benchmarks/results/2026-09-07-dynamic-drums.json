@@ -1,0 +1,162 @@
+{
+  "schema": "oxitone.focused-benchmark.v1",
+  "date": "2026-09-07",
+  "change": "Self-contained native drum-machine example and dynamic instrument/effect chain verification",
+  "baseCommit": "d4b68a810637548d8bbccb5b8eb4b72ef178cd48",
+  "machine": {
+    "cpu": "Apple M4",
+    "os": "macOS 27.0 (26A5425a)",
+    "arch": "aarch64-apple-darwin",
+    "rustc": "1.98.0 (88d9e12ae 2026-08-18)",
+    "llvm": "22.1.8"
+  },
+  "config": {
+    "sampleRate": 48000,
+    "blockSizes": [
+      64,
+      128,
+      256
+    ],
+    "outputChannels": 2,
+    "sampleCount": 30,
+    "warmupSeconds": 1,
+    "measurementTargetSeconds": 3,
+    "device": null,
+    "cpuUtilization": null,
+    "callbackP95Ns": null,
+    "callbackP99Ns": null,
+    "xruns": null
+  },
+  "commands": [
+    "cargo bench -p oxitone-bench --bench plugin_process -- --warm-up-time 1 --measurement-time 3 --sample-size 30",
+    "cargo bench -p oxitone-example-drums --bench process -- --warm-up-time 1 --measurement-time 3 --sample-size 30",
+    "pnpm example:drums"
+  ],
+  "scenarios": [
+    {
+      "id": "plugin_c_abi_gain/64",
+      "blockSize": 64,
+      "slopeNs": 168.1585191186389,
+      "confidence95Ns": [
+        167.81105455519378,
+        168.49978307279073
+      ]
+    },
+    {
+      "id": "plugin_c_abi_gain/128",
+      "blockSize": 128,
+      "slopeNs": 300.9197044009592,
+      "confidence95Ns": [
+        300.3295180796095,
+        301.58185238171285
+      ]
+    },
+    {
+      "id": "plugin_c_abi_gain/256",
+      "blockSize": 256,
+      "slopeNs": 541.8180113742657,
+      "confidence95Ns": [
+        540.9453212599379,
+        542.6648913871194
+      ]
+    },
+    {
+      "id": "plugin_drums_native_entry/64",
+      "blockSize": 64,
+      "slopeNs": 3045.590665226162,
+      "confidence95Ns": [
+        2651.2234107544245,
+        3426.872479103368
+      ]
+    },
+    {
+      "id": "plugin_drums_native_entry/128",
+      "blockSize": 128,
+      "slopeNs": 7333.562321109365,
+      "confidence95Ns": [
+        6573.259987715146,
+        8144.441837888294
+      ]
+    },
+    {
+      "id": "plugin_drums_native_entry/256",
+      "blockSize": 256,
+      "slopeNs": 12093.938445055526,
+      "confidence95Ns": [
+        11013.218675907834,
+        13364.14531892741
+      ]
+    }
+  ],
+  "music": {
+    "title": "Midnight Circuit / 午夜回路",
+    "bpm": 112,
+    "bars": 16,
+    "sha256": "ce1fd2b8dfa095aecc668a2c7d728a07ffcda26f12a012f119413976b51b07e6",
+    "restoredIdentical": true,
+    "durationSeconds": 36.28570833333333,
+    "peakDbfs": -2.106175284594032,
+    "truePeakDbfs": -2.052700281546787,
+    "integratedLufs": -17.047701044852445
+  },
+  "plugins": [
+    {
+      "pluginId": "example.drums",
+      "pluginVersion": "1.0.0",
+      "sha256": "c1f5f7a68466c28130480f2e81c2417a2d6ba0b3b56b8df28350a4ad0eaef534"
+    },
+    {
+      "pluginId": "fixture.gain",
+      "pluginVersion": "1.0.0",
+      "sha256": "c21230de8f4d33459d3f3fb73719ae884e59f9782e4d85eead9efb28052e6c6e"
+    }
+  ],
+  "verification": {
+    "amplitudeReductionDb": {
+      "volume": 6.020599913279625,
+      "insert.0.parameter.gain": 6.020599913279625
+    },
+    "blockSizeParity": [
+      64,
+      128,
+      256
+    ],
+    "diagnostics": [
+      {
+        "pluginId": "example.drums",
+        "pluginVersion": "1.0.0",
+        "faults": 0
+      },
+      {
+        "pluginId": "fixture.gain",
+        "pluginVersion": "1.0.0",
+        "faults": 0
+      }
+    ]
+  },
+  "independentAudioAnalysis": {
+    "tool": "ffmpeg ebur128=peak=true",
+    "integratedLufs": -17,
+    "truePeakDbfs": -2,
+    "loudnessRangeLu": 3.8
+  },
+  "checks": {
+    "typescriptTests": 199,
+    "rustTests": 415,
+    "build": true,
+    "lint": true,
+    "typecheck": true,
+    "rustfmt": true,
+    "actionlint": true,
+    "pluginProcessAllocations": 0,
+    "pluginProcessFrees": 0
+  },
+  "notes": [
+    "Gain scenario loads an actual C dynamic library and includes host event conversion, parameter dispatch and finite-output validation.",
+    "Drum scenario calls the same exported C entry table via a static rlib; excludes dynamic host adapter, graph and device. Four active voices at velocity 0.8, decay 1, default volume 0.8; retrigger every eight blocks.",
+    "Benchmarks ran sequentially after all workspace builds, tests and song renders completed. Drum measurements have broad confidence intervals; this is an initial diagnostic baseline, not a regression or realtime deadline guarantee.",
+    "Functional verification uses N-API to load both actual dynamic libraries with explicit manifests and hashes. Host/snapshot/automation results match; automation wins over competing host events.",
+    "Music includes built-in native wavetable and delay, with MIDI drums on channel 10. Project reload renders identical WAV bytes on this machine; no external sample resources.",
+    "No physical device/callback/worker soak, remote CI, arbitrary third-party safety, signing or notarization acceptance is claimed. Generated WAVs and libraries remain under target and are not committed."
+  ]
+}

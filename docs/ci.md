@@ -8,7 +8,8 @@ than inferring it from a mutable runner label. Both builds target macOS 13+.
 Each fresh checkout installs the repository's pinned pnpm version and frozen
 lockfile, then builds the native addon, SDK and TypeScript examples. It checks
 generated schema drift, lint, types, rustfmt, all Rust/TS tests, the portable offline
-example and focused Slicer/insert benchmarks. No native build output is reused from
+examples (including the dynamic drum/effect chain) and focused Slicer, insert,
+dynamic-effect and drum DSP benchmarks. No native build output is reused from
 the developer checkout. Failures stop the job; tests are not skipped or ignored.
 
 Hosted runners have no physical output device. The CI-only audio setup installs

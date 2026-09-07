@@ -24,6 +24,10 @@
 - `render/worker`: render worker 单 block 耗时分布、ring 深度扫描（2/4/8 blocks）、注入人工调度抖动（模拟抢占）时平均负载 < 70% 预算下 underrun 必须为 0。
 - `render/offline`: render ratio、WAV writer throughput、peak memory。
 - `plugin/c_abi_gain`: 真实 C 动态库在 48 kHz、64/128/256 frames 的实例适配成本，包含参数事件转换和非有限输出检查；不代替 realtime soak。
+- `plugin/drums_native_entry`: 自带 drum cdylib 的同一 C 函数表静态链接测量，48 kHz、
+  stereo、64/128/256 frames、四声部，每 8 blocks 重触发，decay=1、velocity=0.8。
+  包括参数/note dispatch 与原生合成；不包含动态宿主适配器、整图或设备。
+  `cargo bench -p oxitone-example-drums --bench process`；callback/xrun 记 null。
 - `napi/command`: compile/transport command 往返延迟，不能用于 callback。
 - `samples/inspect`: 控制线程的文件读取、SHA-256、解码、降混和 PCM 释放耗时；使用
   48 kHz stereo 的 1 秒 PCM16 / 10 秒 float32 WAV，固定 440 Hz 正弦。Criterion

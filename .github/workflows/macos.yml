@@ -71,11 +71,15 @@ jobs:
         run: bash scripts/ci/setup-audio.sh
       - run: pnpm test
       - name: Run portable offline examples
-        run: pnpm example
+        run: |
+          pnpm example
+          pnpm example:drums
       - name: Run focused benchmarks
         run: |
           cargo bench -p oxitone-bench --bench slicer_tempo -- --warm-up-time 1 --measurement-time 3 --sample-size 30
           cargo bench -p oxitone-bench --bench insert_automation -- --warm-up-time 1 --measurement-time 3 --sample-size 30
+          cargo bench -p oxitone-bench --bench plugin_process -- --warm-up-time 1 --measurement-time 3 --sample-size 30
+          cargo bench -p oxitone-example-drums --bench process -- --warm-up-time 1 --measurement-time 3 --sample-size 30
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -85,3 +89,4 @@ jobs:
             target/ci
             target/criterion
             target/examples/offline/*.json
+            target/examples/drum-machine/report.json

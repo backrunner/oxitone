@@ -138,6 +138,18 @@ macOS 发布库必须签名并完成公证流程；浏览器下载文件可能�
 
 ## Conformance 与验证
 
+仓库自带 `example.drums@1.0.0` 开发示例（`crates/example-drums`），通过真实
+Rust cdylib 注册，不占用内置 ID。四个固定 one-shot 声部：MIDI 36 底鼓、38 军鼓、
+42 闭镲、46 开镲；同 pad 重触发，闭镲终止开镲，忽略 note-off。`volume` 为 0..1
+线性音量（无平滑），`decay` 为 0.5..2 的时长倍数（note-on 时采样）。reset
+保留参数、清空声部并重置固定 noise seed；process 不分配，声音不依赖 block size。
+这是随仓库提供的可重建示例，不是已发布或已签名的内置产品包。
+
+`pnpm example:drums` 构建并显式注册上述音源与参考 C `fixture.gain` 效果器，
+执行初始参数、host 参数、automation 和无故障检查，然后输出 16 小节歌曲、
+鼓机独奏、MIDI、可恢复项目、snapshot 与 hash/peak/LUFS 报告。无需采样下载或设备；
+重新加载项目后仍需在同一 engine 注册两个库，库路径不写入项目。
+
 - `crates/render/tests/fixtures/gain.c`：纯 C 参考效果器；同一源码可静态编译为
   runner 或动态库，测试逐样本 bitwise parity、参数排序、mono、sidechain、
   null factory、prepare 失败和故障 latch。

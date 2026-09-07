@@ -27,6 +27,12 @@ plays its slices through a tempo ramp. It verifies that saving and restoring the
 sample project produces identical WAV bytes. Files go into `target/examples/offline`.
 It does not need an audio device.
 
+`pnpm example:drums` builds a local Rust drum-machine dynamic library and a C gain
+effect, verifies their native parameter/automation paths, and renders
+[Midnight Circuit](examples/drum-machine): a 16-bar song with drums, bass, chords and
+melody. WAV, drum solo, MIDI, portable project and verification report go into
+`target/examples/drum-machine`. No external samples are needed.
+
 The current authoring entry point is `@oxitone/core`:
 
 ```ts
