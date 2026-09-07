@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | M0 工程与协议 | pnpm/Cargo workspace、版本协议、canonical fixtures、N-API smoke tests、macOS arm64/x64 CI（locked install/build/schema/tests/examples/bench） | 远端 CI 首跑尚无记录；最低 macOS 13 runtime 验收仍待完成 |
 | M1 时间轴/MIDI | Project/Track/Pattern/Clip、Chord/Arp、tempo/time-signature、Track tempo/enabled/midiChannel、确定性 SMF writer 与边界测试 | 当前已识别的 authoring 缺口已关闭；持续维护确定性/边界回归 |
-| M2 音源/采样 | Rust synth/Sampler/Slicer、解码/编辑/SRC、SampleClip stretch/repitch、C ABI、TS Sample/Clip/fit 和三种内置音源入口、缓存/provenance；Slicer repitch tempo map/lane 跟随 | 当前已识别的功能缺口已关闭；全规格 golden 和发布环境验证继续追踪 |
+| M2 音源/采样 | Rust synth/Sampler/Multisampler/Slicer、解码/编辑/SRC、SampleClip stretch/repitch、C ABI、TS Sample/Clip/fit 和四种内置音源入口、缓存/provenance；Slicer repitch tempo map/lane 跟随；CC0 钢琴 demo | 当前已识别的功能缺口已关闭；全规格 golden 和发布环境验证继续追踪 |
 | M3 Mixer/Automation/导出 | TS mixer/insert authoring，Rust mixer/PDC/12 effects、完整 insert 自动化/host 参数路径、tempo bake、WAV/stem/loudness 与回归测试 | 全规格 golden/PDC/export 的自动化发布门禁仍需建立和复核 |
 | M4 实时与设备 | CoreAudio HAL、render-ahead/direct、transport/loop、设备适配/诊断、Session 换图及 bar/beat/marker/timecode 入口、换图回收与模拟设备测试 | 修正循环负载后的 10/60 分钟 soak、真实设备切换/拔插和 callback 指标仍需验收 |
 | M5 npm/DX/插件 | 统一 `oxitone` authoring/native/sample 入口，Project/Session 动态插件注册，descriptor 查询，instrument/effect/Channel preset；CLI、便携工程与有声示例 | npm 平台包/发布/签名公证、干净安装验收和逐节点 deadline watchdog |
@@ -19,6 +19,23 @@
 详见下文；preset 已在 2026-09-07 后续阶段提供。canonical snapshot 编解码本身不能替代这些功能。
 
 ## 审查与性能记录的解释
+
+本轮新增两首完整 demo 与钢琴（2026-09-07）：
+
+- `examples/drum-machine/src/full/`：Lofi 80 BPM / 60 bars / 183 s，Melodic Dubstep
+  140 BPM / 104 bars / 181.286 s（均含 3 s tail）。原创主题、段落/收尾、独立轨道、return、
+  sidechain 与自动化均以 SDK authoring 表达；WAV/MIDI/snapshot/report 写入 ignored target。
+- `multisampler()` 与 native `oxitone.multisampler`：1…256 区域、32 声部、键位/力度查表、
+  transpose/ADSR/loop。非法范围、重叠、缺失资源、音高/力度、保存恢复音频一致性与零分配 seek/抢占有测试。
+- 显式 `pnpm example:songs:prepare` 下载固定 commit、逐文件 SHA-256 校验的 CC0 VSCO upright，
+  13 key zones × 3 dynamics（MIDI 39…91），普通 build/test 不下载。钢琴和动态鼓机有 GPUI 面板，
+  两个工程入口支持既有 watch 与最后有效状态恢复。
+- `pnpm build/lint/typecheck/test/schemas`、`cargo fmt --all --check`、`cargo test --workspace`
+  通过（217 TS / 447 Rust tests）；两首实际 WAV 的 LUFS 为 -18.23 / -16.14、true peak 为
+  -4.22 / -3.68 dBTP，native drum faults 均为 0。GPUI 工程截图及钢琴/效果器独立窗口重开检查通过。
+- 39 区域/32 声部/128 frames 微基准：reset+首块 1.509 ms、持续处理 1.137 ms；
+  [归档](../../benchmarks/results/2026-09-07-full-songs-multisampler.json)。这是内存 microbench，
+  未测物理设备 callback/CPU 占用/xrun，不代替 M4 实时验收。
 
 - `.agents/reviews/2026-09-05/` 是历史审查，保留当时失败证据，不代表当前 HEAD
   仍有全部 19 项缺陷。`crates/render/tests/regressions.rs` 已纳入原有 17 个定向

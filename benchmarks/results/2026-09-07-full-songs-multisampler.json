@@ -1,0 +1,59 @@
+{
+  "schema": "oxitone.focused-benchmark.v1",
+  "date": "2026-09-07",
+  "change": "Native multisampler and full-length piano-based demo compositions",
+  "baseCommit": "6af5371",
+  "machine": {
+    "cpu": "Apple M4", "os": "macOS 27.0 (26A5425a)",
+    "arch": "aarch64-apple-darwin", "rustc": "1.98.0", "llvm": "22.1.8"
+  },
+  "config": {
+    "sampleRate": 48000, "blockSize": 128, "sourceChannels": 1, "outputChannels": 2,
+    "voices": 32, "regions": 39, "keys": 13, "velocityLayers": 3,
+    "frequencyHz": 440, "sourceFrames": 48000, "sourceAmplitude": 0.05,
+    "noteKeys": [48, 79], "velocities": [0.3, 0.6, 0.9], "regionGain": 0.8,
+    "sampleCount": 30, "warmupSeconds": 1, "measurementTargetSeconds": 3,
+    "device": null, "cpuUtilization": null, "callbackP95Ns": null,
+    "callbackP99Ns": null, "xruns": null
+  },
+  "command": "cargo bench -p oxitone-bench --bench multisampler -- --warm-up-time 1 --measurement-time 3 --sample-size 30",
+  "scenarios": [
+    {
+      "id": "instruments/multisampler_39_regions_32_voices/reset_first_128",
+      "slopeNs": 1509002.6826864092,
+      "confidence95Ns": [1472987.8352615384, 1550659.0853496878]
+    },
+    {
+      "id": "instruments/multisampler_39_regions_32_voices/sounding_128",
+      "slopeNs": 1136914.795469769,
+      "confidence95Ns": [1119492.3651012145, 1168614.639646801]
+    }
+  ],
+  "songs": [
+    {
+      "title": "Rain on the Window", "bpm": 80, "bars": 60,
+      "durationSeconds": 183, "tracks": 6, "notes": 1497,
+      "peakDbfs": -4.2204319689135055, "truePeakDbfs": -4.216608489627661,
+      "integratedLufs": -18.225305870891653, "renderSeconds": 28.668666666,
+      "sha256": "41459200bdf138f3403b14de185782414012db31b47f31f9d81f131150a9788f",
+      "nativeDrumFaults": 0
+    },
+    {
+      "title": "After the Horizon", "bpm": 140, "bars": 104,
+      "durationSeconds": 181.28570833333333, "tracks": 9, "notes": 2711,
+      "peakDbfs": -3.660126924666272, "truePeakDbfs": -3.6809494630044552,
+      "integratedLufs": -16.144005790774656, "renderSeconds": 35.946817583000005,
+      "sha256": "5f1c8abce2897758590d233b42e93510221731c4c107cbc81db57e59104e099b",
+      "nativeDrumFaults": 0
+    }
+  ],
+  "notes": [
+    "Microbench injects prepared PCM; excludes sample loading, mixer, N-API, I/O and device callbacks.",
+    "Sounding scenario retriggers every 120 blocks before sample exhaustion; reset is included in timing.",
+    "First baseline for this scenario. Repeated after builds, tests and full-song renders finished to reduce contention.",
+    "Full songs use the CC0 VSCO upright subset, stereo samples, native drums and full effect routing; WAV is PCM24 with TPDF dither and a 3-second tail.",
+    "40-note voice-stealing and repeated graph seek/process measured zero allocations and frees in the focused Rust test.",
+    "447 Rust tests and 217 TypeScript tests passed. Both real GPUI projects compiled; piano/effect window reopen smoke passed.",
+    "No physical callback/worker soak was measured; these measurements do not close the realtime acceptance gates."
+  ]
+}

@@ -1,5 +1,8 @@
 # Midnight Circuit / 午夜回路
 
+For the two three-minute **lofi / melodic dubstep** works with an acoustic upright
+piano, see [Full-length songs](src/full/README.md).
+
 A self-contained 112 BPM, 16-bar electronic groove: native kick/snare/closed and
 open hats, round bass, Am7–Fmaj7–Cmaj7–G6 keys and a bell motif. Intro, breakdown,
 fills and a fade ending are authored in [src/song.ts](src/song.ts). Duration is

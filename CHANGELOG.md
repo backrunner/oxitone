@@ -8,6 +8,15 @@ conventional commits (`type(scope): description`).
 
 ### Added
 
+- Two full-length SDK compositions: 80 BPM lofi (3:03) and 140 BPM melodic dubstep
+  (3:01), with acoustic piano, native drum dylib, section markers, effect returns,
+  sidechain ducking, WAV/MIDI export and source-watched GPUI preview entries.
+  Explicit asset preparation pins and verifies the CC0 VSCO 2 CE upright samples.
+- `multisampler()` authoring and native `oxitone.multisampler`: 1–256 disjoint key/
+  velocity regions, per-region tuning/gain and shared ADSR/transpose/loop controls.
+  Region lookup and 32 voices prepare off-thread; rendering, stealing and seek are
+  allocation-free. Includes bank save/load audio parity and a 39-region benchmark.
+
 - Native plugin panels via `Project.registerPluginUi`: versioned descriptor-bound
   pages, groups, knobs, faders, choices and source ADSR diagrams for built-ins and dylibs.
   Every effect keeps host Mix/bypass visible; compact Inspect rows retain full metadata.

@@ -18,6 +18,8 @@
     "schemas": "pnpm --filter @oxitone/protocol run generate",
     "example": "pnpm --filter @oxitone/example-offline start",
     "example:drums": "pnpm --filter @oxitone/example-drums start",
+    "example:songs:prepare": "pnpm --filter @oxitone/example-drums songs:prepare",
+    "example:songs": "pnpm --filter @oxitone/example-drums songs:render",
     "build:preview": "node scripts/build-preview.mjs",
     "preview": "node packages/cli/dist/index.js preview"
   },
