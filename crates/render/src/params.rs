@@ -71,10 +71,13 @@ fn resolve_channel(
                 view.channel_id(channel)
             ))
         })?;
-    Ok((
-        RtTarget::InstrumentParam { channel, index },
-        view.instrument_specs(channel)[index].clone(),
-    ))
+    let spec = &view.instrument_specs(channel)[index];
+    if spec.automation == Some(false) {
+        return Err(target_invalid(format!(
+            "instrument parameter {parameter_id:?} is not available for runtime changes"
+        )));
+    }
+    Ok((RtTarget::InstrumentParam { channel, index }, spec.clone()))
 }
 
 fn resolve_mixer(

@@ -101,6 +101,14 @@ Sample player 的运行时可自动化参数按 DSP 实现：`tone` 是每 clip 
 
 `Slicer` 的每个 slice 是一个预分配的 varispeed player voice：compile 期把显式 marker/grid/onset 统一解析成 frame 区间的不可变 slice 表（onset 检测在 compile/prepare 执行，不得在 callback 中运行），note-on 按 `triggerNote` 偏移索引 slice；oneshot 忽略 note-off，gate 用 note-off 触发 release。slice 播放的全部参数路径与 Sampler 相同，PDC、平滑和确定性规则不变。
 
+Slicer repitch 在 compile 解析原生 BPM 与参数索引并校验完整有效 tempo map 的
+0.25..4 因子范围。处理段起点在 note dispatch 前暂存 tempoFactor，更新活跃 voice
+与随后触发的 voice；所有数据预分配，不读取 JSON、资产或 descriptor 字符串表。
+seek/loop 后重新使用目标 frame 的有效 BPM，复用 SampleVoice 的 rate smoother。
+Sampler/Slicer 共享 voice pool 在 seek/loop 清零 ADSR 状态，保留参数，避免旧 sustain
+让重放跳过 attack。音源事件暂存按 descriptor 大小预分配，同段同参数后写覆盖前写，
+初始值 → host → automation，不再依赖 64 事件上限；seek 清除待处理事件，不释放缓冲。
+
 ## 低延迟和设备
 
 **输出路径选型**：macOS adapter 直接使用 CoreAudio HAL 输出（AudioUnit v2 `HALOutput` 或 `AudioDeviceCreateIOProcID`），输入 scope 显式禁用；不使用 AudioQueue 或 AVAudioEngine——二者会引入不可控的中间缓冲和 graph 开销。adapter 启动时：

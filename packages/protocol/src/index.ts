@@ -29,6 +29,8 @@ export { inspectSampleRequestSchema, sampleInfoSchema, cacheSampleRequestSchema,
 export type { InspectSampleRequest, SampleInfo, CacheSampleRequest, CachedSampleInfo } from "./sample-info.js";
 export { sampleProvenanceSchema } from "./sample-provenance.js";
 export type { SampleProvenance } from "./sample-provenance.js";
+export { wavetableOptionsSchema, samplerOptionsSchema, slicerStateSchema } from "./instruments.js";
+export type { EnvelopeOptions, OscillatorOptions, WavetableOptions, SamplerOptions, SlicerState } from "./instruments.js";
 export { curveSchema, automationPointSchema, CURVE_KINDS } from "./curve.js";
 export type { Curve, CurveKind, AutomationPoint } from "./curve.js";
 export { parameterSpecSchema } from "./parameter.js";

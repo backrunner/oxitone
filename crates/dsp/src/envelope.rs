@@ -146,6 +146,14 @@ impl Adsr {
     pub fn level(&self) -> f32 {
         self.level as f32
     }
+
+    /// Flush playback state for seek/loop while retaining envelope settings.
+    pub fn reset(&mut self) {
+        self.stage = AdsrStage::Idle;
+        self.level = 0.0;
+        self.step = 0.0;
+        self.remaining = 0;
+    }
 }
 
 #[cfg(test)]

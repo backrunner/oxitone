@@ -230,12 +230,16 @@ pub fn parse_state(state: &Value) -> Result<SlicerConfig, OxitoneError> {
             let n = v
                 .as_u64()
                 .ok_or_else(|| err(format!("{path}.triggerNote"), "must be an integer"))?;
-            u8::try_from(n).map_err(|_| err(format!("{path}.triggerNote"), "must be in 0..=127"))?
+            if n > 127 {
+                return Err(err(format!("{path}.triggerNote"), "must be in 0..=127"));
+            }
+            n as u8
         }
     };
-    let play_mode = match object.get("playMode").and_then(Value::as_str) {
-        None | Some("oneshot") => PlayMode::Oneshot,
-        Some("gate") => PlayMode::Gate,
+    let play_mode = match object.get("playMode") {
+        None => PlayMode::Oneshot,
+        Some(Value::String(s)) if s == "oneshot" => PlayMode::Oneshot,
+        Some(Value::String(s)) if s == "gate" => PlayMode::Gate,
         Some(other) => {
             return Err(err(
                 format!("{path}.playMode"),
@@ -243,6 +247,14 @@ pub fn parse_state(state: &Value) -> Result<SlicerConfig, OxitoneError> {
             ))
         }
     };
+    if let Some(sync) = object.get("tempoSync") {
+        if !matches!(sync.as_str(), Some("off" | "repitch")) {
+            return Err(err(
+                format!("{path}.tempoSync"),
+                "tempoSync must be off|repitch",
+            ));
+        }
+    }
     Ok(SlicerConfig {
         sample_id,
         source,

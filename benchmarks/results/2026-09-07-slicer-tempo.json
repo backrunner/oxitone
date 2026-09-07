@@ -1,0 +1,25 @@
+{
+  "schema": "oxitone.focused-benchmark.v1",
+  "date": "2026-09-07",
+  "change": "Built-in instrument helpers, Slicer tempo following and sample envelope reset",
+  "baseCommit": "e56206d",
+  "machine": { "cpu": "Apple M4", "os": "macOS 27.0 (26A5425a)", "arch": "aarch64-apple-darwin", "cargo": "1.98.0" },
+  "config": {
+    "sampleRate": 48000, "blockSize": 128, "sourceChannels": 1, "outputChannels": 2,
+    "voices": 1, "slices": 1, "frequencyHz": 440, "sourceFrames": 48000,
+    "tempoBpm": [90, 153], "curve": "linear", "masterLimiter": false,
+    "sampleCount": 30, "warmupSeconds": 1, "measurementTargetSeconds": 3,
+    "device": null, "cpuUtilization": null, "callbackP95Ns": null, "callbackP99Ns": null, "xruns": null
+  },
+  "command": "cargo bench -p oxitone-bench --bench slicer_tempo -- --warm-up-time 1 --measurement-time 3 --sample-size 30",
+  "scenarios": [
+    { "id": "instruments/slicer_tempo/reset_first_128", "slopeNs": 49235.06921985026, "confidence95Ns": [48758.08930915816, 49903.93802175645] },
+    { "id": "instruments/slicer_tempo/sounding_128", "slopeNs": 55354.48611723549, "confidence95Ns": [52804.876443986, 57848.501611242595] }
+  ],
+  "notes": [
+    "Prepared sample injection; measures complete Channel/Master graph without asset I/O or protected master limiter.",
+    "Sounding scenario restarts every 180 blocks, before sample exhaustion. Restart is included in timed work.",
+    "First new-scenario baseline. Initial measurement overlapped Cargo builds/tests and was repeated after they finished; Criterion's reported improvement compares those two new measurements, not the previous commit.",
+    "No physical device/callback/worker soak was measured; cannot close the realtime acceptance gates."
+  ]
+}

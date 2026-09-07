@@ -26,6 +26,7 @@ impl SampleVoicePool {
             voice.active = false;
             voice.age = 0;
             voice.level = 0.0;
+            voice.amp.reset();
         }
     }
 

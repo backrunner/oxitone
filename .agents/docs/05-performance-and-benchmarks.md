@@ -36,6 +36,10 @@
   `track_repitch_reset_128` / `track_stretch_reset_128` 在相同素材上测完整 ClipNode
   reset + 首块，Track BPM 120、全局 BPM 240、局部 duration 1 beat；包含窗口门控、
   局部 tempo 因子计算和 player 输出。未测真实设备 callback、CPU 利用率或 xrun。
+- `instruments/slicer_tempo`: 48 kHz/128 frames、mono 440 Hz 一秒素材、单 slice/voice、
+  Project BPM 90→153 的 linear ramp。完整 Channel/Master 路径（关闭保护 limiter）；
+  测 reset + 首块，以及每 180 blocks 重触发的持续有声处理；不包含资产加载。
+  此处是内存渲染 microbench，callback、设备、CPU 利用率与 xrun 记 null。
 
 `dsp/*` benchmark 必须包含 denormal 语料（衰减中的滤波器/混响尾部），验证 FTZ/DAZ 与 denormal-safe 实现没有性能悬崖。
 

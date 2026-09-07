@@ -314,8 +314,29 @@ interface SlicerState {
           | { onset: { algorithm: string; sensitivity?: number } }; // 版本化瞬态检测
   triggerNote?: Pitch;                      // default 60
   playMode: 'oneshot'|'gate';
+  tempoSync?: 'off'|'repitch';               // default off; host-owned tempoFactor
 }
 ```
+
+内置音源便捷入口（从 `@oxitone/core` 导出）：
+
+```ts
+const lead = wavetable({ oscA: { wave: 'saw', unison: 4, detune: 12 },
+  mix: 0.2, filter: { type: 'lowpass', cutoff: 4000, resonance: 0.3 },
+  amp: { attack: 0.01, release: 0.2 }, voiceMode: 'poly' });
+const keys = sampler(sample, { rootKey: 60, loop: 'forward', startSeconds: 0.1 });
+const chops = slicer(sample, { slices: { grid: 8 }, tempoSync: 'repitch' });
+channel.instrument = chops;
+```
+
+Wavetable 可配置 oscA/oscB 的 wave/pitch/unison/detune/spread、mix、filter、
+filterEnvelope（ADSR + amount）、amp、voiceMode、glide、level/pan。Sampler 提供
+rootKey、velocitySensitivity、amp、loop、startSeconds、level/pan。ADSR 时间单位
+为 seconds，wave/type/mode 字符串转换为 descriptor 枚举。Slicer slices 支持显式
+frame/beat 标记、grid 1..64 或 onset-v1，以及 triggerNote/playMode/tempoSync、level/pan。
+frame authoring 接受 safe-integer number 或 u64 bigint，wire 统一为十进制字符串。
+schema/类型从 protocol 导出；返回值独立且不修改 Sample。Channel 替换 instrument
+增加一次 revision，需 Session.update 或重新 compile 生效；失败保留旧 authoring 状态。
 
 `Record<string, number>` 只表示经过 schema 校验的参数表，不代表插件可以接收任意键；每个 plugin descriptor 必须提供完整 `ParameterSpec[]`，缺失、未知或越界参数都在 compile 阶段拒绝。
 

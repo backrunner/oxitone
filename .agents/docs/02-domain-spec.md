@@ -85,6 +85,20 @@ Channel、MixerChannel 和 Master 的有序 insert 均暴露 `insert.<index>.mix
 - `tempoSync` 支持 `off` 和 `repitch`（语义与 SampleClip 相同）；v1 不支持逐 slice 保调 stretch——slice 边界随 tempo 变化的重拉伸需要 per-slice WSOLA，作为算法演进候选。切片型 loop 需要跟 tempo 时推荐用 `repitch`。
 - slice 表是插件的结构化 state（见 `04-api-contracts.md` 的 `InstrumentRef.state`），compile 期定稿，播放中不可变；改 slice 需要重新 compile 该节点。
 
+`@oxitone/core` 提供 `wavetable(options?)`、`sampler(sample, options?)` 与
+`slicer(sample, options)`，返回可序列化 InstrumentRef，供 `addChannel({instrument})`
+或 `channel.instrument = ref` 使用。它们不持有 PCM 或 native instance。选项省略时保留
+Rust descriptor 默认值；非法选项报 `InvalidProject`。资源 ID 必须属于目标工程。
+
+Slicer `state.tempoSync` 缺省为 off。repitch 的原生 BPM 为编辑后内容的
+`60 * musicalLengthBeats / durationSeconds`；未声明音乐长度时固定使用编译后有效
+Project tempo 在 beat 0 的 BPM。每个处理段起点用有效 Project BPM（含 tempo lane）
+除以原生 BPM，更新已经发声和新触发的 slice。Channel 可被多个 Track 共享，因此
+Track 静态 tempo 只控制其音符时间，不改变 Channel 的音源时钟。
+tempo 因子支持 0.25..4，完整有效 tempo map 超出此范围时报 `InvalidProject`，
+不静默钳制；与 slice rate 相乘后沿用 voice 的 0.125..16 安全范围和平滑。
+`tempoFactor` 是宿主保留参数，不能在快照参数表、automation 或 setParameter 中赋值。
+
 ## Sample
 
 `Sample` 是可复用的音频资产引用和非破坏性编辑描述，而非内存中的 PCM。它包括 `assetUri`、content hash、原始格式、声道数、sampleRate、帧数和编辑链：

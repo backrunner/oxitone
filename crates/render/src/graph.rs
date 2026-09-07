@@ -309,6 +309,11 @@ impl RenderGraph {
 
         for channel in &mut self.channels {
             channel.stage_initial();
+            if let Some(sync) = &channel.slicer_tempo {
+                channel
+                    .instrument_staged
+                    .set(sync.parameter_index, sync.factor(bpm));
+            }
         }
 
         // Host parameter events due at or before this block's start

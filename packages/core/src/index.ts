@@ -14,6 +14,8 @@ export { MixerChannel } from "./mixer-channel.js";
 export type { MixerChannelOptions, SendOptions } from "./mixer-channel.js";
 export { Sample, SampleClip } from "./sample.js";
 export type { SampleOptions, SampleClipOptions } from "./sample.js";
+export { wavetable, sampler, slicer } from "./instruments.js";
+export type { EnvelopeOptions, OscillatorOptions, WavetableOptions, SamplerOptions, SlicePosition, SliceOptions, SlicerOptions } from "./instruments.js";
 export { chord } from "./chord.js";
 export type { ChordOptions, ChordQuality, ChordVoicing } from "./chord.js";
 export { arp } from "./arp.js";

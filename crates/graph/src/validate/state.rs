@@ -159,6 +159,14 @@ fn check_slicer_state(
             ))
         }
     }
+    if let Some(sync) = object.get("tempoSync") {
+        if !matches!(sync.as_str(), Some("off" | "repitch")) {
+            return Err(invalid(
+                &format!("{path}.tempoSync"),
+                "tempoSync must be off|repitch",
+            ));
+        }
+    }
     if let Some(trigger) = object.get("triggerNote") {
         let note = trigger.as_u64().ok_or_else(|| {
             invalid(
@@ -257,6 +265,12 @@ pub(super) fn validate_states(
             ));
         };
         if schema == SLICER_STATE_SCHEMA_ID {
+            if channel.instrument.parameters.contains_key("tempoFactor") {
+                return Err(invalid(
+                    &path,
+                    "tempoFactor is reserved for the host; use state.tempoSync",
+                ));
+            }
             check_slicer_state(&path, state, &sample_ids, sample_frames)?;
         }
     }

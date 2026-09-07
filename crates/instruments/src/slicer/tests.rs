@@ -321,6 +321,9 @@ fn invalid_state_is_rejected() {
         serde_json::json!({ "sampleId": "s1", "slices": { "onset": { "algorithm": "onset-v2" } } }),
         serde_json::json!({ "sampleId": "s1", "slices": [], "playMode": "oneshot" }),
         serde_json::json!({ "sampleId": "s1", "slices": { "grid": 2 }, "playMode": "hold" }),
+        serde_json::json!({ "sampleId": "s1", "slices": { "grid": 2 }, "playMode": 1 }),
+        serde_json::json!({ "sampleId": "s1", "slices": { "grid": 2 }, "triggerNote": 128 }),
+        serde_json::json!({ "sampleId": "s1", "slices": { "grid": 2 }, "tempoSync": "stretch" }),
         serde_json::json!({ "sampleId": "ghost", "slices": { "grid": 2 } }),
         serde_json::json!({
             "sampleId": "s1",

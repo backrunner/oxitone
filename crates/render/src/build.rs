@@ -88,6 +88,12 @@ impl RenderGraph {
                     host.sample_rate,
                     max_block,
                 )?;
+            let slicer_tempo = crate::slicer_tempo::SlicerTempo::resolve(
+                &channel_plan.instrument,
+                samples,
+                &plan.tempo,
+                &instrument_param_ids,
+            )?;
             let mut inserts = Vec::with_capacity(channel_plan.effect_chain.len());
             for (index, effect) in channel_plan.effect_chain.iter().enumerate() {
                 inserts.push(create_insert(
@@ -114,8 +120,9 @@ impl RenderGraph {
                 bus_id: channel_plan.mixer_channel_id.clone(),
                 instrument,
                 instrument_param_ids,
-                instrument_specs,
+                instrument_specs: instrument_specs.clone(),
                 instrument_initial,
+                slicer_tempo,
                 inserts,
                 level,
                 pan,
@@ -132,7 +139,9 @@ impl RenderGraph {
                 delayed_l: vec![0.0; max_block as usize],
                 delayed_r: vec![0.0; max_block as usize],
                 notes: Vec::with_capacity(plan.scheduler.events_in_range(0, u64::MAX).len()),
-                instrument_staged: Vec::with_capacity(crate::channel::MAX_PARAM_EVENTS),
+                instrument_staged: oxitone_mixer::parameter_queue::ParameterQueue::new(
+                    &instrument_specs,
+                ),
                 first_block: true,
                 note_shift: [0; 128],
                 note_active: [false; 128],

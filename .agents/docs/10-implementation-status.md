@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | M0 工程与协议 | pnpm/Cargo workspace、版本协议、canonical fixtures、N-API smoke tests | `.github/workflows` 缺失；干净 macOS 环境安装/构建门禁未建立 |
 | M1 时间轴/MIDI | Project/Track/Pattern/Clip、Chord/Arp、tempo/time-signature、Track tempo/enabled/midiChannel、确定性 SMF writer 与边界测试 | 当前已识别的 authoring 缺口已关闭；持续维护确定性/边界回归 |
-| M2 音源/采样 | Rust synth/Sampler/Slicer、解码/编辑/SRC、SampleClip stretch/repitch、C ABI、TS Sample/Clip/fit builders、只读导入及标准化 WAV 缓存/provenance 持久化 | 内置音源便捷入口；新核实 Slicer tempoSync repitch 尚未接入宿主 tempo 更新 |
+| M2 音源/采样 | Rust synth/Sampler/Slicer、解码/编辑/SRC、SampleClip stretch/repitch、C ABI、TS Sample/Clip/fit 和三种内置音源入口、缓存/provenance；Slicer repitch tempo map/lane 跟随 | 当前已识别的功能缺口已关闭；全规格 golden 和发布环境验证继续追踪 |
 | M3 Mixer/Automation/导出 | TS mixer/insert authoring，Rust mixer/PDC/12 effects、完整 insert 自动化/host 参数路径、tempo bake、WAV/stem/loudness 与回归测试 | 全规格 golden/PDC/export 的自动化发布门禁仍需建立和复核 |
 | M4 实时与设备 | CoreAudio HAL、render-ahead/direct、transport/loop、设备适配/诊断、Session 换图及 bar/beat/marker/timecode 入口、换图回收与模拟设备测试 | 修正循环负载后的 10/60 分钟 soak、真实设备切换/拔插和 callback 指标仍需验收 |
 | M5 npm/DX/插件 | CLI render/export-midi/doctor、显式动态插件注册/校验/故障计数，最新提交有 C/Rust/N-API 测试 | 平台包/发布/签名公证、逐节点 deadline watchdog、示例/API reference/迁移说明；`oxitone` 当前仅导出底层 facade，未提供仅安装它即可使用 Project 的包结构 |
@@ -204,6 +204,24 @@
   包含完整读/解码、WAV 写入、hash 与 fsync；复用另校验已有文件。首次基线，主机并发
   负载下测量，不代表 realtime 或设备验收；callback、设备、xrun 未测。
 
-当前剩余重点：预设；内置音源便捷入口和 Slicer tempoSync；macOS CI/npm 分发/示例；Preview runner/GPUI；
+## 内置音源入口与 Slicer 速度跟随（2026-09-07）
+
+- `wavetable`、`sampler`、`slicer` 提供类型化选项与严格校验；Channel instrument 可替换。
+  帧标记保持 u64 精度，完整选项经真实 native compile/render 验证，Slicer 工程保存、
+  删除源文件后恢复，WAV 逐字节一致。
+- Slicer repitch 更新新触发和活跃 voice，支持 step/linear/exponential 和 tempo lane；
+  显式音乐长度、trim、reverse/rate、缺省时钟和 Track override 规则均有验证。
+  超范围 tempo 因子、非法模式和宿主保留参数赋值提前拒绝。
+- 修复 Sampler/Slicer seek 未清零 ADSR 导致重放跳过 attack；重放逐样本一致，
+  seek/process allocation/free 均为 0。音源参数队列按 descriptor 预分配，128 参数
+  加同帧 host/automation 优先级通过，原先 64 事件截断已移除。
+- release native build、schemas、lint/typecheck、196 TS tests、fmt 和 Rust workspace
+  的 412 tests 全部通过，无 skip/ignore。新增 6 个 Rust integration 和 5 个 TS 测试。
+- [专项基准](../../benchmarks/results/2026-09-07-slicer-tempo.json)：Apple M4 / 48 kHz /
+  128 frames，单 voice 的整图 reset/首块为 49.24 µs，持续有声段为 55.35 µs。
+  首轮与构建/测试重叠，已在结束后复测；新场景首次基线，无前提交回退结论，未测设备
+  callback/xrun，不替代 10/60 分钟验收。
+
+当前剩余重点：预设；macOS CI/npm 分发/示例；Preview runner/GPUI；
 持续有声负载及设备拔插、资源预算/watchdog、fuzz/sanitizer/SBOM/签名公证等发布门禁。
 这些项仍未完成，逐项实现和记录出口证据后才能关闭对应里程碑。

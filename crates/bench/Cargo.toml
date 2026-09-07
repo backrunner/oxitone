@@ -75,3 +75,7 @@ harness = false
 [[bench]]
 name = "insert_automation"
 harness = false
+
+[[bench]]
+name = "slicer_tempo"
+harness = false

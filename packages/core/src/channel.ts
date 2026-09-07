@@ -60,6 +60,9 @@ export class Channel {
   get instrument(): InstrumentRef {
     return structuredClone(this.spec.instrument);
   }
+  set instrument(value: InstrumentRef) {
+    this.update({ instrument: value });
+  }
 
   get mixerChannelId(): EntityId {
     return this.spec.mixerChannelId;

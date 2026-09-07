@@ -8,6 +8,12 @@ conventional commits (`type(scope): description`).
 
 ### Added
 
+- Built-in `wavetable`, `sampler` and `slicer` authoring helpers with typed controls,
+  native defaults, exact slice markers and editable Channel instrument references.
+- Slicer repitch follows the effective Project tempo map/lane for active and new
+  voices, using declared musical length or the initial effective BPM as its reference.
+  Invalid modes/ranges and writes to the reserved tempo factor fail before playback.
+
 - Explicit normalized sample caching via `importSample(path, { cacheDir })` and
   native `cacheSample`: Rust publishes immutable, content-addressed float32 WAVs
   with original sample rate, decoded PCM and forward loops. Source hashes, format,
@@ -156,6 +162,11 @@ conventional commits (`type(scope): description`).
   `EngineDiagnostics` wire schema in `@oxitone/protocol`.
 
 ### Fixed
+
+- Sampler/Slicer seek resets the envelope as well as the sample reader, so replay
+  starts with the same attack and produces identical samples without allocating.
+- Instrument parameter staging covers the complete descriptor, coalesces same-frame
+  changes and preserves initial/host/automation priority beyond 64 parameters.
 
 - Sample fitting now integrates the effective Rust clock across tempo steps, ramps and
   looped/held tempo lanes. `Project.beatsForSeconds` exposes the same read-only conversion.

@@ -31,6 +31,7 @@ pub mod player;
 pub mod plugins;
 pub mod realtime;
 pub mod render_wav;
+mod slicer_tempo;
 pub mod transport;
 pub mod wav;
 

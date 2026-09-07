@@ -144,10 +144,9 @@ pub(crate) fn apply_bindings(graph: &mut RenderGraph, beat: f64, first: bool) {
             RtTarget::ChannelPan(c) => graph.channels[*c].pan.set_target(physical as f32),
             RtTarget::ChannelMute(c) => graph.channels[*c].mute = physical >= 0.5,
             RtTarget::InstrumentParam { channel, index } => {
-                let staged = &mut graph.channels[*channel].instrument_staged;
-                if staged.len() < crate::channel::MAX_PARAM_EVENTS {
-                    staged.push((0, *index, physical));
-                }
+                graph.channels[*channel]
+                    .instrument_staged
+                    .set(*index, physical);
             }
             RtTarget::InsertMix { channel, insert } => graph.channels[*channel].inserts[*insert]
                 .mix
@@ -195,10 +194,9 @@ pub(crate) fn apply_rt_target(graph: &mut RenderGraph, target: &RtTarget, physic
         RtTarget::ChannelPan(c) => graph.channels[*c].pan.set_target(physical as f32),
         RtTarget::ChannelMute(c) => graph.channels[*c].mute = physical >= 0.5,
         RtTarget::InstrumentParam { channel, index } => {
-            let staged = &mut graph.channels[*channel].instrument_staged;
-            if staged.len() < crate::channel::MAX_PARAM_EVENTS {
-                staged.push((0, *index, physical));
-            }
+            graph.channels[*channel]
+                .instrument_staged
+                .set(*index, physical);
         }
         RtTarget::InsertMix { channel, insert } => graph.channels[*channel].inserts[*insert]
             .mix

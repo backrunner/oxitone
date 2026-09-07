@@ -30,6 +30,10 @@ impl ParameterQueue {
         }
     }
 
+    pub fn clear(&mut self) {
+        self.pending.clear();
+    }
+
     /// Build ABI events by integer index, without allocation or string lookup.
     pub fn with_events<R>(
         &mut self,
