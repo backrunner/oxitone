@@ -8,6 +8,10 @@ conventional commits (`type(scope): description`).
 
 ### Added
 
+- Global checkout CLI installation with `pnpm install:cli`, and `oxitone build`
+  for a single ESM project artifact. Preview now executes bundled code, preserving
+  source-relative assets and external SDK resolution, with last-good error recovery.
+
 - Preserve the After the Horizon lead while developing a 20-track arrangement with
   chord plucks, Reese bridge bass, progressive drop layers, harmonic halo and phrase
   delay throws. New production processors shape timbres, drum room, buses and master.

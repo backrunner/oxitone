@@ -1,11 +1,14 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, statSync, watch, type FSWatcher } from "node:fs";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { createRequire } from "node:module";
-import { dirname, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { context, type BuildContext } from "esbuild";
 import { canonicalEncode, PREVIEW_MAX_FRAME_BYTES, previewFrameSchema, type PreviewFrame } from "@oxitone/protocol";
+import { bundleCode, projectBuildOptions, writeBundle } from "../bundle.js";
 
 const require = createRequire(import.meta.url);
 export interface RunnerOptions { watch?: boolean; debounceMs?: number; watchPaths?: string[]; timeoutMs?: number; }
@@ -20,14 +23,17 @@ export class PreviewRunner {
   private revision = 0n;
   private hash: string | undefined;
   private closed = false;
+  private directory = "";
+  private bundle = "";
 
   constructor(private readonly entry: string, private readonly send: (frame: PreviewFrame) => void,
     private readonly options: RunnerOptions = {}) {}
 
   async start(): Promise<void> {
-    this.buildContext = await context({ absWorkingDir: dirname(resolve(this.entry)), entryPoints: [resolve(this.entry)],
-      bundle: true, write: false, packages: "external", platform: "node", format: "esm", logLevel: "silent",
-      plugins: [{ name: "oxitone-preview", setup: (build) => {
+    this.directory = await mkdtemp(join(tmpdir(), "oxitone-project-"));
+    const options = projectBuildOptions(this.entry);
+    this.buildContext = await context({ ...options,
+      plugins: [...options.plugins!, { name: "oxitone-preview", setup: (build) => {
         build.onStart(() => {
           this.generation++;
           this.child?.kill("SIGKILL");
@@ -39,7 +45,10 @@ export class PreviewRunner {
           if (result.errors.length) {
             const error = result.errors[0]!;
             this.diagnostic(error.text, error.location ? `${error.location.file}:${error.location.line}` : undefined);
-          } else this.schedule();
+          } else if (result.outputFiles?.length === 1) {
+            this.bundle = bundleCode(result, this.entry);
+            this.schedule();
+          } else this.diagnostic("Project build must produce exactly one JavaScript file");
         });
       } }],
     });
@@ -55,7 +64,7 @@ export class PreviewRunner {
         this.generation++;
         this.child?.kill("SIGKILL");
         this.send({ type: "status", protocolVersion: "1.0", state: "building" });
-        this.schedule();
+        void this.buildContext?.rebuild().catch(error => this.diagnostic(String(error)));
       });
       watcher.on("error", (error) => this.diagnostic(error.message, target));
       this.watchers.push(watcher);
@@ -70,14 +79,20 @@ export class PreviewRunner {
   private schedule(): void {
     if (this.timer) clearTimeout(this.timer);
     const generation = this.generation;
-    this.timer = setTimeout(() => this.evaluate(generation), this.options.debounceMs ?? 150);
+    this.timer = setTimeout(() => { void this.evaluate(generation).catch(error => {
+      if (!this.closed && generation === this.generation) this.diagnostic(String(error));
+    }); }, this.options.debounceMs ?? 150);
   }
 
-  private evaluate(generation: number): void {
+  private async evaluate(generation: number): Promise<void> {
+    if (this.closed || generation !== this.generation) return;
+    const bundle = join(this.directory, `project-${generation}.mjs`);
+    await writeBundle(bundle, this.bundle);
+    if (this.closed || generation !== this.generation) { await rm(bundle, { force: true }); return; }
     const worker = new URL("./evaluate.js", import.meta.url);
     if (!existsSync(worker)) worker.pathname = worker.pathname.replace(/\.js$/, ".ts");
     const child = spawn(process.execPath, ["--import", require.resolve("tsx"),
-      fileURLToPath(worker), resolve(this.entry)], {
+      fileURLToPath(worker), bundle, resolve(this.entry)], {
       cwd: dirname(resolve(this.entry)), stdio: ["ignore", "pipe", "pipe", "pipe"],
     });
     this.child = child;
@@ -98,6 +113,7 @@ export class PreviewRunner {
     });
     child.on("error", (error) => { diagnostics = error.message; });
     child.on("close", (code) => {
+      void rm(bundle, { force: true });
       clearTimeout(timer);
       if (this.closed || generation !== this.generation) return;
       this.child = undefined;
@@ -126,6 +142,7 @@ export class PreviewRunner {
     this.child?.kill("SIGKILL");
     for (const watcher of this.watchers) watcher.close();
     await this.buildContext?.dispose();
+    if (this.directory) await rm(this.directory, { recursive: true, force: true });
   }
 
   /** A failed native compile must be retried on a subsequent asset/watch event. */

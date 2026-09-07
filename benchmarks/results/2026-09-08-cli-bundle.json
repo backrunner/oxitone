@@ -1,0 +1,27 @@
+{
+  "schema": "oxitone-cli-bundle-v1",
+  "date": "2026-09-08",
+  "cpu": "Apple M4",
+  "node": "v26.5.0",
+  "os": "27.0",
+  "entry": "examples/drum-machine/src/full/melodic-dubstep.ts",
+  "warmup": 5,
+  "iterations": 30,
+  "p95Ms": 18.22141700000003,
+  "p99Ms": 18.445208999999977,
+  "outputFiles": 1,
+  "outputBytes": 110440,
+  "sourceModules": 10,
+  "device": null,
+  "sampleRate": null,
+  "blockSize": null,
+  "callbackP99Ms": null,
+  "xruns": null,
+  "scope": "esbuild rebuild including source transforms and inline source map; no DSP, device, factory evaluation or native graph compile",
+  "checks": {
+    "cliTests": 10,
+    "lint": "passed",
+    "typecheck": "passed"
+  },
+  "command": "node: context(projectBuildOptions(entry)); 5 warmups then 30 rebuilds"
+}

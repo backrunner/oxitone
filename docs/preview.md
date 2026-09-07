@@ -10,6 +10,7 @@ automation back to the authoring model.
 pnpm install --frozen-lockfile
 pnpm build
 pnpm build:preview
+pnpm install:cli
 pnpm preview examples/offline/src/preview.ts
 ```
 
@@ -23,6 +24,42 @@ silently drawing a window without text. Signed npm platform distribution and min
 release gates.
 Rebuilding replaces the bundle executable atomically with a fresh inode, avoiding
 macOS code-signature cache failures after overwriting a previously launched binary.
+
+`pnpm install:cli` links this checkout's built CLI to `~/.local/bin/oxitone`. Put
+`~/.local/bin` on your shell PATH if it is not there already. The command then works
+from any directory; rebuilding this checkout updates it. Existing installations at
+that path are not overwritten. Use `node scripts/install-cli.mjs <bin-directory>`
+for a different directory. The checkout and installed workspace dependencies must remain.
+
+For the full melodic dubstep project, from the repository root:
+
+```sh
+pnpm example:songs:prepare
+oxitone preview examples/drum-machine/src/full/melodic-dubstep.ts
+```
+
+The default watch mode follows imported arrangement, patch and mix files. Preview
+opens stopped; press Space or Play to listen. Absolute entry paths work outside the checkout.
+
+## Single-file project builds
+
+```sh
+oxitone build examples/drum-machine/src/full/melodic-dubstep.ts -o target/examples/after-the-horizon.mjs
+oxitone preview target/examples/after-the-horizon.mjs
+# To rebuild the file on edits, run this in a separate terminal:
+oxitone build examples/drum-machine/src/full/melodic-dubstep.ts -o target/examples/after-the-horizon.mjs --watch
+```
+
+Both `build` and `preview` use esbuild to combine local imports/exports, JSON and
+statically resolvable dynamic imports into **one ESM JavaScript file**, including
+its source map. Preview executes that file in a fresh process on each rebuild.
+Syntax failures leave the previous artifact and accepted preview intact. Native
+validation and runtime errors keep the previous accepted graph in Preview.
+
+This is a local code artifact: installed npm/SDK/native packages, samples and dylibs
+remain external, with their existing source-relative locations preserved. Nonliteral
+runtime imports/file reads still require those resources and explicit `--watch-path`
+when watching them. Use the portable project format for relocating sample assets.
 
 The drum-machine project uses real dynamic instrument and effect libraries:
 
@@ -66,8 +103,10 @@ export default function createProject() {
 ```
 
 Factories should describe the music without starting playback themselves. They run
-again on every change. Importing the original source preserves `import.meta.url`;
-static dependencies are watched through esbuild, while npm packages are external.
+again on every change. Each source module's `import.meta.url`, `import.meta.dirname`
+and `import.meta.filename` remain anchored to the source file after bundling;
+npm packages are resolved in the author's package scope and kept external.
+`__oxitoneSourceDirectory` is a reserved bundle export used for default asset lookup.
 Return `{project, assetBaseDir}` to resolve relative sample URIs from a particular
 directory; a loaded Project's resource directory is retained automatically.
 

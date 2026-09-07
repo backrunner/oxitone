@@ -20,7 +20,7 @@ API examples, watch, platform boundaries and verification.
 | `@oxitone/protocol` | Schemas, wire types, canonical encoding and error codes |
 | `oxitone` | Unified Project/builders, presets, sample import and native facade |
 | `@oxitone/native` | Lower-level engine facade and native binary resolver |
-| `@oxitone/cli` | `render`, `export-midi`, `doctor`, `preview` commands |
+| `@oxitone/cli` | `build`, `render`, `export-midi`, `doctor`, `preview` commands |
 
 The generated native package is a build artifact interface, not an authoring API.
 
@@ -200,7 +200,9 @@ pnpm --filter @oxitone/cli exec node dist/index.js render /path/chops-project /p
 
 CLI failures return JSON diagnostics on stderr with exit code 1; invalid command
 usage returns exit code 2. `preview <entry.ts>` launches the read-only GPUI app and
-dependency watcher; see [preview usage](preview.md).
+dependency watcher. `build <entry.ts> [-o project.mjs] [--watch]` creates one ESM code
+artifact from local modules; Preview executes the same bundled representation.
+See [preview and global CLI usage](preview.md).
 Low-level consumers can use `createEngine`,
 `compile`, `enqueueTransport`, `renderWav`, `exportMidi`, diagnostics and `dispose`
 from `oxitone`. Third-party plugins register explicitly with `registerPlugin` and

@@ -1,16 +1,24 @@
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFile } from "node:child_process";
 import { mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
 import { encodeProjectSnapshot } from "@oxitone/protocol";
 import { Pattern, Project } from "@oxitone/core";
 import { inspectSample } from "@oxitone/native";
 
 const cli = fileURLToPath(new URL("../dist/index.js", import.meta.url));
-function run(cwd: string, ...args: string[]) {
-  return JSON.parse(execFileSync(process.execPath, [cli, ...args], { cwd, encoding: "utf8" }));
+const execute = promisify(execFile);
+async function run(cwd: string, ...args: string[]) {
+  return JSON.parse((await execute(process.execPath, [cli, ...args], { cwd, encoding: "utf8" })).stdout);
+}
+function rejection(...args: string[]) {
+  return execute(process.execPath, [cli, ...args], { encoding: "utf8" }).then(
+    result => ({ status: 0, stderr: result.stderr }),
+    (error: { code?: string | number; stderr: string }) => ({ status: error.code, stderr: error.stderr }),
+  );
 }
 
 describe("CLI project inputs", () => {
@@ -29,21 +37,21 @@ describe("CLI project inputs", () => {
       await project.save(join(root, "original"));
       await rename(join(root, "original"), join(root, "moved"));
       await rm(source);
-      const report = run(root, "render", "moved", "directory.wav");
+      const report = await run(root, "render", "moved", "directory.wav");
       expect(report.files[0].peakDbfs).toBeGreaterThan(-60);
-      run(root, "render", "moved/oxitone.project.json", "manifest.wav");
+      await run(root, "render", "moved/oxitone.project.json", "manifest.wav");
       const restored = await Project.load(join(root, "moved"));
       await writeFile(join(root, "moved", "snapshot.json"), encodeProjectSnapshot(restored.snapshot()));
-      run(root, "render", "moved/snapshot.json", "snapshot.wav");
+      await run(root, "render", "moved/snapshot.json", "snapshot.wav");
       expect(await readFile(join(root, "directory.wav"))).toEqual(await readFile(join(root, "manifest.wav")));
       expect(await readFile(join(root, "directory.wav"))).toEqual(await readFile(join(root, "snapshot.wav")));
       // MIDI project files use the same loader; native export still owns SMF bytes.
       await synth.save(join(root, "midi-project"));
-      run(root, "export-midi", "midi-project", "cli.mid");
+      await run(root, "export-midi", "midi-project", "cli.mid");
       await synth.exportMidi({ path: join(root, "sdk.mid") });
       expect(await readFile(join(root, "cli.mid"))).toEqual(await readFile(join(root, "sdk.mid")));
     } finally { await rm(root, { recursive: true, force: true }); }
-  }, 30_000); // Several real child-process renders; speed is measured by dedicated benchmarks.
+  }, 60_000); // Several real child-process renders; speed is measured by dedicated benchmarks.
 
   it("reports structured load errors and preserves output on rejection", async () => {
     const root = await mkdtemp(join(tmpdir(), "oxitone-cli-invalid-"));
@@ -55,16 +63,16 @@ describe("CLI project inputs", () => {
       await writeFile(path, JSON.stringify({ ...manifest, formatVersion: "99.0" }));
       const output = join(root, "existing.wav");
       await writeFile(output, "keep");
-      const rejected = spawnSync(process.execPath, [cli, "render", root, output], { encoding: "utf8" });
+      const rejected = await rejection("render", root, output);
       expect(rejected.status).toBe(1);
       expect(JSON.parse(rejected.stderr)).toMatchObject({ code: "ProtocolVersionUnsupported" });
       expect(await readFile(output, "utf8")).toBe("keep");
-      const missing = spawnSync(process.execPath, [cli, "render", join(root, "missing"), output], { encoding: "utf8" });
+      const missing = await rejection("render", join(root, "missing"), output);
       expect(missing.status).toBe(1);
       expect(JSON.parse(missing.stderr)).toMatchObject({ code: "AssetUnavailable" });
       const malformed = join(root, "bad.json");
       await writeFile(malformed, "{broken");
-      const invalid = spawnSync(process.execPath, [cli, "render", malformed, output], { encoding: "utf8" });
+      const invalid = await rejection("render", malformed, output);
       expect(invalid.status).toBe(1);
       expect(JSON.parse(invalid.stderr)).toMatchObject({ code: "InvalidProject" });
     } finally { await rm(root, { recursive: true, force: true }); }

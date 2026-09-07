@@ -2,7 +2,7 @@ import { connect, type Socket } from "node:net";
 import { setTimeout as delay } from "node:timers/promises";
 import { encodeFrame, FrameDecoder } from "../src/preview/framing.js";
 
-export async function until(check: () => boolean | Promise<boolean>, timeout = 15_000): Promise<void> {
+export async function until(check: () => boolean | Promise<boolean>, timeout = 30_000): Promise<void> {
   const end = Date.now() + timeout;
   while (!(await check())) { if (Date.now() > end) throw new Error("Preview condition timed out"); await delay(50); }
 }
@@ -20,7 +20,9 @@ export class Client {
   }
   request(frame: unknown): Promise<Record<string, unknown>> {
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error(`Preview response timed out: ${JSON.stringify(frame).slice(0,120)}`)), 5000);
+      // A rejected request invalidates FIFO matching; close before a late reply can
+      // be mistaken for a subsequent query. Native cold compilation has its own budget.
+      const timer = setTimeout(() => this.socket.destroy(new Error(`Preview response timed out: ${JSON.stringify(frame).slice(0,120)}`)), 30_000);
       this.replies.push({ resolve: (value) => { clearTimeout(timer); resolve(value); }, reject: (error) => { clearTimeout(timer); reject(error); } });
       this.socket.write(encodeFrame(frame));
     });

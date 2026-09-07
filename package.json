@@ -16,7 +16,7 @@
     "test:web": "node examples/web/scripts/smoke.mjs && node examples/web/scripts/watch-smoke.mjs",
     "lint": "pnpm -r --filter './packages/*' --filter './examples/*' run lint",
     "typecheck": "pnpm -r --filter './packages/*' --filter './examples/*' run typecheck",
-    "test": "pnpm -r --filter './packages/*' --filter './examples/*' run test",
+    "test": "pnpm -r --workspace-concurrency=1 --filter './packages/*' --filter './examples/*' run test",
     "test:rust": "cargo test --workspace",
     "fmt:rust": "cargo fmt --all --check",
     "schemas": "pnpm --filter @oxitone/protocol run generate",
@@ -25,6 +25,7 @@
     "example:songs:prepare": "pnpm --filter @oxitone/example-drums songs:prepare",
     "example:songs": "pnpm --filter @oxitone/example-drums songs:render",
     "build:preview": "node scripts/build-preview.mjs",
+    "install:cli": "pnpm --filter @oxitone/cli... build && node scripts/install-cli.mjs",
     "preview": "node packages/cli/dist/index.js preview"
   },
   "devDependencies": {

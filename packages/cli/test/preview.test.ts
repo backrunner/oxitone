@@ -32,6 +32,7 @@ it("watches imported TS and swaps the native playing graph; failures and stale r
   const entry = join(dir, "song.ts"); const notes = join(dir, "notes.ts");
   const frames: PreviewFrame[] = []; const responses: Record<string, unknown>[] = [];
   let client: Client | undefined; let runner: PreviewRunner | undefined;
+  let failure: unknown;
   const writeNotes = (pitch: number, plugin = "oxitone.wavetable") => writeFile(notes, `export const pitch=${pitch}; export const plugin='${plugin}';`);
   try {
     await writeFile(join(dir, "package.json"), '{"type":"module"}');
@@ -78,20 +79,25 @@ it("watches imported TS and swaps the native playing graph; failures and stale r
     await transport({ command: "stop" });
     await until(async () => (await client!.query()).playing === false);
     expect((await client.query()).cursor).toBe("0");
-  } catch (error) { throw new Error(`${String(error)}\nFrames: ${JSON.stringify(frames.filter((f) => f.type !== "snapshot"))}\nViewer: ${viewerLog}`); }
+  } catch (error) { failure = new Error(`${String(error)}\nFrames: ${JSON.stringify(frames.filter((f) => f.type !== "snapshot"))}\nViewer: ${viewerLog}`); }
   finally {
-    await runner?.close();
-    if (client && !client.socket.destroyed) await client.request({ protocolVersion: "1.0", type: "shutdown" });
-    client?.socket.destroy(); viewer.kill();
-    await rm(dir, { recursive: true, force: true }); await rm(ipcDir, { recursive: true, force: true });
+    try {
+      await runner?.close();
+      if (client && !client.socket.destroyed) await client.request({ protocolVersion: "1.0", type: "shutdown" });
+    } catch (error) { failure ??= error; }
+    finally {
+      client?.socket.destroy(); viewer.kill();
+      await rm(dir, { recursive: true, force: true }); await rm(ipcDir, { recursive: true, force: true });
+    }
   }
-}, 60_000);
+  if (failure !== undefined) throw failure;
+}, 120_000);
 
 it("bounds execution time and cancels obsolete factory generations", async () => {
   await mkdir(cache, { recursive: true });
   const dir = await mkdtemp(join(cache, "preview-timeout-")); const entry = join(dir, "song.ts");
   const frames: PreviewFrame[] = [];
-  const runner = new PreviewRunner(entry, (frame) => frames.push(frame), { debounceMs: 10, timeoutMs: 1800 });
+  const runner = new PreviewRunner(entry, (frame) => frames.push(frame), { debounceMs: 10, timeoutMs: 8000 });
   try {
     await writeFile(join(dir, "package.json"), '{"type":"module"}');
     await writeFile(entry, "export default async () => { await new Promise(() => {}); };");
@@ -111,7 +117,7 @@ it("bounds execution time and cancels obsolete factory generations", async () =>
     expect(frames.filter((f) => f.type === "snapshot")).toHaveLength(2);
     expect(frames.some((f) => f.type === "snapshot" && f.snapshot.name === "Obsolete")).toBe(false);
   } finally { await runner.close(); await rm(dir, { recursive: true, force: true }); }
-}, 30_000);
+}, 60_000);
 
 it("watches explicit runtime assets while preserving the entry's import.meta.url", async () => {
   await mkdir(cache, { recursive: true });

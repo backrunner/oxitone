@@ -7,7 +7,7 @@ Preview app 是 Oxitone 工程的可视化呈现器：**代码是音乐的唯一
 与代码的同步是单向数据流：
 
 ```text
-TS 代码变更 -> runner 重新执行 -> ProjectSnapshot(revision+1)
+TS/import 代码变更 -> esbuild 单文件 ESM -> runner 执行产物 -> ProjectSnapshot(revision+1)
             -> IPC -> viewer 编译（控制线程）-> block 边界换图
 engine 状态 -> meter/analysis ring -> viewer 呈现
 viewer 操作 -> transport command -> engine（仅此一个方向回到引擎）
@@ -26,8 +26,16 @@ viewer 操作 -> transport command -> engine（仅此一个方向回到引擎）
 
 入口默认导出 Project 或返回 Project 的 sync/async factory，也可返回
 `{ project, assetBaseDir? }`；Project.registerPlugin 的已校验库配置随 IPC 发送。
-runner 用 esbuild 追踪本地静态 import 依赖（含解析失败的目录；npm packages external），以独立 Node/tsx 子进程
-执行原始入口，避免模块缓存、保留 import.meta.url。每轮执行有 10 秒超时、64 MiB
+runner 用 esbuild 合并本地静态 import/export、JSON 和可静态解析的 dynamic import，
+每轮生成一个带 inline source map 的临时 `.mjs`，独立 Node 子进程只执行这个产物，
+不再执行原始入口。各模块 import.meta.url/dirname/filename 由 AST 转换保留为原文件
+位置；npm dependencies 依据源文件包作用域解析为 external file URLs，Node builtins
+保持 external。这些本地开发产物仍依赖已安装的 SDK/native 包、采样、dylib，不能
+宣称为可跨机器移动的完整分发包。相对资源目录通过保留的 `__oxitoneSourceDirectory`
+导出携带；显式 assetBaseDir 优先。该导出名由 bundler 保留，工程勿自行定义。
+`oxitone build <entry.ts> [-o project.mjs] [--watch]` 使用相同打包器输出单文件；
+成功后原子发布，失败保持上一个文件，拒绝覆盖入口或依赖源文件。Preview 可直接
+加载该 `.mjs`，原始 TS 模块已被合并，不再需要用于执行。每轮执行有 10 秒超时、64 MiB
 结果上限；代码日志走 stderr，snapshot 单独走 pipe，不混用 stdout JSON。
 运行期动态 import/文件读取依赖可由 `--watch-path <path>` 显式补充。未使用文件扫描
 或远程下载来寻找插件。
@@ -88,7 +96,15 @@ diagnostic、status、transport、query、shutdown；所有帧含 protocolVersio
 
 ## 打包与启动
 
+合成器面板扩展为 Oscillators/Modulation/Matrix 三页：A/B 独立 octave/level、
+Sub 六种波形及独立 octave、bank/warp 周期图、FM/ring、三组曲线包络、两组 LFO
+和八槽矩阵/四个 macros。新增 `subOscillator` 与 oscillator 可选绑定详见 `11-plugin-ui.md`。
+图形基于 source/default 和共享波表，不表示播放中 automation/modulation 的有效输出。
+
 - `oxitone preview <entry.ts>`：CLI 启动 runner，并拉起/连接 viewer。
+- `pnpm install:cli` 构建 CLI 及 workspace 依赖，将命令链接到 `~/.local/bin/oxitone`；
+  可通过 `node scripts/install-cli.mjs <bin-directory>` 选择目录。不覆盖其他安装；
+  bin 目录不在 PATH 时提示用户添加，而不是修改无关 shell 配置。
 - viewer 以平台二进制分发：`@oxitone/preview-darwin-arm64`（x64 同规则），npm 安装，规则同 native 包；不允许运行时下载。
 - GPUI 依赖 pin 到具体 git rev，升级必须过 viewer 的 smoke test；GPUI 的 UI 线程模型不得反向约束音频线程。
 
@@ -118,5 +134,8 @@ voice；启动 realtime session 后改变 sampleRate/blockSize 需重启。大�
 - `OXITONE_PREVIEW_CAPTURE_PLUGIN=instrument|synth|effect|info` 在截图模式打开音源和效果器详情，验证重复打开复用、分步关闭重开和键盘滚动；分别截图第一个音源、第一个 Wavetable、第一个 Channel effect 或其插件信息。关闭主窗口走 AppKit 的正常 should-close 路径，验证详情仍打开时 session 可以退出。`OXITONE_PREVIEW_CAPTURE_REVISION` 指定截图前必须接受的最低 revision（默认 1）。
 - `node scripts/smoke-preview-details.mjs [viewer]` 使用真实鼓机/gain dylib，在详情窗口已打开后修改临时入口的 volume，断言所有窗口跟随 revision 2、音源显示新值并成功截图；不修改示例文件，不启动播放。需要先构建 workspace、鼓机示例动态库与 viewer。
 - `node scripts/smoke-preview-panels.mjs [viewer]` 覆盖多窗口语法/runtime/native 失败、坏布局局部回退、Mix 与源码同步、UI import 更新和恢复。截图开关 `OXITONE_PREVIEW_CAPTURE_WATCH=1` 仅在插件截图模式输出观察状态并延长等待；`OXITONE_PREVIEW_CAPTURE_PAGE` 与 `OXITONE_PREVIEW_CAPTURE_PLUGIN_SIZE=440x400` 检查分页和窄窗口。
+  此测试主动注入故障，期间出现的错误 UI 是验收内容；脚本逐阶段标记预期故障，成功后
+  总结恢复结果。完整 stdout/stderr 写入 `target/*-panels-watch.log`，`--verbose` 可实时
+  输出；真正失败仍输出原始日志并返回非零，不屏蔽产品诊断。
 - `OXITONE_PREVIEW_CAPTURE_MIXER=split|expanded|chain` 搭配 `examples/drum-machine/src/mixer-preview.ts` 验证发送比例/自动化、发送目标与输入反向导航、右侧独立键盘滚动；与 navigation/plugin capture 模式分别运行。该可运行示例独立于原始歌曲导出，包含 Drum/Music bus、Reverb/Delay return、pre/post send 和 sidechain，不伪造 UI 数据。
 - `OXITONE_PREVIEW_CAPTURE_TRANSPORT=1` 必须与其他 capture 冒烟分别运行。它使用真实 GPUI 键盘分发、基于实测布局的鼠标控制器和真实 Rust engine + simulated sink，验证任意定位/双击与 Alt 播放、cue 重播/停止、循环边界、Go 输入隔离、连续定位与多窗口快捷键，断言 snapshot 不变。该模式会播放模拟输出，始终不打开音频设备；普通截图不启动播放。它不证明物理鼠标命中、设备 callback 或 xrun 长测结果。
