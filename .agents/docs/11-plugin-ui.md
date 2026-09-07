@@ -44,7 +44,7 @@ project.registerPluginUi({
 ```
 
 - 固定三层结构 pages → groups → controls；groups 自动换行，columns 指定组内列数，窄窗口减少列数。
-  支持 knob、水平 fader、toggle、readout、choice 和 ADSR envelope；页面切换/滚动/窗口缩放是显示操作。
+  支持 knob、水平 fader、toggle、readout、choice、ADSR envelope 及下述 source 可视化；页面切换/滚动/窗口缩放是显示操作。
   size 指定初始逻辑尺寸；有效 watch 改变 size 时调整非全屏窗口，其余更新保留用户尺寸。
 - 所有控件绑定 **plugin namespace** 中的 descriptor ID；UI 无法覆盖范围/单位/默认值/mapping。
   choice 绑定 enum，值必须有限、整数、唯一且在 descriptor 范围内；未列出的值显示原始值。
@@ -64,8 +64,25 @@ project.registerPluginUi({
   缺身份/非法注册容器保留兼容旧布局并显示诊断；不同插件身份绝不复用旧布局。
 - 控件消费 source/default；自动化用小标记区分，effective/live 读数尚未提供。Inspect 随时访问全部参数，
   包括自定义页面未展示的参数；Assets/Info 保存资源、state、descriptor 和已验证 dylib path/hash。
-- Wavetable 默认具备 Sound/Envelopes 页面，涵盖双振荡器、滤波器、Voice/Output 和两个 ADSR；
+- Wavetable 默认具备 Oscillators/Modulation 页面，涵盖双振荡器波形渐变、
+  滤波响应、Voice/Output/Sub/Noise、两个 ADSR、LFO source 曲线及固定路由深度；
   example.drums、fixture.gain 在鼓机示例通过公开 TS API 注册自己的面板。其他插件按 descriptor 紧凑分组。
+  Modulation 把两个 ADSR 放在 LFO/路由下方，减少切页和固定窗口内的空白。
+
+新增 source visual controls 同样可由第三方 `registerPluginUi` 布局使用，uiVersion 仍为 1.0：
+
+| kind | 绑定与图形语义 |
+| --- | --- |
+| `oscillator` | wave/morphTo 对应 0…5 的六种内置 cycle；position/phase/spread 是 0…1，unison 为 1…8 enum，detune 为 0…100 cents（沿用 descriptor normalized unit）。显示同相位 source 插值、unison/width；2D/3D 按钮仅切换堆叠曲线 |
+| `filterResponse` | mode 对应 LP/HP/BP enum 0…2，cutoff 为正 Hz，resonance 为 0…1。用项目 sampleRate 和 Q=0.5+9.5r 的 biquad 系数计算对数频率响应 |
+| `lfoCurve` | shape 对应 sine/triangle/ramp/square enum 0…3，rate 为正 Hz，phase 为 0…1，显示一个 source 周期及周期秒数 |
+| `modulation` | routes 为 1…8 个 `{label, amount}`，amount 绑定现有参数，展示带物理单位的路由深度与双极条 |
+
+以上组件不是任意第三方算法的自动分析器；插件使用它们即声明相同 cycle/filter/LFO
+含义。单位/范围/ID 不兼容时走 `PluginUiInvalid` fallback。旧宿主遇到新 kind
+同样局部回退，不拒绝音乐。绘图在 UI 线程复用解析式 source cycle/LFO 与 DSP
+biquad design，不创建音频实例。波形堆叠不代表 unison 当前 phase，滤波曲线不含
+filter envelope/LFO 的瞬时作用；不宣称 effective/live plugin telemetry。
 
 ### 同步与工程修改边界
 

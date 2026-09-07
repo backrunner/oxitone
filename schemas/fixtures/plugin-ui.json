@@ -56,6 +56,37 @@
               "decay": "amp.decay",
               "sustain": "amp.sustain",
               "release": "amp.release"
+            },
+            {
+              "kind": "oscillator",
+              "wave": "oscA.wavetable",
+              "morphTo": "oscA.morphTo",
+              "position": "oscA.position",
+              "phase": "oscA.phase",
+              "unison": "oscA.unison",
+              "detune": "oscA.detune",
+              "spread": "oscA.spread"
+            },
+            {
+              "kind": "filterResponse",
+              "mode": "filter.type",
+              "cutoff": "filter.cutoff",
+              "resonance": "filter.resonance"
+            },
+            {
+              "kind": "lfoCurve",
+              "shape": "lfo.shape",
+              "rate": "lfo.rateHz",
+              "phase": "lfo.phase"
+            },
+            {
+              "kind": "modulation",
+              "routes": [
+                {
+                  "label": "Cutoff",
+                  "amount": "lfo.cutoff"
+                }
+              ]
             }
           ]
         }

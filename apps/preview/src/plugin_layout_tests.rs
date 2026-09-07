@@ -167,6 +167,12 @@ fn malformed_panels_never_reject_valid_music_and_have_bounded_fallback() {
         json!({"kind":"toggle", "parameter":"pan"}),
         json!({"kind":"choice", "parameter":"voiceMode", "options":[{"value":0,"label":"A"},{"value":0,"label":"B"}]}),
         json!({"kind":"envelope", "attack":"pan", "decay":"amp.decay", "sustain":"amp.sustain", "release":"amp.release"}),
+        json!({"kind":"filterResponse", "mode":"filter.type", "cutoff":"pan", "resonance":"filter.resonance"}),
+        json!({"kind":"lfoCurve", "shape":"oscA.wavetable", "rate":"lfo.rateHz", "phase":"lfo.phase"}),
+        json!({"kind":"oscillator", "wave":"oscA.wavetable", "morphTo":"oscA.morphTo", "position":"pan",
+            "phase":"oscA.phase", "unison":"oscA.unison", "detune":"oscA.detune", "spread":"oscA.spread"}),
+        json!({"kind":"modulation", "routes":[]}),
+        json!({"kind":"modulation", "routes":[{"label":"Pitch", "amount":"missing"}]}),
     ] {
         let mut invalid = fixture();
         invalid["pages"][0]["groups"][0]["controls"] = json!([control]);

@@ -35,6 +35,7 @@ pub struct PluginWindow {
     pub parameter_specs: bool,
     pub panel: Option<Arc<crate::plugin_layout::Layout>>,
     pub page: String,
+    pub stacked_waveforms: bool,
     pub sync_status: String,
     owner: WeakEntity<Preview>,
     focus: FocusHandle,
@@ -74,6 +75,7 @@ impl PluginWindow {
         let details = plugin_details::resolve(&project, &target);
         let panel = resolve_panel(&project, details.as_ref());
         Self {
+            stacked_waveforms: true,
             page: panel
                 .as_ref()
                 .and_then(|p| p.pages.first())

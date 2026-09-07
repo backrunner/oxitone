@@ -100,6 +100,59 @@ pub fn validate(layout: &Layout, descriptor: &PluginDescriptor) -> Result<(), St
                             );
                         }
                     }
+                    Control::Oscillator { .. } => {
+                        let within = |i: usize, unit, min, max| {
+                            specs[i].unit == unit && specs[i].min >= min && specs[i].max <= max
+                        };
+                        if ![0, 1]
+                            .iter()
+                            .all(|&i| within(i, ParameterUnit::Enum, 0., 5.))
+                            || ![2, 3, 6]
+                                .iter()
+                                .all(|&i| within(i, ParameterUnit::Normalized, 0., 1.))
+                            || !within(4, ParameterUnit::Enum, 1., 8.)
+                            || !within(5, ParameterUnit::Normalized, 0., 100.)
+                        {
+                            return invalid("Oscillator requires basic-cycle enums, normalized phase/position/spread and unison/detune");
+                        }
+                    }
+                    Control::FilterResponse { .. } => {
+                        if specs[0].unit != ParameterUnit::Enum
+                            || specs[0].min < 0.
+                            || specs[0].max > 2.
+                            || specs[1].unit != ParameterUnit::Hz
+                            || specs[1].min <= 0.
+                            || specs[2].unit != ParameterUnit::Normalized
+                            || specs[2].min < 0.
+                            || specs[2].max > 1.
+                        {
+                            return invalid(
+                                "Filter response requires LP/HP/BP, Hz and normalized resonance",
+                            );
+                        }
+                    }
+                    Control::LfoCurve { .. } => {
+                        if specs[0].unit != ParameterUnit::Enum
+                            || specs[0].min < 0.
+                            || specs[0].max > 3.
+                            || specs[1].unit != ParameterUnit::Hz
+                            || specs[1].min <= 0.
+                            || specs[2].unit != ParameterUnit::Normalized
+                            || specs[2].min < 0.
+                            || specs[2].max > 1.
+                        {
+                            return invalid(
+                                "LFO curve requires four-shape enum, Hz rate and normalized phase",
+                            );
+                        }
+                    }
+                    Control::Modulation { routes, .. } => {
+                        if !(1..=8).contains(&routes.len())
+                            || routes.iter().any(|r| !text(&r.label, 64))
+                        {
+                            return invalid("Modulation display requires 1–8 labelled routes");
+                        }
+                    }
                     _ => {}
                 }
             }

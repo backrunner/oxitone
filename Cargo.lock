@@ -3436,6 +3436,7 @@ dependencies = [
  "oxitone-core",
  "oxitone-dsp",
  "oxitone-graph",
+ "oxitone-instruments",
  "oxitone-mixer",
  "oxitone-render",
  "oxitone-transport",

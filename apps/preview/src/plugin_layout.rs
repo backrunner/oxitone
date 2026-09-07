@@ -63,6 +63,39 @@ pub enum Control {
         sustain: String,
         release: String,
     },
+    Oscillator {
+        label: Option<String>,
+        wave: String,
+        #[serde(rename = "morphTo")]
+        morph_to: String,
+        position: String,
+        phase: String,
+        unison: String,
+        detune: String,
+        spread: String,
+    },
+    FilterResponse {
+        label: Option<String>,
+        mode: String,
+        cutoff: String,
+        resonance: String,
+    },
+    LfoCurve {
+        label: Option<String>,
+        shape: String,
+        rate: String,
+        phase: String,
+    },
+    Modulation {
+        label: Option<String>,
+        routes: Vec<ModulationRoute>,
+    },
+}
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ModulationRoute {
+    pub label: String,
+    pub amount: String,
 }
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -85,6 +118,26 @@ impl Control {
                 release,
                 ..
             } => vec![attack, decay, sustain, release],
+            Self::Oscillator {
+                wave,
+                morph_to,
+                position,
+                phase,
+                unison,
+                detune,
+                spread,
+                ..
+            } => vec![wave, morph_to, position, phase, unison, detune, spread],
+            Self::FilterResponse {
+                mode,
+                cutoff,
+                resonance,
+                ..
+            } => vec![mode, cutoff, resonance],
+            Self::LfoCurve {
+                shape, rate, phase, ..
+            } => vec![shape, rate, phase],
+            Self::Modulation { routes, .. } => routes.iter().map(|r| r.amount.as_str()).collect(),
         }
     }
     pub fn label(&self) -> Option<&str> {
@@ -94,7 +147,21 @@ impl Control {
             | Self::Toggle { label, .. }
             | Self::Readout { label, .. }
             | Self::Choice { label, .. }
-            | Self::Envelope { label, .. } => label.as_deref(),
+            | Self::Envelope { label, .. }
+            | Self::Oscillator { label, .. }
+            | Self::FilterResponse { label, .. }
+            | Self::LfoCurve { label, .. }
+            | Self::Modulation { label, .. } => label.as_deref(),
         }
+    }
+    pub fn visual(&self) -> bool {
+        matches!(
+            self,
+            Self::Envelope { .. }
+                | Self::Oscillator { .. }
+                | Self::FilterResponse { .. }
+                | Self::LfoCurve { .. }
+                | Self::Modulation { .. }
+        )
     }
 }

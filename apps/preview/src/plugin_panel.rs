@@ -1,4 +1,4 @@
-use crate::{plugin_layout::Control, plugin_window::PluginWindow};
+use crate::plugin_window::PluginWindow;
 use gpui::{prelude::*, *};
 
 pub fn view(this: &PluginWindow, width: f32, cx: &mut Context<PluginWindow>) -> Div {
@@ -38,11 +38,11 @@ pub fn view(this: &PluginWindow, width: f32, cx: &mut Context<PluginWindow>) -> 
                 )),
         );
     }
+    let mut toolbar = div().flex().flex_wrap().items_center().gap_2();
     if layout.pages.len() > 1 {
-        let mut tabs = div().flex().gap_2();
         for page in &layout.pages {
             let id = page.id.clone();
-            tabs = tabs.child(
+            toolbar = toolbar.child(
                 theme
                     .button(format!("panel-page-{id}"), page.title.clone())
                     .when(this.page == id, |d| d.bg(rgb(theme.selected)))
@@ -53,7 +53,6 @@ pub fn view(this: &PluginWindow, width: f32, cx: &mut Context<PluginWindow>) -> 
                     })),
             );
         }
-        content = content.child(tabs);
     }
     let Some(page) = layout
         .pages
@@ -63,41 +62,57 @@ pub fn view(this: &PluginWindow, width: f32, cx: &mut Context<PluginWindow>) -> 
     else {
         return content;
     };
+    if page
+        .groups
+        .iter()
+        .flat_map(|g| &g.controls)
+        .any(|c| matches!(c, crate::plugin_layout::Control::Oscillator { .. }))
+    {
+        toolbar = toolbar.child(
+            div().flex().flex_1().justify_end().child(
+                theme
+                    .button(
+                        "wave-view",
+                        if this.stacked_waveforms {
+                            "Wave view · 3D"
+                        } else {
+                            "Wave view · 2D"
+                        },
+                    )
+                    .on_click(cx.listener(|this, _, _, cx| {
+                        this.stacked_waveforms = !this.stacked_waveforms;
+                        cx.notify();
+                    })),
+            ),
+        );
+    }
+    content = content.child(toolbar);
     let mut groups = div().flex().flex_wrap().gap_2().items_start();
     for group in &page.groups {
         let cols = group
             .columns
             .min(((width - 52.) / 82.).floor().max(1.) as u32);
-        let mut controls = div().flex().flex_wrap();
+        let mut rows = Vec::new();
+        let mut cells = Vec::new();
         for control in &group.controls {
-            let element = match control {
-                Control::Envelope {
-                    attack,
-                    decay,
-                    sustain,
-                    release,
-                    ..
-                } => {
-                    let values = [attack, decay, sustain, release]
-                        .map(|id| parameter(id).map_or(0., |p| p.value));
-                    div()
-                        .w_full()
-                        .bg(rgb(theme.scope))
-                        .rounded_md()
-                        .mb_2()
-                        .child(crate::plugin_dial::envelope(values, theme))
+            if control.visual() {
+                flush_row(&mut rows, &mut cells, cols);
+                rows.push(crate::plugin_visuals::view(
+                    control,
+                    details,
+                    theme,
+                    this.project.snapshot.sample_rate as f64,
+                    this.stacked_waveforms,
+                ));
+            } else if let Some(p) = parameter(control.bindings()[0]) {
+                cells.push(crate::plugin_controls::control_view(control, p, theme));
+                if cells.len() == cols as usize {
+                    flush_row(&mut rows, &mut cells, cols);
                 }
-                _ => {
-                    let Some(p) = parameter(control.bindings()[0]) else {
-                        continue;
-                    };
-                    div()
-                        .w(relative(1. / cols as f32))
-                        .child(crate::plugin_controls::control_view(control, p, theme))
-                }
-            };
-            controls = controls.child(element);
+            }
         }
+        flush_row(&mut rows, &mut cells, cols);
+        let controls = div().flex().flex_col().children(rows);
         groups = groups.child(
             div()
                 .flex_1()
@@ -126,4 +141,20 @@ pub fn view(this: &PluginWindow, width: f32, cx: &mut Context<PluginWindow>) -> 
         .when(details.parameters.is_empty(), |d| {
             d.child(theme.label("No parameter controls"))
         })
+}
+
+/// Explicit equal-width rows avoid percentage rounding wrapping the last dial.
+fn flush_row(rows: &mut Vec<Div>, cells: &mut Vec<Div>, columns: u32) {
+    if cells.is_empty() {
+        return;
+    }
+    let count = cells.len();
+    let mut row = div().w_full().flex();
+    for cell in cells.drain(..) {
+        row = row.child(div().flex_1().min_w_0().child(cell));
+    }
+    for _ in count..columns as usize {
+        row = row.child(div().flex_1().min_w_0());
+    }
+    rows.push(row);
 }

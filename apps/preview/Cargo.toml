@@ -12,6 +12,7 @@ oxitone-graph = { path = "../../crates/graph" }
 oxitone-render = { path = "../../crates/render" }
 oxitone-transport = { path = "../../crates/transport" }
 oxitone-dsp = { path = "../../crates/dsp" }
+oxitone-instruments = { path = "../../crates/instruments" }
 oxitone-mixer = { path = "../../crates/mixer" }
 serde.workspace = true
 serde_json.workspace = true

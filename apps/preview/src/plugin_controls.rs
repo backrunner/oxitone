@@ -144,6 +144,7 @@ pub fn value(parameter: &ParameterDetail) -> String {
     let v = parameter.value;
     match parameter.spec.unit {
         ParameterUnit::Hz if v >= 1000. => format!("{:.2} kHz", v / 1000.),
+        ParameterUnit::Hz if v < 10. => format!("{v:.2} Hz"),
         ParameterUnit::Hz => format!("{v:.0} Hz"),
         ParameterUnit::Seconds if v < 1. => format!("{:.1} ms", v * 1000.),
         ParameterUnit::Seconds => format!("{v:.2} s"),

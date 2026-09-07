@@ -10,6 +10,10 @@ export const pluginUiFixture: PluginUiManifest = {
       { kind: "choice", parameter: "voiceMode", options: [{ value: 0, label: "Poly" }, { value: 1, label: "Mono" }, { value: 2, label: "Legato" }] },
       { kind: "readout", parameter: "oscA.unison", label: "Voices" },
       { kind: "envelope", attack: "amp.attack", decay: "amp.decay", sustain: "amp.sustain", release: "amp.release" },
+      { kind: "oscillator", wave: "oscA.wavetable", morphTo: "oscA.morphTo", position: "oscA.position", phase: "oscA.phase", unison: "oscA.unison", detune: "oscA.detune", spread: "oscA.spread" },
+      { kind: "filterResponse", mode: "filter.type", cutoff: "filter.cutoff", resonance: "filter.resonance" },
+      { kind: "lfoCurve", shape: "lfo.shape", rate: "lfo.rateHz", phase: "lfo.phase" },
+      { kind: "modulation", routes: [{ label: "Cutoff", amount: "lfo.cutoff" }] },
     ],
   }] }],
 };

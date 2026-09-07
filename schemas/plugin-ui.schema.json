@@ -294,6 +294,201 @@
                           "release"
                         ],
                         "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "const": "oscillator"
+                          },
+                          "label": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64,
+                            "pattern": "^[^\\p{Cc}]+$"
+                          },
+                          "wave": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128,
+                            "pattern": "^[^\\p{Cc}]+$"
+                          },
+                          "morphTo": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128,
+                            "pattern": "^[^\\p{Cc}]+$"
+                          },
+                          "position": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128,
+                            "pattern": "^[^\\p{Cc}]+$"
+                          },
+                          "phase": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128,
+                            "pattern": "^[^\\p{Cc}]+$"
+                          },
+                          "unison": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128,
+                            "pattern": "^[^\\p{Cc}]+$"
+                          },
+                          "detune": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128,
+                            "pattern": "^[^\\p{Cc}]+$"
+                          },
+                          "spread": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128,
+                            "pattern": "^[^\\p{Cc}]+$"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "wave",
+                          "morphTo",
+                          "position",
+                          "phase",
+                          "unison",
+                          "detune",
+                          "spread"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "const": "filterResponse"
+                          },
+                          "label": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64,
+                            "pattern": "^[^\\p{Cc}]+$"
+                          },
+                          "mode": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128,
+                            "pattern": "^[^\\p{Cc}]+$"
+                          },
+                          "cutoff": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128,
+                            "pattern": "^[^\\p{Cc}]+$"
+                          },
+                          "resonance": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128,
+                            "pattern": "^[^\\p{Cc}]+$"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "mode",
+                          "cutoff",
+                          "resonance"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "const": "lfoCurve"
+                          },
+                          "label": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64,
+                            "pattern": "^[^\\p{Cc}]+$"
+                          },
+                          "shape": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128,
+                            "pattern": "^[^\\p{Cc}]+$"
+                          },
+                          "rate": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128,
+                            "pattern": "^[^\\p{Cc}]+$"
+                          },
+                          "phase": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128,
+                            "pattern": "^[^\\p{Cc}]+$"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "shape",
+                          "rate",
+                          "phase"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "const": "modulation"
+                          },
+                          "label": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64,
+                            "pattern": "^[^\\p{Cc}]+$"
+                          },
+                          "routes": {
+                            "minItems": 1,
+                            "maxItems": 8,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "label": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 64,
+                                  "pattern": "^[^\\p{Cc}]+$"
+                                },
+                                "amount": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 128,
+                                  "pattern": "^[^\\p{Cc}]+$"
+                                }
+                              },
+                              "required": [
+                                "label",
+                                "amount"
+                              ],
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "routes"
+                        ],
+                        "additionalProperties": false
                       }
                     ]
                   }

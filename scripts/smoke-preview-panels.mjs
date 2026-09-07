@@ -1,11 +1,15 @@
 // Real dylibs + native GPUI windows: incomplete source, runtime/native failure and panel recovery.
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
+const synth = process.argv.includes("--synth");
+const pluginId = synth ? "oxitone.wavetable" : "example.drums";
+const parameterId = synth ? "oscA.position" : "volume";
+const title = synth ? "Motion Synth" : "Circuit Drums";
 const temporary = mkdtempSync(join(root, "target/panel-watch-"));
 const entry = join(temporary, "project.ts");
 const layoutFile = join(temporary, "panel.ts");
@@ -14,21 +18,30 @@ import { panel } from "./panel.js";
 export default () => {
   ${mode === "runtime" ? 'throw new Error("Panel smoke runtime failure");' : ""}
   const p = createProject();
-  const channel = p.channels[0];
-  channel.instrument = { ...channel.instrument, pluginId: ${mode === "native" ? '"missing.instrument"' : '"example.drums"'},
-    parameters: { ...channel.instrument.parameters, volume: ${mode === "recovered" ? 0.42 : 0.85} } };
-  channel.effectChain = channel.effectChain.map(e => ({...e, mix: ${mode === "recovered" ? 0.37 : 0.8}}));
+  const channel = ${synth ? 'p.channels.find(c => c.instrument.pluginId === "oxitone.wavetable")' : "p.channels[0]"};
+  channel.instrument = { ...channel.instrument, pluginId: ${JSON.stringify(mode === "native" ? "missing.instrument" : pluginId)},
+    parameters: { ${synth ? '"oscA.morphTo":5,"lfo.rateHz":4.7,"lfo.cutoff":12,' : "...channel.instrument.parameters,"}
+      ${JSON.stringify(parameterId)}: ${mode === "recovered" ? 0.42 : 0.85} } };
+  p.channels[0].effectChain = p.channels[0].effectChain.map(e => ({...e, mix: ${mode === "recovered" ? 0.37 : 0.8}}));
   return p.registerPluginUi(panel);
 };`;
-const layout = (title, parameter = "volume") => `import { drumPanel } from "../../examples/drum-machine/src/plugin-panels.ts";
+const layout = (title, parameter = parameterId) => {
+  if (synth) {
+    const fixture = JSON.parse(readFileSync(join(root, "schemas/fixtures/plugin-ui.json"), "utf8"));
+    fixture.title = title;
+    fixture.pages[0].groups[0].controls.find(c => c.kind === "oscillator").position = parameter;
+    return `export const panel = ${JSON.stringify(fixture)};`;
+  }
+  return `import { drumPanel } from "../../examples/drum-machine/src/plugin-panels.ts";
 export const panel = { ...drumPanel, title: ${JSON.stringify(title)}, pages: [{ id: "kit", title: "Kit", groups: [
  {id:"kit",title:"Kit shaping",columns:2,controls:[{kind:"knob",parameter:"decay"},{kind:"knob",parameter:${JSON.stringify(parameter)}}]}] }] };`;
-writeFileSync(layoutFile, layout("Circuit Drums"));
+};
+writeFileSync(layoutFile, layout(title));
 writeFileSync(entry, source());
-const viewer = resolve(root, process.argv[2] ?? "target/release/Oxitone Preview.app");
+const viewer = resolve(root, process.argv.slice(2).find(arg => arg !== "--synth") ?? "target/release/Oxitone Preview.app");
 const child = spawn(process.execPath, [join(root, "packages/cli/dist/index.js"), "preview", entry, "--viewer", viewer], {
-  cwd: root, env: { ...process.env, OXITONE_PREVIEW_CAPTURE: join(root, "target/plugin-panels-watch.png"),
-    OXITONE_PREVIEW_APPEARANCE: "dark", OXITONE_PREVIEW_CAPTURE_PLUGIN: "instrument",
+  cwd: root, env: { ...process.env, OXITONE_PREVIEW_CAPTURE: join(root, synth ? "target/synth-panels-watch.png" : "target/plugin-panels-watch.png"),
+    OXITONE_PREVIEW_APPEARANCE: "dark", OXITONE_PREVIEW_CAPTURE_PLUGIN: synth ? "synth" : "instrument",
     OXITONE_PREVIEW_CAPTURE_WATCH: "1", OXITONE_PREVIEW_CAPTURE_REVISION: "4" },
   stdio: ["ignore", "pipe", "pipe"],
 });
@@ -44,12 +57,12 @@ const receive = (chunk) => {
       if (!line.startsWith("Preview panel-watch state ")) continue;
       const state = JSON.parse(line.slice("Preview panel-watch state ".length));
       if (state.windows.length < 2) continue;
-      const drums = state.windows.find(w => w.pluginId === "example.drums");
+      const drums = state.windows.find(w => w.pluginId === pluginId);
       if (!drums) continue;
       if (stage <= 3 && state.error) {
         assert.equal(state.revision, 1);
         assert.ok(state.windows.every(w => w.revision === 1));
-        assert.equal(drums.source.parameters.volume, 0.85);
+        assert.equal(drums.source.parameters[parameterId], 0.85);
         assert.equal(state.windows.find(w => w.pluginId === "fixture.gain").source.mix, 0.8);
         if (!state.windows.every(w => w.sync.includes("Last good"))) continue;
       }
@@ -60,13 +73,13 @@ const receive = (chunk) => {
       } else if (stage === 3 && state.error?.includes("missing.instrument")) {
         stage = 4; writeFileSync(layoutFile, layout("Invalid panel", "unknown")); writeFileSync(entry, source("recovered"));
       } else if (stage === 4 && state.revision === 3 && state.windows.every(w => w.revision === 3)) {
-        assert.equal(drums.title, "Circuit Drums");
+        assert.equal(drums.title, title);
         assert.ok(drums.uiError.includes("PluginUiInvalid"));
-        assert.equal(drums.source.parameters.volume, 0.42);
+        assert.equal(drums.source.parameters[parameterId], 0.42);
         assert.equal(state.windows.find(w => w.pluginId === "fixture.gain").source.mix, 0.37);
-        stage = 5; writeFileSync(layoutFile, layout("Circuit Drums II"));
+        stage = 5; writeFileSync(layoutFile, layout(`${title} II`));
       } else if (stage === 5 && state.revision === 4 && state.windows.every(w => w.revision === 4)) {
-        assert.equal(drums.title, "Circuit Drums II"); assert.equal(drums.uiError, null);
+        assert.equal(drums.title, `${title} II`); assert.equal(drums.uiError, null);
         assert.ok(state.windows.every(w => w.sync === "Synced"));
         stage = 6;
       }
