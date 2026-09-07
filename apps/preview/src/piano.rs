@@ -1,7 +1,8 @@
-use crate::ui::{alpha, button, label, Preview, ACCENT, BORDER, GOLD, MUTED};
+use crate::ui::{alpha, Preview};
 use gpui::{prelude::*, *};
 
 pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
+    let theme = this.theme;
     let project = this.project.as_ref().unwrap();
     let mut root = div()
         .flex_1()
@@ -9,7 +10,7 @@ pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
         .flex()
         .flex_col()
         .border_r_1()
-        .border_color(rgb(BORDER));
+        .border_color(rgb(theme.border));
     let Some(clip) = project
         .snapshot
         .pattern_clips
@@ -19,7 +20,7 @@ pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
         return root.child(
             div()
                 .p_4()
-                .child(label("PIANO ROLL · Select a pattern clip")),
+                .child(theme.label("PIANO ROLL · Select a pattern clip")),
         );
     };
     let pattern = project
@@ -37,10 +38,11 @@ pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
             .flex()
             .items_center()
             .justify_between()
-            .child(label(format!("PIANO ROLL · {name}")))
+            .child(theme.label(format!("PIANO ROLL · {name}")))
             .child(
-                button("loop-selection", "Loop selection").on_click(cx.listener(
-                    move |this, _, _, cx| {
+                theme
+                    .button("loop-selection", "Loop selection")
+                    .on_click(cx.listener(move |this, _, _, cx| {
                         this.loop_start = start;
                         this.loop_end = end;
                         this.loop_enabled = true;
@@ -49,8 +51,7 @@ pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
                             this.play();
                         }
                         cx.notify();
-                    },
-                )),
+                    })),
             ),
     );
     let low = pattern
@@ -96,21 +97,23 @@ pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
                 .left_0()
                 .w_full()
                 .h(px(13.))
-                .bg(rgb(if black { 0x111720 } else { 0x1c2430 }))
+                .bg(rgb(theme.piano_rows[usize::from(black)]))
                 .border_b_1()
-                .border_color(rgb(BORDER))
+                .border_color(rgb(theme.border))
                 .child(
                     div()
                         .w(px(40.))
                         .h_full()
                         .text_xs()
-                        .text_color(rgb(if on { 0x102222 } else { MUTED }))
-                        .bg(rgb(if on {
-                            ACCENT
-                        } else if black {
-                            0x0a1018
+                        .text_color(rgb(if on {
+                            theme.on_accent
                         } else {
-                            0x303b49
+                            theme.key_text[usize::from(black)]
+                        }))
+                        .bg(rgb(if on {
+                            theme.accent
+                        } else {
+                            theme.keys[usize::from(black)]
                         }))
                         .child(format!(
                             "{}{}",
@@ -130,7 +133,7 @@ pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
                 .top_0()
                 .h_full()
                 .w(px(1.))
-                .bg(rgb(BORDER)),
+                .bg(rgb(theme.border)),
         );
     }
     for note in &pattern.notes {
@@ -142,7 +145,7 @@ pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
                 .w(px((note.duration.to_f64() as f32 * zoom - 1.).max(2.)))
                 .h(px(10.))
                 .rounded_sm()
-                .bg(alpha(ACCENT, 0.3 + note.velocity as f32 * 0.7)),
+                .bg(alpha(theme.accent, 0.3 + note.velocity as f32 * 0.7)),
         );
     }
     let global = project.beat(this.playback.audible);
@@ -156,7 +159,7 @@ pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
                 .top_0()
                 .h_full()
                 .w(px(1.))
-                .bg(rgb(GOLD)),
+                .bg(rgb(theme.gold)),
         );
     }
     root.child(

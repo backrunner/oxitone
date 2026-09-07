@@ -62,6 +62,12 @@ diagnostic、status、transport、query、shutdown；所有帧含 protocolVersio
 
 ## 交互与延迟
 
+- 窗口内容延伸到顶部，系统标题文字/独立标题栏隐藏；自绘 56 px 标题区整合工程名、
+  构建状态与只读标识，保留原生 macOS 交通灯按钮。非交互标题区可拖动，双击遵循
+  系统标题栏偏好；Scopes 按钮独立于拖动区域。全屏时收回交通灯预留空间。
+- 外观始终跟随当前窗口的系统 Light/Dark（含 Vibrant）appearance，启动时读取并
+  订阅运行中的变化，无须重启。轨道、钢琴窗、Mixer、Scopes、诊断、按钮 hover/active
+  和位置输入 focus 共用语义配色；主题不进入 ProjectSnapshot，不触发编译或音频命令。
 - viewer 的 transport 操作走引擎同一 command queue；生效延迟 = ring horizon（见 `03`），UI 据此做预期反馈（按钮立即响应，播放头按 horizon 对齐）。
 - seek 目标支持 bar/beat/marker/timecode 与时间轴点击；点击位置按当前有效 tempo map（含烘焙的 tempo lane）换算。
 
@@ -82,10 +88,12 @@ scope true-peak 为 UI 消费音频的 4× 估计，丢帧时不能代替 export
 mixer 状态来自 source，动态 meter 来自引擎。Loop selection 选择 clip 区间；Go
 支持 bar.beat（均从 1 起）、mm:ss 或 `s` 后缀秒数。当前换图保留 transport 并重建
 voice；启动 realtime session 后改变 sampleRate/blockSize 需重启。大工程虚拟列表、
-主题持久化、锁屏后的视觉验收及真实设备 endurance 继续单独追踪。
+手动主题覆盖/偏好持久化、锁屏后的视觉验收及真实设备 endurance 继续单独追踪。
 
 ## 测试
 
 - runner↔viewer 的 IPC 帧用 protocol fixture 做兼容性测试（含 revision 乱序、诊断帧、大 snapshot）。
 - viewer 的状态归约（snapshot → 视图模型）为纯函数，单元测试覆盖；UI 像素级测试不做。
+- 两套主题检查正文/控件/诊断/琴键/clip 文字对比度 ≥ 4.5:1、scope/meter 信号 ≥ 3:1；
+  原生拖动、交通灯、全屏和运行中外观切换仍需未锁屏桌面交互验收。
 - 集成冒烟：示例工程启动 preview，断言 transport 命令生效、换图不中断、诊断 overlay 路径可达。

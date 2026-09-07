@@ -2,22 +2,16 @@ use crate::{
     analysis::AnalysisMap,
     backend::{Backend, Command},
     model::{Diagnostic, PlaybackStatus, UiEvent, ViewProject},
+    theme::Theme,
     wire::Frame,
 };
 use gpui::{prelude::*, *};
 use serde_json::json;
 use std::{sync::Arc, time::Duration};
 
-pub const BG: u32 = 0x0d1118;
-pub const PANEL: u32 = 0x151b25;
-pub const BORDER: u32 = 0x293240;
-pub const TEXT: u32 = 0xdce4ee;
-pub const MUTED: u32 = 0x8492a6;
-pub const ACCENT: u32 = 0x69c7b8;
-pub const GOLD: u32 = 0xe8b977;
-
 pub struct Preview {
     backend: Backend,
+    pub theme: Theme,
     pub project: Option<Arc<ViewProject>>,
     pub playback: PlaybackStatus,
     pub analysis: AnalysisMap,
@@ -35,7 +29,12 @@ pub struct Preview {
 }
 
 impl Preview {
-    pub fn new(backend: Backend, cx: &mut Context<Self>) -> Self {
+    pub fn new(backend: Backend, window: &mut Window, cx: &mut Context<Self>) -> Self {
+        cx.observe_window_appearance(window, |this, window, cx| {
+            this.theme = Theme::from_appearance(window.appearance());
+            cx.notify();
+        })
+        .detach();
         cx.spawn(async move |this, cx| loop {
             cx.background_executor()
                 .timer(Duration::from_millis(33))
@@ -53,6 +52,7 @@ impl Preview {
         .detach();
         Self {
             backend,
+            theme: Theme::from_appearance(window.appearance()),
             project: None,
             playback: PlaybackStatus::default(),
             analysis: AnalysisMap::new(),
@@ -172,24 +172,25 @@ impl Preview {
 }
 
 impl Render for Preview {
-    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let theme = self.theme;
         let mut root = div()
             .size_full()
             .flex()
             .flex_col()
-            .bg(rgb(BG))
-            .text_color(rgb(TEXT))
+            .bg(rgb(theme.bg))
+            .text_color(rgb(theme.text))
             .font_family("Helvetica Neue")
-            .child(self.header(cx))
+            .child(self.header(window, cx))
             .child(self.transport_bar(cx));
         if let Some(diagnostic) = &self.diagnostic {
             root = root.child(
                 div()
                     .px_5()
                     .py_2()
-                    .bg(rgb(0x3b272a))
+                    .bg(rgb(theme.diagnostic_bg))
                     .text_sm()
-                    .text_color(rgb(0xf0baad))
+                    .text_color(rgb(theme.diagnostic_text))
                     .child(format!(
                         "{} · {}  {}",
                         diagnostic.code,
@@ -205,7 +206,7 @@ impl Render for Preview {
                     .h(px(290.))
                     .min_h(px(200.))
                     .border_t_1()
-                    .border_color(rgb(BORDER))
+                    .border_color(rgb(theme.border))
                     .child(crate::piano::view(self, cx))
                     .child(crate::mixer::view(self, cx)),
             );
@@ -222,7 +223,7 @@ impl Render for Preview {
                     .items_center()
                     .gap_4()
                     .child(div().text_2xl().child("Music, written in code."))
-                    .child(div().text_sm().text_color(rgb(MUTED)).child(
+                    .child(div().text_sm().text_color(rgb(theme.muted)).child(
                         "Your tracks, notes and mixer appear after the first successful build.",
                     )),
             );
@@ -231,27 +232,6 @@ impl Render for Preview {
     }
 }
 
-pub fn button(id: impl Into<SharedString>, label: impl Into<SharedString>) -> Stateful<Div> {
-    div()
-        .id(ElementId::Name(id.into()))
-        .px_3()
-        .py_1()
-        .rounded_sm()
-        .bg(rgb(0x252f3e))
-        .text_xs()
-        .cursor_pointer()
-        .child(label.into())
-}
-pub fn label(text: impl Into<SharedString>) -> Div {
-    div()
-        .text_xs()
-        .font_weight(FontWeight::SEMIBOLD)
-        .text_color(rgb(MUTED))
-        .child(text.into())
-}
-pub fn color(index: usize) -> u32 {
-    [0x69c7b8, 0xe8b977, 0x9d9ce4, 0x6ca8ce, 0xcd879b][index % 5]
-}
 pub fn alpha(value: u32, alpha: f32) -> Rgba {
     Rgba {
         a: alpha,

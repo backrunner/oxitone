@@ -301,3 +301,22 @@
 当前仍需独立完成：远端 CI 首跑、macOS 最低版本和完整视觉交互、签名 npm 平台分发；
 10/60 分钟有声负载、设备拔插、资源预算/watchdog、fuzz/sanitizer/SBOM/公证。
 这些验收不能由本地源码与模拟输出测试替代。
+
+## Preview 自绘标题区与系统外观（2026-09-07）
+
+- 隐藏独立系统标题栏/标题文字，56 px 自绘区域整合工程名、只读标识和构建状态。
+  保留原生交通灯，非交互区调用 AppKit 原生拖动，双击遵循 macOS 偏好；Scopes
+  按钮不在拖动目标内，全屏回收交通灯留白。原生对象仅在 UI 线程短暂持有。
+- 启动读取窗口 appearance，并订阅系统 Light/Dark（含 Vibrant）变化；所有面板、
+  琴键、轨道颜色、meter/scope、诊断和 hover/active/focus 共用语义主题。
+  外观更新只通知重绘，不修改 snapshot、编译图或音频状态。
+- 两套主题通过文字 ≥ 4.5:1、分析信号 ≥ 3:1 的对比度检查，覆盖 clip 混色背景。
+  `pnpm lint`、`pnpm typecheck`、`cargo fmt --all --check`、422 Rust tests 均通过，
+  无失败/忽略。Release unsigned app 已重建，Info.plist 校验通过。
+- 新 bundle 经 CLI 加载鼓机工程，IPC 返回 revision 1、4 Tracks / 54 Patterns；
+  显式退出后 viewer 和 socket 目录正常回收。此冒烟未启动真实设备播放。
+- 专项基准：Apple M4 / 48 kHz / 128 frames / 4 Channels，1 秒预热、3 秒测量、
+  30 samples；baseline 30.167 µs、telemetry 31.629 µs。Criterion 分别报告无明显
+  变化/噪声阈值内变化；不测 UI 布局、设备 callback p95/p99 或长期 xrun。
+- 当前桌面仍锁屏，原生拖动/交通灯/全屏及运行中主题切换的视觉交互验收待未锁屏
+  桌面完成；配色测试和进程冒烟不能替代这些项目。

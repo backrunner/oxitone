@@ -1,8 +1,9 @@
 //! Paths are built on the GPUI thread from bounded native analysis rings.
-use crate::ui::{alpha, label, Preview, ACCENT, BORDER, GOLD, MUTED};
+use crate::{theme::Theme, ui::Preview};
 use gpui::{prelude::*, *};
 
 pub fn view(this: &Preview) -> impl IntoElement {
+    let theme = this.theme;
     let node = this.analysis.get(&this.selected_scope);
     let wave = node.map(|n| n.wave.clone()).unwrap_or_default();
     let bins = crate::analysis::spectrum(&wave);
@@ -12,7 +13,7 @@ pub fn view(this: &Preview) -> impl IntoElement {
         move |bounds, _, window, _| {
             let w = f32::from(bounds.size.width);
             let h = f32::from(bounds.size.height);
-            for (channel, tint) in [(0, ACCENT), (1, 0x658fc2)] {
+            for (channel, tint) in [(0, theme.accent), (1, theme.secondary)] {
                 paint(
                     window,
                     bounds,
@@ -42,7 +43,7 @@ pub fn view(this: &Preview) -> impl IntoElement {
                         h - (v.clamp(-90., 0.) + 90.) / 90. * h,
                     )
                 }),
-                GOLD,
+                theme.gold,
             );
         },
     )
@@ -61,7 +62,7 @@ pub fn view(this: &Preview) -> impl IntoElement {
                         h * 0.5 - (s[0] + s[1]).clamp(-2., 2.) * h * 0.23,
                     )
                 }),
-                ACCENT,
+                theme.accent,
             );
         },
     )
@@ -70,17 +71,22 @@ pub fn view(this: &Preview) -> impl IntoElement {
         .h(px(144.))
         .flex_shrink_0()
         .border_t_1()
-        .border_color(rgb(BORDER))
+        .border_color(rgb(theme.border))
         .flex()
         .child(panel(
+            theme,
             format!("WAVEFORM · {}", this.selected_scope),
             waveform,
         ))
-        .child(panel("SPECTRUM · Hann 512 · −90 … 0 dB".into(), spectrum))
-        .child(panel("STEREO · Mid ↑ / Side →".into(), xy))
+        .child(panel(
+            theme,
+            "SPECTRUM · Hann 512 · −90 … 0 dB".into(),
+            spectrum,
+        ))
+        .child(panel(theme, "STEREO · Mid ↑ / Side →".into(), xy))
 }
 
-fn panel(title: String, content: impl IntoElement) -> impl IntoElement {
+fn panel(theme: Theme, title: String, content: impl IntoElement) -> impl IntoElement {
     div()
         .flex_1()
         .min_w_0()
@@ -89,16 +95,16 @@ fn panel(title: String, content: impl IntoElement) -> impl IntoElement {
         .flex()
         .flex_col()
         .border_r_1()
-        .border_color(rgb(BORDER))
-        .child(label(title))
+        .border_color(rgb(theme.border))
+        .child(theme.label(title))
         .child(
             div()
                 .flex_1()
                 .min_h_0()
                 .mt_2()
-                .bg(rgb(0x0a1017))
+                .bg(rgb(theme.scope))
                 .border_1()
-                .border_color(alpha(MUTED, 0.15))
+                .border_color(rgb(theme.border))
                 .child(content),
         )
 }

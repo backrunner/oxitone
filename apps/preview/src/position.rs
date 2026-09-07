@@ -1,8 +1,5 @@
 //! Viewer-only keyboard entry; it sends transport commands, never authoring edits.
-use crate::{
-    model::ViewProject,
-    ui::{Preview, BORDER, MUTED},
-};
+use crate::{model::ViewProject, ui::Preview};
 use gpui::{prelude::*, *};
 use oxitone_core::Beat;
 
@@ -46,6 +43,7 @@ pub fn resolve(project: &ViewProject, text: &str) -> Result<u64, String> {
 }
 
 pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
+    let theme = this.theme;
     div()
         .id("seek-entry")
         .track_focus(&this.position_focus)
@@ -54,9 +52,15 @@ pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
         .py_1()
         .rounded_sm()
         .border_1()
-        .border_color(rgb(BORDER))
+        .border_color(rgb(theme.border))
+        .bg(rgb(theme.bg))
+        .focus(move |style| style.border_color(rgb(theme.accent)))
         .text_xs()
-        .text_color(rgb(MUTED))
+        .text_color(rgb(if this.position_text.is_empty() {
+            theme.muted
+        } else {
+            theme.text
+        }))
         .cursor_text()
         .child(if this.position_text.is_empty() {
             "Go: 1.1 / 0:12 / 12s".into()

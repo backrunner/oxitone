@@ -80,6 +80,15 @@ explicit rebuild of the library and another authoring run.
 
 ## Read-only controls
 
+The integrated header replaces the separate system title bar while retaining the
+native macOS close, minimize and fullscreen buttons. Drag the project/status area
+to move the window; double-click follows your macOS title-bar preference. The Scopes
+button stays independent of the drag area, and fullscreen removes the button gutter.
+
+All panels follow the system's light or dark appearance, including changes while
+the viewer is open. Notes, meters, diagnostics and control states use matching
+palettes. Appearance changes are display-only and do not rebuild the music.
+
 - Click a pattern clip to inspect its notes. Track tempo overrides and sample clip
   lengths use the compiled effective clock. Horizontal/vertical scrolling and zoom
   are display preferences.

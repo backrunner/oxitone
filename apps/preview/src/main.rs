@@ -10,7 +10,11 @@ mod position;
 mod scopes;
 #[cfg(test)]
 mod tests;
+mod theme;
+#[cfg(test)]
+mod theme_tests;
 mod ui;
+mod window_chrome;
 mod wire;
 
 use gpui::{prelude::*, *};
@@ -55,12 +59,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 window_bounds: Some(WindowBounds::Windowed(bounds)),
                 titlebar: Some(TitlebarOptions {
                     title: Some("Oxitone · Project Preview".into()),
-                    ..Default::default()
+                    appears_transparent: true,
+                    traffic_light_position: Some(point(px(18.), px(21.))),
                 }),
                 window_min_size: Some(size(px(1060.), px(720.))),
                 ..Default::default()
             },
-            |_, cx| cx.new(|cx| ui::Preview::new(backend, cx)),
+            |window, cx| cx.new(|cx| ui::Preview::new(backend, window, cx)),
         )
         .expect("open preview window");
         cx.on_window_closed(|cx| {

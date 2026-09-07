@@ -1,13 +1,18 @@
 //! Read-only timeline. Clicking clips selects a pattern; ruler clicks seek.
-use crate::ui::{alpha, color, label, Preview, BORDER, GOLD, MUTED, PANEL};
+use crate::ui::{alpha, Preview};
 use gpui::{prelude::*, *};
 
 pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
+    let theme = this.theme;
     let project = this.project.as_ref().unwrap();
     let zoom = this.zoom;
     let width = (project.end() as f32 * zoom).max(900.);
     let cursor = project.beat(this.playback.audible) as f32 * zoom;
-    let mut ruler = div().relative().h(px(28.)).w(px(width)).bg(rgb(PANEL));
+    let mut ruler = div()
+        .relative()
+        .h(px(28.))
+        .w(px(width))
+        .bg(rgb(theme.panel));
     // One seek target per beat. Labels reflect the actual time-signature map.
     let step = ((20. / zoom).ceil() as usize).max(1);
     for beat in (0..project.end().ceil() as usize)
@@ -26,10 +31,10 @@ pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
                 .w(px(zoom * step as f32))
                 .h_full()
                 .border_l_1()
-                .border_color(rgb(BORDER))
+                .border_color(rgb(theme.border))
                 .px_1()
                 .text_xs()
-                .text_color(rgb(MUTED))
+                .text_color(rgb(theme.muted))
                 .cursor_pointer()
                 .child(if within == oxitone_core::Beat::ZERO {
                     format!("{bar}")
@@ -47,17 +52,17 @@ pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
                     .w(px(184.))
                     .h(px(28.))
                     .px_4()
-                    .child(label("ARRANGEMENT")),
+                    .child(theme.label("ARRANGEMENT")),
             )
             .child(ruler),
     );
     for (index, track) in project.snapshot.tracks.iter().enumerate() {
-        let tint = color(index);
+        let tint = theme.track(index);
         let mut lane = div()
             .relative()
             .w(px(width))
             .h(px(57.))
-            .bg(rgb(if index % 2 == 0 { 0x141c27 } else { 0x111822 }))
+            .bg(rgb(theme.lanes[index % 2]))
             .overflow_hidden();
         for clip in project
             .snapshot
@@ -86,13 +91,13 @@ pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
                     .overflow_hidden()
                     .rounded_sm()
                     .border_1()
-                    .border_color(rgb(if selected { 0xffffff } else { tint }))
+                    .border_color(rgb(if selected { theme.text } else { tint }))
                     .bg(alpha(
                         tint,
                         if clip.enabled == Some(false) {
-                            0.08
+                            theme.clip_opacity * 0.4
                         } else {
-                            0.23
+                            theme.clip_opacity
                         },
                     ))
                     .px_2()
@@ -103,7 +108,7 @@ pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
                     .child(name)
                     .child(
                         div()
-                            .text_color(rgb(MUTED))
+                            .text_color(rgb(theme.muted))
                             .child(format!("{:.1} beats", end - start)),
                     )
                     .on_click(cx.listener(move |this, _, _, cx| {
@@ -130,7 +135,7 @@ pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
                         .h(px(43.))
                         .overflow_hidden()
                         .rounded_sm()
-                        .bg(alpha(tint, 0.18))
+                        .bg(alpha(tint, theme.clip_opacity))
                         .border_1()
                         .border_color(rgb(tint))
                         .px_2()
@@ -147,7 +152,7 @@ pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
                     .top_0()
                     .w(px(((this.loop_end - this.loop_start) as f32 * zoom).max(0.)))
                     .h(px(2.))
-                    .bg(rgb(GOLD)),
+                    .bg(rgb(theme.gold)),
             );
         }
         lane = lane.child(
@@ -157,13 +162,13 @@ pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
                 .top_0()
                 .w(px(1.))
                 .h_full()
-                .bg(rgb(GOLD)),
+                .bg(rgb(theme.gold)),
         );
         rows = rows.child(
             div()
                 .flex()
                 .border_b_1()
-                .border_color(rgb(BORDER))
+                .border_color(rgb(theme.border))
                 .child(
                     div()
                         .w(px(184.))
@@ -172,13 +177,13 @@ pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
                         .py_2()
                         .border_l_2()
                         .border_color(rgb(tint))
-                        .bg(rgb(PANEL))
+                        .bg(rgb(theme.panel))
                         .child(
                             div()
                                 .text_sm()
                                 .child(track.name.clone().unwrap_or_else(|| track.id.clone())),
                         )
-                        .child(div().text_xs().text_color(rgb(MUTED)).child(format!(
+                        .child(div().text_xs().text_color(rgb(theme.muted)).child(format!(
                             "{} channels{}",
                             track.channel_ids.len(),
                             if track.enabled == Some(false) {
