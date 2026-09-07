@@ -1,0 +1,535 @@
+{
+  "schema": "oxitone.focused-benchmark.v1",
+  "date": "2026-09-08",
+  "baseCommit": "5b346b8",
+  "change": "Electronic synthesis, independent oscillator/Sub tuning, distortion/multiband/delay, all-synth melodic dubstep and export-only MIDI allocation",
+  "machine": {
+    "cpu": "Apple M4",
+    "os": "macOS 27.0 (26A5425a)",
+    "arch": "aarch64-apple-darwin",
+    "rustc": "1.98.0",
+    "llvm": "22.1.8",
+    "node": "v26.5.0"
+  },
+  "config": {
+    "sampleRate": 48000,
+    "blockSize": 128,
+    "outputChannels": 2,
+    "voices": [
+      8,
+      32
+    ],
+    "noteKeys": [
+      48,
+      79
+    ],
+    "noteVelocity": 0.6,
+    "noteFrameOffset": 17,
+    "patches": "crates/bench/benches/synth_motion.rs: default/full/electronic; electronic adds banks, warp, FM, curved envelope, two matrix routes and octave/Sub wave",
+    "effects": "crates/bench/benches/electronic_effects.rs: stereo tone and repeated decaying/subnormal input, FTZ active; delay uses pingPong=1, timeSeconds=0.002, ducking=0.5",
+    "warmupSeconds": 1,
+    "measurementTargetSeconds": 2,
+    "sampleCount": 20,
+    "device": null,
+    "cpuUtilization": null,
+    "callbackP95Ns": null,
+    "callbackP99Ns": null,
+    "xruns": null
+  },
+  "commands": [
+    "cargo bench -p oxitone-bench --bench synth_motion --bench electronic_effects -- --warm-up-time 1 --measurement-time 2 --sample-size 20",
+    "cargo bench -p oxitone-bench --bench synth_motion -- default --warm-up-time 1 --measurement-time 2 --sample-size 20"
+  ],
+  "scenarios": [
+    {
+      "family": "instruments_synth_motion",
+      "id": "default_32_voices_128",
+      "slopeNs": 223546.11284702708,
+      "confidence95Ns": [
+        185081.72037342092,
+        275926.7751813951
+      ]
+    },
+    {
+      "family": "instruments_synth_motion",
+      "id": "default_8_voices_128",
+      "slopeNs": 67212.72198248905,
+      "confidence95Ns": [
+        56853.840684039315,
+        84404.80137478473
+      ]
+    },
+    {
+      "family": "instruments_synth_motion",
+      "id": "electronic_32_voices_128",
+      "slopeNs": 570409.124759172,
+      "confidence95Ns": [
+        510151.78639900626,
+        640868.2295772381
+      ]
+    },
+    {
+      "family": "instruments_synth_motion",
+      "id": "electronic_8_voices_128",
+      "slopeNs": 119889.10132574147,
+      "confidence95Ns": [
+        104040.28526509066,
+        147814.76724557212
+      ]
+    },
+    {
+      "family": "instruments_synth_motion",
+      "id": "full_32_voices_128",
+      "slopeNs": 283927.197019989,
+      "confidence95Ns": [
+        266492.3330501217,
+        297228.5648397745
+      ]
+    },
+    {
+      "family": "instruments_synth_motion",
+      "id": "full_8_voices_128",
+      "slopeNs": 81412.32365238779,
+      "confidence95Ns": [
+        67426.694041897,
+        108595.1428700499
+      ]
+    },
+    {
+      "family": "effects_electronic",
+      "id": "oxitone.delay_decay_128",
+      "slopeNs": 1263.2507624039456,
+      "confidence95Ns": [
+        981.0983211814579,
+        1525.496262223285
+      ]
+    },
+    {
+      "family": "effects_electronic",
+      "id": "oxitone.delay_tone_128",
+      "slopeNs": 872.5904976348379,
+      "confidence95Ns": [
+        840.1778857410412,
+        919.1210405793544
+      ]
+    },
+    {
+      "family": "effects_electronic",
+      "id": "oxitone.distortion_decay_128",
+      "slopeNs": 88293.73115164765,
+      "confidence95Ns": [
+        78986.9667133287,
+        98724.05450706078
+      ]
+    },
+    {
+      "family": "effects_electronic",
+      "id": "oxitone.distortion_tone_128",
+      "slopeNs": 52670.431373155276,
+      "confidence95Ns": [
+        47207.86719709996,
+        60144.27115349933
+      ]
+    },
+    {
+      "family": "effects_electronic",
+      "id": "oxitone.multiband_decay_128",
+      "slopeNs": 5239.053547729076,
+      "confidence95Ns": [
+        4868.438483357403,
+        5782.47553915778
+      ]
+    },
+    {
+      "family": "effects_electronic",
+      "id": "oxitone.multiband_tone_128",
+      "slopeNs": 5113.120830084549,
+      "confidence95Ns": [
+        4915.036398587498,
+        5404.843033284373
+      ]
+    }
+  ],
+  "initialDefaultRunUs": {
+    "default_8_voices_128": 32.375,
+    "default_32_voices_128": 72.694
+  },
+  "limits": [
+    "Microbenchmarks process memory PCM; no system audio device or callback was used.",
+    "Default scenarios contain the later same-binary repeat. Same-binary 32-voice default varied from 72.694 to 223.546 us; concurrent system load and wide confidence intervals prevent a controlled regression conclusion. Criterion reported a regression versus stored default baseline; do not mark performance acceptance passed.",
+    "Initial effects/full/electronic measurements overlapped some other work. Other projects on the machine were also actively building/running; a stable baseline still requires a controlled rerun.",
+    "Broad multiband crossover measurements are not steep spectral isolation. Conservative FM/warp mip headroom does not guarantee alias-free extreme settings.",
+    "Objective song metrics and silent PCM checks do not establish subjective commercial-release quality.",
+    "Final native/Wasm full exports overlapped other work and ran at 0.471x/0.123x realtime respectively. Wasm process p99=13.655 ms exceeds the 2.667 ms block deadline under this load. Real-time/offline-speed acceptance is unresolved; byte parity is a separate functional result.",
+    "Browser underruns=0 is a short no-device smoke observation (glass, drop excerpt and watch); it is not a long-duration device or performance soak."
+  ],
+  "measurementDates": [
+    "2026-09-07",
+    "2026-09-08"
+  ],
+  "nativeSong": {
+    "title": "After the Horizon / 地平线之后",
+    "slug": "after-the-horizon",
+    "bpm": 140,
+    "bars": 104,
+    "durationSeconds": 181.28570833333333,
+    "integratedLufs": -14.24058661654801,
+    "truePeakDbfs": -2.510638604275122,
+    "peakDbfs": -2.585296129522639,
+    "sha256": "79c7ca0ffd34d92fdad1beec8d8799ca33434aad54aa6ab08610e7821e5a3e1b",
+    "renderSeconds": 384.690464792,
+    "realtimeMultiple": 0.4712508649876062,
+    "tracks": 17,
+    "notes": 3246,
+    "sectionLevels": [
+      {
+        "name": "First light / Crystal",
+        "startBar": 1,
+        "bars": 8,
+        "rmsDbfs": -21.373620589216547,
+        "peakDbfs": -4.193004842957252,
+        "crestDb": 17.180615746259296,
+        "dc": -0.0000011566007120602047,
+        "stereoCorrelation": 0.5067078534251592,
+        "lowSideToMidDb": -4.878805542690157,
+        "bandRmsDbfs": {
+          "below150": -29.49388095174526,
+          "150to1000": -24.490050405854728,
+          "1000to6000": -30.42246610908627,
+          "above6000": -45.67193639515886
+        }
+      },
+      {
+        "name": "Lift / Build I",
+        "startBar": 9,
+        "bars": 16,
+        "rmsDbfs": -18.319234519723935,
+        "peakDbfs": -2.928845407636244,
+        "crestDb": 15.390389112087691,
+        "dc": 0.00001654174794917302,
+        "stereoCorrelation": 0.7711312438692661,
+        "lowSideToMidDb": -12.27836999962965,
+        "bandRmsDbfs": {
+          "below150": -24.144464184057025,
+          "150to1000": -23.661856173946628,
+          "1000to6000": -27.901349105210404,
+          "above6000": -29.03111221237332
+        }
+      },
+      {
+        "name": "Open sky / Drop I",
+        "startBar": 25,
+        "bars": 16,
+        "rmsDbfs": -14.172702772520044,
+        "peakDbfs": -2.5852947351168467,
+        "crestDb": 11.587408037403197,
+        "dc": 0.000763820866703944,
+        "stereoCorrelation": 0.8373014188298203,
+        "lowSideToMidDb": -22.843341041639814,
+        "bandRmsDbfs": {
+          "below150": -17.151206458699747,
+          "150to1000": -21.703949440706545,
+          "1000to6000": -23.190461906596216,
+          "above6000": -28.617075257054516
+        }
+      },
+      {
+        "name": "Weightless / Break",
+        "startBar": 41,
+        "bars": 16,
+        "rmsDbfs": -19.520579868206795,
+        "peakDbfs": -3.698768556226461,
+        "crestDb": 15.821811311980333,
+        "dc": -0.000015547141416679042,
+        "stereoCorrelation": 0.6863655242766659,
+        "lowSideToMidDb": -12.403587248300298,
+        "bandRmsDbfs": {
+          "below150": -23.11980497969906,
+          "150to1000": -24.358224657378695,
+          "1000to6000": -30.532727233919882,
+          "above6000": -44.946233572011025
+        }
+      },
+      {
+        "name": "Signal / Build II",
+        "startBar": 57,
+        "bars": 16,
+        "rmsDbfs": -18.321023408589586,
+        "peakDbfs": -2.8145242682368163,
+        "crestDb": 15.50649914035277,
+        "dc": 0.0000067116766961714986,
+        "stereoCorrelation": 0.7707201901002573,
+        "lowSideToMidDb": -12.274091107891048,
+        "bandRmsDbfs": {
+          "below150": -24.148521558579667,
+          "150to1000": -23.659883036180535,
+          "1000to6000": -27.898429438443245,
+          "above6000": -29.04168675437186
+        }
+      },
+      {
+        "name": "Beyond / Drop II",
+        "startBar": 73,
+        "bars": 16,
+        "rmsDbfs": -14.257486534465793,
+        "peakDbfs": -2.8801037676294188,
+        "crestDb": 11.377382766836373,
+        "dc": 0.0007576575803651971,
+        "stereoCorrelation": 0.829987293431182,
+        "lowSideToMidDb": -22.520466654244306,
+        "bandRmsDbfs": {
+          "below150": -17.444460719897563,
+          "150to1000": -21.529349721819223,
+          "1000to6000": -23.060301410148266,
+          "above6000": -28.71067062768418
+        }
+      },
+      {
+        "name": "Afterglow / Reprise",
+        "startBar": 89,
+        "bars": 8,
+        "rmsDbfs": -17.211111334498213,
+        "peakDbfs": -3.1169959746056,
+        "crestDb": 14.094115359892612,
+        "dc": -0.000011004893920708179,
+        "stereoCorrelation": 0.7646230276711471,
+        "lowSideToMidDb": -14.444278678982773,
+        "bandRmsDbfs": {
+          "below150": -20.402122263385817,
+          "150to1000": -22.78869424311924,
+          "1000to6000": -28.676083533657707,
+          "above6000": -34.1842728679284
+        }
+      },
+      {
+        "name": "Horizon / Outro",
+        "startBar": 97,
+        "bars": 8,
+        "rmsDbfs": -21.364003026037103,
+        "peakDbfs": -3.6955275854126723,
+        "crestDb": 17.66847544062443,
+        "dc": 0.0000017319674537408526,
+        "stereoCorrelation": 0.6267169070742159,
+        "lowSideToMidDb": -10.489150803441916,
+        "bandRmsDbfs": {
+          "below150": -25.99515175726456,
+          "150to1000": -25.560334337373657,
+          "1000to6000": -31.61472520864782,
+          "above6000": -46.777644313988944
+        }
+      }
+    ],
+    "diagnostics": [
+      {
+        "pluginId": "example.drums",
+        "pluginVersion": "1.0.0",
+        "faults": 0
+      }
+    ],
+    "midi": {
+      "bytes": 30458,
+      "noteTrackCount": 17,
+      "distinctChannels": 13
+    },
+    "audioMidiAssignments": 0
+  },
+  "wasmtime": {
+    "runtime": "wasmtime",
+    "runtimeVersion": "48.0.0",
+    "imports": 0,
+    "peak": 0.15064074099063873,
+    "blocks": 1000,
+    "memoryBefore": [
+      2228224,
+      1208,
+      474
+    ],
+    "memoryAfter": [
+      2228224,
+      1208,
+      474
+    ],
+    "wavBytes": 288044,
+    "state": {
+      "protocolVersion": "1.0",
+      "sampleRate": 48000,
+      "blockSize": 128,
+      "cursor": "0",
+      "state": "stopped",
+      "latencyFrames": 264,
+      "contentEndFrame": "96000",
+      "faulted": false
+    }
+  },
+  "wasm": {
+    "runtime": "v26.5.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M4",
+    "imports": [],
+    "songs": [
+      {
+        "title": "After the Horizon / 地平线之后",
+        "slug": "after-the-horizon",
+        "seconds": 181.28570833333333,
+        "sampleRate": 48000,
+        "blockSize": 128,
+        "samples": 0,
+        "renderSeconds": 1474.454095625,
+        "realtimeMultiple": 0.12295106973573762,
+        "p95Ms": 5.489958000000115,
+        "p99Ms": 13.654708999998547,
+        "processBlocks": 4000,
+        "processStartBar": 24,
+        "memoryBefore": {
+          "bytes": 18808832,
+          "allocations": 103328,
+          "deallocations": 73397
+        },
+        "memoryAfter": {
+          "bytes": 18808832,
+          "allocations": 103328,
+          "deallocations": 73397
+        },
+        "processAllocations": 0,
+        "processDeallocations": 0,
+        "peakDbfs": -2.5852947351168467,
+        "rmsDbfs": -16.956896119204362,
+        "maxPcmDifference": 4.76837158203125e-7,
+        "sectionLevels": [
+          {
+            "name": "First light / Crystal",
+            "rmsDbfs": -21.373620585461758
+          },
+          {
+            "name": "Lift / Build I",
+            "rmsDbfs": -18.319234526101024
+          },
+          {
+            "name": "Open sky / Drop I",
+            "rmsDbfs": -14.172702782010978
+          },
+          {
+            "name": "Weightless / Break",
+            "rmsDbfs": -19.520579877706304
+          },
+          {
+            "name": "Signal / Build II",
+            "rmsDbfs": -18.32102341307633
+          },
+          {
+            "name": "Beyond / Drop II",
+            "rmsDbfs": -14.257486548669554
+          },
+          {
+            "name": "Afterglow / Reprise",
+            "rmsDbfs": -17.211111339690113
+          },
+          {
+            "name": "Horizon / Outro",
+            "rmsDbfs": -21.364003023598144
+          }
+        ]
+      }
+    ]
+  },
+  "browser": {
+    "browser": "153.0.8010.12",
+    "songs": [
+      {
+        "song": "glass",
+        "peak": 0.14722950756549835,
+        "rms": 0.0354628051867121,
+        "diagnostics": {
+          "underruns": 0,
+          "bufferedFrames": 2048,
+          "sampleRate": 48000,
+          "running": true
+        },
+        "state": {
+          "protocolVersion": "1.0",
+          "sampleRate": 48000,
+          "blockSize": 128,
+          "cursor": "74752",
+          "state": "playing",
+          "latencyFrames": 264,
+          "contentEndFrame": "1843200",
+          "faulted": false
+        }
+      },
+      {
+        "song": "after-the-horizon",
+        "peak": 0.5984086990356445,
+        "rms": 0.1832066253608527,
+        "diagnostics": {
+          "underruns": 0,
+          "bufferedFrames": 1792,
+          "sampleRate": 48000,
+          "running": true
+        },
+        "state": {
+          "protocolVersion": "1.0",
+          "sampleRate": 48000,
+          "blockSize": 128,
+          "cursor": "2959360",
+          "state": "playing",
+          "latencyFrames": 600,
+          "contentEndFrame": "8557714",
+          "faulted": false
+        }
+      }
+    ],
+    "errors": [],
+    "audioSinks": [
+      {
+        "sink": {
+          "type": "none"
+        },
+        "state": "running"
+      }
+    ],
+    "disposed": true
+  },
+  "browserWatch": {
+    "validUpdate": true,
+    "syntaxFailureRetainsGraph": true,
+    "runtimeFailureRetainsGraph": true,
+    "recovery": true,
+    "diagnostics": {
+      "underruns": 0,
+      "bufferedFrames": 2048,
+      "sampleRate": 48000,
+      "running": true
+    },
+    "audioSinks": [
+      {
+        "sink": {
+          "type": "none"
+        },
+        "state": "running"
+      }
+    ]
+  },
+  "verification": {
+    "rustWorkspace": {
+      "passed": 467,
+      "failed": 0,
+      "ignoredBenchmarks": 1
+    },
+    "nativePanelWatch": {
+      "passed": true,
+      "syntaxFailureRetainsGraph": true,
+      "runtimeFailureRetainsGraph": true,
+      "pluginFailureRetainsGraph": true,
+      "invalidUiFallsBack": true,
+      "allWindowsRecover": true
+    },
+    "midiBoundary": {
+      "audioTracks": 17,
+      "audioMidiAssignments": 0,
+      "rawMidiExportError": "MidiChannelLimit",
+      "midiCopyExports": true
+    },
+    "testHarness": "Asynchronous compiler/CLI preparation; serial package and core/CLI/Wasm files; bounded integration/IPC timeouts; no assertions removed."
+  }
+}

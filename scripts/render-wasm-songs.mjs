@@ -3,6 +3,7 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { platform, arch, cpus } from "node:os";
 import { WasmEngine } from "../packages/web/dist/wasm.js";
+import { midiSnapshot } from "../examples/drum-machine/dist/full/midi-export.js";
 
 const root=resolve("target/examples/full-songs"), out=resolve("target/examples/wasm");
 await mkdir(out,{recursive:true});
@@ -21,8 +22,9 @@ for(const song of nativeReport.songs){
       assert.equal(info.sha256,sample.sha256);seen.add(sample.sha256);
     }
     const state=engine.compile(snapshot), frames=Math.round(song.durationSeconds*state.sampleRate);
-    // Exercise the busiest song region and include the C ABI drum path.
-    engine.transport({command:"play",frame:Math.round(48*60/song.bpm*state.sampleRate)});
+    // Exercise the first full drop and include the C ABI drum path.
+    const dropStartBar=song.sections.find(([name])=>/drop/i.test(name))?.[1]??0;
+    engine.transport({command:"play",frame:Math.round(dropStartBar*4*60/song.bpm*state.sampleRate)});
     for(let i=0;i<200;i++)engine.process();
     const memoryBefore=engine.memoryDiagnostics(), times=[];
     let peak=0;
@@ -35,7 +37,6 @@ for(const song of nativeReport.songs){
     const start=performance.now(),wav=engine.renderWav({frames,bitDepth:24,dither:true});
     const renderSeconds=(performance.now()-start)/1000;
     await writeFile(resolve(out,song.slug+".wav"),wav);
-    await writeFile(resolve(out,song.slug+".mid"),engine.exportMidi());
     const native=await readFile(resolve(root,song.slug+".wav"));assert.equal(wav.length,native.length);
     function pcm24(bytes,index){const v=bytes[index]|bytes[index+1]<<8|bytes[index+2]<<16;return (v&0x800000?v-0x1000000:v)/8388608;}
     let maxPcmDifference=0,square=0,fullPeak=0;
@@ -56,9 +57,12 @@ for(const song of nativeReport.songs){
     const item={title:song.title,slug:song.slug,seconds:frames/state.sampleRate,sampleRate:state.sampleRate,
       blockSize:state.blockSize,samples:seen.size,renderSeconds,realtimeMultiple:frames/state.sampleRate/renderSeconds,
       p95Ms:times[Math.floor(times.length*.95)],p99Ms:times[Math.floor(times.length*.99)],
-      processBlocks:times.length,memoryBefore,memoryAfter,processAllocations:0,processDeallocations:0,
+      processBlocks:times.length,processStartBar:dropStartBar,memoryBefore,memoryAfter,processAllocations:0,processDeallocations:0,
       peakDbfs:20*Math.log10(fullPeak),rmsDbfs:10*Math.log10(square/((wav.length-44)/3)),maxPcmDifference,sectionLevels};
     report.songs.push(item);console.log(JSON.stringify(item));
+    // MIDI channel sharing is an export concern; the PCM project remains unrestricted.
+    engine.compile(midiSnapshot(snapshot));
+    await writeFile(resolve(out,song.slug+".mid"),engine.exportMidi());
   }finally{engine.dispose();}
 }
 await writeFile(resolve(out,"report.json"),JSON.stringify(report,null,2)+"\n");

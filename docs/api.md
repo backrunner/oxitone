@@ -52,14 +52,31 @@ convenience and rejects values beyond JavaScript's safe-integer range.
 ```ts
 import { wavetable, sampler, slicer } from '@oxitone/core';
 
-const synth = wavetable({ oscA: { wave: 'saw', unison: 4, detune: 12 },
-  filter: { type: 'lowpass', cutoff: 3000 }, amp: { release: 0.2 } });
+const synth = wavetable({
+  oscA: { bank: 'analog', position: 0.35, octave: 1, unison: 7, detune: 18 },
+  oscB: { wave: 'sine', octave: 0, level: 0 }, // Silent FM source.
+  sub: { wave: 'triangle', octave: -1, level: 0.15 },
+  fm: 0.12, filter: { type: 'lowpass', cutoff: 6000 },
+  amp: { attack: 0.01, decay: 0.3, sustain: 0.65, release: 0.2, decayCurve: -0.4 },
+  lfo2: { shape: 'triangle', rateHz: 2 },
+  modulation: [{ source: 'lfo2', target: 'positionA', amount: 0.2 }],
+});
 const keys = sampler(sample, { rootKey: 60, loop: 'forward' });
 const chops = slicer(sample, { slices: { grid: 8 }, tempoSync: 'repitch' });
 channel.instrument = chops;
 ```
 
 These return declarative InstrumentRefs. Omitted controls use Rust defaults.
+Synth A/B each have octave (integer −4..4), additive pitch (−24..24 semitones),
+level, unison and stereo spread. Banks are `pair` (wave/morphTo), `analog`, `digital`
+and `vowel`; warp modes are `off`, `bend`, `asymmetric` and `sync`. FM and ring use
+B to modulate A before oscillator levels are applied. The centered Sub has its own
+octave and sine/triangle/saw/square/pulse/rounded waveform, independent of A/B tuning.
+Two LFOs, curved amp/filter/mod envelopes and four macros feed up to eight modulation
+routes. LFO rates use Hz. See the [synthesis contract](../.agents/docs/13-electronic-production.md)
+for ranges, modulation scaling and bandwidth limits. GPUI shows these source values
+and waveforms in Oscillators, Modulation and Matrix pages; code/watch controls them.
+
 Sampler resources must refer to a Sample in the target project. Slicer also accepts
 explicit `{start: {frames: bigint | number}, end?, rate?, level?, pan?, reverse?}`
 markers, beat markers or `{onset: {algorithm: 'onset-v1', sensitivity?}}`.
@@ -75,8 +92,20 @@ Channel controls are `level` (0..2), `pan` (-1..1), `swing` (0..1), `mute`, `sol
 EffectRefs contain `pluginId`, `pluginVersion`, declared `parameters`, and optional
 `mix` (0..1) / `bypass`. Built-ins are `oxitone.eq`, `limit`, `clipper`, `filter`,
 `phaser`, `reverb`, `compressor`, `delay`, `gate`, `chorus`, `saturator`, `utility`,
+`distortion`, `multiband`, `nonlinear-filter`, `compactor`, `multiband-dynamics`,
+`resonator`, `frequency-shifter`, `pitch-shifter`, `flanger`, `convolver`, `bitcrush`,
+`tape`, `spreader` and `limiter`,
 each at plugin version `1.0.0`. Parameter IDs are validated against the descriptor;
 unknown IDs fail compile. Inserting an effect changes the graph and requires update.
+
+`oxitone.distortion` offers soft/hard/fold/asymmetric modes (0..3), `driveDb`,
+`outputDb`, `toneHz` and `bias`, with 4× oversampling and 36 frames of compensated
+latency. `oxitone.multiband` has bounded upward/downward compression, `depth`, two
+crossovers and three band trims. Its broad complementary bands reconstruct the input
+at unity gain. Delay adds `pingPong` (0/1), `highpassHz` and `ducking` (0..1).
+Every insert retains the same host `mix` and `bypass` controls.
+The typed `effect()`/`convolver()` helpers and production processor controls are
+documented in [Electronic effects](effects.md).
 
 ## Samples and persistence
 
@@ -151,8 +180,12 @@ exports default to deterministic TPDF dither. Reports include duration, peak,
 true peak, LUFS and graph latency.
 
 `exportMidi({path, ...})` produces deterministic SMF Type 1 without importing MIDI.
-Unmapped audio parameters are reported as skipped automation. Tracks beyond the
-16-channel automatic allocation limit require explicit `midiChannel` assignments.
+Unmapped audio parameters are reported as skipped automation. The 16-channel limit
+applies only during MIDI export; arrangement, audio compilation, preview and WAV
+rendering do not require MIDI assignments. Exporting more note tracks requires
+explicit shared `midiChannel` assignments (1..16), otherwise `MidiChannelLimit` is
+returned. Apply those assignments to an export snapshot copy to keep the audio project
+independent; the full-song example does this in `full/midi-export.ts`.
 
 The CLI accepts a snapshot JSON file, portable project directory or its
 `oxitone.project.json`. Snapshot assets resolve relative to the input file; outputs

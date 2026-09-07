@@ -1,15 +1,4 @@
-Piano samples: VSCO 2 Community Edition, Upright Piano
-Sampled by Simon Dalzell / Ivy Audio.
-Distributed by Versilian Studios / Sam Gossner.
-Source: https://github.com/sgossner/VSCO-2-CE
-Pinned commit: 440300901dfe9275fd84e0b7763af1f8443ae62e
-License: CC0 1.0 Universal
-https://creativecommons.org/publicdomain/zero/1.0/
-
-Selected files, original paths, sizes and SHA-256 hashes: piano-assets.json.
-Keys/Upright Piano/MappingChart.txt defines 010=41, 012=45, ..., 034=89.
-The demo uses rr1 and three dynamics; the downloaded audio is unmodified.
-
-Original demo compositions: Rain on the Window; After the Horizon.
-All drum and synthesizer sounds are produced by the Oxitone native engine and
-its example drum plugin. No third-party recordings other than the CC0 piano.
+Original composition: After the Horizon / 地平线之后.
+All musical parts use Oxitone's native wavetable synth; percussion uses its
+Circuit electronic drum preset through the public C ABI (native and Wasm).
+No third-party recordings or commercial synthesizer presets are included.

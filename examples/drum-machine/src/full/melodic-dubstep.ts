@@ -1,91 +1,95 @@
-import { Project, wavetable } from "@oxitone/core";
-import type { InstrumentRef } from "@oxitone/protocol";
-import { drumInstrument } from "../song.js";
-import { uprightPiano } from "./piano.js";
-import { automation, bar, fx, note, preview, sections, type Hit } from "./shared.js";
+import { Project } from "@oxitone/core";
+import { bar, note, preview, sections, type Hit } from "./shared.js";
 import { horizonHook } from "./themes.js";
-import { skyChords, horizonLead, motionBass, skyPad, tapeGlass } from "./synth-patches.js";
+import { createMix } from "./mix.js";
+import { applyMotion } from "./motion.js";
+import { bassAnswer, dropHats, dropPhrase } from "./phrasing.js";
 
 export const dubstep = { slug: "after-the-horizon", title: "After the Horizon / 地平线之后", bpm: 140, bars: 104,
-  sections: [["First light / Piano", 0], ["Lift / Build I", 8], ["Open sky / Drop I", 24],
+  sections: [["First light / Crystal", 0], ["Lift / Build I", 8], ["Open sky / Drop I", 24],
     ["Weightless / Break", 40], ["Signal / Build II", 56], ["Beyond / Drop II", 72],
     ["Afterglow / Reprise", 88], ["Horizon / Outro", 96]] as const };
 
-/** 104 bars in F# minor; recurring piano theme becomes a layered, half-time drop. */
-export function createDubstepSong(piano: (project: Project) => InstrumentRef = uprightPiano): Project {
+/** 104 bars in F# minor; crystal hook, contrasted builds and layered half-time drops. */
+export function createDubstepSong(): Project {
   const p = new Project({ name: dubstep.title, seed: 2026090802 }); p.setTempo(dubstep.bpm);
-  const hall = p.addMixerChannel({ name: "Sky hall · return", inserts: [fx("reverb", { decaySeconds: 3.4, damping: 0.43, predelayMs: 28 })] });
-  const echo = p.addMixerChannel({ name: "Dotted echo · return", inserts: [fx("delay", { timeBeats: 0.75, feedback: 0.36 })] });
-  echo.send(hall, { ratio: 0.2 });
-  const keysBus = p.addMixerChannel({ name: "Upright piano" }); keysBus.send(hall, { ratio: 0.32 });
-  const kickBus = p.addMixerChannel({ name: "Kick · detector" });
-  const drumsBus = p.addMixerChannel({ name: "Snare / tops", inserts: [fx("saturator", { driveDb: 2, outputDb: -1 }, 0.2)] });
-  drumsBus.send(hall, { ratio: 0.08 });
-  const duck = () => fx("compressor", { thresholdDb: -27, ratio: 7, attackMs: 0.4, releaseMs: 180, kneeDb: 5 });
-  const synthBus = p.addMixerChannel({ name: "Wide chords · ducked", inserts: [duck()] });
-  const bassBus = p.addMixerChannel({ name: "Bass · ducked", inserts: [duck()] });
-  kickBus.send(synthBus, { ratio: 1, sidechain: true }); kickBus.send(bassBus, { ratio: 1, sidechain: true });
-  synthBus.send(hall, { ratio: 0.16 });
-  const leadBus = p.addMixerChannel({ name: "Horizon lead", inserts: [duck()] });
-  kickBus.send(leadBus, { ratio: 1, sidechain: true }); leadBus.send(echo, { ratio: 0.19 }); leadBus.send(hall, { ratio: 0.13 });
-  const keys = p.addChannel({ name: "VSCO upright · felt intro", instrument: piano(p), mixerChannelId: keysBus.id, level: 1.5 });
-  const kick = p.addChannel({ name: "Native kick", instrument: drumInstrument(), mixerChannelId: kickBus.id, level: 0.9 });
-  const drums = p.addChannel({ name: "Native snare / hats", instrument: drumInstrument(), mixerChannelId: drumsBus.id, level: 0.77 });
-  const saw = p.addChannel({ name: "Seven-voice supersaw", mixerChannelId: synthBus.id, level: 0.45,
-    instrument: skyChords(),
-    effectChain: [fx("saturator", { driveDb: 3, outputDb: -2 }, 0.18)] });
-  const sub = p.addChannel({ name: "Mono sub", mixerChannelId: bassBus.id, level: 0.48,
-    instrument: wavetable({ oscA: { wave: "sine" }, voiceMode: "mono",
-      filter: { cutoff: 240 }, amp: { attack: 0.006, decay: 0.1, sustain: 0.85, release: 0.06 } }) });
-  const growl = p.addChannel({ name: "Moving mid bass", mixerChannelId: bassBus.id, level: 0.24,
-    instrument: motionBass(),
-    effectChain: [fx("saturator", { driveDb: 8, outputDb: -5 }, 0.7)] });
-  const lead = p.addChannel({ name: "Horizon · morph lead", mixerChannelId: leadBus.id, level: 0.43,
-    instrument: horizonLead() });
-  const air = p.addChannel({ name: "Bloom pad / riser", mixerChannelId: synthBus.id, level: 0.1,
-    instrument: skyPad() });
-  const sparkle = p.addChannel({ name: "Prism · countermelody", mixerChannelId: leadBus.id, pan: -0.22, level: 0.16,
-    instrument: tapeGlass() });
-  const kt = p.addTrack("Piano · F#m9 / Dmaj9 / Aadd9 / E").use(keys), mt = p.addTrack("Piano · horizon theme").use(keys);
+  const mix = createMix(p);
+  const { keys, kick, drums, tops, saw, body, sub, growl, vowel, lead, air, sparkle, arp, lift, fall, impact,
+    pluck, reese, shimmer } = mix;
+  const kt = p.addTrack("Crystal · F#m9 / Dmaj9 / Aadd9 / E").use(keys), mt = p.addTrack("Crystal · horizon theme").use(keys);
   const kickT = p.addTrack("Kick").use(kick), dt = p.addTrack("Half-time snare / hats / rolls").use(drums);
-  kickT.midiChannel = 10; dt.midiChannel = 10;
   const ct = p.addTrack("Supersaw chords").use(saw), st = p.addTrack("Sub").use(sub);
   const wt = p.addTrack("Mid bass · syncopation").use(growl), lt = p.addTrack("Lead · horizon theme").use(lead);
   const at = p.addTrack("Bloom / build tension").use(air);
   const sparkT = p.addTrack("Drop II · answering phrase").use(sparkle);
+  const bodyT = p.addTrack("Chords · center body").use(body), vowelT = p.addTrack("Vowel bass · response").use(vowel);
+  const topT = p.addTrack("Metallic tops / shuffle").use(tops), arpT = p.addTrack("Orbit · pluck movement").use(arp);
+  const liftT = p.addTrack("Noise · build lifts").use(lift), fallT = p.addTrack("Noise · downlifters").use(fall);
+  const impactT = p.addTrack("Drop / phrase impacts").use(impact);
+  const pluckT = p.addTrack("Ember · chord pluck answers").use(pluck);
+  const reeseT = p.addTrack("Undertow · bridge bassline").use(reese);
+  const haloT = p.addTrack("Halo · final chorus air").use(shimmer);
+  const duckHits: number[] = [], chordAttacks: number[] = [];
   const chords = [[54, 61, 64, 68], [50, 57, 61, 64], [57, 61, 64, 71], [52, 59, 64, 68]];
   const roots = [30, 26, 33, 28];
   for (let b = 0; b < dubstep.bars; b++) {
     const drop = b >= 24 && b < 40 || b >= 72 && b < 88;
     const build = b >= 8 && b < 24 || b >= 56 && b < 72;
     const buildPos = b < 24 ? b - 8 : b - 56;
-    const end = b >= 96, final = b === 103, second = b >= 72;
+    const end = b >= 96, final = b === 103;
     const index = b >= 102 ? 0 : Math.floor(b / 2) % 4, chord = chords[index]!, root = roots[index]!;
-    if (!drop || b % 2 === 0) bar(kt, b, chord.map((pitch, i) => note(pitch,
-      i * 0.018, final ? 2.5 : 2.9, drop ? 0.66 : 0.46 + i * 0.035)), "Open piano voicing");
+    if (!drop && !(build && buildPos >= 12)) bar(kt, b, chord.map((pitch, i) => note(pitch,
+      i * 0.018, final ? 2.5 : 2.9, 0.56 + i * 0.035)), "Crystal · open voicing");
     if (!drop && (!build || buildPos < 8) && b < 102) {
       const theme = horizonHook(b, -1).map(hit => ({ ...hit, velocity: hit.velocity * (end ? 0.6 : 0.82) }));
       bar(mt, b, b >= 40 && b < 48 ? theme.slice(0, b % 2 ? 1 : 2) : theme,
-        b >= 40 && b < 48 ? "Horizon · distant fragment" : "Horizon · eight-bar piano theme");
+        b >= 40 && b < 48 ? "Horizon · distant fragment" : "Horizon · eight-bar crystal theme");
     }
     if (b === 102) bar(mt, b, [note(78, 0, 3.4, 0.56)], "F# · home");
     if (drop) {
-      const rhythm = second && b >= 80 ? [0, 1.5, 3] : b % 2 ? [0, 0.75, 1.5, 2.5, 3.25] : [0, 1.5, 2.5, 3.5];
+      const { accents: rhythm, open, second, position, turn } = dropPhrase(b);
+      chordAttacks.push(...rhythm.map(t => b * 4 + t));
       bar(ct, b, rhythm.flatMap((t, i) => chord.slice(1).map(pitch => note(pitch + 12, t,
-        second && b >= 80 ? 0.8 : i === 0 ? 0.62 : 0.38, 0.75))), second && b >= 80 ? "Sky · open final chorus" : "Sky chords");
-      bar(st, b, rhythm.map(t => note(root, t, t === 0 ? 1.2 : 0.42, 0.9)), "Sub anchor");
-      bar(wt, b, [0.75, 1.5, 3, 3.5].map((t, i) => note(root + 12 + (i === 3 && second ? 12 : 0), t, 0.32, 0.8)), "Bass answer");
+        open ? 0.85 : i === 0 ? 0.62 : 0.34, i === 0 ? 0.8 : 0.7))), open ? "Sky · open final chorus" : "Sky · rhythmic bloom");
+      bar(st, b, [note(root, 0, 1.35, 0.88), note(root, 1.5, 0.83, 0.82),
+        note(root, 2.5, turn ? 0.7 : 1.27, 0.85)], "Sub · connected foundation");
+      bar(bodyT, b, rhythm.flatMap(t => chord.slice(0, 3).map(pitch => note(pitch, t, open ? 0.7 : 0.35, 0.66))), "Sky · chord foundation");
+      bar(wt, b, bassAnswer(root, b), turn ? "Signal · turnaround" : "Signal · bass answer");
       bar(lt, b, horizonHook(b), second ? "Horizon · final chorus" : "Horizon · drop hook");
       if (second && b % 2) bar(sparkT, b,
-        [note(chord[2]! + 12, 0.125, 0.6, 0.55), note(chord[1]! + 24, 1.75, 0.7, 0.5), note(chord[2]! + 12, 3.125, 0.65, 0.55)], "Prism · answer");
-      if (second && b % 2) bar(kt, b, [note(chord[2]! + 24, 1.25, 0.4, 0.7), note(chord[1]! + 24, 3, 0.65, 0.66)], "Piano sparkle");
+        [note(chord[2]! + 12, 1.75, 0.6, 0.5), note(chord[1]! + 24, 3.0, 0.24, 0.46)], "Prism · answer");
+      if (b % 2 && (position >= 4 || second)) bar(vowelT, b,
+        [note(root + 12, 1.125, 0.22, 0.72), note(root + 24, 3.125, 0.22, 0.76)], "Formant · call / response");
+      if (position >= 4 && b % 4 === 2) bar(arpT, b, [0.25, 1.25, 2.75, 3.75].map((t, i) =>
+        note(chord[1 + i % 3]! + 24, t, 0.16, 0.46)), "Orbit · phrase sparkle");
+      if (position >= 4 && !turn) bar(pluckT, b, [0.5, 2.75].flatMap(t =>
+        chord.slice(1).map(pitch => note(pitch, t, 0.2, 0.64))), "Ember · offbeat chord answer");
+      if (open) bar(haloT, b, [note(chord[2]! + 24, 0.25, 3.2, 0.5)], "Halo · final lift");
     }
-    if ((build || drop || b >= 44 && b < 56 || b >= 88 && b < 100) && !final) {
-      bar(at, b, chord.slice(1).map(pitch => note(pitch + 12, 0, 3.8, build ? 0.42 + buildPos * 0.018 : 0.55)), "Bloom");
+    if ((build || drop && b % 8 >= 4 || b >= 44 && b < 56 || b >= 88 && b < 100) && !final) {
+      bar(at, b, chord.slice(1).map(pitch => note(pitch + 12, 0, build && buildPos === 15 ? 3.35 : 3.8,
+        build ? 0.38 + buildPos * 0.014 : 0.45)), "Bloom · widening horizon");
     }
+    if (b >= 48 && b < 56 || build && buildPos < 8 || b >= 88 && b < 96) {
+      bar(reeseT, b, [note(root + 12, 0, 1.8, 0.62), note(root + 12, 2.5, 1.25, 0.54)], "Undertow · rolling bridge");
+      if (b % 2) bar(pluckT, b, [0.75, 2.5, 3.25].flatMap(t =>
+        chord.slice(1).map(pitch => note(pitch, t, 0.18, 0.5))), "Ember · bridge pulse");
+    }
+    if (build && buildPos >= 4) {
+      bar(liftT, b, [note(72, 0, buildPos === 15 ? 3.25 : 3.9, 0.08 + buildPos * 0.026)], "Air · rising tension");
+      if (buildPos < 15) bar(arpT, b, Array.from({ length: buildPos >= 12 ? 16 : 8 }, (_,i) =>
+        note(chord[1 + i % 3]! + 12, i * (buildPos >= 12 ? 0.25 : 0.5), 0.17, 0.35 + buildPos * 0.015)), "Orbit · accelerating lift");
+    }
+    if ([24, 32, 40, 72, 80, 88, 96].includes(b)) {
+      bar(fallT, b, [note(72, 0, 2.2, b === 40 || b === 96 ? 0.3 : 0.58)], "Air · transition wash");
+      bar(impactT, b, [note(46, 0, 0.1, b === 40 || b === 96 ? 0.45 : 0.9)], "Impact · phrase arrival");
+    }
+    if (b >= 48 && b < 56 || b >= 88 && b < 100) bar(st, b,
+      [note(root, 0, 2.9, b >= 96 ? 0.35 : 0.52)], "Sub · reprise foundation");
     if (drop || build || b >= 88 && b < 96) {
-      const ks = drop ? [0, 1.5, ...(b % 2 ? [3.25] : [])] : build && buildPos >= 12 ? [0, 1, 2, 3] : [0];
+      const ks = drop ? dropPhrase(b).kicks : build && buildPos >= 12 ? [0, 1, 2, 3] : [0];
       if (!(build && buildPos === 15)) bar(kickT, b, ks.map(t => note(36, t, 0.08, drop ? 1 : 0.68)), "Kick / pulse");
+      if (drop) duckHits.push(...ks.map(t => b * 4 + t), b * 4 + 2);
       const hits: Hit[] = [];
       if (build && buildPos >= 8) {
         const step = buildPos >= 14 ? 0.25 : buildPos >= 12 ? 0.5 : 1;
@@ -93,25 +97,18 @@ export function createDubstepSong(piano: (project: Project) => InstrumentRef = u
           0.3 + buildPos * 0.016 + (t % 1 === 0 ? 0.08 : 0)));
       } else hits.push(note(38, 2, 0.1, drop ? 0.95 : 0.6));
       if (!(build && buildPos === 15)) {
-        for (let i = 0; i < 8; i++) hits.push(note(i === 7 && b % 2 ? 46 : 42, i * 0.5, 0.05, i % 2 ? 0.36 : 0.5));
+        const hats = drop ? dropHats(b) : Array.from({ length: build && buildPos < 8 ? 4 : 8 }, (_, i) =>
+          note(42, i * (build && buildPos < 8 ? 1 : 0.5) + 0.02, 0.05, i % 2 ? 0.4 : 0.3));
+        bar(topT, b, hats, "Metal · offbeat / shuffle");
       }
-      if (drop && b % 4 === 3) for (const t of [3.25, 3.5, 3.75]) hits.push(note(38, t, 0.06, 0.38 + (t - 3) * 0.35));
+      if (drop && b % 4 === 3) for (const t of b % 8 === 7 ? [3, 3.5, 3.75] : [3.75])
+        hits.push(note(38, t, 0.06, 0.32 + (t - 3) * 0.3));
       bar(dt, b, hits, build ? "Build · snare acceleration" : "Half-time / turn");
     }
   }
-  growl.automate("oscA.position", automation.polyline([
-    { beat: 0, value: 0.32 }, { beat: 96, value: 0.4 }, { beat: 160, value: 0.55 },
-    { beat: 288, value: 0.52 }, { beat: 352, value: 0.65 },
-  ]));
-  air.automate("filter.cutoff", automation.polyline([
-    { beat: 0, value: 0.48 }, { beat: 32, value: 0.46 }, { beat: 95, value: 0.93 }, { beat: 96, value: 0.62 },
-    { beat: 160, value: 0.44 }, { beat: 224, value: 0.46 }, { beat: 287, value: 0.96 }, { beat: 288, value: 0.64 },
-    { beat: 352, value: 0.56 }, { beat: 416, value: 0.38 },
-  ]));
-  p.master.inserts = [fx("utility", { gainDb: 10 }),
-    fx("compressor", { thresholdDb: -12, ratio: 1.6, attackMs: 20, releaseMs: 180, kneeDb: 4 }),
-    fx("limit", { ceilingDb: -1.5, releaseMs: 90 })];
-  sections(p, dubstep.sections, dubstep.bars, 1);
+  applyMotion(mix, duckHits, chordAttacks);
+  // Final fader trim is included in offline true-peak validation, after the insert ceiling.
+  sections(p, dubstep.sections, dubstep.bars, 1.2);
   return p;
 }
 

@@ -1,0 +1,475 @@
+{
+  "schema": "oxitone-song-production-v1",
+  "date": "2026-09-08",
+  "baseCommit": "e45ba6f",
+  "machine": {
+    "cpu": "Apple M4",
+    "arch": "arm64",
+    "os": "27.0",
+    "node": "v26.5.0",
+    "rustc": "rustc 1.98.0 (88d9e12ae 2026-08-18) (Homebrew)\nbinary: rustc\ncommit-hash: 88d9e12ae178fab0fb5cc050a94da85685d449ea\ncommit-date: 2026-08-18\nhost: aarch64-apple-darwin\nrelease: 1.98.0\nLLVM version: 22.1.8"
+  },
+  "scope": "Preserve the eight-bar lead; develop all-synth arrangement, timbres, mix and master. Offline/no-device verification only.",
+  "commands": [
+    "pnpm --filter @oxitone/example-drums build",
+    "pnpm example:songs:prepare",
+    "pnpm example:songs",
+    "pnpm example:songs:wasm",
+    "cargo run --release -p oxitone-bench --bin song-profile -- target/examples/full-songs/after-the-horizon.snapshot.json target/examples/full-songs/drums.json 24 80",
+    "pnpm lint",
+    "pnpm typecheck",
+    "cargo fmt --all --check",
+    "cargo test --workspace",
+    "pnpm --filter @oxitone/example-drums test",
+    "OXITONE_WEB_PORT=4197 node examples/web/scripts/dev.mjs",
+    "OXITONE_WEB_PORT=4197 OXITONE_WEB_FULL_SONGS=1 node examples/web/scripts/smoke.mjs"
+  ],
+  "checks": {
+    "lint": "passed",
+    "typecheck": "passed",
+    "cargoFmt": "passed",
+    "rust": {
+      "passed": 486,
+      "failed": 0,
+      "ignored": 1
+    },
+    "exampleTests": 6,
+    "browserErrors": []
+  },
+  "baseline": {
+    "kind": "Unedited demo rendered with current effects fixes",
+    "integratedLufs": -15.635677922343751,
+    "truePeakDbfs": -2.969932378903093
+  },
+  "native": {
+    "title": "After the Horizon / 地平线之后",
+    "bpm": 140,
+    "bars": 104,
+    "seconds": 181.28570833333333,
+    "tracks": 20,
+    "instrumentChannels": 19,
+    "notes": 3234,
+    "sampleRate": 48000,
+    "blockSize": 128,
+    "sha256": "88d1b5ad0ce8325d458b714213c6670412e59f8df13a56f79ef200d80abb79db",
+    "snapshotSha256": "d736417f8c095895fee2135dd6df2a005ab26cf5aa52fbb7da9a863e5aed1f69",
+    "integratedLufs": -13.332605077564295,
+    "peakDbfs": -2.495291524485915,
+    "truePeakDbfs": -2.419247535898814,
+    "renderSeconds": 90.269029417,
+    "realtimeMultiple": 2.0082825245440543,
+    "pluginFaults": [
+      0
+    ],
+    "sectionLevels": [
+      {
+        "name": "First light / Crystal",
+        "startBar": 1,
+        "bars": 8,
+        "rmsDbfs": -18.090989132015537,
+        "peakDbfs": -3.3418166826599864,
+        "crestDb": 14.74917244935555,
+        "dc": -0.0000065427012413452496,
+        "stereoCorrelation": 0.6109561563852746,
+        "lowSideToMidDb": -6.163340603906566,
+        "bandRmsDbfs": {
+          "below150": -26.059498468443984,
+          "150to1000": -21.1708941509022,
+          "1000to6000": -27.403116320087094,
+          "above6000": -42.7392260065682
+        }
+      },
+      {
+        "name": "Lift / Build I",
+        "startBar": 9,
+        "bars": 16,
+        "rmsDbfs": -17.12476769224445,
+        "peakDbfs": -2.81377266068822,
+        "crestDb": 14.310995031556232,
+        "dc": 0.00000536956489512393,
+        "stereoCorrelation": 0.7716365726275771,
+        "lowSideToMidDb": -12.00007089714626,
+        "bandRmsDbfs": {
+          "below150": -22.943050950241556,
+          "150to1000": -22.034881480853766,
+          "1000to6000": -26.854451884926576,
+          "above6000": -28.78734293821622
+        }
+      },
+      {
+        "name": "Open sky / Drop I",
+        "startBar": 25,
+        "bars": 16,
+        "rmsDbfs": -13.513412014374811,
+        "peakDbfs": -2.7802898331645904,
+        "crestDb": 10.73312218121022,
+        "dc": 0.0003656309644570143,
+        "stereoCorrelation": 0.8521600618594484,
+        "lowSideToMidDb": -25.064380579295996,
+        "bandRmsDbfs": {
+          "below150": -16.04038431735712,
+          "150to1000": -21.67195700479084,
+          "1000to6000": -22.5504890739302,
+          "above6000": -29.398369223737774
+        }
+      },
+      {
+        "name": "Weightless / Break",
+        "startBar": 41,
+        "bars": 16,
+        "rmsDbfs": -16.25100189520863,
+        "peakDbfs": -3.295481470326354,
+        "crestDb": 12.955520424882277,
+        "dc": -0.00005851502858282003,
+        "stereoCorrelation": 0.7570042365767503,
+        "lowSideToMidDb": -13.861064423239235,
+        "bandRmsDbfs": {
+          "below150": -19.712578127019974,
+          "150to1000": -21.197660341420036,
+          "1000to6000": -27.356824463442152,
+          "above6000": -42.14091485263393
+        }
+      },
+      {
+        "name": "Signal / Build II",
+        "startBar": 57,
+        "bars": 16,
+        "rmsDbfs": -17.128407974556954,
+        "peakDbfs": -2.495290834470219,
+        "crestDb": 14.633117140086735,
+        "dc": 0.0000013848863872157083,
+        "stereoCorrelation": 0.7708701616694275,
+        "lowSideToMidDb": -12.007928453060913,
+        "bandRmsDbfs": {
+          "below150": -22.93950684698714,
+          "150to1000": -22.036279117613198,
+          "1000to6000": -26.849241215713725,
+          "above6000": -28.81919794276975
+        }
+      },
+      {
+        "name": "Beyond / Drop II",
+        "startBar": 73,
+        "bars": 16,
+        "rmsDbfs": -13.453238197364279,
+        "peakDbfs": -3.0249183743849652,
+        "crestDb": 10.428319822979313,
+        "dc": 0.0003850052303410572,
+        "stereoCorrelation": 0.8476266450575204,
+        "lowSideToMidDb": -24.92906610111845,
+        "bandRmsDbfs": {
+          "below150": -16.10368620962887,
+          "150to1000": -21.44389543873448,
+          "1000to6000": -22.304523343300065,
+          "above6000": -29.35783719979874
+        }
+      },
+      {
+        "name": "Afterglow / Reprise",
+        "startBar": 89,
+        "bars": 8,
+        "rmsDbfs": -14.794279853853915,
+        "peakDbfs": -3.3386164543103884,
+        "crestDb": 11.455663399543527,
+        "dc": 0.00010805862517450793,
+        "stereoCorrelation": 0.8092287790559539,
+        "lowSideToMidDb": -15.660404736794556,
+        "bandRmsDbfs": {
+          "below150": -17.639577571482953,
+          "150to1000": -20.471511884559742,
+          "1000to6000": -26.755544696728407,
+          "above6000": -34.44540013600906
+        }
+      },
+      {
+        "name": "Horizon / Outro",
+        "startBar": 97,
+        "bars": 8,
+        "rmsDbfs": -18.134880837420976,
+        "peakDbfs": -3.3412720738629713,
+        "crestDb": 14.793608763558005,
+        "dc": -0.000015765366383709036,
+        "stereoCorrelation": 0.7045589127020787,
+        "lowSideToMidDb": -11.964870220936996,
+        "bandRmsDbfs": {
+          "below150": -22.45108497323495,
+          "150to1000": -22.47909891108471,
+          "1000to6000": -28.660290301712745,
+          "above6000": -43.84216743776278
+        }
+      }
+    ],
+    "phraseRms": [
+      {
+        "startBar": 1,
+        "rmsDbfs": -18.757585965682438
+      },
+      {
+        "startBar": 5,
+        "rmsDbfs": -17.513224205488424
+      },
+      {
+        "startBar": 9,
+        "rmsDbfs": -17.02081765474489
+      },
+      {
+        "startBar": 13,
+        "rmsDbfs": -16.65760014130573
+      },
+      {
+        "startBar": 17,
+        "rmsDbfs": -18.796677612534182
+      },
+      {
+        "startBar": 21,
+        "rmsDbfs": -16.39955515952158
+      },
+      {
+        "startBar": 25,
+        "rmsDbfs": -13.51764995915346
+      },
+      {
+        "startBar": 29,
+        "rmsDbfs": -13.469513473435455
+      },
+      {
+        "startBar": 33,
+        "rmsDbfs": -13.59674644044321
+      },
+      {
+        "startBar": 37,
+        "rmsDbfs": -13.470965412132434
+      },
+      {
+        "startBar": 41,
+        "rmsDbfs": -19.936206985961046
+      },
+      {
+        "startBar": 45,
+        "rmsDbfs": -19.11279771172249
+      },
+      {
+        "startBar": 49,
+        "rmsDbfs": -14.54954964205041
+      },
+      {
+        "startBar": 53,
+        "rmsDbfs": -14.278286933281276
+      },
+      {
+        "startBar": 57,
+        "rmsDbfs": -17.046893569603622
+      },
+      {
+        "startBar": 61,
+        "rmsDbfs": -16.647046984329283
+      },
+      {
+        "startBar": 65,
+        "rmsDbfs": -18.777118865735854
+      },
+      {
+        "startBar": 69,
+        "rmsDbfs": -16.410596752170985
+      },
+      {
+        "startBar": 73,
+        "rmsDbfs": -13.570312328538346
+      },
+      {
+        "startBar": 77,
+        "rmsDbfs": -13.502733813914
+      },
+      {
+        "startBar": 81,
+        "rmsDbfs": -13.424784730002685
+      },
+      {
+        "startBar": 85,
+        "rmsDbfs": -13.319151625331408
+      },
+      {
+        "startBar": 89,
+        "rmsDbfs": -14.961034711900671
+      },
+      {
+        "startBar": 93,
+        "rmsDbfs": -14.63369178144754
+      },
+      {
+        "startBar": 97,
+        "rmsDbfs": -16.758002818248528
+      },
+      {
+        "startBar": 101,
+        "rmsDbfs": -20.162575662509887
+      }
+    ]
+  },
+  "nativeProcess": {
+    "snapshot": "target/examples/full-songs/after-the-horizon.snapshot.json",
+    "sampleRate": 48000,
+    "blockSize": 128,
+    "tracks": 20,
+    "instrumentChannels": 19,
+    "mixerBuses": 12,
+    "graphLatencyFrames": 1096,
+    "pluginFaults": 0,
+    "device": "offline memory buffers",
+    "callbackP99Ms": null,
+    "xruns": null,
+    "regions": [
+      {
+        "startBar": 24,
+        "warmupBlocks": 128,
+        "blocks": 4000,
+        "meanMs": 1.1754716432499996,
+        "p95Ms": 1.338833,
+        "p99Ms": 1.571375,
+        "maxMs": 4.792125,
+        "peak": 0.6884073615074158,
+        "deadlineMs": 2.6666666666666665,
+        "deadlineExceedances": 8
+      },
+      {
+        "startBar": 80,
+        "warmupBlocks": 128,
+        "blocks": 4000,
+        "meanMs": 1.3867544752500005,
+        "p95Ms": 2.0782079999999996,
+        "p99Ms": 2.826708,
+        "maxMs": 10.428458,
+        "peak": 0.6881124973297119,
+        "deadlineMs": 2.6666666666666665,
+        "deadlineExceedances": 63
+      }
+    ]
+  },
+  "wasm": {
+    "title": "After the Horizon / 地平线之后",
+    "slug": "after-the-horizon",
+    "seconds": 181.28570833333333,
+    "sampleRate": 48000,
+    "blockSize": 128,
+    "samples": 0,
+    "renderSeconds": 165.65187758300002,
+    "realtimeMultiple": 1.0943776248023507,
+    "p95Ms": 6.9007089999977325,
+    "p99Ms": 18.677458000000115,
+    "processBlocks": 4000,
+    "processStartBar": 24,
+    "memoryBefore": {
+      "bytes": 26345472,
+      "allocations": 115660,
+      "deallocations": 82511
+    },
+    "memoryAfter": {
+      "bytes": 26345472,
+      "allocations": 115660,
+      "deallocations": 82511
+    },
+    "processAllocations": 0,
+    "processDeallocations": 0,
+    "peakDbfs": -2.4952922145016663,
+    "rmsDbfs": -15.549405679215411,
+    "maxPcmDifference": 4.76837158203125e-7,
+    "sectionLevels": [
+      {
+        "name": "First light / Crystal",
+        "rmsDbfs": -18.0909891296087
+      },
+      {
+        "name": "Lift / Build I",
+        "rmsDbfs": -17.12476769582797
+      },
+      {
+        "name": "Open sky / Drop I",
+        "rmsDbfs": -13.513412066321589
+      },
+      {
+        "name": "Weightless / Break",
+        "rmsDbfs": -16.251001895083135
+      },
+      {
+        "name": "Signal / Build II",
+        "rmsDbfs": -17.128407963746458
+      },
+      {
+        "name": "Beyond / Drop II",
+        "rmsDbfs": -13.453238157792311
+      },
+      {
+        "name": "Afterglow / Reprise",
+        "rmsDbfs": -14.794279852054217
+      },
+      {
+        "name": "Horizon / Outro",
+        "rmsDbfs": -18.134880846346935
+      }
+    ]
+  },
+  "browser": {
+    "browser": "153.0.8010.12",
+    "songs": [
+      {
+        "song": "glass",
+        "peak": 0.14722950756549835,
+        "rms": 0.035425749396754684,
+        "diagnostics": {
+          "underruns": 0,
+          "bufferedFrames": 1792,
+          "sampleRate": 48000,
+          "running": true
+        },
+        "state": {
+          "protocolVersion": "1.0",
+          "sampleRate": 48000,
+          "blockSize": 128,
+          "cursor": "75264",
+          "state": "playing",
+          "latencyFrames": 264,
+          "contentEndFrame": "1843200",
+          "faulted": false
+        }
+      },
+      {
+        "song": "after-the-horizon",
+        "peak": 0.6555389165878296,
+        "rms": 0.2084590451625351,
+        "diagnostics": {
+          "underruns": 0,
+          "bufferedFrames": 1792,
+          "sampleRate": 48000,
+          "running": true
+        },
+        "state": {
+          "protocolVersion": "1.0",
+          "sampleRate": 48000,
+          "blockSize": 128,
+          "cursor": "2957312",
+          "state": "playing",
+          "latencyFrames": 1096,
+          "contentEndFrame": "8557714",
+          "faulted": false
+        }
+      }
+    ],
+    "errors": [],
+    "audioSinks": [
+      {
+        "sink": {
+          "type": "none"
+        },
+        "state": "running"
+      }
+    ],
+    "disposed": true
+  },
+  "limitations": [
+    "No system audio devices were opened; callback timings and xruns were not measured.",
+    "Native graph regions recorded 8/63 deadline exceedances; final chorus process p99=2.827 ms exceeds the 2.667 ms block period. Wasm p99=18.677 ms also exceeds it. Sustained realtime performance acceptance remains open.",
+    "Timing is host-load-sensitive and is reported for this run, not as a stable throughput guarantee. Full renders and process timing measure different paths.",
+    "Section spectral bands use overlapping first-order filters; low side/mid is a broad mono compatibility indicator.",
+    "Post-insert master fader trim is included in exported true peak. Loudness/finite PCM/parity do not prove subjective commercial-release quality."
+  ]
+}

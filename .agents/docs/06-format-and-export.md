@@ -100,6 +100,10 @@ prepare 资源查找。缓存导入后可删除源文件，保存/移动/恢复�
 
 MIDI 只有 16 个 channel，分配规则如下：
 
+这是 MIDI 导出格式的约束，不限制正常工程的 Track 数量、音频编译、播放、WAV 或 GPUI
+预览。未设置 midiChannel 的工程可以有超过 16 条音符轨；只有调用 MIDI exporter 才
+执行以下分配。可在导出专用快照副本设置映射，不应为了 MIDI 改写用于播放的工程。
+
 独立 Track tempo 不写成第二条 conductor 时钟：每个局部 note-on/off 先按静态 BPM
 换算为秒，再经全局有效 tempo map/lane 逆变换成 Project beat，最后转 tick。
 未指定 override 的 Track 仍直接用原有有理 beat。两者共用 conductor；连续 tempo

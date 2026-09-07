@@ -7,7 +7,7 @@
 </style></head><body>
 <header><span class="brand">OXITONE</span><span class="badge">Wasm / Web Audio</span></header>
 <h1>The same engine.<br>A new place to listen.</h1><p>Synthesizers, drums and effects rendered by Rust. Composed in TypeScript.</p>
-<section class="panel"><div class="row"><button id="play">Play</button><button id="stop">Stop</button><select id="song"><option value="glass">Glass after rain · synth + drums</option value="rain-on-the-window">Rain on the window · full lofi + piano</option value="after-the-horizon">After the horizon · full melodic dubstep</option></select></div>
+<section class="panel"><div class="row"><button id="play">Play</button><button id="stop">Stop</button><select id="song"><option value="glass">Glass after rain · synth + drums</option><option value="after-the-horizon">After the horizon · full melodic dubstep</option></select></div>
 <canvas id="scope" width="1800" height="400" aria-label="Live output waveform"></canvas><input id="seek" type="range" min="0" max="1" value="0" aria-label="Playback position"><div class="row"><span id="metrics">Ready for audio</span><span id="clock">0.0 s</span></div></section>
 <div class="row controls"><button id="update">Update sound</button><button id="invalid">Test invalid update</button><button id="export">Download 8 s WAV</button></div>
 <footer><span id="status">Press Play to start · Space to play or pause · Drag the timeline to seek</span></footer>

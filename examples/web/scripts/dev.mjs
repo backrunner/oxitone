@@ -15,7 +15,7 @@ const watcher = await context({ ...options, plugins: [{ name: "project-watch", s
   });
 } }] });
 await watcher.watch();
-const songs = ["rain-on-the-window","after-the-horizon"];
+const songs = ["after-the-horizon"];
 for(const slug of songs) {
   try {
     const snapshot=JSON.parse(await readFile(resolve(root,"target/examples/full-songs",slug+".snapshot.json"),"utf8"));

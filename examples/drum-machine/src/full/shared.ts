@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Pattern, createAutomationNamespace, type Project, type Track } from "@oxitone/core";
 import { registerPluginOptionsSchema, type EffectRef } from "@oxitone/protocol";
-import { drumPanel, pianoPanel } from "../plugin-panels.js";
-import { outputRoot } from "./piano.js";
+import { drumPanel } from "../plugin-panels.js";
+import { outputRoot } from "./paths.js";
 
 export type Hit = { pitch: number; start: number; duration: number; velocity: number };
 export type Section = readonly [name: string, startBar: number];
@@ -28,5 +28,5 @@ export function drumRegistration() {
 }
 export function preview(project: Project): Project {
   project.registerPlugin(drumRegistration(), { allowPlugins: "any" });
-  return project.registerPluginUi(drumPanel).registerPluginUi(pianoPanel);
+  return project.registerPluginUi(drumPanel);
 }

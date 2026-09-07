@@ -8,6 +8,12 @@ conventional commits (`type(scope): description`).
 
 ### Added
 
+- Preserve the After the Horizon lead while developing a 20-track arrangement with
+  chord plucks, Reese bridge bass, progressive drop layers, harmonic halo and phrase
+  delay throws. New production processors shape timbres, drum room, buses and master.
+  Offline checks cover musical contrast, transient crest, mono bass and full native/Wasm
+  PCM parity; `song-profile` measures the actual graph without opening audio devices.
+
 - Wavetable morph targets/position, organ/glass cycles, unison start phase/spread,
   sine sub/noise layers and a note-triggered LFO with pitch/filter/position/amp routes.
   Native DSP keeps fixed voice state; neutral defaults preserve existing patches.
@@ -16,10 +22,21 @@ conventional commits (`type(scope): description`).
   Full-length demos now develop eight-bar hooks, richer synth layers and a distinct
   second dubstep drop with countermelody and a tonic ending.
 
-- Two full-length SDK compositions: 80 BPM lofi (3:03) and 140 BPM melodic dubstep
-  (3:01), with acoustic piano, native drum dylib, section markers, effect returns,
-  sidechain ducking, WAV/MIDI export and source-watched GPUI preview entries.
-  Explicit asset preparation pins and verifies the CC0 VSCO 2 CE upright samples.
+- Three-minute melodic dubstep composition with layered supersaws, FM/formant bass,
+  independent mono Sub, electronic drums, filtered/ducked returns and master processing.
+  Retired the lofi demo and removed the piano downloads from full-song preparation.
+- Independent A/B and Sub octave controls (−4…4), six Sub waves, A/B levels, three
+  eight-frame banks, warps, FM/ring, curved envelopes, two LFOs and an eight-slot matrix.
+  Preview exposes these source controls and visualizes Sub and prepared bank cycles.
+- Four-mode 4× distortion, three-band upward/downward dynamics, ping-pong delay,
+  feedback highpass and wet ducking; corrected the delay's stereo time smoother.
+- Full-song audio arrangement stays independent of MIDI channel allocation; only
+  the export snapshot assigns shared channels. Added a 17-track native regression.
+- Preview panel smoke labels deliberate failure injections and saves raw logs while
+  retaining nonzero exits for real failures. Native/drum tests prepare plugin binaries
+  asynchronously outside functional timeouts, avoiding compiler stalls and Cargo lock waits.
+  Workspace tests run packages in order, and core bounds native/file integration work
+  without launching concurrent test-file workers.
 - `multisampler()` authoring and native `oxitone.multisampler`: 1–256 disjoint key/
   velocity regions, per-region tuning/gain and shared ADSR/transpose/loop controls.
   Region lookup and 32 voices prepare off-thread; rendering, stealing and seek are

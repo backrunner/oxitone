@@ -66,9 +66,9 @@ pnpm example:web
 Open the displayed localhost URL and press Play. The browser demo includes synths,
 the same drum machine, effects, seek/pause, a live output scope, WAV download and
 source watch. Edit `examples/web/src/song.ts`; invalid updates retain the last good
-song. After `pnpm example:songs:prepare && pnpm example:songs`, both full songs and
-the CC0 upright piano are available in the browser; `pnpm example:songs:wasm`
-renders and compares their complete Wasm output under `target/examples/wasm`.
+song. After `pnpm example:songs:prepare && pnpm example:songs`, the three-minute
+all-synth melodic dubstep demo is available in the browser; `pnpm example:songs:wasm`
+renders and compares its complete Wasm output under `target/examples/wasm`.
 
 The GPUI viewer continues to use the native host:
 

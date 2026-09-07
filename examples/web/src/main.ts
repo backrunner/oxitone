@@ -5,7 +5,6 @@ const status=document.querySelector<HTMLElement>("#status")!, play=document.quer
 const seek=document.querySelector<HTMLInputElement>("#seek")!, select=document.querySelector<HTMLSelectElement>("#song")!;
 select.replaceChildren(...[
   ["glass", "Glass after rain · synth + drums"],
-  ["rain-on-the-window", "Rain on the window · full lofi + piano"],
   ["after-the-horizon", "After the horizon · full melodic dubstep"],
 ].map(([value, label]) => new Option(label!, value!)));
 const canvas=document.querySelector<HTMLCanvasElement>("#scope")!, ctx=canvas.getContext("2d")!;
@@ -19,12 +18,12 @@ async function load() {
   if(select.value==="glass") candidate=createSong(session.context.sampleRate);
   else {
     const response=await fetch(`/songs/${select.value}.snapshot.json`);
-    if(!response.ok)throw new Error("Run pnpm example:songs first to prepare the full songs and piano assets.");
+    if(!response.ok)throw new Error("Run pnpm example:songs first to render the full song.");
     const snapshot=await response.json() as ProjectSnapshot;
     snapshot.sampleRate=session.context.sampleRate;
     for(const sample of snapshot.samples){
       const asset=await fetch(`/assets/${sample.sha256}`);
-      if(!asset.ok)throw new Error("Piano asset unavailable");
+      if(!asset.ok)throw new Error("Sample asset unavailable");
       await session.importSample(new Uint8Array(await asset.arrayBuffer()),sample.format);
     }
     candidate=snapshot;

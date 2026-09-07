@@ -149,24 +149,27 @@ pnpm build:wasm
 pnpm --filter @oxitone/web test
 pnpm --filter @oxitone/example-web exec playwright install chromium
 # In a second terminal, while pnpm example:web is running:
-OXITONE_WEB_URL=http://127.0.0.1:4173 pnpm test:web
+pnpm test:web
 ```
+
+The smoke defaults to the dev server's port 4173. Set `OXITONE_WEB_PORT` or
+`OXITONE_WEB_URL` when using another port; CI passes its isolated port explicitly.
 
 Set `OXITONE_CHROME_PATH` to use an installed Chrome executable.
 Tests force a no-device AudioContext sink (`sinkId: {type: 'none'}`), verify it and
 also launch Chromium with `--mute-audio`. They fail if a no-device sink is unavailable;
 they never fall back to system output. DSP/worklet assertions inspect the real PCM
 before the silent sink. The interactive demo still plays only when you press Play.
-`OXITONE_WEB_FULL_SONGS=1` also exercises the two prepared full songs in the browser.
-After preparing and rendering the native full songs, `pnpm example:songs:wasm` uploads
-all 39 piano sources, renders both full arrangements, checks every section for sound,
+`OXITONE_WEB_FULL_SONGS=1` also exercises the prepared melodic dubstep song in the browser.
+After preparing and rendering the native song, `pnpm example:songs:wasm`
+renders the full all-synth arrangement, checks every section for sound,
 compares every PCM sample against native output, and records process p95/p99 and memory
 counters. Output/report files go into `target/examples/wasm`.
 
 ABI limits: 16 MiB JSON, 64 MiB per asset upload, 256 MiB PCM per in-memory WAV export,
 1 GiB maximum Wasm linear memory. Long exports can be streamed by a raw host using
-`process`; the convenience WAV API is bounded. The complete piano examples use about
-446–454 MiB of Wasm memory before export; desktop Chromium is the tested browser.
+`process`; the convenience WAV API is bounded. The current melodic dubstep song needs
+no sample uploads; desktop Chromium is the tested browser.
 Wasm traps/OOM poison the instance and require recreation; they are distinct from
 recoverable validation errors. Mobile, Safari/Firefox, background-tab scheduling,
 multi-hour playback and device-loopback latency remain unverified. No Wasm plugin

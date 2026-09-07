@@ -21,7 +21,9 @@ async function measure(){
   });
 }
 try{
-  await page.goto(process.env.OXITONE_WEB_URL??"http://127.0.0.1:4175");
+  const url=process.env.OXITONE_WEB_URL??`http://127.0.0.1:${process.env.OXITONE_WEB_PORT??4173}`;
+  console.log("[smoke] Web Audio at",url,"· no-device sink required; invalid-update rejection is intentional.");
+  await page.goto(url);
   assert(await page.evaluate(()=>crossOriginIsolated));
   await page.click("#play");
   await page.waitForFunction(()=>window.oxitone && document.querySelector("#play").textContent==="Pause");
@@ -40,10 +42,10 @@ try{
   await page.emulateMedia({colorScheme:"light"});
   await page.screenshot({path:new URL("web-audio-light.png",output).pathname});
   if(process.env.OXITONE_WEB_FULL_SONGS==="1"){
-    for(const slug of ["rain-on-the-window","after-the-horizon"]){
+    for(const slug of ["after-the-horizon"]){
       console.log("Loading",slug,await page.locator("#song option").evaluateAll(options=>options.map(option=>option.value)));
       await page.selectOption("#song",{value:slug});
-      await page.waitForFunction(slug=>window.oxitone?.project?.name?.startsWith(slug==="rain-on-the-window"?"Rain on the Window":"After the Horizon") &&
+      await page.waitForFunction(()=>window.oxitone?.project?.name?.startsWith("After the Horizon") &&
         document.querySelector("#status").textContent==="Ready · Rust engine",slug,{timeout:60000});
       await page.click("#play");
       await page.evaluate(()=>window.oxitone.session.seek(48000*60));

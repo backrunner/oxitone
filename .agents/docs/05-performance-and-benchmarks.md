@@ -15,6 +15,14 @@
 
 ## 必备 benchmark
 
+- `song-profile`：离线处理实际导出的 demo snapshot 与 hash-pinned 本地鼓机注册，
+  不创建音频设备。命令 `cargo run --release -p oxitone-bench --bin song-profile --
+  target/examples/full-songs/after-the-horizon.snapshot.json
+  target/examples/full-songs/drums.json 24 80`。每个零基 bar seek 后预热 128 blocks，
+  测 4000 blocks 的整图 process p95/p99/max、deadline exceedances 和插件 faults。
+  使用工程自身 sample rate/block size，包含 DSP/automation/PDC，排除文件写入与
+  compile；callback、CPU utilization、xrun 未测，不代替设备或 render-ahead 验收。
+
 - `effects/electronic`: 26 种内置中的电子制作/动态效果，48 kHz/stereo/128 frames，
   continuous tone 与反复衰减语料；Criterion 测平均 DSP 成本。
   `cargo run --release -p oxitone-bench --bin effects-profile` 另测全部 26 种效果及

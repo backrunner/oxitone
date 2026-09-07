@@ -1,4 +1,4 @@
-# 计划与实现核对（更新至 2026-09-07）
+# 计划与实现核对（更新至 2026-09-08）
 
 最初以 `9423ad3` 为核对基线；下表更新为当前实现，后文保留各阶段证据。
 提交继续使用 `BackRunner <dev@backrunner.top>` 与 `type(scope): description`。
@@ -12,8 +12,8 @@
 | --- | --- | --- |
 | M0 工程与协议 | pnpm/Cargo workspace、版本协议、canonical fixtures、N-API smoke tests、macOS arm64/x64 CI（locked install/build/schema/tests/examples/bench） | 远端 CI 首跑尚无记录；最低 macOS 13 runtime 验收仍待完成 |
 | M1 时间轴/MIDI | Project/Track/Pattern/Clip、Chord/Arp、tempo/time-signature、Track tempo/enabled/midiChannel、确定性 SMF writer 与边界测试 | 当前已识别的 authoring 缺口已关闭；持续维护确定性/边界回归 |
-| M2 音源/采样 | Rust synth/Sampler/Multisampler/Slicer、解码/编辑/SRC、SampleClip stretch/repitch、C ABI、TS Sample/Clip/fit 和四种内置音源入口、缓存/provenance；Slicer repitch tempo map/lane 跟随；CC0 钢琴 demo | 当前已识别的功能缺口已关闭；全规格 golden 和发布环境验证继续追踪 |
-| M3 Mixer/Automation/导出 | TS mixer/insert authoring，Rust mixer/PDC/12 effects、完整 insert 自动化/host 参数路径、tempo bake、WAV/stem/loudness 与回归测试 | 全规格 golden/PDC/export 的自动化发布门禁仍需建立和复核 |
+| M2 音源/采样 | Rust synth/Sampler/Multisampler/Slicer、解码/编辑/SRC、SampleClip stretch/repitch、C ABI、TS Sample/Clip/fit 和四种内置音源入口、缓存/provenance；多 bank/warp/FM、双 LFO/矩阵、独立 Sub/八度与电子鼓机 | 当前已识别的功能缺口已关闭；全规格 golden 和发布环境验证继续追踪 |
+| M3 Mixer/Automation/导出 | TS mixer/insert authoring，Rust mixer/PDC/26 effects（含非线性滤波、多段动态、卷积、母带 limiter）、完整 insert 自动化/host 参数路径、tempo bake、WAV/stem/loudness 与回归测试 | 全规格 golden/PDC/export 的自动化发布门禁仍需建立和复核 |
 | M4 实时与设备 | CoreAudio HAL、render-ahead/direct、transport/loop、设备适配/诊断、Session 换图及 bar/beat/marker/timecode 入口、换图回收与模拟设备测试 | 修正循环负载后的 10/60 分钟 soak、真实设备切换/拔插和 callback 指标仍需验收 |
 | M5 npm/DX/插件 | 统一 `oxitone` authoring/native/sample 入口，Project/Session 动态插件注册，descriptor 查询，instrument/effect/Channel preset；CLI、便携工程与有声示例 | npm 平台包/发布/签名公证、干净安装验收和逐节点 deadline watchdog |
 | M6 Preview | runner/watch、带版本 IPC、GPUI arrangement/piano/channel rack/mixer/scopes/transport、原生换图与错误恢复、插件多窗口与声明式原生布局/固定 Mix、CLI preview、unsigned 开发 app bundle | 完整物理交互验收、独立 NSView companion/effective 参数遥测、正式 npm 平台包、签名分发及大工程虚拟列表继续追踪 |
@@ -24,7 +24,56 @@
 
 ## 审查与性能记录的解释
 
-合成器、可视化与旋律发展（2026-09-07）：
+当前 demo 编曲与混音（2026-09-08，效果器完善之后）：
+
+- 原八小节主旋律在两个 Drop 的音高、节奏、时值与力度保持一致。工程为 20 轨、19
+  instrument channels、3234 notes、104 bars/140 BPM；新增 chord pluck、Reese bridge
+  bass 与 final halo，分层进入、句尾留空、FM/formant 交替、不同起落包络和 delay throws。
+- 精选新增效果器用于音色/总线/空间与母带；没有增加采样依赖，MIDI 分配仅在导出副本。
+- 最终离线 native 全曲 181.286 s、−13.33 LUFS、−2.42 dBTP；Drop crest 10.43…10.73 dB，
+  low side/mid <−24.9 dB，Build→Drop RMS 增幅 >3.6 dB。Wasm 全曲最大 PCM 差 4.77e−7，
+  4000 blocks 的 allocations/deallocations/26,345,472-byte memory 均不增长。
+- Native 完整导出 2.008×、Wasm 1.094× realtime。实际图离线 process p99 为
+  1.57/2.83 ms（Drop I/final chorus），Wasm Drop I 此次为 18.68 ms；存在 deadline
+  exceedances，实时性能验收仍未通过。没有打开系统音频设备，callback/xrun 未测。
+- 可复现命令、完整参数快照 hash、环境和测量见
+  [新版归档](../../benchmarks/results/2026-09-08-horizon-arrangement.json)。
+
+历史电子合成、旧版全曲和 smoke 修正（2026-09-07…08，以下音乐指标已被新版取代）：
+
+- Wavetable 保留原 46 个参数索引，扩展为 111 个：A/B 独立 octave/level、六种 Sub
+  波形及独立 octave、三组八帧 bank、warp/FM/ring、双 LFO、曲线 ADSR、四个 macro 和
+  八条固定矩阵路由。TS/Rust/GPUI 合约、共享波形可视化与三页布局同步；详见
+  [电子合成规格](13-electronic-production.md)。
+- 新增 4× 过采样失真与三段上下行动态，delay 增加 ping-pong/高通/ducking，并修正
+  stereo time smoother 每声道推进导致的时间偏差；鼓机扩展调音、瞬态与分音色衰减。
+- Lofi、钢琴 demo 和下载准备流程已移除；Multisampler SDK 能力保留。Melodic Dubstep
+  为全合成 17 轨、104 bars/140 BPM，包含两次不同的 drop、独立 sub/mid/vowel bass、
+  supersaw 和弦、主题/回答、过渡和明确的轨道/总线/母带效果链。
+- 工程编译、音频与预览不受 MIDI 16-channel 限制；demo 编曲不分配 MIDI 通道，只有
+  导出副本共享通道。集成测试覆盖 17 轨编译成功、原快照 MIDI 导出报错、副本导出成功。
+- Panel watch smoke 有意注入 syntax/runtime/plugin/layout 错误，检验 last-good 与多窗口
+  恢复；默认显示分阶段结果，原始日志写入 target，`--verbose` 可展开。真实失败仍退出
+  非零并显示日志。原生 C fixture 与动态鼓机冷构建放入异步 setup，避免同步编译阻塞
+  Vitest RPC 或 Cargo 锁等待占用功能测试预算；C fixture 同一变体只构建一次。
+  TS workspace 按包顺序测试，core/CLI/Wasm 串行文件并使用 30 秒默认预算，避免大量
+  native 波表 prepare/离线导出争用资源；CLI 子进程异步执行，IPC 超时立即关闭失效连接，
+  清理异常不覆盖原始失败且保证关闭 viewer。不将测试超时预算用于实时性能达标判定。
+- `cargo fmt --all --check` 与 Rust workspace 467 tests 通过（另 1 个显式 benchmark
+  ignored）。最终 native 全曲 181.286 s、−14.24 LUFS、−2.51 dBTP，3246 notes、17
+  note tracks，所有段落有声，动态鼓机 faults=0，MIDI 副本成功导出且工程无 MIDI 分配。
+- 完整 Wasm 导出逐样本最大差 4.77e−7；4000 个 Drop 处理块保持 18,808,832 bytes，
+  allocations/frees/growth 均为 0。Wasmtime 48.0.0 的 1000 块/内存 WAV 检查同样通过。
+  Chromium 153 的默认工程/全曲 Drop/代码 watch 短测均使用 sink=none，errors/underruns=0。
+  这些短测不代替持续负载验收；本次负载下 Wasm process p99=13.65 ms，超过 2.67 ms
+  deadline，native/Wasm 完整导出分别为 0.471×/0.123× realtime，性能验收尚未通过。
+  完整环境、置信区间、音乐指标与限制见 [归档](../../benchmarks/results/2026-09-08-electronic-production.json)。
+- 本机有其他项目并发负载，当前 microbench 的稳定性能回归结论需受控环境复核；未测设备
+  callback/xrun。静音的全曲指标与 PCM 一致性验证不等于商业作品听感验收。
+
+以下保留历史阶段结果，旧的双 demo/钢琴与参数数量不代表当前工程。
+
+历史：合成器、可视化与旋律发展（2026-09-07）：
 
 - 原生 Wavetable 新增同相位 wave morph、Organ/Glass、unison phase/spread、Sub/Noise
   与逐声部四形状 LFO 的五条路由；46 个 descriptor 参数，旧默认参数输出保持兼容。
@@ -47,7 +96,7 @@
   tempo-map-following LFO、effective plugin telemetry 或原生 UI companion；M4/M7
   设备长测与发布验收状态不变。旋律结构测试不代替人的听感判断。
 
-本轮新增两首完整 demo 与钢琴（2026-09-07）：
+历史：新增两首完整 demo 与钢琴（2026-09-07）：
 
 - `examples/drum-machine/src/full/`：Lofi 80 BPM / 60 bars / 183 s，Melodic Dubstep
   140 BPM / 104 bars / 181.286 s（均含 3 s tail）。原创主题、段落/收尾、独立轨道、return、

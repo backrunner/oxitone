@@ -25,6 +25,11 @@ name = "effects-profile"
 path = "src/bin/effects-profile.rs"
 bench = false
 
+[[bin]]
+name = "song-profile"
+path = "src/bin/song-profile.rs"
+bench = false
+
 [dependencies]
 oxitone-core = { path = "../core" }
 oxitone-dsp = { path = "../dsp" }
