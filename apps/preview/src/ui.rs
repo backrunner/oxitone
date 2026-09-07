@@ -125,8 +125,12 @@ impl Preview {
                     {
                         self.selected_scope = "mix_master".into();
                     }
+                    if !self.project.as_ref().is_some_and(|old| {
+                        std::sync::Arc::ptr_eq(&old.telemetry, &project.telemetry)
+                    }) {
+                        self.analysis.clear();
+                    }
                     self.project = Some(project);
-                    self.analysis.clear();
                     self.diagnostic = None;
                     self.status = "Code up to date".into();
                 }

@@ -9,7 +9,7 @@ pub fn header(this: &PluginWindow, window: &Window) -> impl IntoElement {
     div()
         .id("plugin-window-drag")
         .window_control_area(WindowControlArea::Drag)
-        .h(px(56.))
+        .h(px(52.))
         .flex_shrink_0()
         .pl(px(if window.is_fullscreen() { 20. } else { 100. }))
         .pr_4()
@@ -30,28 +30,35 @@ pub fn header(this: &PluginWindow, window: &Window) -> impl IntoElement {
         })
         .child(
             div()
-                .text_xs()
-                .font_weight(FontWeight::BOLD)
-                .text_color(rgb(theme.accent))
-                .child("OXITONE"),
-        )
-        .child(
-            div()
                 .flex_1()
                 .min_w_0()
                 .text_xs()
-                .truncate()
-                .child(this.title()),
+                .child(
+                    div().truncate().font_weight(FontWeight::SEMIBOLD).child(
+                        this.panel
+                            .as_ref()
+                            .map_or_else(|| this.title(), |p| p.title.clone()),
+                    ),
+                )
+                .child(
+                    div()
+                        .truncate()
+                        .text_size(px(9.))
+                        .text_color(rgb(theme.muted))
+                        .child(this.details.as_ref().map_or_else(String::new, |d| {
+                            format!("{} · {}", d.owner_name, d.target.label())
+                        })),
+                ),
         )
         .child(
             div()
                 .text_size(px(9.))
                 .text_color(rgb(theme.muted))
-                .child("READ ONLY"),
+                .child("OXITONE"),
         )
 }
 
-pub fn view(this: &PluginWindow, cx: &mut Context<PluginWindow>) -> impl IntoElement {
+pub fn view(this: &PluginWindow, width: f32, cx: &mut Context<PluginWindow>) -> impl IntoElement {
     let theme = this.theme;
     let Some(details) = &this.details else {
         return div()
@@ -67,17 +74,18 @@ pub fn view(this: &PluginWindow, cx: &mut Context<PluginWindow>) -> impl IntoEle
     let descriptor = &details.info.descriptor;
     let mut tabs = div()
         .flex()
-        .gap_4()
-        .h(px(42.))
+        .gap_2()
+        .h(px(36.))
         .items_center()
         .px_4()
         .flex_shrink_0()
         .border_b_1()
         .border_color(rgb(theme.border));
     for (tab, title) in [
-        (DetailTab::Parameters, "Parameters"),
-        (DetailTab::Resources, "Resources / State"),
-        (DetailTab::Plugin, "Plugin info"),
+        (DetailTab::Panel, "Panel"),
+        (DetailTab::Parameters, "Inspect"),
+        (DetailTab::Resources, "Assets"),
+        (DetailTab::Plugin, "Info"),
     ] {
         tabs = tabs.child(
             theme
@@ -107,6 +115,7 @@ pub fn view(this: &PluginWindow, cx: &mut Context<PluginWindow>) -> impl IntoEle
     );
     let mut content = div().w_full().flex().flex_col();
     match this.tab {
+        DetailTab::Panel => content = crate::plugin_panel::view(this, width, cx),
         DetailTab::Parameters => content = crate::plugin_parameters::view(this, cx),
         DetailTab::Resources => content = crate::plugin_resources::view(this),
         DetailTab::Plugin => {
@@ -147,7 +156,7 @@ pub fn view(this: &PluginWindow, cx: &mut Context<PluginWindow>) -> impl IntoEle
                         .state_schema
                         .map_or_else(|| "None".into(), |v| v.0.into()),
                 ))
-                .child(field(theme, "View", "Host parameter view".into()));
+                .child(field(theme, "View", "Native GPUI · Source values".into()));
             if let Some(library) = &details.info.library {
                 content = content
                     .child(field(
@@ -170,46 +179,7 @@ pub fn view(this: &PluginWindow, cx: &mut Context<PluginWindow>) -> impl IntoEle
         .min_h_0()
         .flex()
         .flex_col()
-        .child(
-            div()
-                .px_4()
-                .py_3()
-                .flex_shrink_0()
-                .bg(rgb(theme.panel))
-                .child(
-                    div()
-                        .flex()
-                        .items_center()
-                        .gap_3()
-                        .child(
-                            div()
-                                .text_lg()
-                                .font_weight(FontWeight::SEMIBOLD)
-                                .child(details.name.clone()),
-                        )
-                        .child(div().text_xs().text_color(rgb(theme.muted)).child(format!(
-                            "v{} · {}",
-                            descriptor.plugin_version,
-                            if details.info.library.is_some() {
-                                "Dynamic"
-                            } else {
-                                "Built-in"
-                            }
-                        ))),
-                )
-                .child(
-                    div()
-                        .mt_1()
-                        .text_xs()
-                        .text_color(rgb(theme.muted))
-                        .child(format!(
-                            "{} · {} · {} parameters",
-                            details.owner_name,
-                            details.target.label(),
-                            details.parameters.len()
-                        )),
-                ),
-        )
+        .child(crate::plugin_controls::mix(this))
         .child(tabs)
         .child(
             div()

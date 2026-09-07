@@ -35,15 +35,27 @@ mod playback_tests;
 mod playlist_lane;
 mod plugin_capture;
 mod plugin_catalog;
+mod plugin_controls;
 mod plugin_details;
 #[cfg(test)]
 mod plugin_details_tests;
+mod plugin_dial;
+mod plugin_layout;
+mod plugin_layout_builtin;
+mod plugin_layout_registry;
+#[cfg(test)]
+mod plugin_layout_tests;
+mod plugin_layout_validation;
+mod plugin_open;
+mod plugin_panel;
 mod plugin_parameters;
 mod plugin_resources;
 mod plugin_scroll;
+mod plugin_watch_capture;
 mod plugin_window;
 mod plugin_window_view;
 mod position;
+mod preview_source;
 mod scopes;
 mod scrollbar;
 mod shortcut_help;

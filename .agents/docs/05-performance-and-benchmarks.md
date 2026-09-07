@@ -29,6 +29,10 @@
   包括参数/note dispatch 与原生合成；不包含动态宿主适配器、整图或设备。
   `cargo bench -p oxitone-example-drums --bench process`；callback/xrun 记 null。
 - `napi/command`: compile/transport command 往返延迟，不能用于 callback。
+- `preview/plugin_layout`: release viewer 测试 harness，8 / 256 controls；100 次预热、1000 次
+  控制线程解析/校验，记录 median/p95/p99。命令：`cargo test --release -p oxitone-preview
+  benchmark_layout_validation -- --ignored --nocapture`；包括 JSON 克隆/预算检查/descriptor
+  绑定，不包含 GPUI 排版/绘制、设备、callback 或 DSP，未测指标记 null。
 - `samples/inspect`: 控制线程的文件读取、SHA-256、解码、降混和 PCM 释放耗时；使用
   48 kHz stereo 的 1 秒 PCM16 / 10 秒 float32 WAV，固定 440 Hz 正弦。Criterion
   重复读取同一文件，代表 warm filesystem cache；不含 N-API、TS 或 prepare 的 SRC/编辑。

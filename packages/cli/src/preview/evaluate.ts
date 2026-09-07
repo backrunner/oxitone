@@ -13,7 +13,8 @@ try {
   if (!project || typeof project.snapshot !== "function") throw new Error("Preview entry must export a Project or a factory returning one");
   const snapshot = projectSnapshotSchema.parse(project.snapshot());
   const result = JSON.stringify({ snapshot, assetBaseDir: resolve(value?.assetBaseDir ?? project.assetBaseDir ?? dirname(entry)),
-    plugins: project.registeredPlugins ?? [], allowPlugins: project.pluginPolicy });
+    plugins: project.registeredPlugins ?? [], allowPlugins: project.pluginPolicy,
+    pluginUis: project.registeredPluginUis ?? [] });
   if (Buffer.byteLength(result) > PREVIEW_MAX_FRAME_BYTES) throw new Error("Preview project exceeds 64 MiB");
   writeFileSync(3, result);
 } catch (error) {

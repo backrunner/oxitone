@@ -1,0 +1,74 @@
+{
+  "schema": "oxitone.focused-benchmark.v1",
+  "date": "2026-09-07",
+  "change": "Native declarative plugin panels, fixed host Mix and last-good watch recovery",
+  "baseCommit": "8932fdc",
+  "machine": {
+    "cpu": "Apple M4",
+    "os": "macOS 27.0 (26A5425a)",
+    "arch": "aarch64-apple-darwin",
+    "cargo": "1.98.0"
+  },
+  "layout": {
+    "command": "cargo test --release -p oxitone-preview benchmark_layout_validation -- --ignored --nocapture",
+    "warmupIterations": 100,
+    "measurementIterations": 1000,
+    "scenarios": [
+      {
+        "controls": 8,
+        "medianUs": 4.666,
+        "p95Us": 5.084,
+        "p99Us": 17.416
+      },
+      {
+        "controls": 256,
+        "medianUs": 95.125,
+        "p95Us": 134.417,
+        "p99Us": 196.583
+      }
+    ],
+    "scope": "Control-thread JSON clone, parsing, budgets and descriptor validation. Excludes GPUI layout/paint and DSP; first baseline."
+  },
+  "audio": {
+    "command": "cargo bench -p oxitone-bench --bench preview -- --warm-up-time 1 --measurement-time 3 --sample-size 30",
+    "config": {
+      "sampleRate": 48000,
+      "blockSize": 128,
+      "outputChannels": 2,
+      "channels": 4,
+      "masterLimiter": true,
+      "sampleCount": 30,
+      "warmupSeconds": 1,
+      "measurementTargetSeconds": 3,
+      "device": null,
+      "cpuUtilization": null,
+      "callbackP95Ns": null,
+      "callbackP99Ns": null,
+      "xruns": null
+    },
+    "scenarios": [
+      {
+        "id": "preview/4_channels_128/baseline",
+        "slopeNs": 36691.1826312375,
+        "confidence95Ns": [
+          34149.80928370456,
+          40020.35183567026
+        ]
+      },
+      {
+        "id": "preview/4_channels_128/telemetry",
+        "slopeNs": 36575.028108446655,
+        "confidence95Ns": [
+          35053.81766145223,
+          38535.00792209965
+        ]
+      }
+    ]
+  },
+  "notes": [
+    "No audio callback or DSP code was changed. The audio benchmark binary does not link the viewer; it cannot measure custom panel or source-hash costs.",
+    "Criterion historical changes: baseline +19.199% with a wide confidence interval (reported regression); telemetry +4.4945%, not significant. Retained as observed; this does not establish a regression caused by these UI/control-thread changes.",
+    "Viewer capture and build/test processes had exited before the audio microbenchmark. Host scheduling and hardware state were not externally controlled.",
+    "Native multiwindow smoke used real drum/gain dylibs and tested syntax/runtime/native rejection, invalid layout fallback, source Mix and recovery. Audio graph reuse while playing is separately tested with a simulated session. Physical desktop hit testing and device/callback endurance remain unverified."
+  ]
+}

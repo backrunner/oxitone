@@ -88,7 +88,29 @@ fn select(
     match mode {
         "instrument" | "synth" => {
             first
-                .update(cx, |_, window, _| window.activate_window())
+                .update(cx, |view, window, cx| {
+                    if let Ok(page) = std::env::var("OXITONE_PREVIEW_CAPTURE_PAGE") {
+                        assert!(view
+                            .panel
+                            .as_ref()
+                            .unwrap()
+                            .pages
+                            .iter()
+                            .any(|p| p.id == page));
+                        view.page = page;
+                    }
+                    if let Ok(dimensions) = std::env::var("OXITONE_PREVIEW_CAPTURE_PLUGIN_SIZE") {
+                        let (w, h) = dimensions
+                            .split_once('x')
+                            .expect("plugin size must be WIDTHxHEIGHT");
+                        window.resize(size(
+                            px(w.parse::<f32>().unwrap().clamp(440., 1200.)),
+                            px(h.parse::<f32>().unwrap().clamp(280., 900.)),
+                        ));
+                    }
+                    window.activate_window();
+                    cx.notify();
+                })
                 .unwrap();
             vec![second, first]
         }

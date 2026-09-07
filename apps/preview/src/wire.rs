@@ -21,6 +21,8 @@ pub enum Frame {
         asset_base_dir: String,
         #[serde(default)]
         plugins: Vec<RegisterPluginOptions>,
+        #[serde(default)]
+        plugin_uis: Value,
         allow_plugins: Option<AllowPlugins>,
         hash: String,
     },

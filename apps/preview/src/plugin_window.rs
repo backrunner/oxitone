@@ -10,6 +10,7 @@ use std::sync::Arc;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum DetailTab {
+    Panel,
     Parameters,
     Resources,
     Plugin,
@@ -32,25 +33,36 @@ pub struct PluginWindow {
     pub scroll_drag: Option<(f32, f32, f32)>,
     pub copied: bool,
     pub parameter_specs: bool,
+    pub panel: Option<Arc<crate::plugin_layout::Layout>>,
+    pub page: String,
+    pub sync_status: String,
     owner: WeakEntity<Preview>,
     focus: FocusHandle,
     _subscriptions: Vec<Subscription>,
 }
 
 impl PluginWindow {
-    fn new(
+    pub(crate) fn new(
         target: DetailTarget,
         project: Arc<ViewProject>,
         owner: Entity<Preview>,
+        status: String,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
         let project_changes = cx.observe_in(&owner, window, |this, owner, window, cx| {
-            if let Some(project) = &owner.read(cx).project {
+            let owner = owner.read(cx);
+            let status = sync_status(owner);
+            let mut changed = status != this.sync_status;
+            this.sync_status = status;
+            if let Some(project) = &owner.project {
                 if !Arc::ptr_eq(project, &this.project) {
                     this.refresh(project.clone(), window);
-                    cx.notify();
+                    changed = true;
                 }
+            }
+            if changed {
+                cx.notify();
             }
         });
         let appearance_changes = cx.observe_window_appearance(window, |this, window, cx| {
@@ -59,12 +71,20 @@ impl PluginWindow {
         });
         let focus = cx.focus_handle();
         focus.focus(window);
+        let details = plugin_details::resolve(&project, &target);
+        let panel = resolve_panel(&project, details.as_ref());
         Self {
-            details: plugin_details::resolve(&project, &target),
+            page: panel
+                .as_ref()
+                .and_then(|p| p.pages.first())
+                .map_or_else(String::new, |p| p.id.clone()),
+            panel,
+            sync_status: status,
+            details,
             target,
             project,
             theme: Theme::from_appearance(window.appearance()),
-            tab: DetailTab::Parameters,
+            tab: DetailTab::Panel,
             filter: ParameterFilter::All,
             scroll: ScrollHandle::new(),
             scroll_drag: None,
@@ -77,6 +97,38 @@ impl PluginWindow {
     }
     fn refresh(&mut self, project: Arc<ViewProject>, window: &mut Window) {
         self.details = plugin_details::resolve(&project, &self.target);
+        let panel = resolve_panel(&project, self.details.as_ref());
+        if let Some(next) = &panel {
+            if !window.is_fullscreen()
+                && self.panel.as_ref().is_some_and(|old| {
+                    old.size.width != next.size.width || old.size.height != next.size.height
+                })
+            {
+                window.resize(size(
+                    px(next.size.width as f32),
+                    px(next.size.height as f32),
+                ));
+            }
+        }
+        let same_identity = self
+            .panel
+            .as_ref()
+            .zip(panel.as_ref())
+            .is_some_and(|(old, new)| {
+                old.plugin_id == new.plugin_id && old.plugin_version == new.plugin_version
+            });
+        if !same_identity
+            || !panel
+                .as_ref()
+                .is_some_and(|p| p.pages.iter().any(|p| p.id == self.page))
+        {
+            self.page = panel
+                .as_ref()
+                .and_then(|p| p.pages.first())
+                .map_or_else(String::new, |p| p.id.clone());
+            self.scroll.set_offset(point(px(0.), px(0.)));
+        }
+        self.panel = panel;
         self.project = project;
         self.copied = false;
         window.set_window_title(&self.title());
@@ -86,65 +138,6 @@ impl PluginWindow {
             || format!("{} · Not attached", self.target.label()),
             |d| format!("{} · {} · {}", d.owner_name, d.target.label(), d.name),
         )
-    }
-}
-
-impl Preview {
-    pub fn open_plugin(
-        &mut self,
-        target: DetailTarget,
-        cx: &mut Context<Self>,
-    ) -> Option<WindowHandle<PluginWindow>> {
-        self.plugin_windows
-            .retain(|_, handle| handle.read(cx).is_ok());
-        if let Some(handle) = self.plugin_windows.get(&target).copied() {
-            if handle
-                .update(cx, |_, window, _| window.activate_window())
-                .is_ok()
-            {
-                return Some(handle);
-            }
-        }
-        let project = self.project.clone()?;
-        plugin_details::resolve(&project, &target)?;
-        let owner = cx.entity();
-        let key = target.clone();
-        let mut bounds = Bounds::centered(None, size(px(700.), px(660.)), cx);
-        let offset = px((self.plugin_windows.len() % 6) as f32 * 24.);
-        bounds.origin += point(offset, offset);
-        match cx.open_window(
-            WindowOptions {
-                window_bounds: Some(WindowBounds::Windowed(bounds)),
-                titlebar: Some(TitlebarOptions {
-                    title: Some("Oxitone · Plugin Details".into()),
-                    appears_transparent: true,
-                    traffic_light_position: Some(point(px(18.), px(21.))),
-                }),
-                window_min_size: Some(size(px(540.), px(400.))),
-                ..Default::default()
-            },
-            |window, cx| {
-                cx.new(|cx| {
-                    let detail = PluginWindow::new(target, project, owner, window, cx);
-                    window.set_window_title(&detail.title());
-                    detail
-                })
-            },
-        ) {
-            Ok(handle) => {
-                self.plugin_windows.insert(key, handle);
-                Some(handle)
-            }
-            Err(error) => {
-                self.diagnostic = Some(crate::model::Diagnostic {
-                    code: "PreviewWindowFailed".into(),
-                    message: error.to_string(),
-                    path: None,
-                });
-                cx.notify();
-                None
-            }
-        }
     }
 }
 
@@ -216,10 +209,14 @@ impl Render for PluginWindow {
                 cx.listener(|this, _, _, _| this.scroll_drag = None),
             )
             .child(crate::plugin_window_view::header(self, window))
-            .child(crate::plugin_window_view::view(self, cx))
+            .child(crate::plugin_window_view::view(
+                self,
+                f32::from(window.viewport_size().width),
+                cx,
+            ))
             .child(
                 div()
-                    .h(px(28.))
+                    .h(px(24.))
                     .flex_shrink_0()
                     .px_4()
                     .flex()
@@ -229,9 +226,47 @@ impl Render for PluginWindow {
                     .border_t_1()
                     .border_color(rgb(theme.border))
                     .child(format!(
-                        "READ ONLY · Revision {} · Synced from code",
-                        self.project.snapshot.revision
+                        "{} · r{} · Source values{} · Read only",
+                        self.sync_status,
+                        self.project.snapshot.revision,
+                        if self
+                            .details
+                            .as_ref()
+                            .is_some_and(|d| d.parameters.iter().any(|p| !p.automation.is_empty()))
+                        {
+                            " · • Automated"
+                        } else {
+                            ""
+                        }
                     )),
             )
+    }
+}
+
+pub(crate) fn resolve_panel(
+    project: &ViewProject,
+    details: Option<&PluginDetails>,
+) -> Option<Arc<crate::plugin_layout::Layout>> {
+    let details = details?;
+    let descriptor = &details.info.descriptor;
+    Some(
+        project
+            .panels
+            .layouts
+            .get(&(
+                descriptor.plugin_id.clone(),
+                descriptor.plugin_version.clone(),
+            ))
+            .cloned()
+            .unwrap_or_else(|| Arc::new(crate::plugin_layout_builtin::panel(details))),
+    )
+}
+pub(crate) fn sync_status(owner: &Preview) -> String {
+    if let Some(error) = &owner.diagnostic {
+        format!("Last good · {}", error.code)
+    } else if owner.status == "Building code" {
+        "Building · Last good".into()
+    } else {
+        "Synced".into()
     }
 }

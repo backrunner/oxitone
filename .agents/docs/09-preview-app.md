@@ -41,7 +41,8 @@ diagnostic、status、transport、query、shutdown；所有帧含 protocolVersio
 最后合法图；runner 显式退出才发送 shutdown。`--headless` 使用模拟输出供集成测试。
 
 - revision 单调递增；viewer 忽略乱序或重复 revision。
-- snapshot 内容 hash 不变时不触发重编译（runner 负责 diff）。
+- snapshot 与独立 pluginUis 内容 hash 不变时不发送新版本（runner 负责 diff）。
+  仅 UI 变动时 viewer 复用相同音乐源的 graph/telemetry/音频实例，只发布新呈现；详细校验与回退见 `11-plugin-ui.md`。
 - 编译/校验失败：保持当前可播放图（引擎既有语义），viewer 显示结构化诊断 overlay，包含稳定错误码和 JSON path。
 - 换图在 block 边界完成；正在播放时换图不中断 transport，seek/loop 状态保留。
 
@@ -82,8 +83,8 @@ diagnostic、status、transport、query、shutdown；所有帧含 protocolVersio
 - Piano 支持双轴滚动与拖动滚动条，Shift 滚轮横向、⌘/Ctrl 滚轮缩放时间，Keys ± 调整音高行高，Fit 恢复适配。点击后方向键、Page Up/Down、Home/End 移动视口，± 缩放、F 适配；点击局部拍标尺 seek，Loop clip 使用全局 clip 边界。
 - Mixer 滚轮/触控板与 ‹/› 按钮横向浏览；面板过矮时 Alt 滚轮或纵向滚动条浏览下部；Master 同步纵向位置。点击后左右/Home/End 选择并显示通道，上下/Page Up/Down 纵向浏览；inspector 独立纵向滚动。选择只改变分析 scope。
 - Playlist 与下部编辑视图之间、Piano 与 Mixer 之间的分隔线可拖动。Space 播放/暂停，位置输入框独立处理文字。所有视口状态仅在 viewer 内持有，watch 换图保留仍有效的选择并按新边界夹紧视口。
-- 详情窗口沿用自绘标题区、原生交通灯与系统 appearance；支持参数筛选、滚动、参数/资源/插件信息切换和复制该引用的 JSON。重复打开聚焦已有窗口；独立关闭不影响播放或其他窗口，关闭主窗口退出整个配对 session。有效 watch revision 才更新详情，失败编译保持上次合法数据。dylib 自定义 UI 的后续方案见 `11-plugin-ui.md`，当前通用详情不执行插件 UI 代码。
-- 参数页以双列卡片突出数值、来源、范围与默认值；Specs 展开 ID、mapping/rate/smoothing 和完整自动化绑定。钢琴窗窄于 620 px 时工具栏分为标题与控制两行，防止挤压裁切；分隔线保持 Piano ≥420 px、Mixer ≥520 px。
+- 详情窗口沿用自绘标题区、原生交通灯与系统 appearance；支持参数筛选、滚动、参数/资源/插件信息切换和复制该引用的 JSON。重复打开聚焦已有窗口；独立关闭不影响播放或其他窗口，关闭主窗口退出整个配对 session。有效 watch revision 才更新详情，失败编译保持上次合法数据。声明式自定义 GPUI 面板通过 Project.registerPluginUi 注册，详见 `11-plugin-ui.md`；不执行插件 UI 代码。
+- 插件默认 Panel 页采用紧凑分组旋钮/选项/图形，每个效果器固定显示 host Mix/bypass。Inspect 的紧凑行表显示全部参数，Specs 展开 ID、mapping/rate/smoothing 和完整自动化绑定。钢琴窗窄于 620 px 时工具栏分为标题与控制两行，防止挤压裁切；分隔线保持 Piano ≥420 px、Mixer ≥520 px。
 
 ## 打包与启动
 
@@ -116,5 +117,6 @@ voice；启动 realtime session 后改变 sampleRate/blockSize 需重启。大�
 - `OXITONE_PREVIEW_CAPTURE_NAVIGATION=1` 在截图模式加入 GPUI 键盘分发、基于真实布局边界的滚轮/拖动控制器冒烟，验证钢琴缩放/滚动、Mixer 选择及滚动。它不等于物理鼠标/触控板与系统交通灯、拖动、全屏验收；后者仍需未锁屏桌面。
 - `OXITONE_PREVIEW_CAPTURE_PLUGIN=instrument|synth|effect|info` 在截图模式打开音源和效果器详情，验证重复打开复用、分步关闭重开和键盘滚动；分别截图第一个音源、第一个 Wavetable、第一个 Channel effect 或其插件信息。关闭主窗口走 AppKit 的正常 should-close 路径，验证详情仍打开时 session 可以退出。`OXITONE_PREVIEW_CAPTURE_REVISION` 指定截图前必须接受的最低 revision（默认 1）。
 - `node scripts/smoke-preview-details.mjs [viewer]` 使用真实鼓机/gain dylib，在详情窗口已打开后修改临时入口的 volume，断言所有窗口跟随 revision 2、音源显示新值并成功截图；不修改示例文件，不启动播放。需要先构建 workspace、鼓机示例动态库与 viewer。
+- `node scripts/smoke-preview-panels.mjs [viewer]` 覆盖多窗口语法/runtime/native 失败、坏布局局部回退、Mix 与源码同步、UI import 更新和恢复。截图开关 `OXITONE_PREVIEW_CAPTURE_WATCH=1` 仅在插件截图模式输出观察状态并延长等待；`OXITONE_PREVIEW_CAPTURE_PAGE` 与 `OXITONE_PREVIEW_CAPTURE_PLUGIN_SIZE=440x400` 检查分页和窄窗口。
 - `OXITONE_PREVIEW_CAPTURE_MIXER=split|expanded|chain` 搭配 `examples/drum-machine/src/mixer-preview.ts` 验证发送比例/自动化、发送目标与输入反向导航、右侧独立键盘滚动；与 navigation/plugin capture 模式分别运行。该可运行示例独立于原始歌曲导出，包含 Drum/Music bus、Reverb/Delay return、pre/post send 和 sidechain，不伪造 UI 数据。
 - `OXITONE_PREVIEW_CAPTURE_TRANSPORT=1` 必须与其他 capture 冒烟分别运行。它使用真实 GPUI 键盘分发、基于实测布局的鼠标控制器和真实 Rust engine + simulated sink，验证任意定位/双击与 Alt 播放、cue 重播/停止、循环边界、Go 输入隔离、连续定位与多窗口快捷键，断言 snapshot 不变。该模式会播放模拟输出，始终不打开音频设备；普通截图不启动播放。它不证明物理鼠标命中、设备 callback 或 xrun 长测结果。

@@ -106,8 +106,11 @@ export class PreviewRunner {
         const value = JSON.parse(Buffer.concat(chunks).toString("utf8"));
         value.snapshot.revision = "0";
         const hash = createHash("sha256").update(canonicalEncode(value)).digest("hex");
-        this.send({ type: "status", protocolVersion: "1.0", state: "watching" });
-        if (hash === this.hash) return;
+        if (hash === this.hash) {
+          this.send({ type: "status", protocolVersion: "1.0", state: "watching" });
+          return;
+        }
+        // Changed source remains Building until native acceptance (or a rejection diagnostic).
         if (this.revision === 0xffff_ffff_ffff_ffffn) throw new Error("Preview revision exhausted");
         value.snapshot.revision = String(++this.revision);
         const frame = previewFrameSchema.parse({ ...value, hash, type: "snapshot", protocolVersion: "1.0" });

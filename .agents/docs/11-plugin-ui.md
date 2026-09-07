@@ -1,6 +1,6 @@
 # Plugin UI：通用详情、声明式界面与原生扩展
 
-状态：通用详情窗口已实现；下文 P1/P2/P3 为后续规划，尚未提供对应 SDK、manifest schema 或 C 入口。
+状态：P0 通用详情与 P1 声明式 GPUI 原生面板已实现；P2 独立 NSView companion 和 P3 effective 遥测仍为规划。
 本方案补充 `08-plugin-abi.md` 与 `09-preview-app.md`，不改变现有 audio ABI v1。
 
 ## 已交付的基础层（P0）
@@ -16,41 +16,75 @@
 | 形式 | 提供方 | 优点 | 代价 / 适用范围 |
 | --- | --- | --- | --- |
 | 通用详情（当前） | 宿主按 descriptor 生成 | 所有内置与 dylib 插件立即可查看 | 不表达插件自己的视觉结构 |
-| 声明式 UI（P1，优先） | npm 插件包附带版本化 JSON 和本地资源 | 自定义布局/品牌、统一主题和只读约束；不执行第三方 UI 代码 | 受宿主组件集合约束 |
+| 声明式 UI（P1，已实现） | npm 插件包导出版本化 TS/JSON 布局 | 自定义布局/标题、统一主题和只读约束；不执行第三方 UI 代码 | 受宿主向量组件集合约束 |
 | 原生 UI（P2，可选） | 插件包附带 UI companion dylib | 插件可提供自己的 AppKit/Metal 视图 | 平台专用；同进程原生代码故障可能拖垮整个 viewer |
 
 GPUI 是宿主窗口和声明式组件的渲染层，不把 GPUI/Rust trait 或 Entity 通过 dylib ABI 暴露。
 不要求插件作者与宿主使用同一 Rust 编译器或 GPUI git revision，也不要求提供浏览器/JavaScript UI。
 
-## P1：独立的 UI 注册与布局协议
+## P1：已实现的独立 UI 注册与布局协议
 
-未来在 `RegisterPluginOptions` 增加可选 UI 注册信息，保持 DSP manifest 与音乐快照不变。
-现有 `pluginManifestSchema` 不支持自定义 UI；不能仅在当前 manifest 写入下例就认为会生效。
-实现必须先同步 `packages/protocol/src`、Rust wire、runner IPC、生成 schema 与兼容性 fixture。
-
-建议的注册形状（草案，不是可调用 API）：
+`Project.registerPluginUi(layout: PluginUiManifest): this` 为精确的 pluginId/pluginVersion 注册 GPUI 原生面板，
+支持内置与 dylib 插件；同一身份再次注册替换之前的布局。输入和 `registeredPluginUis` getter 均复制，
+不修改音乐 revision，不写入 ProjectSnapshot/便携工程/DSP manifest，不创建 DSP 实例。
+布局对象可随 npm 包导出，在工程入口显式注册。静态 TS/JSON import 自动 watch；external npm
+包或运行期文件读取需要 `--watch-path`。UI schema 是 `schemas/plugin-ui.schema.json`。
 
 ```ts
-ui: {
-  protocolVersion: '1.0',
-  kind: 'declarative',
-  manifestPath: '/explicit/local/path/ui.json',
-  expectedHash: '<sha256>'
-}
+project.registerPluginUi({
+  uiVersion: "1.0", pluginId: "oxitone.delay", pluginVersion: "1.0.0",
+  title: "Echo", size: { width: 520, height: 320 },
+  pages: [{ id: "main", title: "Delay", groups: [{
+    id: "echo", title: "Echo", columns: 3, controls: [
+      { kind: "knob", parameter: "timeBeats", label: "Time" },
+      { kind: "knob", parameter: "feedback", label: "Feedback" },
+    ],
+  }] }],
+});
 ```
 
-独立 UI manifest 绑定精确 pluginId/pluginVersion 与有序参数表的规范化 hash，声明：
+- 固定三层结构 pages → groups → controls；groups 自动换行，columns 指定组内列数，窄窗口减少列数。
+  支持 knob、水平 fader、toggle、readout、choice 和 ADSR envelope；页面切换/滚动/窗口缩放是显示操作。
+  size 指定初始逻辑尺寸；有效 watch 改变 size 时调整非全屏窗口，其余更新保留用户尺寸。
+- 所有控件绑定 **plugin namespace** 中的 descriptor ID；UI 无法覆盖范围/单位/默认值/mapping。
+  choice 绑定 enum，值必须有限、整数、唯一且在 descriptor 范围内；未列出的值显示原始值。
+  toggle 仅绑定 0/1 enum。ADSR 的 A/D/R 必须是非负 seconds，S 范围在 0…1；
+  图为 source 参数的折线示意，固定示意 sustain hold，不宣称复制 DSP 包络曲线。
+- 每个 Channel/Bus/Master effect 的 **host namespace** mix/bypass 由宿主固定绘制，不接受布局覆盖，
+  在所有标签和滚动位置都可见。Mix 是 0…1 wet 比例，缺省为 1；显示百分比和 dry/wet，自动化有标记。
+  同名插件参数与 host Mix 分开解析。参数从工程代码设置，Preview 无参数 setter。
+- 控件为 GPUI 原生向量绘制，跟随 light/dark 语义主题；无 HTML、脚本、下载、图片或任意原生视图入口。
+  品牌标题和控件标签可自定义；额外组件、图片资源/字体/自定义着色器留待后续协议扩展。
+- 限制：最多 64 registrations / 总计 2 MiB；每布局 256 KiB、8 pages、每页 16 groups、
+  每组 32 controls、整布局 256 controls，columns 1…6，标签 64 UTF-16 单位、ID 128。
+  禁控制字符、重复 page/group ID、重复注册和未知字段；逻辑 width 440…1200、height 280…900。
+  Wire 的可选 `pluginUis` 保留未知 JSON，由 viewer 在控制线程独立校验，避免布局错误拒绝合法音乐。
+- 错误码 `PluginUiInvalid` 属于局部 UI 诊断。未知组件/参数、超预算、不兼容版本时，保留相同身份且
+  对当前 descriptor 仍合法的最后面板，否则用紧凑自动面板；成功音频图仍可接受。移除合法注册恢复默认面板。
+  缺身份/非法注册容器保留兼容旧布局并显示诊断；不同插件身份绝不复用旧布局。
+- 控件消费 source/default；自动化用小标记区分，effective/live 读数尚未提供。Inspect 随时访问全部参数，
+  包括自定义页面未展示的参数；Assets/Info 保存资源、state、descriptor 和已验证 dylib path/hash。
+- Wavetable 默认具备 Sound/Envelopes 页面，涵盖双振荡器、滤波器、Voice/Output 和两个 ADSR；
+  example.drums、fixture.gain 在鼓机示例通过公开 TS API 注册自己的面板。其他插件按 descriptor 紧凑分组。
 
-- 逻辑窗口尺寸与 min/max 尺寸，布局 root；初始组件包括 tabs、group、grid、label、parameter readout/knob/fader、meter、envelope/curve plot、sample overview。
-- 参数绑定使用 descriptor 的稳定 parameter ID；单位、范围、默认值仍由 descriptor 提供，UI 不能覆盖语义。mix/bypass 等宿主参数属于独立 `host` namespace。
-- resource ID 对应包内相对路径、SHA-256、类型、大小和自然尺寸。只允许显式本地文件，禁止远程 URL、目录扫描、路径逃逸；解析/解码在非实时线程完成。
-- 语义颜色 token（surface/text/accent/warning 等）、light/dark variant 和文本可读性约束；不以硬编码字体假定所有机器均有该字体。
-- 组件树深度、节点数、图片尺寸/解码字节、曲线点数均有预检预算；无法支持的必要组件回退通用详情，不能阻断 DSP 注册/编译。
-- UI 状态（选中 tab、滚动、缩放）仅在 viewer 内保存，不改变 ProjectSnapshot。Preview 传入不可变 `readOnly=true`，所有写参数控件仅提供读数与显示交互。
+### 同步与工程修改边界
 
-参数数据分清 `source`、`default`、未来 `effective`。P1 先消费 P0 的 source/default；绑定到未提供的实时数据必须显示“不可用”，不得将初始值标作 live 或用零值伪装数据。
+runner 每次新 worker 序列化独立 `pluginUis` 元数据，内容 hash 包括 UI，音乐快照不变。
+viewer 自行计算 snapshot（revision 清零）+ assetBaseDir + DSP registrations/hash + policy 的
+源内容摘要，不能信任调用者的 hash 跳过验证。同样的音乐源只发布新的 ViewProject，复用 graph、
+telemetry、plugin catalog、transport 及音频实例，不 reset 音源/效果器或清空分析历史。
+音乐/资源引用/注册内容变化仍走完整 compile 和原子换图。资源与库的实际更新继续要求显式重建、
+校验 hash 并重新 authoring；UI 变更不作为重新加载音频资源的隐式请求。
 
-UI 包更新只重建 UI，DSP 二进制修改仍遵循显式 rebuild/register 规则。旧宿主不识别可选 UI 时使用通用详情，不自动下载兼容组件。
+只有 native 接受的快照和局部处理后的布局一起发布；所有窗口观察同一个已接受 Arc。
+building、语法错误、runtime exception、执行超时、缺失依赖、native 编译失败时，各窗口显示
+Building/Last good 状态，保留最近有效参数、Mix 和布局；恢复后同时更新。页面按稳定 ID 保留，
+失效页面回到首个页面；效果器窗口仍跟随 owner + slot index。关闭窗口不影响音频生命周期。
+
+测试包含共享 TS→JSON→Rust fixture、参数绑定/预算/错误回退、UI-only graph/telemetry 复用、
+同 hash 不绕过音乐校验、Mix 更新；实际多窗口 watch 冒烟覆盖语法/runtime/native 拒绝、
+坏布局保留上次界面和后续恢复。release 布局基准测控制线程 JSON 解析与校验，不能代表 GPUI
+绘制或音频 callback 性能。未锁屏物理输入与独立 NSView companion 仍不由截图替代。
 
 ## P2：独立版本的原生 UI C ABI（macOS-first）
 
@@ -89,8 +123,8 @@ UI library 活期与 DSP library 活期相互独立，禁止因窗口关闭释�
 
 ## 分阶段出口
 
-1. **P1**：TS/Rust/schema round-trip；未知 ID/预算/坏资源/旧宿主 fallback；内置 Wavetable 与真实 example.drums、fixture.gain 的声明式面板；双主题、多窗口、watch、只读约束和布局基准。
+1. **P1**：TS/Rust/schema round-trip；未知 ID/预算/未知组件/旧宿主 fallback；内置 Wavetable 与真实 example.drums、fixture.gain 的声明式面板；双主题、多窗口、watch、只读约束和布局基准。
 2. **P2**：公开 UI C header + C/Rust companion fixtures；动态库真实加载、ABI prefix/minor、主题/DPI/resize/焦点/IME、关闭再开、换图/移除、先销毁视图后卸载库；失败不换音频图；未锁屏 AppKit 实机验收。
 3. **P3**：frame/generation/乱序/drops 测试，source/default/effective 区分；关闭窗口停止订阅；音频 PCM parity、allocation/free=0、开启多个 UI 的 worker 和真实 callback p95/p99/xrun 长测。
 
-当前仅 P0 交付。P1/P2/P3、第三方 UI 隔离及正式签名分发没有由本次详情窗口工作自动完成。
+当前交付 P0/P1 的向量组件范围；P2/P3、图片资源扩展、第三方 UI 隔离及正式签名分发仍未完成。

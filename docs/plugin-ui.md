@@ -1,54 +1,119 @@
 # Instrument and effect windows
 
-Double-click an instrument's Mixer strip, or select it and click its instrument card
-under **Details → Chain**. Click any effect card there to open that effect. This includes
-channel effects and bus/Master inserts. Each instance/slot gets its own window;
-opening the same item again brings its existing window forward.
+Double-click an instrument's Mixer strip, or select its card under **Details → Chain**.
+Click any Channel, bus or Master effect card to open it. Each slot gets an independent
+window; reopening a slot focuses its existing window.
 
-The windows show all declared parameters, their source values or plugin defaults,
-units and ranges, mapping/smoothing/rate, automation bindings, and host mix/bypass.
-Parameters use two-column readout cards; **Specs** reveals parameter IDs, mapping,
-smoothing/rate and full automation bindings. Use **All**, **In source** or **Automated**
-to filter, scroll or use navigation keys,
-and switch to **Resources / State** or **Plugin info** for samples, structured state,
-channel context and plugin capabilities. **Copy JSON** copies the selected source
-instrument/effect reference. These are viewing controls; they never edit the music.
+**Panel** shows a compact native instrument/effect face. Wavetable has Sound and
+Envelopes pages with oscillators, filter, voice/output and ADSR diagrams. Every effect
+keeps **Mix**, dry/wet percentages and bypass visible above the scrolling panel,
+including custom layouts. Set the ratio in code:
 
-Values are initial configuration, not a live readback of automation or smoothing.
-Dynamic plugins use the descriptor validated by the Rust loader. Their info tab
-also shows the registered library path and verified SHA-256; viewing details does
-not load another library or instantiate another instrument/effect.
+```ts
+import { createAutomationNamespace } from "oxitone";
 
-Successful watch builds update open windows. Failed builds keep the previous valid
-details. Effects currently have slot indices rather than instance IDs: reordering
-effects changes what that slot's window displays. Removing the slot shows an empty
-state; returning it restores the view. Escape/⌘W or the close button closes just
-that detail window. Closing the main project window ends the session and all details.
-Each window uses the integrated title area and follows system light/dark appearance.
-Space plays/pauses the project, Enter replays from the cue, and Shift+Space stops at
-the cue. Beat/bar, marker, project-boundary and loop shortcuts are shared with the
-main window; unmodified navigation keys still scroll details. See [shortcuts](preview.md).
+channel.addEffect({
+  pluginId: "oxitone.delay", pluginVersion: "1.0.0",
+  parameters: { timeBeats: 0.75, feedback: 0.3 },
+  mix: 0.25, // 25% wet, 75% dry; omitted mix defaults to 1
+});
+// Host mix automation is also supported:
+channel.automate("insert.0.mix", createAutomationNamespace().constant(0.4));
+```
 
-## Custom UI for dylib plugins: planned extension
+Use your automation namespace when authoring lanes; the insert index identifies
+the effect's position in its chain. Mix is supported on Channel, bus and Master inserts.
 
-Custom plugin-provided UI is **not implemented yet**. The current audio ABI v1 has
-no UI entry point; adding unknown UI fields to today's manifest does not enable one.
-The proposed implementation order is:
+**Inspect** lists all parameters, source/default provenance and automation markers.
+**Specs** expands IDs, ranges, mapping and smoothing. **Assets** and **Info** show
+resources, structured state, descriptor and the verified dylib path/hash.
+**Copy JSON** copies the source reference. Values are source configuration, not
+effective automation or smoothing readback. ADSR drawings are source schematics
+with an illustrative sustain hold, not a measured live envelope.
 
-1. **Declarative UI package**: a versioned local JSON layout, parameter-ID bindings,
-   theme tokens and hashed assets, rendered by GPUI. Plugins can arrange their own
-   panels while the host enforces read-only behavior and provides fallback details.
-2. **Optional native companion**: a separate UI dylib and independently versioned C
-   entry that attaches an AppKit view to a host-owned window. It gets an independent
-   UI context and versioned snapshots, never a DSP instance pointer or audio callback.
-3. **Opt-in live feedback**: bounded Rust telemetry for effective parameters and
-   plugin-specific visualizations, with generation/frame ordering and drop counts.
+The controls remain read-only. Page selection, scrolling, resizing and playback
+shortcuts work without changing the music. Each window follows system light/dark
+appearance and uses a custom title area with native macOS traffic lights.
 
-UI registration remains separate from musical snapshots and DSP manifests. An
-unsupported/failed UI falls back to the generic window. Native code in the same
-process is trusted code; crash isolation would require a separate helper process.
+## Register a custom native layout
 
-The [design and acceptance criteria](../.agents/docs/11-plugin-ui.md) cover contracts,
-lifecycle, parameter provenance, readonly enforcement, watch, DPI/theme support,
-compatibility, packaging and realtime benchmarks. All proposed UI API names remain
-draft until the corresponding TS/Rust/schema and conformance implementation lands.
+Built-ins and dynamic libraries use the same public API, separate from DSP registration:
+
+```ts
+import type { PluginUiManifest } from "oxitone";
+
+const echoPanel: PluginUiManifest = {
+  uiVersion: "1.0",
+  pluginId: "oxitone.delay",
+  pluginVersion: "1.0.0",
+  title: "Echo",
+  size: { width: 520, height: 320 },
+  pages: [{
+    id: "main", title: "Delay",
+    groups: [{
+      id: "echo", title: "Echo", columns: 2,
+      controls: [
+        { kind: "knob", parameter: "timeBeats", label: "Time" },
+        { kind: "knob", parameter: "feedback", label: "Feedback" },
+      ],
+    }],
+  }],
+};
+project.registerPluginUi(echoPanel);
+```
+
+The panel binds an exact plugin ID/version. All parameter IDs refer to the plugin
+descriptor; host Mix/bypass are always supplied separately by the viewer. Re-registering
+the same identity replaces its layout. This metadata is not saved in the musical
+snapshot or portable project: register it in the executable Preview entry.
+
+Supported controls are **knob**, horizontal **fader**, **toggle** (0/1 enum),
+**readout**, **choice** (enum options with numeric value and label), and **envelope**
+(attack/decay/sustain/release parameter IDs). Pages and groups have stable IDs.
+Groups wrap across the window, with 1–6 columns inside each group. Labels and group
+titles are customizable; colors follow the host's accessible semantic theme.
+
+The host limits each panel to 8 pages, 16 groups per page, 32 controls per group and
+256 controls overall. Layouts are at most 256 KiB, with at most 64 registrations /
+2 MiB total. Window sizes range from 440×280 to 1200×900 logical points. Labels
+are at most 64 UTF-16 units, IDs 128, with no control characters. The versioned
+[JSON schema](../schemas/plugin-ui.schema.json) supports editor validation; the
+viewer additionally validates descriptor bindings, unique IDs and total budgets.
+
+See the real drum and gain dylib panels in
+[plugin-panels.ts](../examples/drum-machine/src/plugin-panels.ts). They require no
+additional DSP instance, UI library or JavaScript running inside GPUI.
+
+## Watch and incomplete code
+
+Keep layouts in a local static TS/JSON import for automatic watching. For external
+npm packages or runtime-read files, add an explicit `--watch-path`.
+
+A layout-only change updates existing windows while reusing the audio graph and
+its instruments/effects. Stable page IDs preserve selection. A changed declared size
+resizes a non-fullscreen window; unchanged sizes preserve manual resizing.
+Successful musical changes compile and publish their parameters, Mix and layouts
+together, preserving transport with the existing graph-swap semantics.
+
+While code is building or contains syntax/runtime/native compilation errors, windows
+show **Building / Last good** and retain their accepted data; playback continues on
+the last valid graph. Execution is bounded by the runner's 10-second timeout.
+A malformed layout produces a local **PluginUiInvalid** diagnostic, retains the last
+compatible layout (or uses the default panel) and allows valid music to advance.
+Recovery updates all windows; deleting a registration restores the default panel.
+
+Effects are addressed by owner and slot index. Reordering follows the slot, removal
+shows an unattached state, and returning the slot restores its view. Escape/⌘W closes
+only that window; closing the main window ends the session.
+
+## Remaining extensions
+
+This implementation renders declarative layouts directly in native GPUI. Arbitrary
+AppKit/Metal views from a UI companion dylib, bitmap assets, custom shaders and
+effective/live parameter telemetry are separate future extensions. It does not host
+VST plugin formats. The audio ABI v1 has no UI entry point.
+
+[The protocol and lifecycle specification](../.agents/docs/11-plugin-ui.md) tracks
+those extensions. Run `node scripts/smoke-preview-panels.mjs` after building the
+viewer, workspace and drum dylibs to exercise real multiwindow syntax/runtime/native
+failures, invalid-layout fallback and recovery.

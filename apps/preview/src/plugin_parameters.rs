@@ -29,7 +29,7 @@ pub fn view(this: &PluginWindow, cx: &mut Context<PluginWindow>) -> Div {
                 cx.notify();
             })),
     );
-    let mut grid = div().flex().flex_wrap().mx(px(-4.));
+    let mut grid = div().flex().flex_col();
     let mut count = 0;
     for p in details.parameters.iter().filter(|p| match this.filter {
         ParameterFilter::All => true,
@@ -37,23 +37,17 @@ pub fn view(this: &PluginWindow, cx: &mut Context<PluginWindow>) -> Div {
         ParameterFilter::Automated => !p.automation.is_empty(),
     }) {
         count += 1;
-        grid = grid.child(
-            div()
-                .w(relative(0.5))
-                .p_1()
-                .child(crate::parameter_view::row(p, theme, this.parameter_specs)),
-        );
+        grid = grid.child(div().w_full().child(crate::parameter_view::row(
+            p,
+            theme,
+            this.parameter_specs,
+        )));
     }
     div()
-        .p_4()
+        .p_3()
         .flex()
         .flex_col()
         .gap_3()
-        .child(
-            div().text_size(px(10.)).text_color(rgb(theme.muted)).child(
-                "Initial values from code and defaults · Automation may change playback values",
-            ),
-        )
         .child(filters)
         .child(grid)
         .when(count == 0, |d| {

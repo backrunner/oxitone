@@ -163,3 +163,5 @@ export { presetSchema } from "./preset.js";
 export { previewFrameSchema, previewResponseSchema, PREVIEW_MAX_FRAME_BYTES } from "./preview.js";
 export type { PreviewFrame, PreviewSnapshotFrame, PreviewResponse } from "./preview.js";
 export type { Preset, ChannelPreset, InstrumentPreset, EffectPreset } from "./preset.js";
+export { pluginUiManifestSchema, pluginUiControlSchema } from "./plugin-ui.js";
+export type { PluginUiManifest, PluginUiControl } from "./plugin-ui.js";

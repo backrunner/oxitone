@@ -9,6 +9,8 @@ export const PREVIEW_MAX_FRAME_BYTES = 64 * 1024 * 1024;
 export const previewFrameSchema = z.discriminatedUnion("type", [
   z.object({ ...version, type: z.literal("snapshot"), snapshot: projectSnapshotSchema,
     assetBaseDir: z.string().min(1), plugins: z.array(registerPluginOptionsSchema).default([]),
+    // Optional UI metadata is validated locally by the viewer; it cannot reject valid music.
+    pluginUis: z.unknown().optional(),
     allowPlugins: z.enum(["any", "signed-only"]).optional(), hash: z.string().regex(/^[a-f0-9]{64}$/) }),
   z.object({ ...version, type: z.literal("diagnostic"), code: z.string(), message: z.string(), path: z.string().optional() }),
   z.object({ ...version, type: z.literal("status"), state: z.enum(["building", "watching"]) }),

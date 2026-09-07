@@ -12,7 +12,7 @@
 | M3 Mixer/Automation/导出 | TS mixer/insert authoring，Rust mixer/PDC/12 effects、完整 insert 自动化/host 参数路径、tempo bake、WAV/stem/loudness 与回归测试 | 全规格 golden/PDC/export 的自动化发布门禁仍需建立和复核 |
 | M4 实时与设备 | CoreAudio HAL、render-ahead/direct、transport/loop、设备适配/诊断、Session 换图及 bar/beat/marker/timecode 入口、换图回收与模拟设备测试 | 修正循环负载后的 10/60 分钟 soak、真实设备切换/拔插和 callback 指标仍需验收 |
 | M5 npm/DX/插件 | 统一 `oxitone` authoring/native/sample 入口，Project/Session 动态插件注册，descriptor 查询，instrument/effect/Channel preset；CLI、便携工程与有声示例 | npm 平台包/发布/签名公证、干净安装验收和逐节点 deadline watchdog |
-| M6 Preview | runner/watch、带版本 IPC、GPUI arrangement/piano/channel rack/mixer/scopes/transport、原生换图与错误恢复、CLI preview、unsigned 开发 app bundle | 锁屏限制下尚未完成完整视觉交互验收；正式 npm 平台包、签名分发及大工程虚拟列表继续追踪 |
+| M6 Preview | runner/watch、带版本 IPC、GPUI arrangement/piano/channel rack/mixer/scopes/transport、原生换图与错误恢复、插件多窗口与声明式原生布局/固定 Mix、CLI preview、unsigned 开发 app bundle | 完整物理交互验收、独立 NSView companion/effective 参数遥测、正式 npm 平台包、签名分发及大工程虚拟列表继续追踪 |
 | M7 稳定性/发布 | 定向回归、插件 conformance、基准 harness | fuzz/sanitizer、持续负载 endurance、故障注入/资源上限、SBOM/签名公证和自动发布门禁 |
 
 规格中的项目目录保存/读取（formatVersion、资产相对路径、原子写入）已在后续阶段提供，
@@ -431,3 +431,26 @@
   128 frames / 4 Channels，baseline 30.809 µs、telemetry 34.489 µs。Criterion 历史变化
   -3.45%/+6.88%，telemetry 含 4 个 high-severe outliers；基准二进制未改且不链接 viewer，
   不用于归因 UI 性能或判断输入延迟。物理鼠标命中、真实设备播放/callback p95/p99/xrun 仍未验收。
+
+## 紧凑插件面板、自定义布局与 watch 恢复（2026-09-07）
+
+- `Project.registerPluginUi` / PluginUiManifest / 生成 JSON schema 已交付；布局独立于音乐
+  快照和 DSP 注册，支持精确 plugin ID/version、分页、自动换行分组、旋钮、水平推子、
+  enum 选项/开关、读数及 source ADSR 示意。范围/默认值/mapping 仍由权威 descriptor 提供。
+- 效果器固定显示 host Mix/bypass、dry/wet 与自动化标识；Inspect 改为紧凑行表，
+  移除重复大标题和常驻说明。Wavetable 覆盖全部参数；真实鼓机/gain dylib 示例注册自定义面板。
+- UI-only 变化在控制线程比较音乐源摘要，复用 graph、telemetry、音频实例和 transport；
+  不重置 DSP、不清空分析历史。布局失败保留同身份的兼容旧布局，否则局部回退；合法音乐仍可更新。
+  修改代码时窗口显示 Building/Last good，直到 native 接受才显示 Synced；语法、runtime、
+  超时、缺失插件和 native 拒绝都保留上份合法数据。页面 ID、用户滚动/尺寸按兼容规则保留。
+- 442 项 Rust 工作区测试通过；另有 1 项默认忽略的 release 布局 benchmark 已显式运行通过。
+  Protocol/Core/CLI 共 181 项 TS 测试、lint/typecheck、rustfmt 通过；schema 已生成。
+  Release `.app` 与 plist 校验通过；实际亮暗主题、440 px 窄窗口/包络分页、键盘滚动、
+  多窗口关闭重开及 source→语法错误→runtime 错误→native 拒绝→坏布局→恢复冒烟通过。
+  冒烟期间发现并修复窗口创建时重复读取父 Entity 的 panic，以及效果器默认高度遮住数值的问题。
+- [专项基准](../../benchmarks/results/2026-09-07-plugin-panels.json)：布局 8 / 256 controls 的
+  median 为 4.666 / 95.125 µs，p95 为 5.084 / 134.417 µs；只测控制线程解析/校验，
+  不代表 GPUI 绘制或 callback。音频 microbench 的历史 baseline 报告回退，telemetry 无显著变化；
+  该二进制没有修改且不链接 viewer，原样归档，不将噪声数字解释为 UI 性能结论。
+- P1 本次交付原生向量组件范围；独立 AppKit/Metal UI companion、图片资源、effective 参数
+  遥测、物理桌面操作与真实设备长测仍单独追踪，未声称 VST hosting 或第三方 native UI 隔离。

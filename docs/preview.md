@@ -145,7 +145,7 @@ palettes. Appearance changes are display-only and do not rebuild the music.
   divider between the piano roll and Mixer to change their widths.
 - Double-click an instrument strip or click its instrument card under **Chain**;
   click an effect slot to open that instrument/effect in an independent, live-updating
-  detail window. See [plugin windows and custom-UI plans](plugin-ui.md).
+  detail window. See [plugin windows and custom layouts](plugin-ui.md).
 - The footer shows native load, estimated output/graph latency, xruns and dynamic
   plugin faults. Error diagnostics include code/path where available.
 
@@ -175,7 +175,7 @@ stopping the CLI stops the paired session. A locked macOS desktop can suppress
 window refresh while the native engine and IPC continue working.
 
 Changing sample rate or block size after playback starts requires restarting the
-viewer. Graph swaps keep transport position/loop settings and rebuild voice state;
+viewer. Musical graph swaps keep transport position/loop settings and rebuild voice state; UI-only layout updates reuse audio instances;
 they do not promise seamless preservation of sustained voices. Faders/notes cannot
 be dragged or edited in the viewer. Large-project virtualization, signed npm bundles
 and physical-device endurance are tracked separately from the current preview.

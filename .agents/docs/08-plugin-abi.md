@@ -5,8 +5,9 @@
 （加载和实例）、`oxitone-napi` 和 `oxitone` TypeScript facade。
 
 当前 ABI v1 不提供插件自带 UI 入口。Preview 已能从已验证 descriptor 为内置/动态
-插件生成多窗口只读详情；自定义声明式布局、独立 native UI ABI 与实时反馈规划见
-`11-plugin-ui.md`。该规划不改变此处已实现的 audio ABI，也没有把草案 symbol 加入宿主加载路径。
+插件生成多窗口只读详情，并通过 Project.registerPluginUi 注册自定义 GPUI 原生布局。
+已实现的布局协议、后续独立 native UI ABI 与实时反馈规划见 `11-plugin-ui.md`。
+UI 不改变此处 audio ABI；宿主尚不加载 native UI companion symbol。
 
 ## 注册与所有权
 

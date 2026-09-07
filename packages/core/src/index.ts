@@ -1,4 +1,5 @@
 export { Project } from "./project.js";
+export type { PluginUiManifest, PluginUiControl } from "@oxitone/protocol";
 export { createPluginPreset, createChannelPreset, validatePreset, applyPreset, presetInstrument, presetEffect } from "./preset.js";
 export type { Preset, ChannelPreset, InstrumentPreset, EffectPreset, PresetMetadata, PresetRuntimeOptions } from "./preset.js";
 export { savePreset, loadPreset } from "./preset-files.js";

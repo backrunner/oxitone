@@ -1504,6 +1504,7 @@
             "additionalProperties": false
           }
         },
+        "pluginUis": {},
         "allowPlugins": {
           "type": "string",
           "enum": [

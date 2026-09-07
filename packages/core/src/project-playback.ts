@@ -11,6 +11,7 @@ import {
   registerPluginOptionsSchema,
   type RegisterPluginOptions,
   type RegisteredPlugin,
+  type PluginUiManifest,
 } from "@oxitone/protocol";
 import {
   compile as nativeCompile,
@@ -30,9 +31,23 @@ export type ProjectCompileOptions = EngineOptions & CompileOptions;
 export abstract class ProjectPlayback {
   private activeSession?: Session;
   private pluginList: RegisterPluginOptions[] = [];
+  private pluginUiList: PluginUiManifest[] = [];
   private policy: EngineOptions["allowPlugins"];
   get registeredPlugins(): RegisterPluginOptions[] { return structuredClone(this.pluginList); }
   get pluginPolicy(): EngineOptions["allowPlugins"] { return this.policy; }
+
+  /** Register a native Preview panel for an exact built-in or dylib plugin version.
+   * Layout validation is local to Preview: invalid layouts never reject valid audio.
+   * Static imports are watched; UI metadata does not change the musical revision or saved project.
+   */
+  registerPluginUi(layout: PluginUiManifest): this {
+    const copy = structuredClone(layout);
+    const index = this.pluginUiList.findIndex((ui) => ui.pluginId === copy.pluginId && ui.pluginVersion === copy.pluginVersion);
+    if (index < 0) this.pluginUiList.push(copy);
+    else this.pluginUiList[index] = copy;
+    return this;
+  }
+  get registeredPluginUis(): PluginUiManifest[] { return structuredClone(this.pluginUiList); }
 
   /** Register trusted plugin code for this project's current and future engines. */
   registerPlugin(input: RegisterPluginOptions, options: Pick<EngineOptions, "allowPlugins"> = {}): RegisteredPlugin {

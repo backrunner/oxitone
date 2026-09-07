@@ -47,6 +47,13 @@ impl ParameterDetail {
         if span <= 0. {
             return 0.;
         }
+        if self.spec.mapping == Some(oxitone_core::wire::ParameterMapping::Log)
+            && self.spec.min > 0.
+            && self.value > 0.
+        {
+            return ((self.value / self.spec.min).ln() / (self.spec.max / self.spec.min).ln())
+                .clamp(0., 1.) as f32;
+        }
         ((self.value - self.spec.min) / span).clamp(0., 1.) as f32
     }
 }

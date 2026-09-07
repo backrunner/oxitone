@@ -8,6 +8,11 @@ conventional commits (`type(scope): description`).
 
 ### Added
 
+- Native plugin panels via `Project.registerPluginUi`: versioned descriptor-bound
+  pages, groups, knobs, faders, choices and source ADSR diagrams for built-ins and dylibs.
+  Every effect keeps host Mix/bypass visible; compact Inspect rows retain full metadata.
+  UI-only watch changes reuse audio instances, while invalid code keeps the last valid
+  UI/audio and invalid layouts fall back locally. Includes real multiwindow recovery smoke.
 - Unified `oxitone` authoring/sample/native exports, with the low-level facade now
   named `@oxitone/native`. Project/Session register dynamic plugins; native descriptor
   metadata supports validated instrument/effect/Channel presets with portable assets.

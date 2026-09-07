@@ -26,6 +26,7 @@ use std::{
 pub struct Engine {
     pub current: Option<Arc<ViewProject>>,
     seen: Option<u64>,
+    audio_key: Option<[u8; 32]>,
     graph: Option<Box<RenderGraph>>,
     session: Option<RealtimeSession>,
     plugins: Vec<Arc<CPlugin>>,
@@ -38,6 +39,7 @@ impl Engine {
         Self {
             current: None,
             seen: None,
+            audio_key: None,
             graph: None,
             session: None,
             plugins: vec![],
@@ -52,9 +54,17 @@ impl Engine {
                 snapshot,
                 asset_base_dir,
                 plugins,
+                plugin_uis,
                 allow_plugins,
                 hash,
-            } => self.replace(*snapshot, asset_base_dir, plugins, allow_plugins, &hash),
+            } => self.replace(
+                *snapshot,
+                asset_base_dir,
+                plugins,
+                allow_plugins,
+                &hash,
+                plugin_uis,
+            ),
             Frame::Transport { command } => {
                 wire::transport(command).and_then(|cmd| self.transport(cmd))
             }
@@ -102,6 +112,7 @@ impl Engine {
         plugins: Vec<RegisterPluginOptions>,
         policy: Option<AllowPlugins>,
         hash: &str,
+        plugin_uis: Value,
     ) -> Result<(), OxitoneError> {
         if self.seen.is_some_and(|seen| snapshot.revision <= seen) {
             return Ok(());
@@ -109,6 +120,30 @@ impl Engine {
         self.seen = Some(snapshot.revision);
         if hash.len() != 64 || !hash.bytes().all(|b| b.is_ascii_hexdigit()) {
             return Err(wire::invalid("invalid snapshot hash"));
+        }
+        // Compute this locally, excluding only UI metadata and the presentation revision.
+        // Never trust the runner hash as authorization to skip native graph validation.
+        let audio_key = crate::preview_source::audio_key(&snapshot, &base, &plugins, policy)?;
+        if self.audio_key == Some(audio_key) {
+            if let Some(previous) = &self.current {
+                let project = Arc::new(ViewProject {
+                    panels: crate::plugin_layout_registry::resolve(
+                        &plugin_uis,
+                        &previous.plugins,
+                        Some(&previous.panels),
+                    ),
+                    snapshot,
+                    plan: previous.plan.clone(),
+                    telemetry: previous.telemetry.clone(),
+                    graph_latency: previous.graph_latency,
+                    plugins: previous.plugins.clone(),
+                    pattern_labels: previous.pattern_labels.clone(),
+                    mixer_strips: Default::default(),
+                });
+                self.current = Some(project.clone());
+                let _ = self.events.send(UiEvent::Accepted(project));
+                return Ok(());
+            }
         }
         if self.current.as_ref().is_some_and(|current| {
             self.session.is_some()
@@ -155,8 +190,14 @@ impl Engine {
             &SampleStore::new(Some(PathBuf::from(base))),
             &RenderGraphOptions::default(),
         )?);
+        let catalog = crate::plugin_catalog::collect(&snapshot, &registry, libraries);
         let project = Arc::new(ViewProject {
-            plugins: crate::plugin_catalog::collect(&snapshot, &registry, libraries),
+            panels: crate::plugin_layout_registry::resolve(
+                &plugin_uis,
+                &catalog,
+                self.current.as_ref().map(|p| &p.panels),
+            ),
+            plugins: catalog,
             mixer_strips: Default::default(),
             snapshot,
             plan: graph.plan().into(),
@@ -175,6 +216,7 @@ impl Engine {
             self.graph = Some(graph);
         }
         self.plugins = loaded;
+        self.audio_key = Some(audio_key);
         self.current = Some(project.clone());
         let _ = self.events.send(UiEvent::Accepted(project));
         Ok(())

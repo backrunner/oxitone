@@ -15,9 +15,11 @@ pub struct ViewProject {
     pub graph_latency: u64,
     pub pattern_labels: OnceLock<HashMap<String, String>>,
     pub plugins: crate::plugin_catalog::Catalog,
+    pub panels: crate::plugin_layout_registry::Panels,
     pub mixer_strips: OnceLock<Vec<crate::mixer_model::Strip>>,
 }
 
+#[derive(Clone)]
 pub struct ViewPlan {
     pub tempo: CompiledTempoMap,
     pub time_signatures: CompiledTimeSignatureMap,

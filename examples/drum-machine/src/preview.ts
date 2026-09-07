@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { pluginManifestSchema } from "@oxitone/protocol";
 import { createDrumSong } from "./song.js";
+import { drumPanel, gainPanel } from "./plugin-panels.js";
 
 /** Build libraries once with pnpm example:drums, then watch this authoring entry. */
 export default function createProject() {
@@ -16,5 +17,5 @@ export default function createProject() {
       manifest: pluginManifestSchema.parse(JSON.parse(readFileSync(new URL(manifest!, root), "utf8"))) },
     { allowPlugins: "any" }); // Explicit trust for these two local development fixtures.
   }
-  return project;
+  return project.registerPluginUi(drumPanel).registerPluginUi(gainPanel);
 }
