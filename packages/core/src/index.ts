@@ -22,6 +22,8 @@ export type { SampleOptions, SampleClipOptions } from "./sample.js";
 export { wavetable, sampler, slicer } from "./instruments.js";
 export { multisampler } from "./multisampler.js";
 export type { SampleRegion, MultisamplerOptions } from "./multisampler.js";
+export { softPiano, grandPiano } from "./piano.js";
+export type { PianoBank, PianoSample } from "./piano.js";
 export type { EnvelopeOptions, OscillatorOptions, WavetableOptions, SamplerOptions, SlicePosition, SliceOptions, SlicerOptions } from "./instruments.js";
 export { chord } from "./chord.js";
 export type { ChordOptions, ChordQuality, ChordVoicing } from "./chord.js";

@@ -24,7 +24,28 @@
 
 ## 审查与性能记录的解释
 
-当前 demo 编曲与混音（2026-09-08，效果器完善之后）：
+当前 demo 与 CLI（2026-09-08，钢琴和低频分层）：
+
+- `oxitone` 已安装到当前开发机 `~/.local/bin`；`pnpm install:cli` 可重建链接。
+  `oxitone build entry.ts -o project.mjs [--watch]` 将本地 TS/JS/JSON 与静态 import
+  合为单个 ESM 文件，保留源码资源路径；SDK/native/采样仍为外部依赖。Preview 真正
+  执行 bundle，错误代码保留 last-good。全局命令及 24 轨/52 samples 的单文件原生预览已验证。
+- 新增 `softPiano`/`grandPiano` helpers，复用 Rust multisampler；Salamander 录音固定
+  commit、逐文件 SHA-256，显式 prepare 下载。普通测试用本地小 fixture，不依赖网络。
+- 编曲为 24 轨、23 instrument channels、3648 notes、104 bars/140 BPM；原 Drop 主旋律
+  不变。持续 sub、泛音 bassline 独立总线，120 ms kick duck；FM、vowel、sync stabs、
+  Reese 交替，supersaw 下移并延长，intro/break 有分力度钢琴，snare 叠 clap。
+- Native 全曲 181.286 s、−12.07 LUFS、−1.41 dBTP；Drop crest 10.32…10.39 dB，
+  low side/mid <−21.7 dB；单独 bus stems 验证低频贡献，避开底鼓能量的混淆。
+- Native Drop I/final chorus 的离线 process p99 为 1.55/1.59 ms（128 frames/48 kHz，
+  两个区间均零 deadline exceedances）；Wasm Drop I p99 为 2.48 ms。全曲最大 PCM 差
+  4.77e−7；4000 blocks 内 582,942,720-byte Wasm memory、分配/释放计数不变。
+  Native/Wasm 全曲导出为 1.706×/1.110× realtime；完整设备长测仍未验收。
+- 验证和当前 native/Wasm 性能见
+  [钢琴/低频归档](../../benchmarks/results/2026-09-08-horizon-piano-bass.json)。
+  测试没有使用系统音频设备，设备 callback/xrun 与商业作品听感不能据此宣称达标。
+
+历史 demo 编曲与混音（2026-09-08，20 轨效果器版本）：
 
 - 原八小节主旋律在两个 Drop 的音高、节奏、时值与力度保持一致。工程为 20 轨、19
   instrument channels、3234 notes、104 bars/140 BPM；新增 chord pluck、Reese bridge

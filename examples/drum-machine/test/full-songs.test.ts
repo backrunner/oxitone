@@ -4,11 +4,11 @@ import { createDubstepSong, dubstep } from "../src/full/melodic-dubstep.js";
 import { horizonHook } from "../src/full/themes.js";
 import { midiSnapshot } from "../src/full/midi-export.js";
 
-it("builds a complete deterministic all-synth arrangement with two developed drops", () => {
+it("builds a deterministic sampled-piano and electronic arrangement with two developed drops", () => {
   const snapshot = createDubstepSong().snapshot();
   expect(snapshot).toEqual(createDubstepSong().snapshot());
-  expect(snapshot.samples).toHaveLength(0);
-  expect(snapshot.channels.every(c => ["oxitone.wavetable", "example.drums"].includes(c.instrument.pluginId))).toBe(true);
+  expect(snapshot.samples).toHaveLength(52);
+  expect(snapshot.channels.every(c => ["oxitone.wavetable", "example.drums", "oxitone.multisampler"].includes(c.instrument.pluginId))).toBe(true);
   expect(dubstep.bars * 240 / dubstep.bpm).toBeGreaterThan(175);
   expect(dubstep.bars * 240 / dubstep.bpm).toBeLessThan(185);
   expect(snapshot.tracks.length).toBeGreaterThanOrEqual(16);
@@ -40,6 +40,11 @@ it("builds a complete deterministic all-synth arrangement with two developed dro
   }
   const sub = snapshot.channels.find(c => c.name?.includes("pure mono sub"))!;
   expect(sub.instrument.parameters).toMatchObject({ "oscA.level": 0, "sub.wave": 0, "sub.octave": 0 });
+  const bassline = snapshot.channels.find(c => c.name?.includes("harmonic bassline"))!;
+  expect(sub.mixerChannelId).not.toBe(bassline.mixerChannelId);
+  const dropSub = snapshot.patterns.filter(p => p.name === "Sub · sustained weight");
+  expect(dropSub).toHaveLength(32);
+  expect(dropSub.every(p => beatFromWire(p.notes[0]!.duration) >= 3.12)).toBe(true);
 });
 
 it("preserves every lead note in both drops and develops the surrounding orchestration", () => {

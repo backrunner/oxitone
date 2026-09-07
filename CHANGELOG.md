@@ -8,6 +8,11 @@ conventional commits (`type(scope): description`).
 
 ### Added
 
+- Recorded `softPiano`/`grandPiano` bank helpers, backed by the existing Rust
+  multisampler. The demo prepares a hash-pinned CC BY 3.0 Salamander bank explicitly,
+  uses piano in its quieter sections, and develops a stronger sub/harmonic bassline,
+  alternating FM/vowel/sync basses, sustained middle-register supersaws and clap layers.
+
 - Global checkout CLI installation with `pnpm install:cli`, and `oxitone build`
   for a single ESM project artifact. Preview now executes bundled code, preserving
   source-relative assets and external SDK resolution, with last-good error recovery.
@@ -28,7 +33,7 @@ conventional commits (`type(scope): description`).
 
 - Three-minute melodic dubstep composition with layered supersaws, FM/formant bass,
   independent mono Sub, electronic drums, filtered/ducked returns and master processing.
-  Retired the lofi demo and removed the piano downloads from full-song preparation.
+  Retired the lofi demo; recorded piano preparation is available for the revised intro/break.
 - Independent A/B and Sub octave controls (−4…4), six Sub waves, A/B levels, three
   eight-frame banks, warps, FM/ring, curved envelopes, two LFOs and an eight-slot matrix.
   Preview exposes these source controls and visualizes Sub and prepared bank cycles.

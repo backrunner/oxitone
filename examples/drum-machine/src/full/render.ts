@@ -52,4 +52,4 @@ for (const [song, create] of [[dubstep, createDubstepSong]] as const) {
   } finally { dispose(engine); }
 }
 await writeFile(join(outputRoot, "report.json"), `${JSON.stringify({ sampleRate: 48000, blockSize: 128,
-  instruments: "Oxitone synthesis / Circuit electronic drums; no sample assets", songs: reports }, null, 2)}\n`);
+  instruments: "Oxitone synthesis / Circuit electronic drums / Salamander Grand Piano v3 (Alexander Holm, CC BY 3.0)", songs: reports }, null, 2)}\n`);

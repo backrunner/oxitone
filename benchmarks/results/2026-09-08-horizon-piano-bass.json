@@ -1,0 +1,405 @@
+{
+  "schema": "oxitone-song-production-v1",
+  "date": "2026-09-08",
+  "baseCommit": "18cc810",
+  "machine": {
+    "cpu": "Apple M4",
+    "arch": "arm64",
+    "os": "27.0.0",
+    "node": "v26.5.0"
+  },
+  "scope": "Recorded piano helpers, separated sub/harmonic/moving bass, lower sustained supersaws, clap detail, final mix and single-file CLI preview. Offline only.",
+  "commands": [
+    "pnpm --filter @oxitone/core build",
+    "pnpm --filter @oxitone/example-drums build",
+    "pnpm example:songs:prepare",
+    "pnpm example:songs",
+    "pnpm --filter @oxitone/example-drums songs:stems",
+    "pnpm example:songs:wasm",
+    "cargo run --release -p oxitone-bench --bin song-profile -- target/examples/full-songs/after-the-horizon.snapshot.json target/examples/full-songs/drums.json 24 80",
+    "pnpm lint",
+    "pnpm typecheck",
+    "cargo fmt --all --check",
+    "cargo test --workspace",
+    "pnpm --filter @oxitone/core test",
+    "pnpm --filter @oxitone/example-drums test",
+    "oxitone build examples/drum-machine/src/full/melodic-dubstep.ts -o target/examples/after-the-horizon.mjs",
+    "oxitone preview /Volumes/BRData/projects/oxitone/target/examples/after-the-horizon.mjs --headless --no-watch"
+  ],
+  "checks": {
+    "lint": "passed",
+    "typecheck": "passed",
+    "cargoFmt": "passed",
+    "rust": {
+      "passed": 486,
+      "failed": 0,
+      "ignored": 1
+    },
+    "coreTests": 145,
+    "demoTests": 7,
+    "diffCheck": "passed",
+    "audioDevicesOpened": 0
+  },
+  "recordings": {
+    "source": "https://github.com/sfzinstruments/SalamanderGrandPiano",
+    "commit": "3382bf9496bba2486f5ab0de55a264d1dfc38404",
+    "license": "CC-BY-3.0",
+    "credit": "Salamander Grand Piano v3 by Alexander Holm; FLAC distribution by sfzinstruments/kinwie. Oxitone supplies independent velocity mapping and processing.",
+    "preparedFiles": 120,
+    "compressedBytes": 179018159,
+    "projectFiles": 52,
+    "projectPcmBytes": 268180488,
+    "metadata": "examples/drum-machine/src/full/piano-assets.json"
+  },
+  "native": {
+    "title": "After the Horizon / 地平线之后",
+    "durationSeconds": 181.28570833333333,
+    "sampleRate": 48000,
+    "blockSize": 128,
+    "tracks": 24,
+    "instrumentChannels": 23,
+    "mixerBuses": 14,
+    "notes": 3648,
+    "integratedLufs": -12.06677784976253,
+    "peakDbfs": -1.4700669547756373,
+    "truePeakDbfs": -1.4054296986643577,
+    "renderSeconds": 106.2432555,
+    "realtimeMultiple": 1.7063268010053991,
+    "sha256": "2282307a08cbeac6a15c53ea42df79f896d42cdbb908b26096fc43d9dd229544",
+    "snapshotSha256": "9e20d96e61f0ad98f69e4dbeccdaf35ff18260041ba7bbfc1355bef02882d75e",
+    "sectionLevels": [
+      {
+        "name": "First light / Soft Piano",
+        "startBar": 1,
+        "bars": 8,
+        "rmsDbfs": -17.885675601518173,
+        "peakDbfs": -2.4549057861037755,
+        "crestDb": 15.430769815414397,
+        "dc": 0.0000021750232750437304,
+        "stereoCorrelation": 0.43667556249479117,
+        "lowSideToMidDb": -4.128989862204672,
+        "bandRmsDbfs": {
+          "below150": -26.139867105253725,
+          "150to1000": -20.96719531700499,
+          "1000to6000": -26.939529753632012,
+          "above6000": -42.42479334949515
+        }
+      },
+      {
+        "name": "Lift / Build I",
+        "startBar": 9,
+        "bars": 16,
+        "rmsDbfs": -15.720936922039987,
+        "peakDbfs": -1.7782524764749787,
+        "crestDb": 13.942684445565009,
+        "dc": -0.000009609208452924681,
+        "stereoCorrelation": 0.7371457950901348,
+        "lowSideToMidDb": -10.649236388200052,
+        "bandRmsDbfs": {
+          "below150": -22.386268047851146,
+          "150to1000": -20.293599269295058,
+          "1000to6000": -25.074234621395583,
+          "above6000": -27.46009147329446
+        }
+      },
+      {
+        "name": "Open sky / Drop I",
+        "startBar": 25,
+        "bars": 16,
+        "rmsDbfs": -12.253458615008261,
+        "peakDbfs": -1.9307449365726659,
+        "crestDb": 10.322713678435596,
+        "dc": 0.001040421501652486,
+        "stereoCorrelation": 0.8415949656310795,
+        "lowSideToMidDb": -22.1520230873624,
+        "bandRmsDbfs": {
+          "below150": -15.204630844958949,
+          "150to1000": -19.40085969704433,
+          "1000to6000": -21.065164595075395,
+          "above6000": -29.14326946202445
+        }
+      },
+      {
+        "name": "Weightless / Break",
+        "startBar": 41,
+        "bars": 16,
+        "rmsDbfs": -13.867526041087066,
+        "peakDbfs": -2.4548494674655954,
+        "crestDb": 11.412676573621471,
+        "dc": 0.00013403266868221043,
+        "stereoCorrelation": 0.8193823958180008,
+        "lowSideToMidDb": -17.58656597833727,
+        "bandRmsDbfs": {
+          "below150": -15.855331307554252,
+          "150to1000": -20.618146453254,
+          "1000to6000": -26.54111633823648,
+          "above6000": -40.936605841484095
+        }
+      },
+      {
+        "name": "Signal / Build II",
+        "startBar": 57,
+        "bars": 16,
+        "rmsDbfs": -16.09434453377044,
+        "peakDbfs": -1.4700663415818536,
+        "crestDb": 14.624278192188585,
+        "dc": -0.000013821403163886207,
+        "stereoCorrelation": 0.7495075346403864,
+        "lowSideToMidDb": -11.609291274645583,
+        "bandRmsDbfs": {
+          "below150": -22.769971768826693,
+          "150to1000": -20.857914400724216,
+          "1000to6000": -25.249075643598925,
+          "above6000": -27.462922088154983
+        }
+      },
+      {
+        "name": "Beyond / Drop II",
+        "startBar": 73,
+        "bars": 16,
+        "rmsDbfs": -12.4137490779705,
+        "peakDbfs": -2.019622417820716,
+        "crestDb": 10.394126660149784,
+        "dc": 0.0009720503228781686,
+        "stereoCorrelation": 0.8392446219304684,
+        "lowSideToMidDb": -21.78546277148877,
+        "bandRmsDbfs": {
+          "below150": -15.606800344933305,
+          "150to1000": -19.236068131868077,
+          "1000to6000": -21.115219950177412,
+          "above6000": -29.081575173496095
+        }
+      },
+      {
+        "name": "Afterglow / Reprise",
+        "startBar": 89,
+        "bars": 8,
+        "rmsDbfs": -11.962141232642427,
+        "peakDbfs": -1.9196525900632153,
+        "crestDb": 10.042488642579212,
+        "dc": 0.0004265140770075947,
+        "stereoCorrelation": 0.8909562906492342,
+        "lowSideToMidDb": -20.273673072164257,
+        "bandRmsDbfs": {
+          "below150": -13.663464065634091,
+          "150to1000": -19.317527282656897,
+          "1000to6000": -25.739008196122466,
+          "above6000": -33.441276980382185
+        }
+      },
+      {
+        "name": "Horizon / Outro",
+        "startBar": 97,
+        "bars": 8,
+        "rmsDbfs": -16.04225531260567,
+        "peakDbfs": -2.4476807520004287,
+        "crestDb": 13.59457456060524,
+        "dc": -0.00005544352634835894,
+        "stereoCorrelation": 0.7021994572994816,
+        "lowSideToMidDb": -13.807442681642215,
+        "bandRmsDbfs": {
+          "below150": -18.618210830072414,
+          "150to1000": -21.92148145124922,
+          "1000to6000": -27.86614427589855,
+          "above6000": -43.150102503181486
+        }
+      }
+    ],
+    "diagnostics": [
+      {
+        "pluginId": "example.drums",
+        "pluginVersion": "1.0.0",
+        "faults": 0
+      }
+    ]
+  },
+  "bassStems": {
+    "meaning": "Eight bars from bar 25; bus direct master-contribution taps before master inserts/fader. Actual kick sidechain retained. Send-only buses have zero direct contribution.",
+    "buses": [
+      {
+        "name": "Drop I · first statement",
+        "startBar": 1,
+        "bars": 8,
+        "rmsDbfs": -21.550737417387204,
+        "peakDbfs": -17.62111449266573,
+        "crestDb": 3.9296229247214747,
+        "dc": 0.0000305799878604125,
+        "stereoCorrelation": 1,
+        "lowSideToMidDb": -236.2532800737333,
+        "bandRmsDbfs": {
+          "below150": -21.93086611523393,
+          "150to1000": -33.74106650403157,
+          "1000to6000": -50.04851325710615,
+          "above6000": -67.57728022819664
+        }
+      },
+      {
+        "name": "Drop I · first statement",
+        "startBar": 1,
+        "bars": 8,
+        "rmsDbfs": -33.56546249162615,
+        "peakDbfs": -20.918955537028904,
+        "crestDb": 12.646506954597246,
+        "dc": -5.0073928300573e-7,
+        "stereoCorrelation": 1,
+        "lowSideToMidDb": -222.97019809331502,
+        "bandRmsDbfs": {
+          "below150": -35.213948095653535,
+          "150to1000": -40.181388860789795,
+          "1000to6000": -52.04732683676359,
+          "above6000": -69.06777116912686
+        }
+      },
+      {
+        "name": "Drop I · first statement",
+        "startBar": 1,
+        "bars": 8,
+        "rmsDbfs": -31.49263454399263,
+        "peakDbfs": -14.281160345221613,
+        "crestDb": 17.211474198771015,
+        "dc": 0.0000014296612550779844,
+        "stereoCorrelation": 0.999458196011319,
+        "lowSideToMidDb": -40.33077519088883,
+        "bandRmsDbfs": {
+          "below150": -39.834127917569305,
+          "150to1000": -34.73618995670646,
+          "1000to6000": -40.01425895840136,
+          "above6000": -54.11665752620614
+        }
+      }
+    ]
+  },
+  "nativeProcess": {
+    "snapshot": "target/examples/full-songs/after-the-horizon.snapshot.json",
+    "sampleRate": 48000,
+    "blockSize": 128,
+    "tracks": 24,
+    "instrumentChannels": 23,
+    "mixerBuses": 14,
+    "graphLatencyFrames": 1096,
+    "pluginFaults": 0,
+    "device": "offline memory buffers",
+    "callbackP99Ms": null,
+    "xruns": null,
+    "regions": [
+      {
+        "startBar": 24,
+        "warmupBlocks": 128,
+        "blocks": 4000,
+        "meanMs": 1.3839118442500007,
+        "p95Ms": 1.500167,
+        "p99Ms": 1.547083,
+        "maxMs": 1.616167,
+        "peak": 0.7692992091178894,
+        "deadlineMs": 2.6666666666666665,
+        "deadlineExceedances": 0
+      },
+      {
+        "startBar": 80,
+        "warmupBlocks": 128,
+        "blocks": 4000,
+        "meanMs": 1.4498122035000027,
+        "p95Ms": 1.5512080000000001,
+        "p99Ms": 1.58925,
+        "maxMs": 1.6598330000000001,
+        "peak": 0.7622123956680298,
+        "deadlineMs": 2.6666666666666665,
+        "deadlineExceedances": 0
+      }
+    ]
+  },
+  "wasm": {
+    "title": "After the Horizon / 地平线之后",
+    "slug": "after-the-horizon",
+    "seconds": 181.28570833333333,
+    "sampleRate": 48000,
+    "blockSize": 128,
+    "samples": 52,
+    "renderSeconds": 163.316433541,
+    "realtimeMultiple": 1.1100273524392277,
+    "p95Ms": 2.4052499999997963,
+    "p99Ms": 2.48379100000011,
+    "processBlocks": 4000,
+    "processStartBar": 24,
+    "memoryBefore": {
+      "bytes": 582942720,
+      "allocations": 175551,
+      "deallocations": 134636
+    },
+    "memoryAfter": {
+      "bytes": 582942720,
+      "allocations": 175551,
+      "deallocations": 134636
+    },
+    "processAllocations": 0,
+    "processDeallocations": 0,
+    "peakDbfs": -1.4700663415818536,
+    "rmsDbfs": -14.023775010283758,
+    "maxPcmDifference": 4.76837158203125e-7,
+    "sectionLevels": [
+      {
+        "name": "First light / Soft Piano",
+        "rmsDbfs": -17.885675602578974
+      },
+      {
+        "name": "Lift / Build I",
+        "rmsDbfs": -15.720936936139294
+      },
+      {
+        "name": "Open sky / Drop I",
+        "rmsDbfs": -12.25345863316608
+      },
+      {
+        "name": "Weightless / Break",
+        "rmsDbfs": -13.867526039330183
+      },
+      {
+        "name": "Signal / Build II",
+        "rmsDbfs": -16.094344521617575
+      },
+      {
+        "name": "Beyond / Drop II",
+        "rmsDbfs": -12.413749053607201
+      },
+      {
+        "name": "Afterglow / Reprise",
+        "rmsDbfs": -11.962141233822257
+      },
+      {
+        "name": "Horizon / Outro",
+        "rmsDbfs": -16.042255313960514
+      }
+    ]
+  },
+  "preview": {
+    "entry": "/Volumes/BRData/projects/oxitone/target/examples/after-the-horizon.mjs",
+    "state": {
+      "protocolVersion": "1.0",
+      "type": "state",
+      "revision": "1",
+      "seenRevision": "1",
+      "cursor": "0",
+      "audibleFrame": "0",
+      "playing": false,
+      "xruns": 0,
+      "pluginFaults": 0,
+      "tracks": 24,
+      "patterns": 867
+    },
+    "tracks": 24,
+    "samples": 52,
+    "viewer": "headless simulated sink",
+    "log": "",
+    "rejected": 0,
+    "bundleBytes": 231223,
+    "bundleSha256": "e503b19f9aa251b1069491ed8c6ea986d96e72a398bb82a2a862fea58c08dd7f",
+    "globalCommandFromUnrelatedCwd": "started successfully from /tmp with --headless --no-watch, then terminated cleanly"
+  },
+  "limitations": [
+    "Objective metrics do not establish subjective commercial-release quality; no listening claim.",
+    "CPU timings are finite offline regions, not hardware callback or long device endurance acceptance. Wasm process timing covers Drop I only.",
+    "52 piano resources raise Wasm linear memory to about 556 MiB during processing. Full 88-key sample-bank memory is not validated in Wasm.",
+    "Single project bundle keeps installed SDK/native libraries and sample assets external.",
+    "MIDI export shares timbre-family channels and cannot preserve independent patches/CCs or overlapping same pitches."
+  ]
+}

@@ -10,7 +10,8 @@
     "test": "vitest run",
     "start": "node dist/index.js",
     "songs:prepare": "node dist/full/prepare.js",
-    "songs:render": "node dist/full/render.js"
+    "songs:render": "node dist/full/render.js",
+    "songs:stems": "node dist/full/stems.js"
   },
   "dependencies": {
     "@oxitone/core": "workspace:*",

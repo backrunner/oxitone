@@ -3,19 +3,21 @@ import type { ProjectSnapshot } from "@oxitone/protocol";
 /** MIDI-only copy: retain unrestricted authoring/audio tracks and group drum exports on GM 10. */
 export function midiSnapshot(source: ProjectSnapshot): ProjectSnapshot {
   const copy = structuredClone(source);
-  const channels = new Map<string, number>();
-  const available = Array.from({ length: 16 }, (_, i) => i + 1).filter(c => c !== 10);
+  // Explicit demo timbre families; shared MIDI channels cannot reproduce independent patches/CCs.
+  const families: [RegExp, number][] = [
+    [/^Soft Piano/, 1], [/^Grand Piano/, 2], [/pure mono sub/, 3], [/harmonic bassline/, 4],
+    [/^Undertow/, 5], [/^Signal/, 6], [/^Formant/, 7], [/^Laser/, 8], [/^Horizon/, 9],
+    [/^Clap/, 10], [/supersaw/, 11], [/center chord body/, 12], [/^Ember|^Orbit/, 13],
+    [/^Bloom/, 14], [/^Prism|^Halo/, 15], [/^Air/, 16],
+  ];
   for (const track of [...copy.tracks].sort((a,b) => a.id.localeCompare(b.id))) {
     const channel = copy.channels.find(c => c.id === track.channelIds[0]);
     if (!channel) continue;
     if (channel.instrument.pluginId === "example.drums") track.midiChannel = 10;
     else {
-      if (!channels.has(channel.id)) {
-        const next = available.shift();
-        if (next !== undefined) channels.set(channel.id, next);
-      }
-      // Leave excess parts unassigned so the native exporter reports MidiChannelLimit.
-      track.midiChannel = channels.get(channel.id);
+      const family = families.find(([pattern]) => pattern.test(channel.name ?? ""));
+      if (!family) throw new Error(`Declare a MIDI export family for ${channel.name ?? channel.id}`);
+      track.midiChannel = family[1];
     }
   }
   return copy;

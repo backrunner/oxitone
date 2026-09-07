@@ -409,6 +409,14 @@ transpose 为连续半音偏移，在新 note-on 时取值；区域选择仍使�
 完整 native 参数顺序为 transpose、velocitySensitivity、amp.attack/decay/sustain/release、loop、start、level、pan；
 后九项沿用 Sampler 的范围/默认值/自动化语义，transpose 的默认值为 0。键位与力度区域不可在 callback 修改。
 
+`grandPiano(bank, options?)` / `softPiano(bank, options?)` 是这个原生 multisampler 的录音钢琴映射 helpers，
+不引入新的 wire schema 或 JS DSP。`PianoBank` 包含 `keyRange: [low,high]` 与按弱到强排列的
+2…8 个 `layers`，每层是 `{sample: Sample, rootKey, gain?}` 数组。各层根音集合必须一致且无重复，
+总区域数 ≤256；helper 不修改输入，按根音中点创建不重叠键区，平分力度 1…127。
+Grand 使用所有录音层；Soft 只使用最弱两层并映射完整力度范围。默认 Grand 的 velocitySensitivity=.7、
+attack=.002s、release=.38s；Soft 为 .45/.007s/.75s；两者 decay=0、sustain=1，允许 MultisamplerOptions 覆盖。
+非法层、Sample、键区或 options 报 `InvalidProject`；音频文件依旧由 Project 提供，helper 不下载资源。
+
 `Record<string, number>` 只表示经过 schema 校验的参数表，不代表插件可以接收任意键；每个 plugin descriptor 必须提供完整 `ParameterSpec[]`，缺失、未知或越界参数都在 compile 阶段拒绝。
 
 Project 自身也是可自动化实体：它暴露参数 `tempo`（20..999 BPM，`mapping: 'log'`，`rate: 'control'`），lane 以 `target: { entityId: <projectId>, parameterId: 'tempo' }` 绑定，语义与烘焙规则见 `02-domain-spec.md` 和 `03-audio-runtime-spec.md`。

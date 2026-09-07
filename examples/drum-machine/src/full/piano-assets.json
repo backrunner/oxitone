@@ -1,0 +1,1208 @@
+{
+  "source": "https://github.com/sfzinstruments/SalamanderGrandPiano",
+  "commit": "3382bf9496bba2486f5ab0de55a264d1dfc38404",
+  "license": "CC-BY-3.0",
+  "credit": "Salamander Grand Piano v3 by Alexander Holm; FLAC distribution by sfzinstruments/kinwie. Oxitone supplies independent velocity mapping and processing.",
+  "files": [
+    {
+      "file": "A0v2.flac",
+      "rootKey": 21,
+      "layer": 2,
+      "bytes": 2179707,
+      "sha256": "a5a3e3558f3589233a910b84da5ccc69f3ba1ed5f0a7a7e78ab10e59dccba06c",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "1014154"
+    },
+    {
+      "file": "A0v5.flac",
+      "rootKey": 21,
+      "layer": 5,
+      "bytes": 2638509,
+      "sha256": "4b51dcd8e2573994744404235e64db98934a6f2543096bb469790321cfb8bbd9",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "1195587"
+    },
+    {
+      "file": "A0v9.flac",
+      "rootKey": 21,
+      "layer": 9,
+      "bytes": 2727560,
+      "sha256": "02a70183eb6ae395f477fa4a38288f06fccbec49175945cc2da4aa0f7c3b30c2",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "1217792"
+    },
+    {
+      "file": "A0v13.flac",
+      "rootKey": 21,
+      "layer": 13,
+      "bytes": 2814539,
+      "sha256": "276ddf7c62f4b5680811a89a7fcff47453132a0715df3e5613c4c58184d8bb3d",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "1237349"
+    },
+    {
+      "file": "C1v2.flac",
+      "rootKey": 24,
+      "layer": 2,
+      "bytes": 2442369,
+      "sha256": "52ffea0eea639265e90a38f5a65c04f727c62271d8e3bf3553d668501fa9f3c3",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "1134298"
+    },
+    {
+      "file": "C1v5.flac",
+      "rootKey": 24,
+      "layer": 5,
+      "bytes": 2498437,
+      "sha256": "437ef6f1e8c35f062610b063cbcdf394180d344ce510d936a915f57a6fe4e19f",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "1136364"
+    },
+    {
+      "file": "C1v9.flac",
+      "rootKey": 24,
+      "layer": 9,
+      "bytes": 2508365,
+      "sha256": "2dd8dfedd491a07f4bb44d3c70662e4e131f1a4be310d13a7e01b31dff21193a",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "1126753"
+    },
+    {
+      "file": "C1v13.flac",
+      "rootKey": 24,
+      "layer": 13,
+      "bytes": 2551193,
+      "sha256": "89efe11ec6d73ab3621c08214f44e1e78312e70218bee2c0b85bd9562f79b4fa",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "1127832"
+    },
+    {
+      "file": "D#1v2.flac",
+      "rootKey": 27,
+      "layer": 2,
+      "bytes": 2497323,
+      "sha256": "27c4964f70851a69d8f48b3d013df359eaf5db8e1d201fc5836e0bf4760e6256",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "1034674"
+    },
+    {
+      "file": "D#1v5.flac",
+      "rootKey": 27,
+      "layer": 5,
+      "bytes": 2840893,
+      "sha256": "d11f4f7010acdf403f48bd02aee092293c3daba7a2833bae460a75c9b76ea7e0",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "1161698"
+    },
+    {
+      "file": "D#1v9.flac",
+      "rootKey": 27,
+      "layer": 9,
+      "bytes": 2901002,
+      "sha256": "6fbf864207bdf2024474937f90ae038352c6533ef7a58ca9d7e294e6944155e8",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "1165024"
+    },
+    {
+      "file": "D#1v13.flac",
+      "rootKey": 27,
+      "layer": 13,
+      "bytes": 2921669,
+      "sha256": "e037b153020973861bfbef7865c1080e7e1b27c0be87cad82e9e61bf8fe2fe8d",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "1157447"
+    },
+    {
+      "file": "F#1v2.flac",
+      "rootKey": 30,
+      "layer": 2,
+      "bytes": 2063507,
+      "sha256": "2d5c37d753872eef15524a2b64c949fcbd710c8681636df5f54383b1bdc4d7f4",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "900465"
+    },
+    {
+      "file": "F#1v5.flac",
+      "rootKey": 30,
+      "layer": 5,
+      "bytes": 2660928,
+      "sha256": "1a2b1ed554467a4efc9894784f5296deb34d422d8b2a2a36ad2eaeb779f0152b",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "1118450"
+    },
+    {
+      "file": "F#1v9.flac",
+      "rootKey": 30,
+      "layer": 9,
+      "bytes": 2696747,
+      "sha256": "b18d29c7598b785354fa7d34c4295b6b3156e61e68e97a833800afcf7270cf26",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "1118755"
+    },
+    {
+      "file": "F#1v13.flac",
+      "rootKey": 30,
+      "layer": 13,
+      "bytes": 2727847,
+      "sha256": "3fadde14ec3d3ed4aa728ea5ee66f4241bd90265ace2cc6f7c46633670958278",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "1114361"
+    },
+    {
+      "file": "A1v2.flac",
+      "rootKey": 33,
+      "layer": 2,
+      "bytes": 2186772,
+      "sha256": "3b62aa6568d571dab161e4e13c52f85e8a4ba3e8ec7f2309aaac89509f0f7cdc",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "951911"
+    },
+    {
+      "file": "A1v5.flac",
+      "rootKey": 33,
+      "layer": 5,
+      "bytes": 2402980,
+      "sha256": "a1986ba0c45258f80b6014e4341def170f283b28a4905e10518c763254a9478f",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "1013405"
+    },
+    {
+      "file": "A1v9.flac",
+      "rootKey": 33,
+      "layer": 9,
+      "bytes": 2707943,
+      "sha256": "65a782873ddc11233f7a414ee84bbb56d9d80e8c0c2a4258241b5ddfa4d94520",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "1116949"
+    },
+    {
+      "file": "A1v13.flac",
+      "rootKey": 33,
+      "layer": 13,
+      "bytes": 2779724,
+      "sha256": "f8a1c9ddd11f309a1231fd7e9f3f2182a70589428cbbf93ade703151f7f384b4",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "1123513"
+    },
+    {
+      "file": "C2v2.flac",
+      "rootKey": 36,
+      "layer": 2,
+      "bytes": 2100686,
+      "sha256": "237b0dd04074ee30c2de98d3df3d69fceb5885d20fecd5e004ccba9093b4d429",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "922410"
+    },
+    {
+      "file": "C2v5.flac",
+      "rootKey": 36,
+      "layer": 5,
+      "bytes": 2510357,
+      "sha256": "bb79dafec30facfec6dcbc24cab2b933af647fbf65d9a9216aaf7842e43daa6a",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "1068615"
+    },
+    {
+      "file": "C2v9.flac",
+      "rootKey": 36,
+      "layer": 9,
+      "bytes": 2564042,
+      "sha256": "26b839cd6518c4852204ed4d531eaa2372b2feb00f5b5edd196c37b3ad63ed1c",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "1069602"
+    },
+    {
+      "file": "C2v13.flac",
+      "rootKey": 36,
+      "layer": 13,
+      "bytes": 2624902,
+      "sha256": "ebca9159fc960f12612f21166a0dae616510478cb6d3a2e8e1683ee626a8a664",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "1066791"
+    },
+    {
+      "file": "D#2v2.flac",
+      "rootKey": 39,
+      "layer": 2,
+      "bytes": 2295789,
+      "sha256": "c420add4d002e36406c45680ffa8ecf0b38c93deb37cffb5cbec808484835e8e",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "986308"
+    },
+    {
+      "file": "D#2v5.flac",
+      "rootKey": 39,
+      "layer": 5,
+      "bytes": 2578767,
+      "sha256": "4ce2134deda2ee09aecfa04705310cd05113b0cfbae131e2c23727cdbb34ec1d",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "1073496"
+    },
+    {
+      "file": "D#2v9.flac",
+      "rootKey": 39,
+      "layer": 9,
+      "bytes": 2579428,
+      "sha256": "f764c397fba28f77625fd97965a40e6d5d4899c4d220979c22ed3f4a26b302a6",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "1061221"
+    },
+    {
+      "file": "D#2v13.flac",
+      "rootKey": 39,
+      "layer": 13,
+      "bytes": 2611764,
+      "sha256": "4e4efcd51b21192bdafb8f32a800d02572c32ff873a9d6d859cdc4ffd49c8d3d",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "1055094"
+    },
+    {
+      "file": "F#2v2.flac",
+      "rootKey": 42,
+      "layer": 2,
+      "bytes": 1983201,
+      "sha256": "31e445ed52ce66dab27eaad754cf0e3a948ac19df809b999f1581c434bd3f61c",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "877435"
+    },
+    {
+      "file": "F#2v5.flac",
+      "rootKey": 42,
+      "layer": 5,
+      "bytes": 2314774,
+      "sha256": "9a1dcad208ada9743e0b31398bce0269d238e6658fa2bbcceb81f0564a86d3bc",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "994129"
+    },
+    {
+      "file": "F#2v9.flac",
+      "rootKey": 42,
+      "layer": 9,
+      "bytes": 2339282,
+      "sha256": "210657414189ff51cd5e53824e5155f9d1fc73bc1a8f707e932473681f0a6d32",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "981773"
+    },
+    {
+      "file": "F#2v13.flac",
+      "rootKey": 42,
+      "layer": 13,
+      "bytes": 2407608,
+      "sha256": "4faa87aff92ff7e8d9c61b881b9693f87a74cde97344a20d3a4abdffa3142301",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "986703"
+    },
+    {
+      "file": "A2v2.flac",
+      "rootKey": 45,
+      "layer": 2,
+      "bytes": 1856830,
+      "sha256": "172379a2cc68d26fc17273dbfa498b281f4ced35269c5c2918ddb8627c168649",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "773714"
+    },
+    {
+      "file": "A2v5.flac",
+      "rootKey": 45,
+      "layer": 5,
+      "bytes": 1887699,
+      "sha256": "b38348a7084e2842f6b5441f525877713031a85228c743bc5b55e6a28cadfc63",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "768239"
+    },
+    {
+      "file": "A2v9.flac",
+      "rootKey": 45,
+      "layer": 9,
+      "bytes": 1945375,
+      "sha256": "01f15f2aaabe324a473450eb99a1fe60af2594d9c6bd8c9dacba899773ec8c08",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "777876"
+    },
+    {
+      "file": "A2v13.flac",
+      "rootKey": 45,
+      "layer": 13,
+      "bytes": 2011461,
+      "sha256": "39f8959a2344e1ec36d8fed2bf1091bb57f2d1b4953f1320582b3cb74788bd31",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "778340"
+    },
+    {
+      "file": "C3v2.flac",
+      "rootKey": 48,
+      "layer": 2,
+      "bytes": 1651757,
+      "sha256": "665e05f77b1c1b44951ae202974798befbb7c68813ffeeb5871536532095a39d",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "760811"
+    },
+    {
+      "file": "C3v5.flac",
+      "rootKey": 48,
+      "layer": 5,
+      "bytes": 1731432,
+      "sha256": "739ff6e06c830e0a252708bcca21d143babeb0cf1480ce4ebc58fa8ea67719ef",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "777702"
+    },
+    {
+      "file": "C3v9.flac",
+      "rootKey": 48,
+      "layer": 9,
+      "bytes": 1759949,
+      "sha256": "94b8e18eb2c6cbf28a6497ca6c8e8b08b5ad93528e1799f53903a7b7501cdf05",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "771803"
+    },
+    {
+      "file": "C3v13.flac",
+      "rootKey": 48,
+      "layer": 13,
+      "bytes": 1803471,
+      "sha256": "9ac83c8ca65ed68f5eb87029581741c25e0249674e20e792e778393e602e7b03",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "776566"
+    },
+    {
+      "file": "D#3v2.flac",
+      "rootKey": 51,
+      "layer": 2,
+      "bytes": 1580308,
+      "sha256": "06d36b3575dbbcaeddd5ba34076fd4dc06259eae099587820e1843ecf7a39042",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "709148"
+    },
+    {
+      "file": "D#3v5.flac",
+      "rootKey": 51,
+      "layer": 5,
+      "bytes": 1790253,
+      "sha256": "2fef32f190a83ebd8d5dac184beeffbdc7f21a3b1b562e557db266e725dd60d1",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "781778"
+    },
+    {
+      "file": "D#3v9.flac",
+      "rootKey": 51,
+      "layer": 9,
+      "bytes": 1772749,
+      "sha256": "05c3520d4cce586a9978ea791537a66dcb11052050902ede968d67a6b1093b56",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "769132"
+    },
+    {
+      "file": "D#3v13.flac",
+      "rootKey": 51,
+      "layer": 13,
+      "bytes": 1790968,
+      "sha256": "b0b95430fcd4a249d336060241bbaf8f7732855aa0c44472e001c33fde680a17",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "761179"
+    },
+    {
+      "file": "F#3v2.flac",
+      "rootKey": 54,
+      "layer": 2,
+      "bytes": 1506111,
+      "sha256": "640e5da0fd97b6268b7b8150d97bffda3f53e8f41bb7a8df0490ccf7509bae53",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "664057"
+    },
+    {
+      "file": "F#3v5.flac",
+      "rootKey": 54,
+      "layer": 5,
+      "bytes": 1775604,
+      "sha256": "aa64b3c1bcbaff4bc6e0246038ffc7fa8bb047dc9d5bdf6f66746f7d03a487eb",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "771468"
+    },
+    {
+      "file": "F#3v9.flac",
+      "rootKey": 54,
+      "layer": 9,
+      "bytes": 1822051,
+      "sha256": "60550b92468f54d6d6ab7dec3c45b5611b38d6500db88e59b543dc996b8856b6",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "778171"
+    },
+    {
+      "file": "F#3v13.flac",
+      "rootKey": 54,
+      "layer": 13,
+      "bytes": 1816533,
+      "sha256": "9d375514e85b2007cb5c8c69e1e6b5c6c490864289bc6596b292195968e281d5",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "768010"
+    },
+    {
+      "file": "A3v2.flac",
+      "rootKey": 57,
+      "layer": 2,
+      "bytes": 1568956,
+      "sha256": "4cf1a2ee21a4b1e2bf14293c762658b0e95e24d58afca59476780d3461302d49",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "681163"
+    },
+    {
+      "file": "A3v5.flac",
+      "rootKey": 57,
+      "layer": 5,
+      "bytes": 1738211,
+      "sha256": "5956e4b731456ad34443a7c8db99c0bbd742df7fe625b0e123f5dd008817f24c",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "735518"
+    },
+    {
+      "file": "A3v9.flac",
+      "rootKey": 57,
+      "layer": 9,
+      "bytes": 1796674,
+      "sha256": "75f4fb04dd54e416b93863203377aaf95dab2a980cf2261037b178d180a96514",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "751725"
+    },
+    {
+      "file": "A3v13.flac",
+      "rootKey": 57,
+      "layer": 13,
+      "bytes": 1814316,
+      "sha256": "9c94e94eb4b357dd7f0146520fc70b2cb79dd14bdfe78d954130e623f59e1ff2",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "737286"
+    },
+    {
+      "file": "C4v2.flac",
+      "rootKey": 60,
+      "layer": 2,
+      "bytes": 1448551,
+      "sha256": "2e8331f97c313ebbc6cd9c4d7975c5e8ea8eaec8414d701343dfe4e90a109cd0",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "652399"
+    },
+    {
+      "file": "C4v5.flac",
+      "rootKey": 60,
+      "layer": 5,
+      "bytes": 1685205,
+      "sha256": "2c0c641a32b4d0958c9b1e3a4049dad2c1aea01aa74844d5061ab59033ddc171",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "746064"
+    },
+    {
+      "file": "C4v9.flac",
+      "rootKey": 60,
+      "layer": 9,
+      "bytes": 1747731,
+      "sha256": "512e6c8d114fa700113ffc8b42f71101574499bec2477354295ecceddabf9979",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "752900"
+    },
+    {
+      "file": "C4v13.flac",
+      "rootKey": 60,
+      "layer": 13,
+      "bytes": 1768613,
+      "sha256": "dfdcdedf982a04e45c6dbd088130aa713b94c59727d75d8a688e7ddabc44ecbd",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "748347"
+    },
+    {
+      "file": "D#4v2.flac",
+      "rootKey": 63,
+      "layer": 2,
+      "bytes": 1365324,
+      "sha256": "cfbf7c4dbb86a330217c89976406bde9bd1ffdbd1953c6565f5b6898b3b2af49",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "646867"
+    },
+    {
+      "file": "D#4v5.flac",
+      "rootKey": 63,
+      "layer": 5,
+      "bytes": 1529007,
+      "sha256": "fa9f6c69388ae6a3ddd690c0d9a4c81ef0f463911d87c5e8c3e401ea026e044a",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "711051"
+    },
+    {
+      "file": "D#4v9.flac",
+      "rootKey": 63,
+      "layer": 9,
+      "bytes": 1583173,
+      "sha256": "74a0cc7b294b24707ffb947b4869a26042b0451ed53a3bbf32622fcf48b46f17",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "721516"
+    },
+    {
+      "file": "D#4v13.flac",
+      "rootKey": 63,
+      "layer": 13,
+      "bytes": 1674994,
+      "sha256": "08d87e428d0734e1f3911ad9b913d868c378b13b7bc447a44d0185ba44f011ff",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "755233"
+    },
+    {
+      "file": "F#4v2.flac",
+      "rootKey": 66,
+      "layer": 2,
+      "bytes": 1301432,
+      "sha256": "41984ed349cab42f6293fcfa52c6cb59d19e134868992be663f668e4827b90c6",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "640062"
+    },
+    {
+      "file": "F#4v5.flac",
+      "rootKey": 66,
+      "layer": 5,
+      "bytes": 1441445,
+      "sha256": "bcb9fed0973442b2ec681d06a3690676608e2b225e0a17a95cb8782ff0b0f0ff",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "689717"
+    },
+    {
+      "file": "F#4v9.flac",
+      "rootKey": 66,
+      "layer": 9,
+      "bytes": 1516761,
+      "sha256": "b3feb5668f614d845dab1ea7d7877c7b6ff45498a1f50476cee90f88d2aaf41d",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "710549"
+    },
+    {
+      "file": "F#4v13.flac",
+      "rootKey": 66,
+      "layer": 13,
+      "bytes": 1491508,
+      "sha256": "a313111332287aa1a09a1a89a7d7e92da7a4672a3ef72e5d082531e560f2a805",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "685859"
+    },
+    {
+      "file": "A4v2.flac",
+      "rootKey": 69,
+      "layer": 2,
+      "bytes": 1308537,
+      "sha256": "8fb648231c904bc96f0cf86a8259a2f55dffba59a4420036f32a96f47f52a269",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "628455"
+    },
+    {
+      "file": "A4v5.flac",
+      "rootKey": 69,
+      "layer": 5,
+      "bytes": 1389193,
+      "sha256": "1439c8af22d91f9ae76447aee6a5be11155299e3edad7ed143b5118f29c86e24",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "649058"
+    },
+    {
+      "file": "A4v9.flac",
+      "rootKey": 69,
+      "layer": 9,
+      "bytes": 1412927,
+      "sha256": "b25017e9cd0cc9fa9e22821eb3643390df467978d043b90f045b053d245a29ee",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "650364"
+    },
+    {
+      "file": "A4v13.flac",
+      "rootKey": 69,
+      "layer": 13,
+      "bytes": 1468684,
+      "sha256": "7fc924898c697f739b1ed705fbea7523dfc99ce818380eb54659bafa69e176a6",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "665890"
+    },
+    {
+      "file": "C5v2.flac",
+      "rootKey": 72,
+      "layer": 2,
+      "bytes": 1355346,
+      "sha256": "615f1bc23b9183a5c0e02997b083f283f3fff29990bf7ffc62c111c739fbf548",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "692905"
+    },
+    {
+      "file": "C5v5.flac",
+      "rootKey": 72,
+      "layer": 5,
+      "bytes": 1532927,
+      "sha256": "89bc53b493aee1cacddd60d17057f811e10297b5a67203d302979102592ad25a",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "763101"
+    },
+    {
+      "file": "C5v9.flac",
+      "rootKey": 72,
+      "layer": 9,
+      "bytes": 1542971,
+      "sha256": "72adc6b756ed07454a98ff2c4e54082f7477e07147b8eb4c906d210cc3f68c72",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "757266"
+    },
+    {
+      "file": "C5v13.flac",
+      "rootKey": 72,
+      "layer": 13,
+      "bytes": 1498911,
+      "sha256": "f0a418b6aa64d15b63d565cfcdab99604f5615539935ac4daeed3a52780db11c",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "721186"
+    },
+    {
+      "file": "D#5v2.flac",
+      "rootKey": 75,
+      "layer": 2,
+      "bytes": 1226144,
+      "sha256": "66b39172aeac7b8f0d0bcb0afeedbf4e1587152b5d1b8d5e59ee5b056b1009f6",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "611200"
+    },
+    {
+      "file": "D#5v5.flac",
+      "rootKey": 75,
+      "layer": 5,
+      "bytes": 1234965,
+      "sha256": "068b7e54ff00df5f7dcf6f21da6e03b07b1931859272f23b4e6de01d81a2b95d",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "605969"
+    },
+    {
+      "file": "D#5v9.flac",
+      "rootKey": 75,
+      "layer": 9,
+      "bytes": 1305830,
+      "sha256": "c7c481ab0b43d21e952f372204dd048d3e06e9744aaa39a45209377ca72ffe5d",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "631309"
+    },
+    {
+      "file": "D#5v13.flac",
+      "rootKey": 75,
+      "layer": 13,
+      "bytes": 1308203,
+      "sha256": "5d1ad2e09946a9cc707bd5e0dc2e89870d841bc8b4cd6f4125370925f1b2b565",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "615467"
+    },
+    {
+      "file": "F#5v2.flac",
+      "rootKey": 78,
+      "layer": 2,
+      "bytes": 1073200,
+      "sha256": "94f862c363fd9e0dba690ce24c29d27a78e2eee641c71b274b4a739b9f3ce01d",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "543850"
+    },
+    {
+      "file": "F#5v5.flac",
+      "rootKey": 78,
+      "layer": 5,
+      "bytes": 1145753,
+      "sha256": "2213a775a32eab348bf539be74c4ef9f8e89537315e60b51156c41208bc01754",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "570449"
+    },
+    {
+      "file": "F#5v9.flac",
+      "rootKey": 78,
+      "layer": 9,
+      "bytes": 1173927,
+      "sha256": "06f95a6014fc9f9a3fec9f786fccdd3d636e27986c76a0294390981df88ac25f",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "575827"
+    },
+    {
+      "file": "F#5v13.flac",
+      "rootKey": 78,
+      "layer": 13,
+      "bytes": 1155608,
+      "sha256": "b673dd8e61549962ba3eff1a0cfe0dbfb08bc90797d284302456b1edc1ccff91",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "553533"
+    },
+    {
+      "file": "A5v2.flac",
+      "rootKey": 81,
+      "layer": 2,
+      "bytes": 692482,
+      "sha256": "da033a1173ddb4920a137417a3276e90ed76c5ba54816191bea3d798c8e43a10",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "328465"
+    },
+    {
+      "file": "A5v5.flac",
+      "rootKey": 81,
+      "layer": 5,
+      "bytes": 893488,
+      "sha256": "95a3c9d6bec09f30a814440a71e17755b65b0eb2ea4536b99693d1461db0e899",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "413185"
+    },
+    {
+      "file": "A5v9.flac",
+      "rootKey": 81,
+      "layer": 9,
+      "bytes": 1109304,
+      "sha256": "9842fd4beb177ba7e898eead28c3ce6869319e25f862e322c26fe03e354a5542",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "503838"
+    },
+    {
+      "file": "A5v13.flac",
+      "rootKey": 81,
+      "layer": 13,
+      "bytes": 1107301,
+      "sha256": "fc90734fb997a0846ff319907ea44b448b20fcb2eb634bd58e8b186580dbd53c",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "489585"
+    },
+    {
+      "file": "C6v2.flac",
+      "rootKey": 84,
+      "layer": 2,
+      "bytes": 534649,
+      "sha256": "9cd9d4c72f29f5ef946230d126a1dc088b4d53c488de13ac8b06adaf24f3477d",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "234979"
+    },
+    {
+      "file": "C6v5.flac",
+      "rootKey": 84,
+      "layer": 5,
+      "bytes": 642347,
+      "sha256": "2b9646f3956b7e9d50baf573fb5b45b64fee2e5ff6ec56bd9aa40cde914066bf",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "278528"
+    },
+    {
+      "file": "C6v9.flac",
+      "rootKey": 84,
+      "layer": 9,
+      "bytes": 689941,
+      "sha256": "5804f0e48b9879fa77d719a63bf6be517f6e29e8397828f97a5191080141e160",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "291374"
+    },
+    {
+      "file": "C6v13.flac",
+      "rootKey": 84,
+      "layer": 13,
+      "bytes": 701778,
+      "sha256": "15dd61cabba1265fb437260cc08f6c738664532df3957a4e5a927e617ce25eec",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "290697"
+    },
+    {
+      "file": "D#6v2.flac",
+      "rootKey": 87,
+      "layer": 2,
+      "bytes": 745050,
+      "sha256": "cfa1136120f06903013d48902e98f9993e47ce94aef7d4f42a7d967e9a4afb8d",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "321170"
+    },
+    {
+      "file": "D#6v5.flac",
+      "rootKey": 87,
+      "layer": 5,
+      "bytes": 776942,
+      "sha256": "feac0ed06c59a73fdcd0bd8b480330df94134b735a5651e645cdd8ab482f2c30",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "326348"
+    },
+    {
+      "file": "D#6v9.flac",
+      "rootKey": 87,
+      "layer": 9,
+      "bytes": 774129,
+      "sha256": "a1f6369419f6db72d64d7d9c01267d945368031cd2d7cc0917f9eb62d104e95c",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "318225"
+    },
+    {
+      "file": "D#6v13.flac",
+      "rootKey": 87,
+      "layer": 13,
+      "bytes": 805108,
+      "sha256": "008ca38da86312821c8ae25a2218b429d930f4e4e063b49f86018b4f2dcf4484",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "325490"
+    },
+    {
+      "file": "F#6v2.flac",
+      "rootKey": 90,
+      "layer": 2,
+      "bytes": 471711,
+      "sha256": "ddf648a666f850daccd75b4fe8c1899c1269332b9d36b52ba19f90f5a6aabf8a",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "208427"
+    },
+    {
+      "file": "F#6v5.flac",
+      "rootKey": 90,
+      "layer": 5,
+      "bytes": 618762,
+      "sha256": "bdcf329fd64a40d7e6033cf2b82f97c25c439d495fc7415d9e26156e534dd28d",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "269155"
+    },
+    {
+      "file": "F#6v9.flac",
+      "rootKey": 90,
+      "layer": 9,
+      "bytes": 661406,
+      "sha256": "8cb6bda1103ae975ad8e168b9d09e36f632cd74ee0a9c5bfa19bc8df02f8607c",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "281235"
+    },
+    {
+      "file": "F#6v13.flac",
+      "rootKey": 90,
+      "layer": 13,
+      "bytes": 655144,
+      "sha256": "14de48d1d305d81a2e69717c43398f51a39582118958db3c76a539556c7b9228",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "273238"
+    },
+    {
+      "file": "A6v2.flac",
+      "rootKey": 93,
+      "layer": 2,
+      "bytes": 571359,
+      "sha256": "21b3741075d579d6af4661d952cdf42fd634a412cf0770c17fcc5c01b7da6d1c",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "280522"
+    },
+    {
+      "file": "A6v5.flac",
+      "rootKey": 93,
+      "layer": 5,
+      "bytes": 665943,
+      "sha256": "f3bb1202c924ac0c06d6208e4bf4228ea43f217ed0eabe8022f041526baf9ebe",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "325253"
+    },
+    {
+      "file": "A6v9.flac",
+      "rootKey": 93,
+      "layer": 9,
+      "bytes": 667115,
+      "sha256": "8005b652911645ba6e6be219ce0645eee0da9f134b0d33ccb9fbbe9ac1e73893",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "322352"
+    },
+    {
+      "file": "A6v13.flac",
+      "rootKey": 93,
+      "layer": 13,
+      "bytes": 670257,
+      "sha256": "ad1277f1adcd52882c2c8355b8cb7951e6f351bfb6472b762b0347c294150a22",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "316621"
+    },
+    {
+      "file": "C7v2.flac",
+      "rootKey": 96,
+      "layer": 2,
+      "bytes": 405498,
+      "sha256": "62d152db2d2dc831c19cd1de0289731dd8acc35256d2a0b90a263076e3548534",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "198769"
+    },
+    {
+      "file": "C7v5.flac",
+      "rootKey": 96,
+      "layer": 5,
+      "bytes": 414109,
+      "sha256": "ca222f236806a564b17f199843e7befb176a8a2c0194dcfc86153bee9adbb6c7",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "200518"
+    },
+    {
+      "file": "C7v9.flac",
+      "rootKey": 96,
+      "layer": 9,
+      "bytes": 413637,
+      "sha256": "8449a8ecb1c71784b2184a70779d800550224dc62aff20452b1d766704ee4826",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "196230"
+    },
+    {
+      "file": "C7v13.flac",
+      "rootKey": 96,
+      "layer": 13,
+      "bytes": 470922,
+      "sha256": "4343d1ccfb8de415574dd58191599ef449a21c22d86440bff9efb753a062c6d0",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "218123"
+    },
+    {
+      "file": "D#7v2.flac",
+      "rootKey": 99,
+      "layer": 2,
+      "bytes": 497381,
+      "sha256": "891d601fdc167a90ea78fdb1ffe3cefad31948dfe35fd1726210039fe35f635d",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "244486"
+    },
+    {
+      "file": "D#7v5.flac",
+      "rootKey": 99,
+      "layer": 5,
+      "bytes": 472541,
+      "sha256": "f7b49b99ae72b26d100174efa707736597dcc1c474673924297a090bf1ce8f93",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "230885"
+    },
+    {
+      "file": "D#7v9.flac",
+      "rootKey": 99,
+      "layer": 9,
+      "bytes": 478906,
+      "sha256": "8da45d4254dffaa3aaf2c76f65a6299013eb7f53ba95526dd14aff1aadc4ccb3",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "229845"
+    },
+    {
+      "file": "D#7v13.flac",
+      "rootKey": 99,
+      "layer": 13,
+      "bytes": 483234,
+      "sha256": "b62042150a0719f6bd7160353c106f31cd42efc4052e37e03596a8d0d64097e9",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "226162"
+    },
+    {
+      "file": "F#7v2.flac",
+      "rootKey": 102,
+      "layer": 2,
+      "bytes": 542101,
+      "sha256": "05d0af933b13a892efb44716089cb2738f4ea703ba71186e35a0279decbff364",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "218337"
+    },
+    {
+      "file": "F#7v5.flac",
+      "rootKey": 102,
+      "layer": 5,
+      "bytes": 548407,
+      "sha256": "40319a1482e2b0132edb2fa0e82d281e78cff59ddaf254032a281d2e87f7e5d2",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "219080"
+    },
+    {
+      "file": "F#7v9.flac",
+      "rootKey": 102,
+      "layer": 9,
+      "bytes": 541733,
+      "sha256": "ab406ca9900da1ba05d889127a434eace52ef811789b0cc169707bf84d4a0779",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "214414"
+    },
+    {
+      "file": "F#7v13.flac",
+      "rootKey": 102,
+      "layer": 13,
+      "bytes": 572098,
+      "sha256": "0b11d6be965af0386d67c15e13fd530d7e0bbf6edb25d5b9c68f5f72fa0d41ce",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "223145"
+    },
+    {
+      "file": "A7v2.flac",
+      "rootKey": 105,
+      "layer": 2,
+      "bytes": 330590,
+      "sha256": "6338e7cfc1ef6c4169724ab9eb028fe3ed1d4285e9cd4cd1934f1ff1edec5b7d",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "169910"
+    },
+    {
+      "file": "A7v5.flac",
+      "rootKey": 105,
+      "layer": 5,
+      "bytes": 365182,
+      "sha256": "d2180f82dbab5944a7d2fa8c5698dc80087f1603fa2c7c37964c132a83b446b5",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "182559"
+    },
+    {
+      "file": "A7v9.flac",
+      "rootKey": 105,
+      "layer": 9,
+      "bytes": 356638,
+      "sha256": "cdf7fd3442d3e2532e035c3729af62e3a536a6028086ee31f303e60e4e4bde81",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "175449"
+    },
+    {
+      "file": "A7v13.flac",
+      "rootKey": 105,
+      "layer": 13,
+      "bytes": 384467,
+      "sha256": "a1064960ac609b84f85ce224e5cfeb71d94688e00c790697298200874fcaa135",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "182026"
+    },
+    {
+      "file": "C8v2.flac",
+      "rootKey": 108,
+      "layer": 2,
+      "bytes": 347437,
+      "sha256": "1627d60f70b8a1cf668f0aecad7db05396a0151fbb36aed9d551dc1620f52097",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "155148"
+    },
+    {
+      "file": "C8v5.flac",
+      "rootKey": 108,
+      "layer": 5,
+      "bytes": 302658,
+      "sha256": "cd89fbbd6b4a3c71d5e84eeb3203a23b0b6643c1f500945e70557a5e96a203d0",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "133230"
+    },
+    {
+      "file": "C8v9.flac",
+      "rootKey": 108,
+      "layer": 9,
+      "bytes": 426387,
+      "sha256": "25d8fa12d6d323edff35c8743325854ada1231c70d045536e1231eea4e676743",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "184252"
+    },
+    {
+      "file": "C8v13.flac",
+      "rootKey": 108,
+      "layer": 13,
+      "bytes": 443825,
+      "sha256": "775cef5d8d2197ab967c3c764307bc26e349270138b01cdcece98cbc8646a921",
+      "sampleRate": 48000,
+      "channels": 2,
+      "frames": "189153"
+    }
+  ]
+}

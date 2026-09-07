@@ -1,6 +1,6 @@
 # Electronic effects and mastering
 
-The processing palette is complete; the all-synth demo now uses selected processors
+The processing palette is complete; the electronic demo now uses selected processors
 for separate timbre, bus, spatial-return and mastering roles (see 13-electronic-production.md).
 All effects use the existing versioned EffectRef, physical parameter values,
 normalized automation, host mix/bypass and fixed prepare-time PDC. TypeScript

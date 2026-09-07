@@ -16,22 +16,22 @@ export const tapeGlass = () => wavetable({
   lfo: { rateHz: 0.42, positionA: 0.1, pitch: 0.02 },
 });
 export const skyChords = () => wavetable({
-  oscA: { wave: "saw", morphTo: "square", position: 0.04, unison: 9, detune: 22, spread: 1, phaseSpread: 0.79 },
-  oscB: { wave: "saw", octave: 1, unison: 5, detune: 13, spread: 0.86, phase: 0.14, phaseSpread: 0.63 },
-  mix: 0.14, noise: { level: 0.004 }, filter: { cutoff: 5100, resonance: 0.045 },
-  filterEnvelope: { amount: 11, attack: 0.018, decay: 0.25, sustain: 0.08, release: 0.14, decayCurve: -0.5 },
-  amp: { attack: 0.014, decay: 0.28, sustain: 0.72, release: 0.12, attackCurve: -0.3, releaseCurve: -0.5 },
+  oscA: { wave: "saw", morphTo: "square", position: 0.09, unison: 7, detune: 19, spread: 0.95, phaseSpread: 0.73 },
+  oscB: { wave: "saw", octave: 0, unison: 3, detune: 8, spread: 0.48, phase: 0.23, phaseSpread: 0.41 },
+  mix: 0.3, noise: { level: 0.013 }, filter: { cutoff: 10500, resonance: 0.025 },
+  filterEnvelope: { amount: 4, attack: 0.008, decay: 0.35, sustain: 0.5, release: 0.14 },
+  amp: { attack: 0.007, decay: 0.18, sustain: 0.94, release: 0.1, releaseCurve: -0.5 },
   lfo: { rateHz: 140 / 60 / 8, positionA: 0.025 }, lfo2: { shape: "triangle", rateHz: 0.29 },
   modulation: [{ source: "lfo2", target: "positionB", amount: 0.04 },
     { source: "velocity", target: "cutoff", amount: 0.055 }, { source: "noteRandom", target: "pan", amount: 0.035 }],
 });
 export const chordBody = () => wavetable({
   oscA: { wave: "saw", morphTo: "triangle", position: 0.35, unison: 3, detune: 9, spread: 0.4, phaseSpread: 0.37 },
-  filter: { cutoff: 2300, resonance: 0.025 },
+  filter: { cutoff: 3600, resonance: 0.025 },
   amp: { attack: 0.008, decay: 0.3, sustain: 0.65, release: 0.12, decayCurve: -0.3 },
 });
 export const horizonLead = () => wavetable({
-  oscA: { wave: "saw", morphTo: "square", position: 0.19, unison: 5, detune: 7, spread: 0.32, phaseSpread: 0.57 },
+  oscA: { wave: "saw", morphTo: "square", position: 0.27, unison: 3, detune: 6, spread: 0.24, phaseSpread: 0.37 },
   oscB: { wave: "triangle", octave: 1 }, mix: 0.13, filter: { cutoff: 6300, resonance: 0.06 },
   filterEnvelope: { amount: 7, attack: 0.003, decay: 0.2, sustain: 0.15, release: 0.2, decayCurve: -0.5 },
   amp: { attack: 0.007, decay: 0.18, sustain: 0.8, release: 0.13, releaseCurve: -0.4 },

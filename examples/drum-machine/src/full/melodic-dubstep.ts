@@ -4,19 +4,21 @@ import { horizonHook } from "./themes.js";
 import { createMix } from "./mix.js";
 import { applyMotion } from "./motion.js";
 import { bassAnswer, dropHats, dropPhrase } from "./phrasing.js";
+import { pianoBank } from "./piano.js";
 
 export const dubstep = { slug: "after-the-horizon", title: "After the Horizon / 地平线之后", bpm: 140, bars: 104,
-  sections: [["First light / Crystal", 0], ["Lift / Build I", 8], ["Open sky / Drop I", 24],
+  sections: [["First light / Soft Piano", 0], ["Lift / Build I", 8], ["Open sky / Drop I", 24],
     ["Weightless / Break", 40], ["Signal / Build II", 56], ["Beyond / Drop II", 72],
     ["Afterglow / Reprise", 88], ["Horizon / Outro", 96]] as const };
 
-/** 104 bars in F# minor; crystal hook, contrasted builds and layered half-time drops. */
-export function createDubstepSong(): Project {
+/** 104 bars in F# minor; recorded piano, contrasted builds and layered half-time drops. */
+export function createDubstepSong(makePianoBank: typeof pianoBank = pianoBank): Project {
   const p = new Project({ name: dubstep.title, seed: 2026090802 }); p.setTempo(dubstep.bpm);
-  const mix = createMix(p);
+  const mix = createMix(p, makePianoBank(p));
   const { keys, kick, drums, tops, saw, body, sub, growl, vowel, lead, air, sparkle, arp, lift, fall, impact,
-    pluck, reese, shimmer } = mix;
-  const kt = p.addTrack("Crystal · F#m9 / Dmaj9 / Aadd9 / E").use(keys), mt = p.addTrack("Crystal · horizon theme").use(keys);
+    pluck, reese, shimmer, grand, foundation, laser, clap } = mix;
+  const kt = p.addTrack("Soft Piano · open voicings").use(keys), mt = p.addTrack("Soft Piano · horizon theme").use(keys);
+  const grandT = p.addTrack("Grand Piano · breakdown voicings").use(grand);
   const kickT = p.addTrack("Kick").use(kick), dt = p.addTrack("Half-time snare / hats / rolls").use(drums);
   const ct = p.addTrack("Supersaw chords").use(saw), st = p.addTrack("Sub").use(sub);
   const wt = p.addTrack("Mid bass · syncopation").use(growl), lt = p.addTrack("Lead · horizon theme").use(lead);
@@ -29,8 +31,10 @@ export function createDubstepSong(): Project {
   const pluckT = p.addTrack("Ember · chord pluck answers").use(pluck);
   const reeseT = p.addTrack("Undertow · bridge bassline").use(reese);
   const haloT = p.addTrack("Halo · final chorus air").use(shimmer);
-  const duckHits: number[] = [], chordAttacks: number[] = [];
-  const chords = [[54, 61, 64, 68], [50, 57, 61, 64], [57, 61, 64, 71], [52, 59, 64, 68]];
+  const basslineT = p.addTrack("Bassline · harmonic weight").use(foundation);
+  const laserT = p.addTrack("Laser bass · turnaround stabs").use(laser), clapT = p.addTrack("Clap · snare layer").use(clap);
+  const duckHits: number[] = [], kickHits: number[] = [], chordAttacks: number[] = [];
+  const chords = [[54, 57, 61, 64, 68], [50, 54, 57, 61, 64], [57, 61, 64, 71], [52, 59, 64, 68]];
   const roots = [30, 26, 33, 28];
   for (let b = 0; b < dubstep.bars; b++) {
     const drop = b >= 24 && b < 40 || b >= 72 && b < 88;
@@ -38,28 +42,36 @@ export function createDubstepSong(): Project {
     const buildPos = b < 24 ? b - 8 : b - 56;
     const end = b >= 96, final = b === 103;
     const index = b >= 102 ? 0 : Math.floor(b / 2) % 4, chord = chords[index]!, root = roots[index]!;
-    if (!drop && !(build && buildPos >= 12)) bar(kt, b, chord.map((pitch, i) => note(pitch,
-      i * 0.018, final ? 2.5 : 2.9, 0.56 + i * 0.035)), "Crystal · open voicing");
+    if (!drop && !(build && buildPos >= 12)) bar(b >= 40 && b < 96 ? grandT : kt, b,
+      chord.map((pitch, i) => note(pitch, i * 0.018, final ? 2.5 : 2.9, 0.52 + i * 0.035)), "Piano · open voicing");
     if (!drop && (!build || buildPos < 8) && b < 102) {
       const theme = horizonHook(b, -1).map(hit => ({ ...hit, velocity: hit.velocity * (end ? 0.6 : 0.82) }));
       bar(mt, b, b >= 40 && b < 48 ? theme.slice(0, b % 2 ? 1 : 2) : theme,
-        b >= 40 && b < 48 ? "Horizon · distant fragment" : "Horizon · eight-bar crystal theme");
+        b >= 40 && b < 48 ? "Horizon · distant fragment" : "Horizon · eight-bar piano theme");
     }
     if (b === 102) bar(mt, b, [note(78, 0, 3.4, 0.56)], "F# · home");
     if (drop) {
       const { accents: rhythm, open, second, position, turn } = dropPhrase(b);
       chordAttacks.push(...rhythm.map(t => b * 4 + t));
-      bar(ct, b, rhythm.flatMap((t, i) => chord.slice(1).map(pitch => note(pitch + 12, t,
-        open ? 0.85 : i === 0 ? 0.62 : 0.34, i === 0 ? 0.8 : 0.7))), open ? "Sky · open final chorus" : "Sky · rhythmic bloom");
-      bar(st, b, [note(root, 0, 1.35, 0.88), note(root, 1.5, 0.83, 0.82),
-        note(root, 2.5, turn ? 0.7 : 1.27, 0.85)], "Sub · connected foundation");
-      bar(bodyT, b, rhythm.flatMap(t => chord.slice(0, 3).map(pitch => note(pitch, t, open ? 0.7 : 0.35, 0.66))), "Sky · chord foundation");
+      const voicing = [...chord.slice(1), chord[1]! + 12];
+      bar(ct, b, rhythm.flatMap((t, i) => voicing.map(pitch => note(pitch, t,
+        Math.min(open ? 1.35 : 0.95, (rhythm[i + 1] ?? (turn ? 3.1 : 4)) - t - 0.06), i === 0 ? 0.86 : 0.78))),
+        open ? "Sky · open final chorus" : "Sky · rhythmic bloom");
+      bar(st, b, [note(root, 0, turn ? 3.12 : 3.88, 0.94)], "Sub · sustained weight");
+      bar(basslineT, b, [note(root, 0, 1.38, 0.85), note(root, 1.5, 0.85, 0.8),
+        note(root, 2.5, turn ? 0.55 : 0.65, 0.84), ...(turn ? [] : [note(root + 12, 3.25, 0.57, 0.7)])], "Bassline · driving harmonics");
+      bar(bodyT, b, rhythm.flatMap((t, i) => chord.slice(0, 3).map(pitch => note(pitch, t,
+        Math.min(open ? 1.2 : 0.7, (rhythm[i + 1] ?? 4) - t - 0.07), 0.73))), "Sky · chord foundation");
       bar(wt, b, bassAnswer(root, b), turn ? "Signal · turnaround" : "Signal · bass answer");
       bar(lt, b, horizonHook(b), second ? "Horizon · final chorus" : "Horizon · drop hook");
       if (second && b % 2) bar(sparkT, b,
         [note(chord[2]! + 12, 1.75, 0.6, 0.5), note(chord[1]! + 24, 3.0, 0.24, 0.46)], "Prism · answer");
-      if (b % 2 && (position >= 4 || second)) bar(vowelT, b,
-        [note(root + 12, 1.125, 0.22, 0.72), note(root + 24, 3.125, 0.22, 0.76)], "Formant · call / response");
+      if (position >= 2 || second) bar(vowelT, b,
+        [note(root + 12, 2.25, turn ? 0.48 : 0.7, 0.85)], "Formant · call / response");
+      if (position % 4 >= 2) bar(laserT, b, (turn ? [3.25, 3.625] : [3.5]).map((t, i) =>
+        note(root + 12 + (i ? 7 : 12), t, 0.17, 0.8 - i * 0.08)), "Laser · spectral turnaround");
+      if (second || position >= 8) bar(reeseT, b, [note(root + 12, 0, 1.15, 0.67)], "Undertow · drop weight");
+      bar(clapT, b, [note(60, 2.018, 0.15, 0.88)], "Clap · layered backbeat");
       if (position >= 4 && b % 4 === 2) bar(arpT, b, [0.25, 1.25, 2.75, 3.75].map((t, i) =>
         note(chord[1 + i % 3]! + 24, t, 0.16, 0.46)), "Orbit · phrase sparkle");
       if (position >= 4 && !turn) bar(pluckT, b, [0.5, 2.75].flatMap(t =>
@@ -89,7 +101,7 @@ export function createDubstepSong(): Project {
     if (drop || build || b >= 88 && b < 96) {
       const ks = drop ? dropPhrase(b).kicks : build && buildPos >= 12 ? [0, 1, 2, 3] : [0];
       if (!(build && buildPos === 15)) bar(kickT, b, ks.map(t => note(36, t, 0.08, drop ? 1 : 0.68)), "Kick / pulse");
-      if (drop) duckHits.push(...ks.map(t => b * 4 + t), b * 4 + 2);
+      if (drop) { kickHits.push(...ks.map(t => b * 4 + t)); duckHits.push(...ks.map(t => b * 4 + t), b * 4 + 2); }
       const hits: Hit[] = [];
       if (build && buildPos >= 8) {
         const step = buildPos >= 14 ? 0.25 : buildPos >= 12 ? 0.5 : 1;
@@ -106,9 +118,9 @@ export function createDubstepSong(): Project {
       bar(dt, b, hits, build ? "Build · snare acceleration" : "Half-time / turn");
     }
   }
-  applyMotion(mix, duckHits, chordAttacks);
+  applyMotion(mix, duckHits, chordAttacks, kickHits);
   // Final fader trim is included in offline true-peak validation, after the insert ceiling.
-  sections(p, dubstep.sections, dubstep.bars, 1.2);
+  sections(p, dubstep.sections, dubstep.bars, 1.36);
   return p;
 }
 

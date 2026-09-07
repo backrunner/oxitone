@@ -107,6 +107,17 @@ Every insert retains the same host `mix` and `bypass` controls.
 The typed `effect()`/`convolver()` helpers and production processor controls are
 documented in [Electronic effects](effects.md).
 
+`softPiano(bank, options?)` and `grandPiano(bank, options?)` map recorded piano
+samples onto the native multisampler. A `PianoBank` has `keyRange: [21, 108]` and
+2–8 `layers`, ordered soft to strong; each layer contains `{sample, rootKey, gain?}`
+with the same unique roots (maximum 256 total regions). Samples are existing
+`project.addSample(...)` references. Key zones use nearest roots; velocity zones
+are equal partitions of 1–127. Grand uses every layer; Soft maps the quietest two
+layers across all velocities and defaults to a gentler attack/longer release.
+Both accept `MultisamplerOptions`; invalid banks/options throw `InvalidProject`.
+These helpers do not download or embed recordings. The full-song example provides
+a pinned, explicitly prepared CC BY 3.0 Salamander bank and its attribution.
+
 ## Samples and persistence
 
 ```ts

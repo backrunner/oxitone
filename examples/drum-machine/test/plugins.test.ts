@@ -10,6 +10,7 @@ import { readFileSync } from "node:fs";
 import { beatToWire } from "@oxitone/protocol";
 import { createDubstepSong } from "../src/full/melodic-dubstep.js";
 import { midiSnapshot } from "../src/full/midi-export.js";
+import { fixturePiano } from "./piano-fixture.js";
 
 const output = mkdtempSync(join(tmpdir(), "oxitone-drums-"));
 let plugins: Awaited<ReturnType<typeof buildPlugins>>;
@@ -44,7 +45,7 @@ it("compiles more than 16 audio tracks without MIDI assignments and checks the l
   const engine = createEngine({ allowPlugins: "any" });
   try {
     registerPlugin(engine, plugins[0]!);
-    const snapshot = createDubstepSong().snapshot();
+    const snapshot = createDubstepSong(fixturePiano(output)).snapshot();
     expect(snapshot.tracks.length).toBeGreaterThan(16);
     expect(snapshot.tracks.every(t => t.midiChannel === undefined)).toBe(true);
     expect(() => compile(engine, snapshot)).not.toThrow();

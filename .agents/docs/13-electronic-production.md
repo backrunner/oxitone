@@ -1,7 +1,7 @@
 # Electronic synthesis and production
 
-The electronic demo uses synthesis for every musical part, with the C ABI drum
-machine providing synthetic percussion. The lofi demo is retired. Shared native
+The electronic demo uses native synthesis for electronic parts, recorded soft/grand
+piano in quieter sections, and the C ABI drum machine for percussion. The lofi demo is retired. Shared native
 and Wasm DSP and silent-test requirements continue to apply.
 
 ## Synthesis contract
@@ -79,7 +79,7 @@ and silent tests do not establish subjective equivalence to commercial releases.
 
 Keep the existing eight-bar hook's pitches, note starts, lengths and velocities in
 both drops. Preserve the F# minor chord progression, 140 BPM and 104-bar form.
-The 20-track / 19-instrument-channel version develops four-bar accompaniment cells:
+The arrangement develops four-bar accompaniment cells:
 Drop I introduces shuffled tops and chord plucks after the first statement;
 Drop II adds glass answers, longer final chords and a high harmonic halo. The
 eighth-bar turnaround removes late saw/kick accents to expose bass and delay tails.
@@ -101,7 +101,40 @@ positive section correlation, small DC, drop crest >6 dB and low side/mid <−20
 Each drop must exceed its build's section RMS by 2 dB. Four-bar energy measurements
 are included in report.json. These are regression bounds, not a loudness target
 for every project or proof of subjective mix quality. Final evidence is archived
-in `benchmarks/results/2026-09-08-horizon-arrangement.json`.
+in the benchmark archive; the earlier 20-track version is recorded in
+`benchmarks/results/2026-09-08-horizon-arrangement.json`.
+
+### Piano and bass-weight revision
+
+Soft Piano uses quiet recorded velocity layers in the intro and theme, with Grand
+Piano voicings in the break/reprise. Salamander Grand Piano v3 recordings by
+Alexander Holm (CC BY 3.0), distributed as FLAC by sfzinstruments/kinwie, are pinned
+to revision `3382bf9496bba2486f5ab0de55a264d1dfc38404`. Explicit prepare downloads
+120 files (layers 2/5/9/13, minor-third roots A0–C8), verifies their sizes/SHA-256,
+and writes attribution. No ordinary build/test downloads. The demo registers only
+52 files in keys 48–84 (~256 MiB decoded PCM); sample bytes stay outside Git.
+CI uses tiny local fixtures for native piano layer selection and graph validation.
+
+Drop sub is sustained and uses a separate bus, with a short kick-only gain envelope
+recovering after 0.28 beats (120 ms). A separate filtered harmonic bassline supports
+small-speaker translation; Reese, FM turbine, vowel and sync-warp stabs use distinct
+rhythmic roles. Avoid combining phase warp and FM in these patches: conservative
+bandlimiting compounds their mip headroom and removes carrier partials. No engine
+anti-alias safeguards are relaxed. Supersaws include middle-register thirds, a
+central body, sustained gates and brighter automated filtering. Snare has a clap
+layer, and kick duration leaves room for bass recovery. Original drop hook,
+140 BPM and 104-bar form are preserved. MIDI alone uses explicit timbre-family
+channel sharing; independent patches/CCs and same-pitch overlaps cannot be faithfully
+reproduced on shared MIDI channels.
+
+Public technique references, used for principles rather than copied patches:
+- Au5, [Supersaw Killer](https://www.youtube.com/watch?v=IhvO8grER5s): stereo,
+  additional oscillators, filtering and chord voicings.
+- Au5, [Cracked Bass Drops Technique](https://www.youtube.com/watch?v=t3__vw0vaV8):
+  alternating bass gestures and rhythmic flow.
+- Au5, [1 Minute Reese](https://www.youtube.com/watch?v=W87uuuGcq9c): Reese layering.
+- [Virtual Riot / Modestep interview](https://splice.com/blog/virtual-riot/):
+  drum fills, one-shots, top detail and processing experimentation.
 
 Capability references:
 - [Serum 2](https://xferrecords.com/products/serum-2): continuous frame positions,

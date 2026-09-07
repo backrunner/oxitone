@@ -12,12 +12,10 @@ export function dropPhrase(bar: number) {
 }
 
 export function bassAnswer(root: number, bar: number): Hit[] {
-  const { position, second, turn } = dropPhrase(bar);
+  const { position, second } = dropPhrase(bar);
   // FM and vowel answers alternate: they never compete at the same onset.
-  const times = position % 2 ? [0.75, 2.75] : [0.75, 3.125];
-  const hits = times.map((t, i) => note(root + 12 + (second && i === 1 ? 7 : 0), t, 0.3, 0.74 + i * 0.05));
-  if (turn) hits.push(note(root + 24, 3.5, 0.16, 0.68), note(root + 19, 3.75, 0.16, 0.62));
-  return hits;
+  const times = position % 2 ? [0.5, 1.25] : [0.75];
+  return times.map((t, i) => note(root + 12 + (second && i === 1 ? 7 : 0), t, i ? 0.23 : 0.42, 0.88 - i * 0.06));
 }
 
 export function dropHats(bar: number): Hit[] {
