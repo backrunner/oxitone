@@ -348,3 +348,31 @@
   同时修复开发 bundle 原地覆盖旧 Mach-O 后的 `SIGKILL (Code Signature Invalid)`：
   构建脚本使用临时文件 + rename 创建新 inode。连续两次构建后由 CLI 直接启动 bundle
   executable、加载鼓机与截图退出均通过；仍是未做 Developer ID 签名/公证的本地开发包。
+
+## 音源/效果器多窗口详情与自定义 UI 规划（2026-09-07）
+
+- Mixer 音源条双击、音源 inspector 入口和 Channel/Mixer/Master 的效果器槽位可打开
+  独立详情窗口；同地址复用窗口，不同地址可并排查看。沿用自绘标题区、原生交通灯和
+  系统亮暗色。支持参数筛选、标签页、复制引用 JSON、滚动条及方向/Page/Home/End。
+- 控制线程从已接受图的 registry 复制权威 descriptor、动态库路径与实际 SHA-256。
+  显示 source/default 参数、范围/单位/平滑/rate/mapping、自动化绑定、host mix/bypass、
+  资源与 structured state、插件能力和通道上下文；数值明确为初始配置，不冒充 live 参数。
+  窗口不持有 DSP/动态库指针，不创建第二个音频实例，不改变音频 ABI 或处理路径。
+- 有效 watch 更新所有详情；编译失败保留上次合法数据。效果器没有独立实例 ID，窗口
+  按 owner + slot index 寻址；重排跟随槽位，删除显示未挂载，再出现恢复。详情关闭释放
+  自己的订阅，主窗口关闭退出整个配对 session。
+- 431 项 Rust 工作区测试（含 14 项 viewer）、lint/typecheck、rustfmt 均通过，无失败/忽略。
+  新测试覆盖 source/default、自动化作用域、同插件多槽位/Master、重排/删除/返回及拒绝换图。
+- 真实 GPUI 深/浅色截图检查了动态音源、gain 效果器/库信息与 27 参数 Wavetable；
+  键盘滚动、重复打开、关闭重开均通过。截图模式按 AppKit 生命周期分步操作，避免创建同一
+  dispatch 立即销毁造成旧窗口的初始原生绘制残留；不修改 GPUI 依赖或隐藏错误日志。
+- `scripts/smoke-preview-details.mjs` 在真实鼓机/gain dylib 详情均打开后修改临时 TS 入口，
+  两窗口跟随 revision 2，volume 从 0.85 变为 0.42。Release unsigned `.app` 重建及 plist
+  检查通过，最终 bundle 再执行 watch 冒烟；主窗口的 AppKit close 路径可在详情仍打开时退出。
+- [专项基准](../../benchmarks/results/2026-09-07-plugin-details.json)：Apple M4 / 48 kHz /
+  128 frames / 4 Channels，baseline 30.999 µs、telemetry 32.359 µs。相对历史记录 Criterion
+  报告 +4.74%/+3.21%；基准代码/二进制未变，且不链接 viewer，不能归因于 UI 变更或据此
+  宣称帧率表现。没有测多窗口并发音频负载、真实 callback p95/p99/xrun 或物理桌面交互。
+- `11-plugin-ui.md` 明确当前仅交付通用详情 P0；后续 P1 声明式 GPUI 布局、P2 独立版本
+  native companion UI C ABI、P3 有界实时反馈分别列出契约/所有权/主题/watch/fallback 与出口。
+  自定义 UI 注册、schema、symbol、第三方 UI 进程隔离与签名分发仍是规划，未声称已实现。

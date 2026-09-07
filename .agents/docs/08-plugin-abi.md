@@ -4,6 +4,10 @@
 `oxitone-graph::abi_c`（记录与 descriptor 校验）、`oxitone-render::plugins`
 （加载和实例）、`oxitone-napi` 和 `oxitone` TypeScript facade。
 
+当前 ABI v1 不提供插件自带 UI 入口。Preview 已能从已验证 descriptor 为内置/动态
+插件生成多窗口只读详情；自定义声明式布局、独立 native UI ABI 与实时反馈规划见
+`11-plugin-ui.md`。该规划不改变此处已实现的 audio ABI，也没有把草案 symbol 加入宿主加载路径。
+
 ## 注册与所有权
 
 ```ts

@@ -121,6 +121,7 @@ impl Engine {
         }
         let mut registry = builtin_registry()?;
         let mut loaded = vec![];
+        let mut libraries = crate::plugin_catalog::Libraries::new();
         for options in plugins {
             if options.manifest.plugin_id.starts_with("oxitone.")
                 || registry
@@ -136,6 +137,16 @@ impl Engine {
             let plugin =
                 unsafe { load_plugin(&options, policy.unwrap_or(AllowPlugins::SignedOnly))? };
             registry.register(plugin.clone())?;
+            libraries.insert(
+                (
+                    options.manifest.plugin_id.clone(),
+                    options.manifest.plugin_version.clone(),
+                ),
+                crate::plugin_catalog::LibraryInfo {
+                    path: options.library_path.clone(),
+                    sha256: plugin.registration.sha256.clone(),
+                },
+            );
             loaded.push(plugin);
         }
         let mut graph = Box::new(RenderGraph::compile(
@@ -145,6 +156,7 @@ impl Engine {
             &RenderGraphOptions::default(),
         )?);
         let project = Arc::new(ViewProject {
+            plugins: crate::plugin_catalog::collect(&snapshot, &registry, libraries),
             snapshot,
             plan: graph.plan().into(),
             graph_latency: graph.graph_latency_frames(),

@@ -14,6 +14,7 @@ pub struct ViewProject {
     pub telemetry: Arc<PreviewTelemetry>,
     pub graph_latency: u64,
     pub pattern_labels: OnceLock<HashMap<String, String>>,
+    pub plugins: crate::plugin_catalog::Catalog,
 }
 
 pub struct ViewPlan {

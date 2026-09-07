@@ -31,10 +31,18 @@ pub struct Preview {
     pub mixer_focus: FocusHandle,
     pub workspace_focus: FocusHandle,
     pub position_text: String,
+    pub plugin_windows: std::collections::HashMap<
+        crate::plugin_details::DetailTarget,
+        WindowHandle<crate::plugin_window::PluginWindow>,
+    >,
 }
 
 impl Preview {
     pub fn new(backend: Backend, window: &mut Window, cx: &mut Context<Self>) -> Self {
+        window.on_window_should_close(cx, |_, cx| {
+            cx.defer(|cx| cx.quit());
+            true
+        });
         let workspace_focus = cx.focus_handle();
         workspace_focus.focus(window);
         crate::capture::schedule(window, cx);
@@ -80,6 +88,7 @@ impl Preview {
             mixer_focus: cx.focus_handle(),
             workspace_focus,
             position_text: String::new(),
+            plugin_windows: Default::default(),
         }
     }
 

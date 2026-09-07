@@ -117,6 +117,9 @@ palettes. Appearance changes are display-only and do not rebuild the music.
   Up/Down and Page Up/Down scroll vertically. Meter columns mean **peak and RMS**.
 - Drag the horizontal divider above the editors to change their height, or the
   divider between the piano roll and Mixer to change their widths.
+- Double-click an instrument strip or choose **Open instrument ↗** in its inspector;
+  click an effect slot to open that instrument/effect in an independent, live-updating
+  detail window. See [plugin windows and custom-UI plans](plugin-ui.md).
 - The footer shows native load, estimated output/graph latency, xruns and dynamic
   plugin faults. Error diagnostics include code/path where available.
 
@@ -149,6 +152,18 @@ checks the minimum logical window size. `OXITONE_PREVIEW_CAPTURE_NAVIGATION=1`
 adds a keyboard-dispatch and scroll/drag-controller smoke using measured view bounds,
 then captures the resulting selection and zoom. Use the drum example for this smoke.
 The process exits after capture and the CLI cleans up its socket.
+
+For instrument/effect windows, set `OXITONE_PREVIEW_CAPTURE_PLUGIN` to `instrument`,
+`synth` (first Wavetable), `effect`, or `info` (effect metadata). This also checks
+window reuse, close/reopen, detail keyboard scrolling and the main-window close
+path while details remain open. Use the drum example, which has both kinds of plugin.
+`OXITONE_PREVIEW_CAPTURE_REVISION=2` waits for an accepted watch update before capture.
+
+After building the workspace, drum example and viewer, run the actual multiwindow
+watch smoke with `node scripts/smoke-preview-details.mjs` (optionally pass a viewer
+path). It changes a private temporary entry after the windows open, verifies the new
+parameter value and revision in both windows, and writes `target/plugin-details-watch.png`.
+It removes the temporary entry and leaves the example source intact.
 
 These options only apply when `OXITONE_PREVIEW_CAPTURE` is present. Appearance is
 overridden on that window; system preferences stay intact. The opt-in redraw driver

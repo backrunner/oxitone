@@ -1,0 +1,25 @@
+{
+  "schema": "oxitone.focused-benchmark.v1",
+  "date": "2026-09-07",
+  "change": "Read-only instrument/effect detail windows and owned plugin metadata",
+  "baseCommit": "dad879d",
+  "machine": { "cpu": "Apple M4", "os": "macOS 27.0 (26A5425a)", "arch": "aarch64-apple-darwin", "cargo": "1.98.0" },
+  "config": {
+    "sampleRate": 48000, "blockSize": 128, "outputChannels": 2,
+    "channels": 4, "masterLimiter": true,
+    "sampleCount": 30, "warmupSeconds": 1, "measurementTargetSeconds": 3,
+    "device": null, "cpuUtilization": null, "callbackP95Ns": null, "callbackP99Ns": null, "xruns": null
+  },
+  "command": "cargo bench -p oxitone-bench --bench preview -- --warm-up-time 1 --measurement-time 3 --sample-size 30",
+  "scenarios": [
+    { "id": "preview/4_channels_128/baseline", "slopeNs": 30998.995033639578, "confidence95Ns": [30950.53051911587, 31048.118843408112] },
+    { "id": "preview/4_channels_128/telemetry", "slopeNs": 32359.16314522169, "confidence95Ns": [32309.89966933972, 32419.500961511094] }
+  ],
+  "notes": [
+    "Preview windows and other build/test processes were stopped during this run. Audio processing and the benchmark sources are unchanged; Cargo reused the existing benchmark binary.",
+    "Criterion reports historical changes of +4.74% baseline and +3.21% telemetry, both above its noise threshold. These are slower measurements, not evidence of an improvement; no causal attribution to detail-window code is possible from this benchmark, which does not link the viewer.",
+    "Four channels; playback restarts every 180 blocks. Telemetry queues are consumed every 12 blocks, approximately 30 Hz.",
+    "This microbenchmark excludes GPUI layout, painting, open detail windows and device I/O. UI responsiveness, concurrent-window audio load and physical-device callback p95/p99/xrun endurance are not measured here.",
+    "Real GPUI dark/light captures, keyboard scrolling, close/reopen and accepted watch updates are covered separately by the detail-window smoke. Physical mouse/trackpad, fullscreen and system appearance-switch acceptance still require an unlocked desktop."
+  ]
+}

@@ -2,7 +2,7 @@ use crate::{analysis::NodeAnalysis, engine::Engine, position, wire};
 use oxitone_render::preview::NoteEcho;
 use serde_json::json;
 
-fn engine() -> Engine {
+pub(crate) fn engine() -> Engine {
     let (events, _) = std::sync::mpsc::channel();
     let mut engine = Engine::new(true, events);
     let beat = |n| json!({"numerator":n,"denominator":1});

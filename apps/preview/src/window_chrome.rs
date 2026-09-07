@@ -114,7 +114,7 @@ impl Preview {
     unexpected_cfgs,
     reason = "objc 0.2 macros check the legacy cargo-clippy feature"
 )]
-fn start_drag(window: &Window, cx: &App) {
+pub(crate) fn start_drag(window: &Window, cx: &App) {
     use objc::{class, msg_send, rc::StrongPtr, runtime::Object, sel, sel_impl};
     use raw_window_handle::{HasWindowHandle, RawWindowHandle};
 
@@ -148,6 +148,6 @@ fn start_drag(window: &Window, cx: &App) {
 }
 
 #[cfg(not(target_os = "macos"))]
-fn start_drag(window: &Window, _: &App) {
+pub(crate) fn start_drag(window: &Window, _: &App) {
     window.start_window_move();
 }

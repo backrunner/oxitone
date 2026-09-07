@@ -26,57 +26,81 @@ pub fn window_size() -> Size<Pixels> {
 }
 
 #[cfg(target_os = "macos")]
-#[allow(
-    unexpected_cfgs,
-    reason = "objc 0.2 macros check the legacy cargo-clippy feature"
-)]
 pub fn schedule(window: &Window, cx: &mut Context<Preview>) {
-    use objc::{class, msg_send, rc::StrongPtr, runtime::Object, sel, sel_impl};
-    use raw_window_handle::{HasWindowHandle, RawWindowHandle};
+    use crate::capture_surface::Surface;
     let Some(path) = std::env::var_os("OXITONE_PREVIEW_CAPTURE") else {
         return;
     };
     let appearance = std::env::var("OXITONE_PREVIEW_APPEARANCE").unwrap_or_default();
     let navigation = std::env::var("OXITONE_PREVIEW_CAPTURE_NAVIGATION").is_ok_and(|v| v == "1");
+    let plugin = std::env::var("OXITONE_PREVIEW_CAPTURE_PLUGIN").unwrap_or_default();
+    let revision = std::env::var("OXITONE_PREVIEW_CAPTURE_REVISION")
+        .ok()
+        .map(|v| v.parse::<u64>().expect("capture revision must be u64"))
+        .unwrap_or(1);
     let window_handle = window.window_handle();
-    let name = match appearance.as_str() {
-        "light" => Some(c"NSAppearanceNameAqua"),
-        "dark" => Some(c"NSAppearanceNameDarkAqua"),
-        "" => None,
-        _ => panic!("OXITONE_PREVIEW_APPEARANCE must be light or dark"),
-    };
-    let RawWindowHandle::AppKit(handle) = HasWindowHandle::window_handle(window).unwrap().as_raw()
-    else {
+    let Some(surface) = Surface::new(window) else {
         return;
     };
-    // SAFETY: on GPUI's UI thread; retain the NSView until the task finishes.
-    // displayLayer is scheduled outside GPUI dispatch to avoid reentrant borrows.
-    let view = unsafe { StrongPtr::retain(handle.ns_view.as_ptr().cast::<Object>()) };
     cx.spawn(async move |this, cx| {
-        let number: isize;
-        unsafe {
-            let native_window: *mut Object = msg_send![*view, window];
-            number = msg_send![native_window, windowNumber];
-            if let Some(name) = name {
-                let string: *mut Object =
-                    msg_send![class!(NSString), stringWithUTF8String: name.as_ptr()];
-                let appearance: *mut Object =
-                    msg_send![class!(NSAppearance), appearanceNamed: string];
-                let _: () = msg_send![native_window, setAppearance: appearance];
-            }
-        }
+        surface.appearance(&appearance);
+        let mut details = Vec::new();
+        let mut closed = None;
         let mut ready_frames = 0;
-        for _ in 0..100 {
+        for _ in 0..150 {
             Timer::after(std::time::Duration::from_millis(100)).await;
-            let Ok(ready) = this.update(cx, |this, _| this.project.is_some()) else {
+            let Ok(current) = this.update(cx, |this, _| {
+                this.project.as_ref().map(|p| p.snapshot.revision)
+            }) else {
                 return;
             };
-            unsafe {
-                let layer: *mut Object = msg_send![*view, layer];
-                let _: () = msg_send![*view, displayLayer: layer];
-            }
-            if ready {
+            surface.redraw();
+            if current.is_some() {
                 ready_frames += 1;
+            }
+            if !plugin.is_empty() {
+                // Let AppKit finish presenting/closing between lifecycle steps.
+                // Closing in the creation dispatch leaves GPUI's initial native draw queued.
+                let handles = if ready_frames == 2 {
+                    this.update(cx, |this, cx| {
+                        crate::plugin_capture::open(this, &plugin, cx)
+                    })
+                    .unwrap()
+                } else if ready_frames == 6 {
+                    details.clear();
+                    closed = Some(
+                        this.update(cx, |this, cx| crate::plugin_capture::close_effect(this, cx))
+                            .unwrap(),
+                    );
+                    Vec::new()
+                } else if ready_frames == 8 {
+                    this.update(cx, |this, cx| {
+                        crate::plugin_capture::reopen(this, closed.take().unwrap(), &plugin, cx)
+                    })
+                    .unwrap()
+                } else {
+                    Vec::new()
+                };
+                for handle in handles {
+                    if let Ok(Some(detail)) =
+                        cx.update_window(handle.into(), |_, window, _| Surface::new(window))
+                    {
+                        detail.appearance(&appearance);
+                        details.push(detail);
+                    }
+                }
+                if ready_frames == 8 {
+                    eprintln!("Preview plugin windows opened");
+                }
+            }
+            for detail in &details {
+                detail.redraw();
+            }
+            if !plugin.is_empty() {
+                this.update(cx, |this, cx| {
+                    crate::plugin_capture::navigate(this, ready_frames, cx)
+                })
+                .unwrap();
             }
             if navigation {
                 let _ = cx.update_window(window_handle, |_, window, cx| {
@@ -85,7 +109,12 @@ pub fn schedule(window: &Window, cx: &mut Context<Preview>) {
                     }
                 });
             }
-            if ready_frames >= 14 {
+            if ready_frames >= 14 && current.is_some_and(|v| v >= revision) {
+                if !plugin.is_empty() {
+                    this.update(cx, |this, cx| crate::plugin_capture::verify(this, cx))
+                        .unwrap();
+                }
+                let number = details.last().map_or(surface.number, |s| s.number);
                 let result = cx
                     .background_executor()
                     .spawn(async move {
@@ -99,11 +128,12 @@ pub fn schedule(window: &Window, cx: &mut Context<Preview>) {
                     Ok(status) if status.success() => eprintln!("Preview capture saved"),
                     other => eprintln!("Preview capture failed: {other:?}"),
                 }
-                let _ = cx.update(|cx| cx.quit());
+                // Exercise the main window's native close callback with details still open.
+                surface.close();
                 return;
             }
         }
-        eprintln!("Preview capture timed out waiting for a valid project");
+        eprintln!("Preview capture timed out waiting for a valid project/revision");
         let _ = cx.update(|cx| cx.quit());
     })
     .detach();

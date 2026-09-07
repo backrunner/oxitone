@@ -117,9 +117,15 @@ pub fn view(this: &Preview, strip: &Strip, cx: &mut Context<Preview>) -> impl In
         }))
         .hover(move |s| s.bg(rgb(theme.button)))
         .cursor_pointer()
-        .on_click(cx.listener(move |this, _, _, cx| {
+        .on_click(cx.listener(move |this, event: &ClickEvent, _, cx| {
             this.selected_scope = id.clone();
             this.workspace.inspector.set_offset(point(px(0.), px(0.)));
+            if event.click_count() == 2 {
+                this.open_plugin(
+                    crate::plugin_details::DetailTarget::Instrument(id.clone()),
+                    cx,
+                );
+            }
             cx.notify();
         }))
         .child(div().h(px(3.)).flex_shrink_0().bg(rgb(tint)))

@@ -7,6 +7,15 @@ use gpui::{prelude::*, *};
 
 pub fn view(this: &Preview, strip: &Strip, cx: &mut Context<Preview>) -> impl IntoElement {
     let theme = this.theme;
+    let instrument = this
+        .project
+        .as_ref()
+        .unwrap()
+        .snapshot
+        .channels
+        .iter()
+        .any(|c| c.id == strip.id);
+    let owner = strip.id.clone();
     let mut content = div()
         .w_full()
         .p_3()
@@ -25,6 +34,18 @@ pub fn view(this: &Preview, strip: &Strip, cx: &mut Context<Preview>) -> impl In
                 .text_color(rgb(theme.muted))
                 .child(strip.kind.clone()),
         )
+        .when(instrument, |d| {
+            d.child(
+                theme
+                    .button("inspect-instrument", "Open instrument ↗")
+                    .on_click(cx.listener(move |this, _, _, cx| {
+                        this.open_plugin(
+                            crate::plugin_details::DetailTarget::Instrument(owner.clone()),
+                            cx,
+                        );
+                    })),
+            )
+        })
         .child(
             div()
                 .mt_2()
@@ -34,8 +55,19 @@ pub fn view(this: &Preview, strip: &Strip, cx: &mut Context<Preview>) -> impl In
                 .child("EFFECT SLOTS"),
         );
     for (i, (effect, bypass)) in strip.effects.iter().enumerate() {
+        let target = if instrument {
+            crate::plugin_details::DetailTarget::ChannelInsert(strip.id.clone(), i)
+        } else {
+            crate::plugin_details::DetailTarget::BusInsert(strip.id.clone(), i)
+        };
         content = content.child(
             div()
+                .id(("inspect-effect", i))
+                .cursor_pointer()
+                .hover(move |s| s.bg(rgb(theme.button_hover)))
+                .on_click(cx.listener(move |this, _, _, cx| {
+                    this.open_plugin(target.clone(), cx);
+                }))
                 .px_2()
                 .py_2()
                 .rounded_sm()
@@ -46,7 +78,7 @@ pub fn view(this: &Preview, strip: &Strip, cx: &mut Context<Preview>) -> impl In
                     div()
                         .text_xs()
                         .text_color(rgb(if *bypass { theme.muted } else { theme.accent }))
-                        .child(format!("{:02}  {effect}", i + 1)),
+                        .child(format!("{:02}  {effect} ↗", i + 1)),
                 )
                 .when(*bypass, |d| {
                     d.child(
