@@ -83,7 +83,7 @@ jobs:
             if curl -fsS http://127.0.0.1:4175/ > /dev/null; then break; fi
             sleep 1
           done
-          pnpm test:web
+          OXITONE_WEB_URL=http://127.0.0.1:4175 pnpm test:web
       - name: Run portable offline examples
         run: |
           pnpm example

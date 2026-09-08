@@ -22,6 +22,23 @@ the no-device sink is unavailable; Chromium is also launched with `--mute-audio`
 They inspect nonzero PCM upstream of the silent sink, so muting does not weaken DSP
 or AudioWorklet assertions. The CI workflow does not install or select audio devices.
 
+Plugin suites build their C/Rust fixtures once in asynchronous setup (up to ten
+minutes for a cold build). Functional tests keep separate bounded timeouts; compiler
+work must not block Vitest's RPC loop. The root TS runner executes packages in order;
+core, CLI and Wasm run one test file at a time with a 30-second default test budget
+because their suites include compilation, WAV exports and filesystem round trips.
+Longer CLI scenarios declare their own bounds; child processes run asynchronously,
+and preview IPC failure always closes the connection and cleans up the viewer. This
+avoids many workers preparing separate synth tables at once. These timeouts are
+failure bounds, not performance acceptance. Avoid overlapping full Cargo/TS runs and
+audio benchmarks when collecting timing evidence.
+
+The native panel smoke deliberately injects syntax, runtime, missing-plugin and
+invalid-layout failures. It labels each expected rejection and checks last-good
+state/recovery. Raw logs remain under `target/*-panels-watch.log`; use `--verbose`
+to stream them. Real failures print the raw log and exit nonzero. Web smoke uses
+the dev server's default port 4173; CI passes its private port through `OXITONE_WEB_URL`.
+
 The workflow uploads environment information, silent browser reports/screenshots, Criterion
 results and example snapshot/report JSON. Large WAVs and native binaries are not
 published as release artifacts. Hosted-runner timing is diagnostic: the jobs do not
@@ -36,7 +53,7 @@ not publish packages.
 
 Keep temporary logs, screenshots and test fixtures under `target/`. Routine cleanup
 can remove Cargo compilation caches and temporary test environments while retaining
-`target/examples` (songs and piano assets), `target/criterion` (comparison baselines),
+`target/examples` (generated songs and local plugin libraries), `target/criterion` (comparison baselines),
 the preview bundles and the active local tooling. Compilation caches regenerate on
 the next build; package `dist` and native bindings are needed to run the current SDK.
 

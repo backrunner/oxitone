@@ -1,10 +1,11 @@
-import { execFileSync } from "node:child_process";
+import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterAll, describe, expect, it } from "vitest";
+import { promisify } from "node:util";
+import { beforeAll, afterAll, describe, expect, it } from "vitest";
 import { beatToWire, pluginManifestSchema, type ProjectSnapshot } from "@oxitone/protocol";
 import { compile, createEngine, dispose, getPluginDiagnostics, registerPlugin, renderWav, setParameter } from "../src/index.js";
 
@@ -13,9 +14,10 @@ const dir = mkdtempSync(join(tmpdir(), "oxitone-plugins-"));
 const fixture = join(root, "crates/render/tests/fixtures");
 const manifest = pluginManifestSchema.parse(JSON.parse(readFileSync(join(fixture, "gain.json"), "utf8")));
 
-function build(name: string, extra: string[] = []): string {
+const execute = promisify(execFile);
+async function build(name: string, extra: string[] = []): Promise<string> {
   const path = join(dir, `${name}${process.platform === "darwin" ? ".dylib" : ".so"}`);
-  execFileSync("cc", ["-std=c11", "-shared", "-fPIC", "-O2", "-I", join(root, "include"),
+  await execute("cc", ["-std=c11", "-shared", "-fPIC", "-O2", "-I", join(root, "include"),
     ...extra, join(fixture, "gain.c"), "-o", path]);
   return path;
 }
@@ -38,13 +40,19 @@ function snapshot(gain?: number): ProjectSnapshot {
   };
 }
 
+let gainLibrary: string, faultLibrary: string;
+// Compiler startup belongs to fixture preparation, and must not block Vitest's RPC loop.
+beforeAll(async () => {
+  gainLibrary = await build("gain");
+  faultLibrary = await build("fault", ["-DFIXTURE_FAULT=2"]);
+}, 600_000);
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
 describe("dynamic plugins through the native facade", () => {
   it("applies insert automation and queued host parameters to dynamic effects", () => {
     const engine = createEngine({ allowPlugins: "any" });
     try {
-      registerPlugin(engine, { libraryPath: build("automated-gain"), manifest });
+      registerPlugin(engine, { libraryPath: gainLibrary, manifest });
       for (const owner of ["chn_plugin", "mix_master"]) {
         const input = snapshot(1);
         if (owner === "mix_master") {
@@ -67,10 +75,10 @@ describe("dynamic plugins through the native facade", () => {
     } finally {
       dispose(engine);
     }
-  });
+  }, 60_000);
 
   it("registers per engine, compiles and renders the C effect with deterministic gain", () => {
-    const libraryPath = build("gain");
+    const libraryPath = gainLibrary;
     const expectedHash = createHash("sha256").update(readFileSync(libraryPath)).digest("hex");
     const engine = createEngine({ allowPlugins: "any" });
     const other = createEngine({ allowPlugins: "any" });
@@ -92,23 +100,22 @@ describe("dynamic plugins through the native facade", () => {
       expect(dry.files[0]!.peakDbfs).toBeGreaterThan(-60);
       expect(dry.files[0]!.peakDbfs - wet.files[0]!.peakDbfs).toBeCloseTo(6.0206, 3);
       expect(getPluginDiagnostics(engine)).toEqual([{ pluginId: "fixture.gain", pluginVersion: "1.0.0", faults: 0 }]);
-      const changedBinary = build("different", ["-DFIXTURE_FAULT=2"]);
-      expect(() => registerPlugin(engine, { libraryPath: changedBinary, manifest })).toThrow();
+      expect(() => registerPlugin(engine, { libraryPath: faultLibrary, manifest })).toThrow();
     } finally {
       dispose(engine);
       dispose(other);
     }
-  });
+  }, 60_000);
 
   it("mutes a non-finite plugin and exposes its fault count", () => {
     const engine = createEngine({ allowPlugins: "any" });
     try {
-      registerPlugin(engine, { libraryPath: build("nan", ["-DFIXTURE_FAULT=2"]), manifest });
+      registerPlugin(engine, { libraryPath: faultLibrary, manifest });
       const report = renderWav(engine, snapshot(1), { path: join(dir, "muted.wav") });
       expect(report.files[0]!.peakDbfs).toBe(-144);
       expect(getPluginDiagnostics(engine)[0]!.faults).toBe(1);
     } finally {
       dispose(engine);
     }
-  });
+  }, 60_000);
 });
