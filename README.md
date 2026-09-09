@@ -1,9 +1,5 @@
 # Oxitone
 
-<p align="center">
-  <img src="docs/assets/oxitone-logo.webp" alt="Oxitone logo: three modular mixer channels around a play aperture" width="220">
-</p>
-
 <p align="center"><strong>Code your sound.</strong> A TypeScript authoring SDK backed by a Rust realtime audio engine.</p>
 
 <p align="center">
