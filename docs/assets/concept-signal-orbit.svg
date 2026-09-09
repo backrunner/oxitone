@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">Oxitone signal orbit concept</title>
+  <desc id="desc">Three precise signal orbits and control nodes surround a central audio aperture.</desc>
+  <defs>
+    <linearGradient id="field" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#151D35"/>
+      <stop offset="1" stop-color="#080B17"/>
+    </linearGradient>
+    <linearGradient id="orbitA" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#6CE9FF"/>
+      <stop offset="1" stop-color="#6885FF"/>
+    </linearGradient>
+    <linearGradient id="orbitB" x1="1" y1="0" x2="0" y2="1">
+      <stop stop-color="#B978FF"/>
+      <stop offset="1" stop-color="#6B70FF"/>
+    </linearGradient>
+    <radialGradient id="core" cx="45%" cy="40%" r="65%">
+      <stop stop-color="#243A72"/>
+      <stop offset="1" stop-color="#0B1021"/>
+    </radialGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="10" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect x="24" y="24" width="976" height="976" rx="228" fill="url(#field)"/>
+  <rect x="48" y="48" width="928" height="928" rx="208" fill="none" stroke="#8299E8" stroke-opacity=".14" stroke-width="2"/>
+
+  <!-- Three signal paths: notes, automation, and plugin routing. -->
+  <ellipse cx="512" cy="512" rx="320" ry="188" fill="none" stroke="#4D6DAA" stroke-opacity=".30" stroke-width="12" transform="rotate(-28 512 512)"/>
+  <ellipse cx="512" cy="512" rx="320" ry="188" fill="none" stroke="url(#orbitA)" stroke-width="18" stroke-linecap="round" stroke-dasharray="420 880" transform="rotate(-28 512 512)" filter="url(#glow)"/>
+  <ellipse cx="512" cy="512" rx="320" ry="188" fill="none" stroke="#5369A4" stroke-opacity=".28" stroke-width="12" transform="rotate(32 512 512)"/>
+  <ellipse cx="512" cy="512" rx="320" ry="188" fill="none" stroke="url(#orbitB)" stroke-width="18" stroke-linecap="round" stroke-dasharray="360 940" transform="rotate(32 512 512)" filter="url(#glow)"/>
+  <ellipse cx="512" cy="512" rx="258" ry="258" fill="none" stroke="#6178BE" stroke-opacity=".35" stroke-width="10"/>
+  <path d="M 512 254 A 258 258 0 0 1 748 408" fill="none" stroke="#6CE9FF" stroke-width="16" stroke-linecap="round" filter="url(#glow)"/>
+
+  <!-- Central audio aperture. -->
+  <circle cx="512" cy="512" r="142" fill="url(#core)" stroke="#90A5F3" stroke-opacity=".35" stroke-width="6"/>
+  <circle cx="512" cy="512" r="104" fill="none" stroke="url(#orbitA)" stroke-width="18"/>
+  <path d="M 468 512 C 468 472 484 450 512 450 C 540 450 556 472 556 512 C 556 552 540 574 512 574 C 484 574 468 552 468 512 Z" fill="none" stroke="url(#orbitB)" stroke-width="14" stroke-linecap="round"/>
+
+  <!-- Event nodes: intentionally few and oversized for icon-scale clarity. -->
+  <circle cx="271" cy="327" r="24" fill="#6CE9FF" stroke="#D4FAFF" stroke-opacity=".35" stroke-width="6"/>
+  <circle cx="772" cy="335" r="24" fill="#B978FF" stroke="#F0DFFF" stroke-opacity=".35" stroke-width="6"/>
+  <circle cx="782" cy="704" r="24" fill="#6C84FF" stroke="#E0E6FF" stroke-opacity=".35" stroke-width="6"/>
+  <circle cx="271" cy="327" r="42" fill="none" stroke="#6CE9FF" stroke-opacity=".16" stroke-width="4"/>
+  <circle cx="772" cy="335" r="42" fill="none" stroke="#B978FF" stroke-opacity=".16" stroke-width="4"/>
+  <circle cx="782" cy="704" r="42" fill="none" stroke="#6C84FF" stroke-opacity=".16" stroke-width="4"/>
+
+  <!-- Transport cue. -->
+  <path d="M 512 120 V 178" stroke="#D4FAFF" stroke-opacity=".8" stroke-width="10" stroke-linecap="round"/>
+  <path d="M 512 108 L 494 132 H 530 Z" fill="#6CE9FF"/>
+</svg>
