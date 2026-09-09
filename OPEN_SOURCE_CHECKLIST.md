@@ -18,7 +18,10 @@ kept in the repository so future releases can repeat the review.
 - [x] No tracked `.env`, credential, token or private-key filenames were found in the pre-publish scan.
 - [x] No tracked files outside ignored build directories exceed the repository size budget.
 - [x] Logo source and generation metadata are stored under `docs/assets/`; no API token is committed.
-- [ ] Enable GitHub secret scanning, Dependabot and branch protection after creating the remote repository.
+- [x] Public repository created at https://github.com/backrunner/oxitone with Dependabot alerts enabled.
+- [ ] Resolve the current Dependabot findings before a production release: ten npm alerts for Vitest's development
+      dependency (GHSA-82fw-gwwq-j7x9; fixed in Vitest 4.1.11+) and one transitive Rust `grid` alert in the pinned
+      GPUI tree (GHSA-38c5-483c-4qqp; fixed in `grid` 1.0.1+).
 
 ## Verification
 
