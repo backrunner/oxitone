@@ -1,0 +1,25 @@
+{
+  "predictionId": "b4br0x8kf1rmw0d0gx1t4wjepc",
+  "output": [
+    "https://replicate.delivery/xezq/RNreEiOe3vjskkPBcfuH2Cg38dWx92oSIgsBQIJtD7ldjpXuA/tmprlag6mcr.webp"
+  ],
+  "artifacts": [
+    {
+      "path": "/Volumes/BRData/projects/oxitone/docs/assets/logo-code-low/b4br0x8kf1rmw0d0gx1t4wjepc-output-0-0.webp",
+      "bytes": 75808,
+      "sourceUrl": "https://replicate.delivery/xezq/RNreEiOe3vjskkPBcfuH2Cg38dWx92oSIgsBQIJtD7ldjpXuA/tmprlag6mcr.webp",
+      "outputPath": "output.0",
+      "contentType": "image/webp"
+    }
+  ],
+  "createdAt": "2026-09-09T17:42:07.687Z",
+  "model": "openai/gpt-image-2.5-flare",
+  "version": "hidden",
+  "input": {
+    "aspect_ratio": "1:1",
+    "background": "transparent",
+    "prompt": "Futuristic minimalist tech logo for Oxitone, an open-source TypeScript code authoring SDK with a Rust realtime synthesizer engine. Combine a clean code symbol made from two angular chevrons and a small node-graph circuit with a smooth synthesizer oscillator waveform in one compact abstract mark. Flat vector geometry, precise rounded corners, electric cyan and violet on a transparent background, subtle dark navy accent, no animal, no head, no horns, no letters, no words, no mockup, centered, high contrast, recognizable at 32px, suitable for a GitHub avatar and npm package.",
+    "quality": "low"
+  },
+  "type": "prediction"
+}

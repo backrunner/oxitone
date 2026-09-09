@@ -1,0 +1,25 @@
+{
+  "predictionId": "zrm6apm6d9rmy0d0gxca1rhnyw",
+  "output": [
+    "https://replicate.delivery/xezq/K4baNfIflgtfApDfgoPdSei0JAIBAvxvziKzfIxaZiIp7R9yF/tmpa3b208af.webp"
+  ],
+  "artifacts": [
+    {
+      "path": "/Volumes/BRData/projects/oxitone/docs/assets/logo-daw-a/zrm6apm6d9rmy0d0gxca1rhnyw-output-0-0.webp",
+      "bytes": 48016,
+      "sourceUrl": "https://replicate.delivery/xezq/K4baNfIflgtfApDfgoPdSei0JAIBAvxvziKzfIxaZiIp7R9yF/tmpa3b208af.webp",
+      "outputPath": "output.0",
+      "contentType": "image/webp"
+    }
+  ],
+  "createdAt": "2026-09-09T18:05:42.735Z",
+  "model": "openai/gpt-image-2.5-flare",
+  "version": "hidden",
+  "input": {
+    "aspect_ratio": "1:1",
+    "background": "opaque",
+    "prompt": "Premium DAW software app icon, minimalist geometric brand mark only. A bold rounded-square deep charcoal background containing one continuous electric-cyan waveform that turns into a vertical playhead and forms a subtle letter O. Add a small violet timeline beat marker, like a professional music workstation identity. Flat solid colors, clean vector edges, balanced negative space, centered, no text, no letters, no animals, no horns, no brackets, no circuit board, no gradients, no glow, no glitch, no 3D, no mockup, crisp at 24 pixels.",
+    "quality": "medium"
+  },
+  "type": "prediction"
+}

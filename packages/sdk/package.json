@@ -1,7 +1,7 @@
 {
   "name": "oxitone", "version": "0.1.0",
   "description": "TypeScript music authoring SDK with a native Rust audio engine",
-  "license": "Apache-2.0", "type": "module",
+  "license": "MPL-2.0", "type": "module",
   "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
   "files": ["dist"], "engines": { "node": ">=20" },
   "scripts": {

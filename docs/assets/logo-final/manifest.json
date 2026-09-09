@@ -1,0 +1,25 @@
+{
+  "predictionId": "zk97nqg335rmy0d0gx2a5h7az8",
+  "output": [
+    "https://replicate.delivery/xezq/uqBSexb5rBzRF6UtsVtpYQVMTVkGkJ3IY9fJovRPcyW0y0LXA/tmpccmxxyg2.webp"
+  ],
+  "artifacts": [
+    {
+      "path": "/Volumes/BRData/projects/oxitone/docs/assets/logo-final/zk97nqg335rmy0d0gx2a5h7az8-output-0-0.webp",
+      "bytes": 45084,
+      "sourceUrl": "https://replicate.delivery/xezq/uqBSexb5rBzRF6UtsVtpYQVMTVkGkJ3IY9fJovRPcyW0y0LXA/tmpccmxxyg2.webp",
+      "outputPath": "output.0",
+      "contentType": "image/webp"
+    }
+  ],
+  "createdAt": "2026-09-09T17:43:17.783Z",
+  "model": "openai/gpt-image-2.5-flare",
+  "version": "hidden",
+  "input": {
+    "aspect_ratio": "1:1",
+    "background": "opaque",
+    "prompt": "Clean professional vector logo mark for Oxitone, a developer tool for code and synthesizers. A single compact glyph: two angular code brackets framing a smooth three-cycle oscillator waveform, with three small circuit nodes. Symmetric, geometric, flat colors, electric cyan and violet with deep navy background, no animal imagery, no horns, no text, no letters, no extra objects, no glitch, no scanlines, no gradients, centered with generous padding, crisp edges, suitable for GitHub and npm branding.",
+    "quality": "medium"
+  },
+  "type": "prediction"
+}

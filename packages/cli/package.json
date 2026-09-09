@@ -2,7 +2,7 @@
   "name": "@oxitone/cli",
   "version": "0.1.0",
   "description": "Command line tools for Oxitone rendering and diagnostics",
-  "license": "Apache-2.0",
+  "license": "MPL-2.0",
   "type": "module",
   "bin": { "oxitone": "dist/index.js" },
   "exports": {

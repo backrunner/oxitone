@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Live TypeScript editing for the Oxitone DAW",
-  "license": "Apache-2.0",
+  "license": "MPL-2.0",
   "engines": { "vscode": "^1.96.0" },
   "categories": ["Other"],
   "main": "./dist/extension.cjs",

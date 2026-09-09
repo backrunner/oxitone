@@ -2,7 +2,7 @@
   "name": "@oxitone/native-generated",
   "version": "0.1.0",
   "description": "Generated N-API bindings for the Oxitone native engine; never hand-edit",
-  "license": "Apache-2.0",
+  "license": "MPL-2.0",
   "main": "index.js",
   "types": "index.d.ts",
   "exports": {

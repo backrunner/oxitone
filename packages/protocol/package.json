@@ -2,7 +2,7 @@
   "name": "@oxitone/protocol",
   "version": "0.1.0",
   "description": "Versioned wire schemas and codecs for the Oxitone TypeScript/Rust boundary",
-  "license": "Apache-2.0",
+  "license": "MPL-2.0",
   "type": "module",
   "exports": {
     ".": {

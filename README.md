@@ -1,5 +1,16 @@
 # Oxitone
 
+<p align="center">
+  <img src="docs/assets/oxitone-logo.webp" alt="Oxitone logo: code brackets framing a synthesizer waveform" width="220">
+</p>
+
+<p align="center"><strong>Code your sound.</strong> A TypeScript authoring SDK backed by a Rust realtime audio engine.</p>
+
+<p align="center">
+  <a href="https://github.com/backrunner/oxitone/actions/workflows/macos.yml"><img src="https://github.com/backrunner/oxitone/actions/workflows/macos.yml/badge.svg" alt="macOS CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MPL--2.0-7f52ff.svg" alt="MPL-2.0 license"></a>
+</p>
+
 Oxitone is a TypeScript authoring SDK with a Rust audio engine. Write notes,
 instruments, samples, effects and automation in TypeScript; Rust compiles the graph
 and handles playback, WAV rendering and MIDI export. The native callback runs no
@@ -118,4 +129,9 @@ or long-term latency acceptance. See [CI details](docs/ci.md).
 and [remaining milestones](.agents/docs/10-implementation-status.md) describe the
 current contracts and release gaps. Contributions follow [AGENTS.md](AGENTS.md).
 
-Licensed under [Apache-2.0](LICENSE).
+Oxitone is free and open source software licensed under the [Mozilla Public License 2.0](LICENSE).
+
+The repository is currently pre-1.0. APIs, file formats, native packaging and plugin ABI may change while the
+release milestones in [the implementation status](.agents/docs/10-implementation-status.md) are completed.
+Please read [the contribution guide](CONTRIBUTING.md) and [the open-source readiness checklist](OPEN_SOURCE_CHECKLIST.md)
+before sending a pull request.

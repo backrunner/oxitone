@@ -1,0 +1,25 @@
+{
+  "predictionId": "16m0817465rmr0d0gwzahh2j6g",
+  "output": [
+    "https://replicate.delivery/xezq/V6F6FLTQXZLtFlGylefgOeY5orEPXlIaV7b5YfSvcaJ21SvcB/tmp47u4fs7f.webp"
+  ],
+  "artifacts": [
+    {
+      "path": "/Volumes/BRData/projects/oxitone/docs/assets/logo-low/16m0817465rmr0d0gwzahh2j6g-output-0-0.webp",
+      "bytes": 80972,
+      "sourceUrl": "https://replicate.delivery/xezq/V6F6FLTQXZLtFlGylefgOeY5orEPXlIaV7b5YfSvcaJ21SvcB/tmp47u4fs7f.webp",
+      "outputPath": "output.0",
+      "contentType": "image/webp"
+    }
+  ],
+  "createdAt": "2026-09-09T17:37:34.812Z",
+  "model": "openai/gpt-image-2.5-flare",
+  "version": "hidden",
+  "input": {
+    "aspect_ratio": "1:1",
+    "background": "transparent",
+    "prompt": "Minimal vector-style logo for Oxitone, a TypeScript authoring SDK and Rust realtime audio engine. Create a distinctive abstract sound wave woven into an ox horn silhouette, geometric rounded mark, electric violet and cyan on transparent background, no gradients, no mockup, no extra words, centered, clean negative space, suitable for npm and GitHub avatar.",
+    "quality": "low"
+  },
+  "type": "prediction"
+}

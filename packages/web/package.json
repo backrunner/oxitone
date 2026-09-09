@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Shared Oxitone Rust engine for Wasm runtimes and Web Audio",
   "type": "module",
-  "license": "Apache-2.0",
+  "license": "MPL-2.0",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
