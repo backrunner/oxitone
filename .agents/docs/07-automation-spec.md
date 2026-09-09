@@ -1,5 +1,21 @@
 # Oxitone Automation 执行规格
 
+Engine 1.2 的 Playlist automation 使用独立 AutomationClip placements，lane.playback
+显式区分 global 与 playlist；最后一个 clip 删除后仍为 playlist。片段本地时间、半开边界、
+重叠优先级、无 active lane 时的静态参数恢复、tempo 限制、预算与版本门禁见
+[18-project-daw.md](18-project-daw.md#pattern-声部与-playlist-automation)。
+控制线程预编译不重叠区间；音频端二分查找、块内边界检测，无分配、锁或 JS 调用。
+Playlist placement 同时受所属 Track 的 enabled/mute/solo 过滤；全局 lane 不受 Track M/S
+影响。无有效 placement 时恢复 target 静态值，solo 策略与音频编译选项一致。M/S 不改变
+全局 tempo 烘焙和 source 求值规则，现有 source golden vectors 保持不变。
+
+下文定义当前 v1 执行。Engine 1.1 的 plugin/effectHost scope 与实例绑定见 [20](20-plugin-instances.md)，
+同一物理参数的 legacy/typed aliases 在控制侧合并验证与编译，不能绕过多 lane combine 规则。
+发布前迁移目标为 [共享 DAG、原生 range edit 与新随机域](../designs/source-daw/04-runtime.md)，
+24 个 authoring 入口均保留；迁移时须同步 Rust、schema 与 golden vectors。新增 source
+`replaceRange` 原生节点及 TypeScript builder，定义见下文；lane range/共享 DAG/random-v2
+仍未迁移，已有 chance 节点保留旧算法。
+
 本文是 Automation source 的规范性定义。TypeScript builder、wire schema、Rust validator、Rust evaluator、离线渲染和 MIDI export 必须遵循同一语义。
 
 ## 1. 坐标与输出
@@ -95,6 +111,30 @@ quantize(x,n) = round(x*(n-1))/(n-1)
 
 AST 最大深度 64、最大节点数 256。共享 source 在 wire 中默认展开并分别计数；未来如加入引用节点，必须禁止 cycle。
 
+### Source 区间覆盖
+
+所有 24 个 builder 的 `AutomationSource` 值支持
+`source.replaceRange({start, end, fadeBeats?}, replacement)`，返回不可变派生 source。
+replacement 也可直接写 `{beat,value,curve?}[]` 本地控制点，等价于 linear curve source，
+DAW 回写普通点数组无需引入 namespace/import。GPUI 与 Document 的 source 编辑见 [18](18-project-daw.md)。
+点数组的 `curve` 必须保留到原生 replacement curve；省略才采用 linear，不能在 TS
+replaceRange 转换时丢弃。`automation-range.json` 增加 Bézier/step 混合点的跨层 golden。
+wire 新增 `kind: replaceRange`，包含 base/replacement 子树、startBeat/endBeat 和可选 fadeBeats。
+此新增 tagged variant 保留 engine wire 1.0 其他结构；不声称完整 engine protocol 2 已迁移。
+旧引擎遇到未知 variant 必须拒绝，不能忽略字段后播放原曲。
+
+范围在 source 本地 beat 域，严格 [start,end)，end > start >= 0。区间外原样求 base；
+区间内 replacement beat 0 对应 start。replacement 的 restart context 同时平移 originBeat，
+transport iteration 保留。这是 source 覆盖，现有 lane loop 映射后每轮重复；不冒充单轮
+lane/timeline 范围编辑。base 的编译 seed path 透传，添加/叠加范围不会重置区间外 chance。
+这仅保证 range wrapper，不改变现有 map/unary/binary 的旧 seed path 规则。
+
+默认 hard；fadeBeats > 0 在区间两端以线性权重混合 base/replacement，每端 fade 不超过
+范围一半。未要求 crossfade 时不改变边界。后加的覆盖作用于前一个 source，遵循显式顺序；
+相同范围的 hard replacement 可归约为一个节点，含 fade 的叠加不能套用此归约。
+原生 value_at/has_edge 不分配，区间/渐变边界参与离线分段和 sample-accurate edge 检查。
+两棵子树都计入 depth/node 预算；tempo validator 递归检查二者，不能借覆盖隐藏 chance。
+
 ## 5. 求值速率
 
 - target `rate='control'`：每个 block 起点求值；Rust parameter smoother 负责跨 block 平滑。
@@ -138,6 +178,8 @@ source beat，结束后保持最终 phase；恰好结束在整周期边界时保
 - curve：before/at/after points，所有 interpolation，block 和 tempo boundary 连续性。
 - chance：probability 0/1、固定 seed 的前 16 个 decision、absolute seek 往返一致、restart loop iteration 不同但可复现。
 - composition：嵌套 map/invert/multiply、最终 clamp、depth/node limits。
+- source range：`schemas/fixtures/automation-range.json` TS/Rust 对拍；hard/fade、重叠、
+  chance absolute/restart/seek、两端零权重溢出、64/128/256 sample parity 与零分配/释放。
 - parity：相同 serialized source 在 realtime/offline、不同 block size（64/128/256）下，在同一 sample frame 输出一致。
 - tempo loop golden（`crates/transport/tests/tempo_lane_loop.rs`）：source 在 beat 0/0.5/1
   为 120/240/60 BPM，loop 长度 1、count 2。beat 0.5/1/1.5/2/3 的累计秒数应为

@@ -77,6 +77,15 @@ pub(super) fn validate_ids(snapshot: &ProjectSnapshot) -> Result<(), OxitoneErro
     for (i, clip) in snapshot.sample_clips.iter().enumerate() {
         check_id(&mut seen, &format!("$.sampleClips[{i}].id"), &clip.id)?;
     }
+    for (i, clip) in snapshot
+        .automation_clips
+        .as_deref()
+        .unwrap_or(&[])
+        .iter()
+        .enumerate()
+    {
+        check_id(&mut seen, &format!("$.automationClips[{i}].id"), &clip.id)?;
+    }
     for (i, sample) in snapshot.samples.iter().enumerate() {
         check_prefixed(
             &mut seen,
@@ -112,6 +121,35 @@ pub(super) fn validate_ids(snapshot: &ProjectSnapshot) -> Result<(), OxitoneErro
             prefixes::AUTOMATION,
             "automation lane",
         )?;
+    }
+    for (i, channel) in snapshot.channels.iter().enumerate() {
+        if let Some(id) = &channel.instrument.instance_id {
+            check_id(
+                &mut seen,
+                &format!("$.channels[{i}].instrument.instanceId"),
+                id,
+            )?;
+        }
+        for (j, effect) in channel.effect_chain.iter().enumerate() {
+            if let Some(id) = &effect.instance_id {
+                check_id(
+                    &mut seen,
+                    &format!("$.channels[{i}].effectChain[{j}].instanceId"),
+                    id,
+                )?;
+            }
+        }
+    }
+    for (i, bus) in snapshot.mixer_channels.iter().enumerate() {
+        for (j, effect) in bus.inserts.iter().enumerate() {
+            if let Some(id) = &effect.instance_id {
+                check_id(
+                    &mut seen,
+                    &format!("$.mixerChannels[{i}].inserts[{j}].instanceId"),
+                    id,
+                )?;
+            }
+        }
     }
     Ok(())
 }

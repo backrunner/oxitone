@@ -59,6 +59,7 @@ pub fn base_snapshot() -> ProjectSnapshot {
         channels: vec![],
         mixer_channels: vec![],
         automation: vec![],
+        automation_clips: None,
     }
 }
 
@@ -76,12 +77,15 @@ pub fn track(
         pattern_clip_ids: pattern_clips.iter().map(|s| s.to_string()).collect(),
         sample_clip_ids: sample_clips.iter().map(|s| s.to_string()).collect(),
         enabled: None,
+        mute: None,
+        solo: None,
         midi_channel: None,
     }
 }
 
 pub fn wavetable_ref(parameters: &[(&str, f64)]) -> InstrumentRef {
     InstrumentRef {
+        instance_id: None,
         plugin_id: "oxitone.wavetable".into(),
         plugin_version: "1.0.0".into(),
         parameters: parameters
@@ -95,6 +99,7 @@ pub fn wavetable_ref(parameters: &[(&str, f64)]) -> InstrumentRef {
 
 pub fn effect_ref(plugin_id: &str, parameters: &[(&str, f64)]) -> EffectRef {
     EffectRef {
+        instance_id: None,
         plugin_id: plugin_id.into(),
         plugin_version: "1.0.0".into(),
         parameters: parameters
@@ -178,6 +183,7 @@ pub fn pattern(id: &str, length: (i64, u32), notes: Vec<NoteSpec>) -> PatternSpe
         name: None,
         length_beats: beat(length.0, length.1),
         notes,
+        parts: None,
     }
 }
 

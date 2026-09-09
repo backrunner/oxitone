@@ -12,6 +12,7 @@ mod compile;
 mod curve;
 mod eval;
 mod lane_time;
+mod range;
 
 use oxitone_core::error::OxitoneError;
 use oxitone_core::wire::AutomationSourceSpec;

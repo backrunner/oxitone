@@ -37,6 +37,7 @@ fn scheduler_for(tempo: &oxitone_transport::CompiledTempoMap, beats: i64) -> Sch
     let sources = [ClipSource {
         clip: &clip,
         pattern: &pattern,
+        period: pattern.length_beats,
         channel_id: &channel_id,
         swing: 0.0,
         track_tempo: None,

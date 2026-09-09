@@ -35,6 +35,15 @@ pub struct PatternSpec {
     pub name: Option<String>,
     pub length_beats: Beat,
     pub notes: Vec<NoteSpec>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub parts: Option<Vec<PatternPartSpec>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PatternPartSpec {
+    pub channel_id: EntityId,
+    pub pattern_id: EntityId,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -155,11 +164,29 @@ pub enum AutomationCombine {
 pub struct AutomationTarget {
     pub entity_id: EntityId,
     pub parameter_id: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scope: Option<ParameterScope>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum ParameterScope {
+    Plugin,
+    EffectHost,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum AutomationPlayback {
+    Global,
+    Playlist,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AutomationLaneSpec {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub playback: Option<AutomationPlayback>,
     pub id: EntityId,
     pub target: AutomationTarget,
     pub source: AutomationSourceSpec,
@@ -169,4 +196,17 @@ pub struct AutomationLaneSpec {
     pub loop_spec: Option<LoopSpec>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub last_beat: Option<Beat>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AutomationClipSpec {
+    pub id: EntityId,
+    pub lane_id: EntityId,
+    pub track_id: EntityId,
+    pub start_beat: Beat,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub duration_beats: Option<Beat>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub enabled: Option<bool>,
 }

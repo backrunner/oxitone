@@ -22,6 +22,8 @@ it("decodes fragmented headers/bodies, UTF-8 and consecutive messages with bound
 it("validates preview options and defaults to dependency watch", () => {
   expect(parsePreviewArgs(["song.ts"]).options.watch).toBe(true);
   expect(parsePreviewArgs(["song.ts", "--no-watch", "--headless"]).options).toMatchObject({ watch: false, headless: true });
+  expect(parsePreviewArgs(["song.ts", "--document-socket", "/tmp/oxitone-test/document"]).options.documentSocket).toBe("/tmp/oxitone-test/document");
+  expect(() => parsePreviewArgs(["song.ts", "--document-socket"])).toThrow("requires a path");
   expect(() => parsePreviewArgs(["song.ts", "--viewer"])).toThrow("requires a path");
   expect(() => parsePreviewArgs(["song.ts", "--edit"])).toThrow("Unknown");
 });

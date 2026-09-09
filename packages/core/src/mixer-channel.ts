@@ -11,6 +11,9 @@ import { parseAuthoring } from "./authoring-validation.js";
 import type { AutomationLane, AutomationLaneOptions } from "./automation/lane.js";
 import type { AutomationSource } from "./automation/source.js";
 import type { Project } from "./project.js";
+import { ConfigurationSources } from "./configuration-sources.js";
+import { PluginInstances } from "./plugin-instances.js";
+import type { PluginInstance } from "./plugin-instance.js";
 
 /** Options for `project.addMixerChannel(...)`; sends are added with `send(...)`. */
 export interface MixerChannelOptions {
@@ -32,6 +35,9 @@ export interface SendOptions {
 /** A project-owned mixer bus; `project.master` is the terminal output bus. */
 export class MixerChannel {
   private spec: MixerChannelSpec;
+  private readonly instances: PluginInstances;
+  /** @internal Source identities, excluded from engine snapshots. */
+  readonly configurationSources: ConfigurationSources;
 
   /** @internal Use `project.addMixerChannel(...)` or `project.master`. */
   constructor(private readonly project: Project, id: EntityId, options: MixerChannelOptions = {}) {
@@ -40,6 +46,9 @@ export class MixerChannel {
       inserts: options.inserts ?? [], sends: [],
     }, "mixerChannel");
     this.checkMaster(this.spec);
+    this.instances = new PluginInstances(this, project);
+    this.spec.inserts = this.instances.adopt(this.spec.inserts);
+    this.configurationSources = new ConfigurationSources(undefined, options.inserts ?? []);
   }
 
   get id(): EntityId {
@@ -96,9 +105,33 @@ export class MixerChannel {
     this.update({ inserts: [...value] });
   }
 
-  addEffect(effect: EffectRef): this {
-    this.inserts = [...this.spec.inserts, effect];
-    return this;
+  get effectInstances(): readonly PluginInstance[] { return this.spec.inserts.map(ref => this.instances.handle(ref, "effect")); }
+  reorderEffects(order: readonly PluginInstance[]): void {
+    order.forEach(instance => this.instances.require(instance, "effect"));
+    if (order.length !== this.spec.inserts.length || new Set(order).size !== order.length) throw new OxitoneError(ErrorCode.EditScopeConflict, "effect order must be a permutation of this owner's instances");
+    const sources = order.map(instance => this.configurationSources.chain[this.spec.inserts.findIndex(ref => ref.instanceId === instance.id)]!);
+    this.inserts = order.map(instance => this.spec.inserts.find(ref => ref.instanceId === instance.id)!);
+    this.configurationSources.chain = sources;
+  }
+  removeEffect(instance: PluginInstance): void {
+    this.instances.require(instance, "effect");
+    const sources = this.configurationSources.chain.filter((_, index) => this.spec.inserts[index]!.instanceId !== instance.id);
+    this.inserts = this.spec.inserts.filter(ref => ref.instanceId !== instance.id);
+    this.configurationSources.chain = sources;
+  }
+  /** @internal */
+  updateInstance(instance: PluginInstance, config: EffectRef): void {
+    this.instances.require(instance, "effect");
+    const sources = this.configurationSources.chain.map((source, index) => this.spec.inserts[index]!.instanceId === instance.id ? config : source);
+    this.inserts = this.spec.inserts.map(previous => previous.instanceId === instance.id ? { ...config, instanceId: instance.id } : previous);
+    this.configurationSources.chain = sources;
+  }
+  addEffect(effect: EffectRef): PluginInstance {
+    const sources = [...this.configurationSources.chain, effect];
+    const { instanceId: _, ...config } = effect;
+    this.inserts = [...this.spec.inserts, config];
+    this.configurationSources.chain = sources;
+    return this.effectInstances.at(-1)!;
   }
 
   /** Sends in authoring order (defensive copy). */
@@ -157,7 +190,9 @@ export class MixerChannel {
     const spec = parseAuthoring(mixerChannelSpecSchema, input, "mixerChannel");
     if (spec.id !== this.id) throw new OxitoneError(ErrorCode.InvalidProject, "mixer identity cannot change");
     this.checkMaster(spec);
+    spec.inserts = this.instances.restore(spec.inserts);
     this.spec = spec;
+    this.configurationSources.update({ inserts: input.inserts });
   }
 
   private checkMaster(spec: MixerChannelSpec): void {
@@ -172,7 +207,9 @@ export class MixerChannel {
     this.project.assertMutable();
     const next = parseAuthoring(mixerChannelSpecSchema, { ...this.spec, ...patch }, "mixerChannel");
     this.checkMaster(next);
+    next.inserts = this.instances.adopt(next.inserts, this.spec.inserts);
     this.spec = next;
+    this.configurationSources.update(patch);
     if (this.isMaster) this.project.materializeMaster();
     this.project.touch();
   }

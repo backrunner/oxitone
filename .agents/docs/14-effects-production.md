@@ -55,8 +55,10 @@ silent detector remains a real external sidechain. Gate adds hysteresis and rang
 compressor adds detector highpass. Reverb and delay retain existing IDs/defaults,
 with reverb wet highpass/lowpass, input-driven ducking and stereo width. Filter
 cutoff redesign now uses a persistent 32-frame cycle, independent of host blocks.
-The 12 new processors have compact grouped native Preview panels; source/watch,
-host mix/bypass, custom panel overrides and system appearance retain existing rules.
+All 26 effects have dedicated native panels with parameter-derived response diagrams;
+DAW controls submit instance-scoped source transactions. Source/watch, host mix/bypass,
+custom panel overrides and system appearance follow 11-plugin-ui.md. Diagrams do not
+claim measured signal or effective parameter telemetry.
 Tests cover transfer/frequency/time
 behavior, tail exhaustion, reset, block independence, PDC and zero allocations.
 Native and Wasm use the same DSP. Automated tests never open output devices.

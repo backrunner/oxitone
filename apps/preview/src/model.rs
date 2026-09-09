@@ -14,6 +14,7 @@ pub struct ViewProject {
     pub telemetry: Arc<PreviewTelemetry>,
     pub graph_latency: u64,
     pub pattern_labels: OnceLock<HashMap<String, String>>,
+    pub automation_previews: OnceLock<HashMap<String, Arc<oxitone_graph::compile::CompiledLane>>>,
     pub plugins: crate::plugin_catalog::Catalog,
     pub panels: crate::plugin_layout_registry::Panels,
     pub mixer_strips: OnceLock<Vec<crate::mixer_model::Strip>>,
@@ -185,6 +186,7 @@ pub struct Diagnostic {
 }
 
 pub enum UiEvent {
+    Document(crate::document_wire::DocumentMessage),
     Accepted(Arc<ViewProject>),
     Diagnostic(Diagnostic),
     Status(String),

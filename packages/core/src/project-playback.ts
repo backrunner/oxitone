@@ -35,6 +35,8 @@ export abstract class ProjectPlayback {
   private policy: EngineOptions["allowPlugins"];
   get registeredPlugins(): RegisterPluginOptions[] { return structuredClone(this.pluginList); }
   get pluginPolicy(): EngineOptions["allowPlugins"] { return this.policy; }
+  /** Fluent authoring registration; signature policy and hash checks are identical to registerPlugin. */
+  withPluginRegistration(input: RegisterPluginOptions): this { this.registerPlugin(input); return this; }
 
   /** Register a native Preview panel for an exact built-in or dylib plugin version.
    * Layout validation is local to Preview: invalid layouts never reject valid audio.

@@ -160,7 +160,10 @@ fn not_compiled(engine_id: &str) -> OxitoneError {
 /// `RenderGraphOptions` honoring the engine's `EngineOptions` overrides
 /// (sample rate, block size, metronome).
 fn graph_options(options: Option<&EngineOptions>) -> RenderGraphOptions {
-    let mut graph_options = RenderGraphOptions::default();
+    let mut graph_options = RenderGraphOptions {
+        respect_solo: true,
+        ..Default::default()
+    };
     if let Some(options) = options {
         graph_options.compile.sample_rate = options.sample_rate;
         graph_options.compile.block_size = options.block_size;
@@ -874,6 +877,7 @@ mod tests {
             channels: vec![],
             mixer_channels: vec![],
             automation: vec![],
+            automation_clips: None,
         }
     }
 
@@ -888,6 +892,8 @@ mod tests {
             pattern_clip_ids: vec!["pcl_a".into()],
             sample_clip_ids: vec![],
             enabled: None,
+            mute: None,
+            solo: None,
             midi_channel: None,
         });
         snapshot.patterns.push(PatternSpec {
@@ -918,6 +924,7 @@ mod tests {
                     tags: None,
                 },
             ],
+            parts: None,
         });
         snapshot.pattern_clips.push(PatternClipSpec {
             id: "pcl_a".into(),
@@ -936,6 +943,7 @@ mod tests {
             id: "chn_a".into(),
             name: None,
             instrument: InstrumentRef {
+                instance_id: None,
                 plugin_id: "oxitone.wavetable".into(),
                 plugin_version: "1.0.0".into(),
                 parameters: BTreeMap::new(),
@@ -1192,6 +1200,8 @@ mod tests {
             pattern_clip_ids: vec![],
             sample_clip_ids: vec!["scl_a".into()],
             enabled: None,
+            mute: None,
+            solo: None,
             midi_channel: None,
         });
 

@@ -1,0 +1,13 @@
+export { anchorPatternExpression, writePatternEdit } from "./pattern-writer.js";
+export type { ExpressionAnchor, PatternWriteRequest, PatternWriteResult } from "./pattern-writer.js";
+export { SourceOwnership } from "./ownership.js";
+export type { OwnedSource } from "./ownership.js";
+export { materializePatternReference, writeLiteralPatternEdit } from "./materialize.js";
+export type { MaterializeCandidate, MaterializeSummary } from "./materialize.js";
+export { captureSourceReads } from "./read-set.js";
+export type { SourceRead } from "./read-set.js";
+export { SourceSaveStore } from "./source-save.js";
+export type { SourceSaveRequest } from "./source-save.js";
+export type { SourceSaveFile } from "./save-journal.js";
+export { ProjectDocument } from "./project-document.js";
+export type { ProjectDocumentOptions } from "./project-document.js";

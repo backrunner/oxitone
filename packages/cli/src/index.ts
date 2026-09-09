@@ -14,7 +14,7 @@ import { bundleProject } from "./bundle.js";
 import { resolve, parse } from "node:path";
 
 function usage(): never {
-  console.error("Usage: oxitone doctor | oxitone <render|export-midi> <snapshot.json|project-directory> <output> | oxitone build <entry.ts> [-o project.mjs] [--watch] | oxitone preview <entry.ts|project.mjs> [--no-watch] [--viewer path]");
+  console.error("Usage: oxitone doctor | oxitone <render|export-midi> <snapshot.json|project-directory> <output> | oxitone build <entry.ts> [-o project.mjs] [--watch] | oxitone <daw|preview> <entry.ts> [--no-watch] [--viewer path]");
   process.exit(2);
 }
 
@@ -22,7 +22,7 @@ async function main(argv: string[]): Promise<void> {
   const [command, input, output] = argv;
   if (!command) usage();
   if (command === "--help" || command === "-h") {
-    console.log("Oxitone: build <entry.ts> [-o project.mjs] [--watch] · preview <entry.ts|project.mjs> [--no-watch] [--watch-path path] [--viewer path] · render <project> <wav> · export-midi <project> <mid> · doctor");
+    console.log("Oxitone: daw <entry.ts> [--no-watch] [--viewer path] · build <entry.ts> [-o project.mjs] [--watch] · preview <entry.ts|project.mjs> [--no-watch] [--watch-path path] [--viewer path] · render <project> <wav> · export-midi <project> <mid> · doctor");
     return;
   }
   if (command === "build") {
@@ -38,9 +38,9 @@ async function main(argv: string[]): Promise<void> {
     }
     await bundleProject(input, destination, watch); return;
   }
-  if (command === "preview") {
+  if (command === "preview" || command === "daw") {
     const { entry, options } = parsePreviewArgs(argv.slice(1));
-    await launchPreview(entry, options);
+    await launchPreview(entry, { ...options, edit: command === "daw" });
     return;
   }
   if (command === "doctor") {

@@ -1,3 +1,4 @@
+use crate::mixer_control::{control, toggle};
 use crate::{
     mixer_model::{db, Strip, STRIP_WIDTH},
     ui::{alpha, Preview},
@@ -25,6 +26,8 @@ pub fn view(
     let rms = analysis.map_or(0., |a| a.rms);
     let output = strip.output();
     let count = strip.sends().count();
+    let level = this.mix_value(&strip.id, crate::mixer_edit::Control::Level, strip.level);
+    let pan = this.mix_value(&strip.id, crate::mixer_edit::Control::Pan, strip.pan);
     div()
         .id(SharedString::from(format!("strip-{}", strip.id)))
         .w(px(STRIP_WIDTH))
@@ -99,14 +102,21 @@ pub fn view(
                         .child(strip.kind.clone()),
                 ),
         )
-        .child(crate::mixer_meter::pan(strip.pan as f32, tint, theme))
-        .child(div().px_2().child(crate::mixer_meter::meter(
-            strip.level as f32,
-            peak,
-            rms,
-            tint,
-            theme,
-        )))
+        .child(
+            control(this, strip, crate::mixer_edit::Control::Pan, pan, cx)
+                .child(crate::mixer_meter::pan(pan as f32, tint, theme)),
+        )
+        .child(
+            control(this, strip, crate::mixer_edit::Control::Level, level, cx)
+                .px_2()
+                .child(crate::mixer_meter::meter(
+                    level as f32,
+                    peak,
+                    rms,
+                    tint,
+                    theme,
+                )),
+        )
         .child(
             div()
                 .h(px(29.))
@@ -117,7 +127,7 @@ pub fn view(
                 .text_size(px(12.))
                 .font_family("Menlo")
                 .font_weight(FontWeight::MEDIUM)
-                .child(format!("{} ", db(strip.level as f32)))
+                .child(format!("{} ", db(level as f32)))
                 .child(
                     div()
                         .text_size(px(9.))
@@ -135,15 +145,17 @@ pub fn view(
                     div()
                         .flex()
                         .gap_1()
-                        .child(badge("M", strip.mute, theme))
-                        .child(badge("S", strip.solo, theme)),
+                        .child(toggle(this, strip, false, cx))
+                        .child(toggle(this, strip, true, cx)),
                 )
-                .child(
-                    div()
-                        .text_size(px(9.))
-                        .text_color(rgb(theme.muted))
-                        .child(format!("{} FX", strip.effects.len())),
-                ),
+                .when(!strip.effects.is_empty(), |row| {
+                    row.child(
+                        div()
+                            .text_size(px(9.))
+                            .text_color(rgb(theme.muted))
+                            .child(format!("{} FX", strip.effects.len())),
+                    )
+                }),
         )
         .child(div().flex_1().min_h(px(6.)))
         .child(
@@ -185,20 +197,11 @@ pub fn view(
                             format!("{count} send{}", if count == 1 { "" } else { "s" })
                         } else if master {
                             format!("{} inputs", strip.inputs.len())
-                        } else {
+                        } else if peak > 0. {
                             format!("{} peak", db(peak))
+                        } else {
+                            String::new()
                         }),
                 ),
         )
-}
-fn badge(label: &'static str, active: bool, theme: crate::theme::Theme) -> Div {
-    div()
-        .w(px(19.))
-        .h(px(17.))
-        .rounded_sm()
-        .text_center()
-        .text_size(px(9.))
-        .bg(rgb(if active { theme.gold } else { theme.button }))
-        .text_color(rgb(if active { theme.bg } else { theme.muted }))
-        .child(label)
 }

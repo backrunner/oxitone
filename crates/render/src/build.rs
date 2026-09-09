@@ -38,7 +38,7 @@ pub struct RenderGraphOptions {
     /// Master limiter/clip protection (default on; only diagnostics may
     /// disable it, 03-audio-runtime-spec.md §数值精度).
     pub master_limiter: bool,
-    /// Honor channel/bus solo flags (export default off).
+    /// Honor Track/channel/bus solo flags (export default off).
     pub respect_solo: bool,
     /// Metronome click level; `None` disables the click.
     pub metronome_level: Option<f32>,
@@ -66,7 +66,11 @@ impl RenderGraph {
     ) -> Result<Self, OxitoneError> {
         let sample_rate = options.compile.sample_rate.unwrap_or(snapshot.sample_rate);
         samples.prepare_all(snapshot, sample_rate)?;
-        let plan = compile_plan(snapshot, registry, samples, &options.compile)?;
+        let compile = CompileOptions {
+            respect_solo: options.respect_solo,
+            ..options.compile.clone()
+        };
+        let plan = compile_plan(snapshot, registry, samples, &compile)?;
         let max_block = plan.block_size;
         let host = HostContext {
             sample_rate: f64::from(sample_rate),
@@ -164,7 +168,22 @@ impl RenderGraph {
         tracks.sort_by(|a, b| a.id.cmp(&b.id));
         for track in tracks {
             let mut channel_ids: Vec<&str> = track.channel_ids.iter().map(String::as_str).collect();
+            for clip in snapshot
+                .pattern_clips
+                .iter()
+                .filter(|clip| clip.track_id == track.id && clip.enabled != Some(false))
+            {
+                if let Some(parts) = snapshot
+                    .patterns
+                    .iter()
+                    .find(|pattern| pattern.id == clip.pattern_id)
+                    .and_then(|pattern| pattern.parts.as_ref())
+                {
+                    channel_ids.extend(parts.iter().map(|part| part.channel_id.as_str()));
+                }
+            }
             channel_ids.sort_unstable();
+            channel_ids.dedup();
             for id in channel_ids {
                 channel_tracks
                     .entry(id.to_string())

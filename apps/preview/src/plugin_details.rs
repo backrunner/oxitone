@@ -34,6 +34,7 @@ impl DetailTarget {
     }
 }
 
+#[derive(Clone)]
 pub struct ParameterDetail {
     pub spec: ParameterSpec,
     pub value: f64,

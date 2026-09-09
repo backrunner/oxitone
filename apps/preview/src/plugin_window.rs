@@ -23,6 +23,7 @@ pub enum ParameterFilter {
 }
 
 pub struct PluginWindow {
+    pub identity: String,
     pub target: DetailTarget,
     pub project: Arc<ViewProject>,
     pub details: Option<PluginDetails>,
@@ -36,45 +37,82 @@ pub struct PluginWindow {
     pub panel: Option<Arc<crate::plugin_layout::Layout>>,
     pub page: String,
     pub stacked_waveforms: bool,
+    pub plots: Arc<Vec<crate::plugin_plot::Plot>>,
+    pub parameter_bounds:
+        std::rc::Rc<std::cell::RefCell<std::collections::HashMap<String, Bounds<Pixels>>>>,
+    edit_stamp: u64,
+    projected: bool,
+    source_ready: bool,
     pub sync_status: String,
-    owner: WeakEntity<Preview>,
-    focus: FocusHandle,
+    pub(super) owner: WeakEntity<Preview>,
+    pub width: f32,
+    pub request_focus: bool,
+    pub source_button: std::rc::Rc<std::cell::Cell<Bounds<Pixels>>>,
+    pub(super) focus: FocusHandle,
     _subscriptions: Vec<Subscription>,
 }
 
 impl PluginWindow {
+    pub fn focus(&self, window: &mut Window) {
+        self.focus.focus(window);
+    }
     pub(crate) fn new(
         target: DetailTarget,
         project: Arc<ViewProject>,
         owner: Entity<Preview>,
         status: String,
-        window: &mut Window,
+        theme: Theme,
         cx: &mut Context<Self>,
     ) -> Self {
-        let project_changes = cx.observe_in(&owner, window, |this, owner, window, cx| {
+        let project_changes = cx.observe(&owner, |this, owner, cx| {
             let owner = owner.read(cx);
             let status = sync_status(owner);
-            let mut changed = status != this.sync_status;
+            let mut changed = status != this.sync_status
+                || this.theme.bg != owner.theme.bg
+                || this.source_ready != owner.document_ready();
+            this.source_ready = owner.document_ready();
+            let mut parameters_changed = false;
+            this.theme = owner.theme;
             this.sync_status = status;
             if let Some(project) = &owner.project {
                 if !Arc::ptr_eq(project, &this.project) {
-                    this.refresh(project.clone(), window);
+                    this.refresh(project.clone());
+                    this.theme = owner.theme;
                     changed = true;
+                    parameters_changed = true;
                 }
             }
-            if changed {
+            if this.edit_stamp != owner.document.plugin.stamp {
+                this.edit_stamp = owner.document.plugin.stamp;
+                parameters_changed |= this.projected
+                    || owner
+                        .document
+                        .plugin
+                        .change()
+                        .is_some_and(|c| c.identity == this.identity);
+            }
+            if parameters_changed {
+                this.project_edit(owner);
+            }
+            if changed || parameters_changed {
                 cx.notify();
             }
         });
-        let appearance_changes = cx.observe_window_appearance(window, |this, window, cx| {
-            this.theme = Theme::from_appearance(window.appearance());
-            cx.notify();
-        });
         let focus = cx.focus_handle();
-        focus.focus(window);
         let details = plugin_details::resolve(&project, &target);
         let panel = resolve_panel(&project, details.as_ref());
+        let plots = Arc::new(
+            details
+                .as_ref()
+                .map_or_else(Vec::new, |d| crate::plugin_plot::build(d, &project)),
+        );
         Self {
+            identity: crate::plugin_identity::key(&project, &target),
+            plots,
+            parameter_bounds: Default::default(),
+            edit_stamp: 0,
+            projected: false,
+            source_ready: false,
             stacked_waveforms: true,
             page: panel
                 .as_ref()
@@ -85,7 +123,10 @@ impl PluginWindow {
             details,
             target,
             project,
-            theme: Theme::from_appearance(window.appearance()),
+            theme,
+            width: 820.,
+            request_focus: true,
+            source_button: Default::default(),
             tab: DetailTab::Panel,
             filter: ParameterFilter::All,
             scroll: ScrollHandle::new(),
@@ -94,24 +135,16 @@ impl PluginWindow {
             parameter_specs: false,
             owner: owner.downgrade(),
             focus,
-            _subscriptions: vec![project_changes, appearance_changes],
+            _subscriptions: vec![project_changes],
         }
     }
-    fn refresh(&mut self, project: Arc<ViewProject>, window: &mut Window) {
-        self.details = plugin_details::resolve(&project, &self.target);
+    fn refresh(&mut self, project: Arc<ViewProject>) {
+        self.details = crate::plugin_identity::follow(&project, &self.target, &self.identity)
+            .and_then(|target| {
+                self.target = target;
+                plugin_details::resolve(&project, &self.target)
+            });
         let panel = resolve_panel(&project, self.details.as_ref());
-        if let Some(next) = &panel {
-            if !window.is_fullscreen()
-                && self.panel.as_ref().is_some_and(|old| {
-                    old.size.width != next.size.width || old.size.height != next.size.height
-                })
-            {
-                window.resize(size(
-                    px(next.size.width as f32),
-                    px(next.size.height as f32),
-                ));
-            }
-        }
         let same_identity = self
             .panel
             .as_ref()
@@ -133,115 +166,44 @@ impl PluginWindow {
         self.panel = panel;
         self.project = project;
         self.copied = false;
-        window.set_window_title(&self.title());
+    }
+    fn project_edit(&mut self, owner: &Preview) {
+        self.projected = false;
+        self.details = crate::plugin_identity::follow(&self.project, &self.target, &self.identity)
+            .and_then(|target| plugin_details::resolve(&self.project, &target));
+        if let Some(details) = &mut self.details {
+            if let Some(change) = owner
+                .document
+                .plugin
+                .change()
+                .filter(|c| c.identity == self.identity)
+                .filter(|_| owner.document.plugin.gesture.is_some() || owner.presentation_active())
+            {
+                if let Some(parameter) = details
+                    .parameters
+                    .iter_mut()
+                    .find(|p| p.host == change.host && p.spec.id == change.parameter)
+                {
+                    parameter.value = change.value;
+                    parameter.explicit = true;
+                    self.projected = true;
+                }
+            }
+            self.plots = Arc::new(crate::plugin_plot::build(details, &self.project));
+        } else {
+            self.plots = Arc::new(vec![]);
+        }
     }
     pub fn title(&self) -> String {
         self.details.as_ref().map_or_else(
-            || format!("{} · Not attached", self.target.label()),
-            |d| format!("{} · {} · {}", d.owner_name, d.target.label(), d.name),
+            || format!("{} — Not attached", self.target.label()),
+            |d| {
+                d.target.slot().map_or_else(
+                    || format!("{} — {}", d.name, d.owner_name),
+                    |slot| format!("{} — {}, insert {}", d.name, d.owner_name, slot + 1),
+                )
+            },
         )
-    }
-}
-
-impl Render for PluginWindow {
-    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let theme = self.theme;
-        div()
-            .id("plugin-details")
-            .size_full()
-            .flex()
-            .flex_col()
-            .font_family("Helvetica Neue")
-            .bg(rgb(theme.bg))
-            .text_color(rgb(theme.text))
-            .track_focus(&self.focus)
-            .on_key_down(cx.listener(|this, event: &KeyDownEvent, window, cx| {
-                let key = event.keystroke.key.as_str();
-                if key == "escape" || (key == "w" && event.keystroke.modifiers.platform) {
-                    window.remove_window();
-                    cx.stop_propagation();
-                    return;
-                }
-                if let Some(shortcut) = crate::shortcuts::playback(&event.keystroke) {
-                    if !event.is_held || shortcut.repeats() {
-                        let _ = this.owner.update(cx, |owner, cx| {
-                            owner.playback_shortcut(shortcut);
-                            cx.notify();
-                        });
-                    }
-                    cx.stop_propagation();
-                    return;
-                }
-                let delta = match key {
-                    "up" => Some(32.),
-                    "down" => Some(-32.),
-                    "pageup" => Some(f32::from(this.scroll.bounds().size.height)),
-                    "pagedown" => Some(-f32::from(this.scroll.bounds().size.height)),
-                    "home" => Some(f32::from(this.scroll.max_offset().height)),
-                    "end" => Some(-f32::from(this.scroll.max_offset().height)),
-                    _ => None,
-                };
-                if let Some(delta) = delta {
-                    this.scroll.set_offset(point(
-                        px(0.),
-                        (this.scroll.offset().y + px(delta))
-                            .clamp(-this.scroll.max_offset().height, px(0.)),
-                    ));
-                    cx.stop_propagation();
-                    cx.notify();
-                }
-            }))
-            .on_mouse_move(cx.listener(|this, event: &MouseMoveEvent, _, cx| {
-                if event.pressed_button != Some(MouseButton::Left) {
-                    this.scroll_drag = None;
-                }
-                if let Some((pointer, offset, scale)) = this.scroll_drag {
-                    let next = (offset - (f32::from(event.position.y) - pointer) * scale)
-                        .clamp(-f32::from(this.scroll.max_offset().height), 0.);
-                    this.scroll.set_offset(point(px(0.), px(next)));
-                    cx.notify();
-                }
-            }))
-            .on_mouse_up(
-                MouseButton::Left,
-                cx.listener(|this, _, _, _| this.scroll_drag = None),
-            )
-            .on_mouse_up_out(
-                MouseButton::Left,
-                cx.listener(|this, _, _, _| this.scroll_drag = None),
-            )
-            .child(crate::plugin_window_view::header(self, window))
-            .child(crate::plugin_window_view::view(
-                self,
-                f32::from(window.viewport_size().width),
-                cx,
-            ))
-            .child(
-                div()
-                    .h(px(24.))
-                    .flex_shrink_0()
-                    .px_4()
-                    .flex()
-                    .items_center()
-                    .text_size(px(10.))
-                    .text_color(rgb(theme.muted))
-                    .border_t_1()
-                    .border_color(rgb(theme.border))
-                    .child(format!(
-                        "{} · r{} · Source values{} · Read only",
-                        self.sync_status,
-                        self.project.snapshot.revision,
-                        if self
-                            .details
-                            .as_ref()
-                            .is_some_and(|d| d.parameters.iter().any(|p| !p.automation.is_empty()))
-                        {
-                            " · • Automated"
-                        } else {
-                            ""
-                        }
-                    )),
-            )
     }
 }
 
@@ -264,9 +226,15 @@ pub(crate) fn resolve_panel(
     )
 }
 pub(crate) fn sync_status(owner: &Preview) -> String {
-    if let Some(error) = &owner.diagnostic {
+    if let Some(error) = owner.active_diagnostic() {
         format!("Last good · {}", error.code)
-    } else if owner.status == "Building code" {
+    } else if owner.status == "Building code"
+        || owner
+            .document
+            .view
+            .as_ref()
+            .is_some_and(|v| v.status == "building")
+    {
         "Building · Last good".into()
     } else {
         "Synced".into()

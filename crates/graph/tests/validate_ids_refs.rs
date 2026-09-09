@@ -63,8 +63,10 @@ fn malformed_ids_are_rejected() {
     snapshot
         .automation
         .push(oxitone_core::wire::AutomationLaneSpec {
+            playback: None,
             id: "".to_string(),
             target: oxitone_core::wire::AutomationTarget {
+                scope: None,
                 entity_id: "chn_0001".to_string(),
                 parameter_id: "level".to_string(),
             },
@@ -92,6 +94,7 @@ fn add_pattern(snapshot: &mut oxitone_core::wire::ProjectSnapshot) {
             voice: None,
             tags: None,
         }],
+        parts: None,
     });
 }
 

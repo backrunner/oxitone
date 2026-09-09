@@ -45,14 +45,43 @@ pub(crate) fn expand_track(
                 format!("$.patternClips[{}].patternId", clip.id),
             )
         })?;
-        expand_clip(clip, pattern, ppq, seed, sequence, &mut notes, clock)?;
+        if let Some(parts) = &pattern.parts {
+            for part in parts {
+                let leaf = patterns
+                    .get(part.pattern_id.as_str())
+                    .ok_or_else(|| invalid("missing Pattern part", "$.patterns.parts"))?;
+                expand_clip(
+                    clip,
+                    leaf,
+                    pattern.length_beats,
+                    ppq,
+                    seed,
+                    sequence,
+                    &mut notes,
+                    clock,
+                )?;
+            }
+        } else {
+            expand_clip(
+                clip,
+                pattern,
+                pattern.length_beats,
+                ppq,
+                seed,
+                sequence,
+                &mut notes,
+                clock,
+            )?;
+        }
     }
     Ok(notes)
 }
 
+#[allow(clippy::too_many_arguments)]
 fn expand_clip(
     clip: &PatternClipSpec,
     pattern: &PatternSpec,
+    period: Beat,
     ppq: u16,
     seed: u64,
     sequence: &mut u64,
@@ -86,7 +115,7 @@ fn expand_clip(
         ));
     }
 
-    let pattern_len = pattern.length_beats;
+    let pattern_len = period;
     if pattern_len == Beat::ZERO {
         return Err(invalid(
             "pattern lengthBeats must be > 0",
@@ -159,7 +188,7 @@ fn expand_clip(
                 ));
             }
         }
-        if !beat_cmp(note.start, pattern_len).is_lt() {
+        if !beat_cmp(note.start, pattern.length_beats).is_lt() {
             return Err(invalid(
                 "note start must be inside the pattern length",
                 format!("{note_path}.start"),

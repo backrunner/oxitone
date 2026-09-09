@@ -1,22 +1,35 @@
 # Plugin UI：通用详情、声明式界面与原生扩展
 
+发布目标已采用 [UI protocol 2、typed instance 与完整插件管理器](../designs/source-daw/05-plugins.md)。
+实例参数/host 参数与配置写回须经 Document Service，
+重排不得转移绑定，外部插件与内置插件采用同一事务体系。本文原 P0/P1 名称不等于新设计阶段完成。
+
 状态：P0 通用详情与 P1 声明式 GPUI 原生面板已实现；P2 独立 NSView companion 和 P3 effective 遥测仍为规划。
 本方案补充 `08-plugin-abi.md` 与 `09-preview-app.md`，不改变现有 audio ABI v1。
 
 ## 已交付的基础层（P0）
 
-- 每个音源和 Channel/Mixer/Master insert 都可打开只读 GPUI 详情窗口；相同地址聚焦已有窗口，多个地址可同时打开。
+- 每个音源和 Channel/Mixer/Master insert 都可打开 GPUI 面板；相同实例聚焦已有窗口，多个实例可同时打开。DAW 可编辑，普通 Preview 只读。
 - 控制线程从已校验 registry 复制 descriptor 与动态库路径/实际 SHA-256，详情不创建 DSP 实例，不持有库或音频实例指针。
 - 显示源码初始参数、缺省参数、范围/单位/平滑/rate/mapping、自动化绑定、mix/bypass、音源资源和 structured state；用户可以筛选、滚动、切换标签及复制引用 JSON。
-- 有效 watch 快照更新所有窗口；拒绝的构建不改变窗口数据。窗口键是 owner kind + owner ID + instrument/insert index。EffectRef 无独立 ID，重排后窗口跟随槽位，不能用 pluginId 作为实例 ID；同插件的多个实例必须互不混淆。
-- 关闭详情仅销毁该窗口；关闭主窗口退出 session。详情跟随系统 appearance，使用自绘标题区和原生交通灯。
+- 默认页名为 Source controls，明确读数来自源码初始设置；同步正常时不重复显示 Synced，
+  移除占据一整行的 Initial settings。Configure 放在页签栏右侧，Info 页改为 Copy JSON。
+  DAW 的 Configure 打开当前准确 owner/kind/slot 对应的独立实例配置窗口，
+  默认 This instance，并将表单滚到顶部；不改变插件库搜索或选择。详情面板仍显示
+  初始值；DAW 面板的旋钮、选项和 host Mix/bypass 可直接编辑，配置输入通过
+  [19](19-plugin-configuration-source.md) 写回。拖动期间投影参数与图形，释放提交一次，
+  不提供绕过文档事务的连续音频 setter。
+- 有效 watch 快照更新所有窗口；拒绝的构建不改变窗口数据。窗口跟随稳定的实例身份，
+  重排更新 owner/slot 显示地址，替换或删除后显示未挂载；不能用 pluginId 作为实例 ID。
+- 详情是主 GPUI 窗口中的 Entity，与 Browser、Piano、Mixer 共用内部窗口管理器，支持拖动、八方向缩放、最大化/恢复和关闭。关闭只释放 UI Entity，不改变 DSP；关闭主窗口退出 session。只有宿主标题栏具有原生交通灯，详情跟随宿主 appearance。
+  主窗口有未保存文档时遵循 [09](09-preview-app.md) 的保存关闭确认。
 
 ## 选择：先提供由 GPUI 渲染的声明式 UI，再提供可选原生 UI
 
 | 形式 | 提供方 | 优点 | 代价 / 适用范围 |
 | --- | --- | --- | --- |
 | 通用详情（当前） | 宿主按 descriptor 生成 | 所有内置与 dylib 插件立即可查看 | 不表达插件自己的视觉结构 |
-| 声明式 UI（P1，已实现） | npm 插件包导出版本化 TS/JSON 布局 | 自定义布局/标题、统一主题和只读约束；不执行第三方 UI 代码 | 受宿主向量组件集合约束 |
+| 声明式 UI（P1，已实现） | npm 插件包导出版本化 TS/JSON 布局 | 自定义布局/标题、统一主题和文档事务；不执行第三方 UI 代码 | 受宿主向量组件集合约束 |
 | 原生 UI（P2，可选） | 插件包附带 UI companion dylib | 插件可提供自己的 AppKit/Metal 视图 | 平台专用；同进程原生代码故障可能拖垮整个 viewer |
 
 GPUI 是宿主窗口和声明式组件的渲染层，不把 GPUI/Rust trait 或 Entity 通过 dylib ABI 暴露。
@@ -44,14 +57,18 @@ project.registerPluginUi({
 ```
 
 - 固定三层结构 pages → groups → controls；groups 自动换行，columns 指定组内列数，窄窗口减少列数。
+  每组使用 6 px 圆角、标题带和细边界，连续旋钮保持等宽列；choice 单独横排，标签在左，
+  选项在右并按实际宽度换行，不占一整行旋钮的高度。注册布局保留作者的页面、组与控件标签；
+  自动 fallback 使用 descriptor.label，不使用点分 parameter ID 的末段作为控件名称，
+  namespace 仅生成可读分组标题。上述均为宿主排版，不变更 UI 1.0 或参数绑定。
   支持 knob、水平 fader、toggle、readout、choice、ADSR envelope 及下述 source 可视化；页面切换/滚动/窗口缩放是显示操作。
-  size 指定初始逻辑尺寸；有效 watch 改变 size 时调整非全屏窗口，其余更新保留用户尺寸。
+  size 指定初次打开时的逻辑尺寸；有效 watch 保留用户调整的窗口尺寸，内容随宽度重新排布。
 - 所有控件绑定 **plugin namespace** 中的 descriptor ID；UI 无法覆盖范围/单位/默认值/mapping。
   choice 绑定 enum，值必须有限、整数、唯一且在 descriptor 范围内；未列出的值显示原始值。
   toggle 仅绑定 0/1 enum。ADSR 的 A/D/R 必须是非负 seconds，S 范围在 0…1；
   图为 source 参数的折线示意，固定示意 sustain hold，不宣称复制 DSP 包络曲线。
 - 每个 Channel/Bus/Master effect 的 **host namespace** mix/bypass 由宿主固定绘制，不接受布局覆盖，
-  在所有标签和滚动位置都可见。Mix 是 0…1 wet 比例，缺省为 1；显示百分比和 dry/wet，自动化有标记。
+  在所有标签和滚动位置都可见。Mix 是 0…1 wet 比例，缺省为 1；显示百分比。
   同名插件参数与 host Mix 分开解析。参数从工程代码设置，Preview 无参数 setter。
 - 控件为 GPUI 原生向量绘制，跟随 light/dark 语义主题；无 HTML、脚本、下载、图片或任意原生视图入口。
   品牌标题和控件标签可自定义；额外组件、图片资源/字体/自定义着色器留待后续协议扩展。
@@ -64,10 +81,11 @@ project.registerPluginUi({
   缺身份/非法注册容器保留兼容旧布局并显示诊断；不同插件身份绝不复用旧布局。
 - 控件消费 source/default；自动化用小标记区分，effective/live 读数尚未提供。Inspect 随时访问全部参数，
   包括自定义页面未展示的参数；Assets/Info 保存资源、state、descriptor 和已验证 dylib path/hash。
-- Wavetable 默认具备 Oscillators/Modulation 页面，涵盖双振荡器波形渐变、
-  滤波响应、Voice/Output/Sub/Noise、两个 ADSR、LFO source 曲线及固定路由深度；
-  example.drums、fixture.gain 在鼓机示例通过公开 TS API 注册自己的面板。其他插件按 descriptor 紧凑分组。
-  Modulation 把两个 ADSR 放在 LFO/路由下方，减少切页和固定窗口内的空白。
+- Wavetable 默认具备 Oscillators / Filter & output / Modulation / Matrix 页面，涵盖双振荡器波形渐变、
+  滤波响应、Voice/Output/Sub/Noise、三个 ADSR、两组 LFO source 曲线、固定路由深度和八槽矩阵；
+  example.drums、fixture.gain 在鼓机示例通过公开 TS API 注册自己的面板。全部内置处理器使用下述专用面板；其他插件按 descriptor 紧凑分组。
+  Amplitude/Filter envelope 位于 Modulation 页顶部；移除与深度旋钮重复的路由读数。
+  Glide 归入 Voice & output，A/B、FM、Ring 归入 Oscillator mix，避免跨功能混排。
 
 新增 source visual controls 同样可由第三方 `registerPluginUi` 布局使用，uiVersion 仍为 1.0：
 
@@ -97,12 +115,47 @@ telemetry、plugin catalog、transport 及音频实例，不 reset 音源/效果
 只有 native 接受的快照和局部处理后的布局一起发布；所有窗口观察同一个已接受 Arc。
 building、语法错误、runtime exception、执行超时、缺失依赖、native 编译失败时，各窗口显示
 Building/Last good 状态，保留最近有效参数、Mix 和布局；恢复后同时更新。页面按稳定 ID 保留，
-失效页面回到首个页面；效果器窗口仍跟随 owner + slot index。关闭窗口不影响音频生命周期。
+失效页面回到首个页面；效果器窗口跟随实例身份，owner/slot 随重排更新。关闭窗口不影响音频生命周期。
 
 测试包含共享 TS→JSON→Rust fixture、参数绑定/预算/错误回退、UI-only graph/telemetry 复用、
 同 hash 不绕过音乐校验、Mix 更新；实际多窗口 watch 冒烟覆盖语法/runtime/native 拒绝、
 坏布局保留上次界面和后续恢复。release 布局基准测控制线程 JSON 解析与校验，不能代表 GPUI
 绘制或音频 callback 性能。未锁屏物理输入与独立 NSView companion 仍不由截图替代。
+
+## 内置面板与直接编辑
+
+全部 26 个内置效果器和 4 个音源均有专用分组和可视化。内置图形是宿主已知算法的
+原生呈现，不新增第三方 JSON control kind；显式注册的自定义布局仍优先。
+
+| 处理器 | 图形 |
+| --- | --- |
+| EQ、Filter、Nonlinear Filter | 分段/总频响；非线性滤波明确为小信号响应 |
+| Compressor、Gate、Limit、Limiter、Compactor | 静态输入/输出与时序示意；Gate 标注迟滞区 |
+| Multiband、Multiband Dynamics | 三段动态曲线及分频/增益区域 |
+| Delay、Reverb、Convolver | 回声位置/反馈衰减、RT60 包络、IR 湿声带宽 |
+| Chorus、Flanger、Phaser | 按当前速率、深度和左右相位计算的一周期轨迹 |
+| Clipper、Saturator、Distortion、Tape | 静态整形曲线；Tape 另有 wow/flutter 延迟调制 |
+| Bitcrush | 明确标记的 1 kHz 参考信号经采样保持/量化后的阶梯 |
+| Pitch Shifter、Frequency Shifter | 音高映射、带正负号的频率平移 |
+| Utility、Spreader | 明确标记的 M/S 参考圆与宽度关系 |
+| Wavetable | 振荡器、Sub、滤波、LFO、包络及调制矩阵 |
+| Sampler、Multisampler、Slicer | 根音/键位力度区域与包络、slice 触发序列；自动切片显示检测灵敏度 |
+
+图形有坐标/单位，使用初始参数和声明的采样映射，不伪造实际采样波形、频谱、gain
+reduction 或 effective 遥测。数据只在参数/接受的工程变化时重新构建，绘制使用缓存的
+有界点列。开窗不创建第二个 DSP 实例，不调用 process 或读取音频状态指针。
+
+DAW 的 bundled/third-party knob、fader、toggle、choice 共用文档编辑入口；上下拖动旋钮、
+左右拖动 fader，Shift 精调，双击恢复 descriptor 默认值；choice 直接选择枚举项。
+默认只改当前实例，独立配置窗口保留精确值输入和共享定义范围。窗口级指针 capture
+跨越控件边界，Escape、关闭面板和外部文档 revision 取消未提交手势。等待接受时保留
+图形投影，拒绝后恢复。重排后仍通过实例的当前使用位置查询配置 site。
+所有保存、撤销和重做继续走 Node Document Service；普通 preview 保持只读。
+
+Delay 按引擎时间优先级只显示当前生效的时间旋钮：显式 `timeSeconds` 使用秒数，
+否则使用 `timeBeats`。时间单位由源配置决定；Inspect 保留全部参数。图形不把
+未暴露的实际 IR、onset markers 或 DSP 运行态猜测为信号数据。专用图形只用于
+bundled library 的准确 1.0.0 版本，外部库即使使用相同名称也不会套用这些算法。
 
 ## P2：独立版本的原生 UI C ABI（macOS-first）
 

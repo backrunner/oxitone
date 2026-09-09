@@ -1,0 +1,20 @@
+{
+  "date": "2026-09-09",
+  "benchmark": "daw-editing-gestures",
+  "cpu": "Apple M4",
+  "os": "macOS 27.0.0",
+  "rust": "1.98.0",
+  "profile": "release",
+  "command": "cargo test --release -p oxitone-preview benchmark_editing_gestures -- --ignored --nocapture",
+  "scope": "GPUI editing algorithms only; no GPU frame, IPC, audio device or callback",
+  "warmup": 100,
+  "samples": 1000,
+  "results": [
+    { "scenario": "note-brush-128", "p50Us": 2.292, "p95Us": 2.416, "p99Us": 2.833 },
+    { "scenario": "note-brush-4096", "p50Us": 116.625, "p95Us": 165.250, "p99Us": 241.083 },
+    { "scenario": "note-group-128", "p50Us": 0.167, "p95Us": 0.209, "p99Us": 0.250 },
+    { "scenario": "note-group-10000", "p50Us": 16.209, "p95Us": 18.916, "p99Us": 37.167 },
+    { "scenario": "curve-preview-128", "p50Us": 22.292, "p95Us": 25.417, "p99Us": 55.792 },
+    { "scenario": "curve-preview-4096", "p50Us": 434.458, "p95Us": 538.667, "p99Us": 603.375 }
+  ]
+}

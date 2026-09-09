@@ -1,10 +1,9 @@
 //! Miniature note geometry shares the compiled clip clock with the playlist.
-use crate::model::ViewProject;
+use crate::{model::ViewProject, playlist_actions::Clip};
 use gpui::{prelude::*, *};
-use oxitone_core::wire::PatternClipSpec;
 use std::sync::Arc;
 
-pub fn thumbnail(project: Arc<ViewProject>, clip: PatternClipSpec, tint: u32) -> impl IntoElement {
+pub fn thumbnail(project: Arc<ViewProject>, clip: Clip, tint: u32) -> impl IntoElement {
     canvas(
         |_, _, _| {},
         move |bounds, _, window, _| {
@@ -12,31 +11,44 @@ pub fn thumbnail(project: Arc<ViewProject>, clip: PatternClipSpec, tint: u32) ->
                 .snapshot
                 .patterns
                 .iter()
-                .find(|p| p.id == clip.pattern_id)
+                .find(|p| p.id == clip.resource)
             else {
                 return;
             };
-            let low = pattern.notes.iter().map(|n| n.pitch).min().unwrap_or(60);
-            let high = pattern.notes.iter().map(|n| n.pitch).max().unwrap_or(72);
-            let (start, end) = project.clip_bounds(&clip);
-            let local_end = project.global_to_local(&clip.track_id, end);
+            let notes: Vec<_> = if let Some(parts) = &pattern.parts {
+                parts
+                    .iter()
+                    .filter_map(|part| {
+                        project
+                            .snapshot
+                            .patterns
+                            .iter()
+                            .find(|p| p.id == part.pattern_id)
+                    })
+                    .flat_map(|p| p.notes.iter())
+                    .collect()
+            } else {
+                pattern.notes.iter().collect()
+            };
+            let low = notes.iter().map(|n| n.pitch).min().unwrap_or(60);
+            let high = notes.iter().map(|n| n.pitch).max().unwrap_or(72);
+            let (start, end) = (clip.start, clip.start + clip.length);
+            let local_start = project.global_to_local(&clip.track, start);
+            let local_end = project.global_to_local(&clip.track, end);
             let length = pattern.length_beats.to_f64();
-            let repeats = ((local_end - clip.start_beat.to_f64()) / length)
-                .ceil()
-                .max(0.) as usize;
+            let repeats = ((local_end - local_start) / length).ceil().max(0.) as usize;
             let width = f32::from(bounds.size.width);
             let height = f32::from(bounds.size.height);
             window.with_content_mask(Some(ContentMask { bounds }), |window| {
                 for repeat in 0..repeats.min(4096) {
-                    for note in &pattern.notes {
-                        let local =
-                            clip.start_beat.to_f64() + repeat as f64 * length + note.start.to_f64();
+                    for note in &notes {
+                        let local = local_start + repeat as f64 * length + note.start.to_f64();
                         if local >= local_end {
                             continue;
                         }
-                        let a = project.local_to_global(&clip.track_id, local);
+                        let a = project.local_to_global(&clip.track, local);
                         let b = project.local_to_global(
-                            &clip.track_id,
+                            &clip.track,
                             (local + note.duration.to_f64()).min(local_end),
                         );
                         let x = ((a - start) / (end - start).max(1e-9)) as f32 * width;

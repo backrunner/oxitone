@@ -1,0 +1,188 @@
+{
+  "version": 1,
+  "beats": [
+    0,
+    2,
+    2.25,
+    2.5,
+    3,
+    3.5,
+    3.75,
+    4,
+    4.25
+  ],
+  "cases": [
+    {
+      "name": "hard",
+      "source": {
+        "kind": "replaceRange",
+        "base": {
+          "kind": "constant",
+          "value": 0.25
+        },
+        "replacement": {
+          "kind": "curve",
+          "interpolation": "linear",
+          "points": [
+            {
+              "beat": {
+                "numerator": 0,
+                "denominator": 1
+              },
+              "value": 0.2
+            },
+            {
+              "beat": {
+                "numerator": 1,
+                "denominator": 1
+              },
+              "value": 0.8
+            }
+          ]
+        },
+        "startBeat": {
+          "numerator": 2,
+          "denominator": 1
+        },
+        "endBeat": {
+          "numerator": 4,
+          "denominator": 1
+        }
+      },
+      "expected": [
+        0.25,
+        0.2,
+        0.35,
+        0.5,
+        0.8,
+        0.8,
+        0.8,
+        0.25,
+        0.25
+      ]
+    },
+    {
+      "name": "fade",
+      "source": {
+        "kind": "replaceRange",
+        "base": {
+          "kind": "constant",
+          "value": 0.25
+        },
+        "replacement": {
+          "kind": "curve",
+          "interpolation": "linear",
+          "points": [
+            {
+              "beat": {
+                "numerator": 0,
+                "denominator": 1
+              },
+              "value": 0.2
+            },
+            {
+              "beat": {
+                "numerator": 1,
+                "denominator": 1
+              },
+              "value": 0.8
+            }
+          ]
+        },
+        "startBeat": {
+          "numerator": 2,
+          "denominator": 1
+        },
+        "endBeat": {
+          "numerator": 4,
+          "denominator": 1
+        },
+        "fadeBeats": {
+          "numerator": 1,
+          "denominator": 2
+        }
+      },
+      "expected": [
+        0.25,
+        0.25,
+        0.3,
+        0.5,
+        0.8,
+        0.8,
+        0.525,
+        0.25,
+        0.25
+      ]
+    },
+    {
+      "name": "bezier-and-step-control-points",
+      "source": {
+        "kind": "replaceRange",
+        "base": {
+          "kind": "constant",
+          "value": 0.25
+        },
+        "replacement": {
+          "kind": "curve",
+          "interpolation": "linear",
+          "points": [
+            {
+              "beat": {
+                "numerator": 0,
+                "denominator": 1
+              },
+              "value": 0.2,
+              "curve": {
+                "kind": "bezier",
+                "out": [
+                  0.3333333333333333,
+                  0.6
+                ],
+                "in": [
+                  0.6666666666666666,
+                  0.9
+                ]
+              }
+            },
+            {
+              "beat": {
+                "numerator": 1,
+                "denominator": 1
+              },
+              "value": 0.8,
+              "curve": {
+                "kind": "step"
+              }
+            },
+            {
+              "beat": {
+                "numerator": 2,
+                "denominator": 1
+              },
+              "value": 0.4
+            }
+          ]
+        },
+        "startBeat": {
+          "numerator": 2,
+          "denominator": 1
+        },
+        "endBeat": {
+          "numerator": 4,
+          "denominator": 1
+        }
+      },
+      "expected": [
+        0.25,
+        0.2,
+        0.4765625,
+        0.6875,
+        0.8,
+        0.8,
+        0.8,
+        0.25,
+        0.25
+      ]
+    }
+  ]
+}

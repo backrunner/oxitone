@@ -9,6 +9,8 @@ packages/native-generated/index.d.ts
 *.tsbuildinfo
 .DS_Store
 coverage/
+.oxitone-source-save/
+.oxitone-save-*.tmp
 benches/results/
 benchmarks/results/*
 !benchmarks/results/*.json

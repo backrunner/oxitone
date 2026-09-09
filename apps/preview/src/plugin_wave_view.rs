@@ -10,7 +10,7 @@ pub fn oscillator(values: &[f64], advanced: [f64; 4], theme: Theme, stacked: boo
     let (source, target, position, phase) =
         (values[0] as usize, values[1] as usize, values[2], values[3]);
     let names = ["SINE", "SAW", "SQUARE", "TRIANGLE", "ORGAN", "GLASS"];
-    let [bank, warp_mode, warp, octave] = advanced;
+    let [bank, warp_mode, warp, _octave] = advanced;
     let title = if bank == 0. {
         format!("{} → {}", names[source.min(5)], names[target.min(5)])
     } else {
@@ -84,11 +84,6 @@ pub fn oscillator(values: &[f64], advanced: [f64; 4], theme: Theme, stacked: boo
             .w_full()
             .h(px(92.)),
         )
-        .child(caption(
-            format!("{} voices · {:.0} ct", values[4] as usize, values[5]),
-            format!("{octave:+.0} OCT · Width {:.0}%", values[6] * 100.),
-            theme,
-        ))
 }
 
 pub fn sub(values: &[f64], theme: Theme) -> Div {
@@ -102,7 +97,7 @@ pub fn sub(values: &[f64], theme: Theme) -> Div {
         .overflow_hidden()
         .child(caption(
             ["SINE", "TRIANGLE", "SAW", "SQUARE", "PULSE 25%", "ROUNDED"][wave].into(),
-            format!("{:+.0} OCT · {:.0}%", values[1], values[2] * 100.),
+            String::new(),
             theme,
         ))
         .child(

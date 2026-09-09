@@ -34,8 +34,10 @@ fn ramp() -> AutomationSourceSpec {
 
 fn lane(id: &str, entity: &str, parameter: &str) -> AutomationLaneSpec {
     AutomationLaneSpec {
+        playback: None,
         id: id.to_owned(),
         target: AutomationTarget {
+            scope: None,
             entity_id: entity.to_owned(),
             parameter_id: parameter.to_owned(),
         },

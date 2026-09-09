@@ -1,10 +1,10 @@
 import { ErrorCode, OxitoneError } from "./errors.js";
 
 /** Current protocol version (`major.minor`). Major bumps are breaking. */
-export const PROTOCOL_VERSION = "1.0";
+export const PROTOCOL_VERSION = "1.2";
 
 export const PROTOCOL_MAJOR = 1;
-export const PROTOCOL_MINOR = 0;
+export const PROTOCOL_MINOR = 2;
 
 const VERSION_PATTERN = /^(\d+)\.(\d+)$/;
 

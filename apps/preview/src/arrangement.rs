@@ -8,6 +8,7 @@ use gpui::{prelude::*, *};
 const SIDEBAR: f32 = 176.;
 pub fn view(this: &mut Preview, window_width: f32, cx: &mut Context<Preview>) -> impl IntoElement {
     let theme = this.theme;
+    let drop_viewport = this.document.playlist.viewport.clone();
     let project = this.project.as_ref().unwrap();
     let viewport = (window_width - SIDEBAR - 10.).max(1.);
     if !this.workspace.playlist_fitted {
@@ -15,7 +16,8 @@ pub fn view(this: &mut Preview, window_width: f32, cx: &mut Context<Preview>) ->
         this.workspace.playlist_fitted = true;
     }
     let zoom = this.zoom;
-    let width = (project.end() as f32 * zoom).max(viewport);
+    let timeline_end = (project.end() + 8.).max(16.);
+    let width = (timeline_end as f32 * zoom).max(viewport);
     let cursor = project.beat(this.position_frame()) as f32 * zoom;
     let offset = this.workspace.arrangement.offset();
     let mut ruler = div().relative().h(px(30.)).w(px(width));
@@ -23,7 +25,7 @@ pub fn view(this: &mut Preview, window_width: f32, cx: &mut Context<Preview>) ->
     let step = ((20. / zoom).ceil() as usize).max(1);
     let first = ((-f32::from(offset.x) / zoom).max(0.) as usize / step) * step;
     let last = (((-f32::from(offset.x) + viewport) / zoom).ceil() as usize + step)
-        .min(project.end().ceil() as usize);
+        .min(timeline_end.ceil() as usize);
     for beat in (first..last).step_by(step) {
         let (bar, within) = project
             .plan
@@ -103,16 +105,12 @@ pub fn view(this: &mut Preview, window_width: f32, cx: &mut Context<Preview>) ->
                     div()
                         .w(px(SIDEBAR - 24.))
                         .text_xs()
-                        .font_weight(FontWeight::BOLD)
-                        .child("PLAYLIST"),
+                        .font_weight(FontWeight::SEMIBOLD)
+                        .child("Arrangement"),
                 )
                 .child(markers)
-                .child(
-                    div()
-                        .text_size(px(10.))
-                        .text_color(rgb(theme.muted))
-                        .child(format!("{} tracks", project.snapshot.tracks.len())),
-                ),
+                .child(crate::workspace_panels::dock_tabs(this, cx))
+                .child(this.playlist_zoom(cx)),
         )
         .child(
             div()
@@ -127,7 +125,7 @@ pub fn view(this: &mut Preview, window_width: f32, cx: &mut Context<Preview>) ->
                         .px_3()
                         .text_size(px(9.))
                         .text_color(rgb(theme.muted))
-                        .child("TRACKS / BARS"),
+                        .child("Tracks"),
                 )
                 .child(
                     div()
@@ -165,6 +163,15 @@ pub fn view(this: &mut Preview, window_width: f32, cx: &mut Context<Preview>) ->
                 .child(
                     div()
                         .id("arrangement-scroll")
+                        .relative()
+                        .child(
+                            canvas(
+                                move |bounds, _, _| drop_viewport.set(bounds),
+                                |_, _, _, _| {},
+                            )
+                            .absolute()
+                            .size_full(),
+                        )
                         .flex_1()
                         .min_w_0()
                         .h_full()

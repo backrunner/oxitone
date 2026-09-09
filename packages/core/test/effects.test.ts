@@ -43,8 +43,10 @@ describe("electronic effect authoring and native contracts", () => {
         await project.compile({ audioBackend: "simulated" });
       }
       channel.effectChain = [effect("nonlinearFilter", { cutoffHz: 400 })];
-      channel.automate("insert.0.parameter.cutoffHz", createAutomationNamespace().sine({ periodBeats: 1 }));
+      const lane = channel.automate("insert.0.parameter.cutoffHz", createAutomationNamespace().sine({ periodBeats: 1 }));
       await project.compile({ audioBackend: "simulated" });
+      expect(() => { channel.effectChain = [convolver("smp_missing")]; }).toThrowError(expect.objectContaining({ code: ErrorCode.EditScopeConflict }));
+      project.removeAutomationLane(lane);
       channel.effectChain = [convolver("smp_missing")];
       await expect(project.compile({ audioBackend: "simulated" })).rejects.toMatchObject({ code: ErrorCode.InvalidProject });
     } finally { await project.session?.dispose(); }

@@ -1,5 +1,12 @@
 # Oxitone 格式、资源和导出
 
+发布目标中 DAW Save 写回普通可执行 TS 及显式依赖/资产，见
+[源码与保存事务设计](../designs/source-daw/02-source-writing.md)。下文 JSON 工程仍是现有
+snapshot 导出/恢复能力，不是未来 DAW Save 格式。新 Pattern source DAG 的独立往返接口见
+[15-source-authoring.md](15-source-authoring.md)，旧 `Project.save` 不保存该生成结构。
+生产源码 Save 的单 Pattern 文档与多文件发布/恢复原语现已提供，见
+[17-project-source-session.md](17-project-source-session.md)，尚未接入 GPUI 或替代原有导出入口。
+
 ## 项目文件
 
 Phase 1 推荐项目文件为可版本控制的目录：
@@ -93,6 +100,9 @@ prepare 资源查找。缓存导入后可删除源文件，保存/移动/恢复�
 - Metronome 默认不进导出，`includeMetronome: true` 时混入 master 与所有 stem。
 
 ## MIDI 导出
+
+Track mute 排除该轨音符；Solo 为试听状态，MIDI 导出忽略它。WAV 的现有 respectSolo
+选项同时适用于 Track、Channel 与 Bus，默认 false。M/S 的调度与时间线行为见 [23](23-daw-controls.md)。
 
 输出标准 MIDI File Type 1，PPQ 默认 960（可配置但必须记录）。Conductor track 写 tempo/time-signature/name；markers 以 marker meta event 写入 conductor track。每个 Oxitone Track 写 note-on/off 和声明的 CC automation。Note 时间由 beat 按 `round-half-up(beat * PPQ)` 转 tick（与 transport 的 frame 换算同一确定性四舍五入规则，以精确有理数计算），并修正同 tick 的 event ordering：同 tick 上 note-off 先于 note-on；tick 舍入产生的零时长 note 保证其 note-on 先于自身 note-off。Note velocity 0..1 映射为 `1 + round-half-up(v * 126)`（即 1..127，0 不映射为 0 以避免被部分接收端当作 note-off）。MIDI export 不读取外部 MIDI，也不导出不可映射的 synth/effect 参数；报告 skipped automation diagnostics。
 

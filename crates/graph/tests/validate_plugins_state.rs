@@ -15,6 +15,7 @@ fn err(
 
 fn effect_ref(plugin_id: &str) -> EffectRef {
     EffectRef {
+        instance_id: None,
         plugin_id: plugin_id.to_string(),
         plugin_version: PLUGIN_VERSION.to_string(),
         parameters: Default::default(),

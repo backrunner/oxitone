@@ -1,46 +1,117 @@
-//! Compact native effect panels. Values come exclusively from source/watch.
-use crate::plugin_layout::{Choice, Control, Group, Page};
+//! Purpose-built groupings for every bundled effect; descriptors own ranges and defaults.
+use crate::plugin_layout::{Group, Page};
 use oxitone_graph::PluginDescriptor;
 
 pub fn pages(descriptor: &PluginDescriptor) -> Option<Vec<Page>> {
+    if descriptor.plugin_version != "1.0.0" {
+        return None;
+    }
     let groups: &[(&str, &[&str])] = match descriptor.plugin_id.as_str() {
+        "oxitone.eq" => &[
+            ("Low shelf", &["band1.freqHz", "band1.gainDb"]),
+            ("Low mid", &["band2.freqHz", "band2.q", "band2.gainDb"]),
+            ("High mid", &["band3.freqHz", "band3.q", "band3.gainDb"]),
+            ("High shelf", &["band4.freqHz", "band4.gainDb"]),
+        ],
+        "oxitone.filter" => &[("Filter", &["mode", "cutoffHz", "resonance"])],
         "oxitone.nonlinear-filter" => &[
             ("Filter", &["mode", "cutoffHz", "resonance"]),
             ("Drive", &["driveDb", "outputDb"]),
+        ],
+        "oxitone.compressor" => &[
+            (
+                "Compression",
+                &["thresholdDb", "ratio", "kneeDb", "makeupDb"],
+            ),
+            (
+                "Detector",
+                &["detector", "attackMs", "releaseMs", "sidechainHighpassHz"],
+            ),
+        ],
+        "oxitone.gate" => &[
+            ("Gate", &["thresholdDb", "hysteresisDb", "rangeDb"]),
+            ("Envelope", &["attackMs", "holdMs", "releaseMs"]),
+        ],
+        "oxitone.limit" => &[("Peak control", &["ceilingDb", "releaseMs", "saturate"])],
+        "oxitone.limiter" => &[("Peak control", &["inputDb", "ceilingDb", "releaseMs"])],
+        "oxitone.clipper" => &[("Clipping", &["mode", "driveDb", "outputDb"])],
+        "oxitone.saturator" => &[
+            ("Color", &["curve", "driveDb", "outputDb"]),
+            ("Quality", &["oversample"]),
+        ],
+        "oxitone.distortion" => &[
+            ("Shaping", &["mode", "driveDb", "bias"]),
+            ("Output", &["toneHz", "outputDb"]),
+        ],
+        "oxitone.multiband" => &[
+            ("Dynamics", &["depth", "upwardDb", "downwardRatio"]),
+            (
+                "Detector",
+                &[
+                    "lowerThresholdDb",
+                    "upperThresholdDb",
+                    "attackMs",
+                    "releaseMs",
+                ],
+            ),
+            ("Crossovers", &["lowHz", "highHz"]),
+            (
+                "Band levels",
+                &["lowGainDb", "midGainDb", "highGainDb", "outputDb"],
+            ),
         ],
         "oxitone.multiband-dynamics" => &[
             ("Dynamics", &["depth", "upwardDb", "downwardRatio", "time"]),
             ("Crossovers", &["lowHz", "highHz"]),
             (
-                "Band Levels",
+                "Band levels",
                 &["lowGainDb", "midGainDb", "highGainDb", "outputDb"],
             ),
         ],
         "oxitone.compactor" => &[
             ("Density", &["thresholdDb", "upwardDb", "transient"]),
-            ("Timing & Output", &["attackMs", "releaseMs", "outputDb"]),
+            ("Timing & output", &["attackMs", "releaseMs", "outputDb"]),
         ],
-        "oxitone.resonator" => &[
-            ("Modes", &["frequencyHz", "inharmonicity", "decaySeconds"]),
-            ("Color", &["brightness", "spread", "outputDb"]),
+        "oxitone.delay" => &[
+            ("Time", &["timeBeats", "timeSeconds", "pingPong"]),
+            (
+                "Feedback",
+                &["feedback", "feedbackFilterHz", "highpassHz", "ducking"],
+            ),
+        ],
+        "oxitone.reverb" => &[
+            ("Space", &["decaySeconds", "predelayMs", "damping"]),
+            (
+                "Wet signal",
+                &["highpassHz", "lowpassHz", "width", "ducking"],
+            ),
         ],
         "oxitone.convolver" => &[
             ("Space", &["predelayMs", "outputDb"]),
             ("Bandwidth", &["highpassHz", "lowpassHz"]),
         ],
+        "oxitone.resonator" => &[
+            ("Modes", &["frequencyHz", "inharmonicity", "decaySeconds"]),
+            ("Color", &["brightness", "spread", "outputDb"]),
+        ],
+        "oxitone.chorus" => &[("Voices", &["rateHz", "depth", "delayMs"])],
+        "oxitone.flanger" => &[
+            ("Sweep", &["rateHz", "depthMs", "delayMs"]),
+            ("Feedback & stereo", &["feedback", "stereo"]),
+        ],
+        "oxitone.phaser" => &[
+            ("Sweep", &["rateHz", "depth", "centerHz"]),
+            ("Notches", &["stages", "feedback"]),
+        ],
         "oxitone.tape" => &[
             ("Color", &["driveDb", "toneHz", "outputDb"]),
             ("Motion", &["wow", "flutter"]),
         ],
-        "oxitone.flanger" => &[
-            ("Sweep", &["rateHz", "depthMs", "delayMs"]),
-            ("Feedback & Stereo", &["feedback", "stereo"]),
-        ],
-        "oxitone.limiter" => &[("Mastering", &["inputDb", "ceilingDb", "releaseMs"])],
-        "oxitone.frequency-shifter" => &[("Frequency Shift", &["shiftHz", "stereoHz", "outputDb"])],
-        "oxitone.pitch-shifter" => &[("Pitch Shift", &["semitones", "cents", "outputDb"])],
-        "oxitone.bitcrush" => &[("Digital Color", &["bits", "rateHz", "jitter", "outputDb"])],
+        "oxitone.frequency-shifter" => &[("Translation", &["shiftHz", "stereoHz", "outputDb"])],
+        "oxitone.pitch-shifter" => &[("Transpose", &["semitones", "cents", "outputDb"])],
+        "oxitone.bitcrush" => &[("Digital color", &["bits", "rateHz", "jitter", "outputDb"])],
         "oxitone.spreader" => &[("Stereo", &["width", "amount", "bassMonoHz"])],
+        "oxitone.utility" => &[("Signal", &["gainDb", "width", "mono", "polarity"])],
         _ => return None,
     };
     Some(vec![Page {
@@ -49,72 +120,22 @@ pub fn pages(descriptor: &PluginDescriptor) -> Option<Vec<Page>> {
         groups: groups
             .iter()
             .enumerate()
-            .map(|(index, (title, ids))| Group {
-                id: format!("group-{index}"),
-                title: (*title).into(),
-                columns: ids.len().min(4) as u32,
-                controls: ids
+            .map(|(index, (title, ids))| {
+                let controls: Vec<_> = ids
                     .iter()
-                    .filter_map(|id| {
-                        let spec = descriptor.parameters.iter().find(|p| p.id == *id)?;
-                        Some(if *id == "mode" {
-                            Control::Choice {
-                                parameter: (*id).into(),
-                                label: Some("Mode".into()),
-                                options: ["Low Pass", "High Pass", "Band Pass", "Notch"]
-                                    .into_iter()
-                                    .enumerate()
-                                    .map(|(i, label)| Choice {
-                                        value: i as f64,
-                                        label: label.into(),
-                                    })
-                                    .collect(),
-                            }
-                        } else {
-                            Control::Knob {
-                                parameter: (*id).into(),
-                                label: Some(spec.label.clone()),
-                            }
-                        })
-                    })
-                    .collect(),
+                    .map(|id| crate::plugin_builtin_controls::control(descriptor, id))
+                    .collect();
+                Group {
+                    id: format!("group-{index}"),
+                    title: (*title).into(),
+                    columns: controls
+                        .iter()
+                        .filter(|c| !matches!(c, crate::plugin_layout::Control::Choice { .. }))
+                        .count()
+                        .clamp(1, 4) as u32,
+                    controls,
+                }
             })
             .collect(),
     }])
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn production_panels_bind_every_real_parameter_once() {
-        for plugin in oxitone_mixer::builtin_effect_plugins() {
-            let descriptor = plugin.descriptor();
-            let Some(pages) = pages(descriptor) else {
-                continue;
-            };
-            let bindings: Vec<_> = pages
-                .iter()
-                .flat_map(|p| &p.groups)
-                .flat_map(|g| &g.controls)
-                .flat_map(|c| c.bindings())
-                .collect();
-            assert_eq!(bindings.len(), descriptor.parameters.len());
-            for spec in &descriptor.parameters {
-                assert_eq!(bindings.iter().filter(|id| **id == spec.id).count(), 1);
-            }
-            let layout = crate::plugin_layout::Layout {
-                ui_version: "1.0".into(),
-                plugin_id: descriptor.plugin_id.clone(),
-                plugin_version: descriptor.plugin_version.clone(),
-                title: "Effect".into(),
-                size: crate::plugin_layout::PanelSize {
-                    width: 720,
-                    height: 540,
-                },
-                pages,
-            };
-            crate::plugin_layout_validation::validate(&layout, descriptor).unwrap();
-        }
-    }
 }

@@ -42,6 +42,7 @@ fn pattern(length: (i64, u32), notes: Vec<NoteSpec>) -> PatternSpec {
         name: None,
         length_beats: beat(length.0, length.1),
         notes,
+        parts: None,
     }
 }
 
@@ -70,6 +71,7 @@ fn source<'a>(clip: &'a PatternClipSpec, pattern: &'a PatternSpec, swing: f64) -
     ClipSource {
         clip,
         pattern,
+        period: pattern.length_beats,
         channel_id: chan1(),
         swing,
         track_tempo: None,

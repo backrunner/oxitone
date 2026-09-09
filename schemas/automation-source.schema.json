@@ -91,6 +91,36 @@
           "type": "object",
           "required": [
             "kind",
+            "base",
+            "replacement",
+            "startBeat",
+            "endBeat"
+          ],
+          "properties": {
+            "kind": {
+              "const": "replaceRange"
+            },
+            "base": {
+              "$ref": "#/$defs/source"
+            },
+            "replacement": {
+              "$ref": "#/$defs/source"
+            },
+            "startBeat": {
+              "$ref": "#/$defs/beat"
+            },
+            "endBeat": {
+              "$ref": "#/$defs/beat"
+            },
+            "fadeBeats": {
+              "$ref": "#/$defs/beat"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
             "value"
           ],
           "properties": {

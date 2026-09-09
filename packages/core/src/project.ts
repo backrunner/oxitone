@@ -16,8 +16,10 @@ import {
   type AutomationLaneOptions,
   type AutomationLaneTarget,
 } from "./automation/lane.js";
+import { AutomationClip } from "./automation/clip.js";
 import type { AutomationSource } from "./automation/source.js";
-import { validateLaneTarget } from "./automation/target.js";
+import { ProjectAutomation } from "./project-automation.js";
+import { registerPattern } from "./pattern-registration.js";
 import type { Pattern } from "./pattern.js";
 import { PatternClip } from "./pattern-clip.js";
 import { ProjectTimeline } from "./project-timeline.js";
@@ -27,6 +29,8 @@ import type { BarBeatPosition } from "./time-signature.js";
 import { saveProject, loadProject, type SaveProjectOptions } from "#project-files";
 import { parseRestorableSnapshot } from "./project-restore.js";
 import { restoreEntities } from "./project-hydrate.js";
+import { arrange } from "./project-arrangement.js";
+import { configure } from "./project-edit.js";
 
 export type { Marker } from "./project-timeline.js";
 
@@ -70,7 +74,7 @@ export class Project extends ProjectTimeline {
   private readonly channelList: Channel[] = [];
   private readonly mixerChannelList: MixerChannel[] = [];
   private readonly sampleList: Sample[] = [];
-  private readonly automationLaneList: AutomationLane[] = [];
+  private readonly automationStore = new ProjectAutomation(this, prefix => this.claimId(prefix), () => this.entityIds);
   private readonly patternsById = new Map<string, Pattern>();
   private readonly entityIds = new Set<string>();
   private revisionCounter = 0n;
@@ -102,6 +106,10 @@ export class Project extends ProjectTimeline {
   get name(): string | undefined {
     return this.projectName;
   }
+  /** Apply a Playlist placement, move or removal. Indices follow builder creation order. */
+  arrange(edit: import("@oxitone/protocol").ArrangementEdit): this { arrange(this, edit); return this; }
+  /** Edit mixer, Track, tempo or plugin configuration using current builder order. */
+  configure(edit: import("@oxitone/protocol").ProjectEdit): this { configure(this, edit); return this; }
 
   /** Monotonically increasing mutation counter. */
   get revision(): number {
@@ -228,58 +236,25 @@ export class Project extends ProjectTimeline {
     return [...this.channelList];
   }
 
-  /**
-   * Bind an automation source to a target parameter (04-api-contracts.md
-   * `AutomationLaneSpec`). The target entity must exist in this project; the
-   * project entity itself only exposes `tempo`, and at most one tempo lane is
-   * allowed (`TempoAutomationConflict`).
-   */
-  addAutomationLane(
-    target: AutomationLaneTarget,
-    source: AutomationSource,
-    options: AutomationLaneOptions = {},
-  ): AutomationLane {
-    this.assertMutable();
-    validateLaneTarget(this.id, this.entityIds, this.automationLaneList, target, source);
-    const lane = new AutomationLane(this.claimId(ID_PREFIXES.automation), target, source, options);
-    if (target.entityId === this.masterId) this.materializeMaster();
-    this.automationLaneList.push(lane);
-    this.touch();
-    return lane;
+  addAutomationLane(target: AutomationLaneTarget, source: AutomationSource, options: AutomationLaneOptions = {}): AutomationLane {
+    return this.automationStore.addAutomationLane(target, source, options);
   }
-
-  /** Automation lanes in creation order. */
-  get automationLanes(): readonly AutomationLane[] {
-    return [...this.automationLaneList];
+  get automationLanes(): readonly AutomationLane[] { return this.automationStore.automationLanes; }
+  get automationClips(): readonly AutomationClip[] { return this.automationStore.automationClips; }
+  createAutomationClip(lane: AutomationLane, track: Track, startBeat: number, durationBeats?: number): AutomationClip {
+    return this.automationStore.createAutomationClip(lane, track, startBeat, durationBeats);
   }
+  removeAutomationClip(clip: AutomationClip): void { this.automationStore.removeAutomationClip(clip); }
+  removeAutomationLane(lane: AutomationLane): void { this.automationStore.removeAutomationLane(lane); }
 
   /** @internal Create and attach a pattern clip; called by the draft API. */
   createPatternClip(track: Track, pattern: Pattern, startBeat: number): PatternClip {
     this.assertMutable();
-    this.registerPattern(pattern);
+    registerPattern(this, pattern, this.patternsById, this.entityIds);
     const clip = new PatternClip(this, track, pattern, this.claimId("pcl_"), startBeat);
     track.attachClip(clip);
     this.touch();
     return clip;
-  }
-
-  private registerPattern(pattern: Pattern): void {
-    const existing = this.patternsById.get(pattern.id);
-    if (existing !== undefined && existing !== pattern) {
-      throw new OxitoneError(
-        ErrorCode.InvalidProject,
-        `duplicate pattern id: ${pattern.id}`,
-        { details: { path: "patterns.id" } },
-      );
-    }
-    if (existing === pattern) return;
-    const claimed = [pattern.id, ...pattern.notes.flatMap((note) => note.id === undefined ? [] : [note.id])];
-    const unique = new Set(claimed);
-    if (unique.size !== claimed.length || claimed.some((id) => this.entityIds.has(id))) {
-      throw new OxitoneError(ErrorCode.InvalidProject, "pattern or note ID is already registered");
-    }
-    for (const id of unique) this.entityIds.add(id);
-    this.patternsById.set(pattern.id, pattern);
   }
 
   protected claimId(prefix: string): EntityId {
@@ -322,7 +297,8 @@ export class Project extends ProjectTimeline {
     project.channelList.push(...restored.channels);
     project.sampleList.push(...restored.samples);
     project.trackList.push(...restored.tracks);
-    project.automationLaneList.push(...restored.automation);
+    project.automationStore.lanes.push(...restored.automation);
+    project.automationStore.clips.push(...restored.automationClips);
     for (const [id, pattern] of restored.patterns) project.patternsById.set(id, pattern);
     for (const id of ids) project.entityIds.add(id);
     project.revisionCounter = BigInt(snapshot.revision);

@@ -5,8 +5,21 @@ import { pathToFileURL } from "node:url";
 import { build, context, transform, type BuildOptions, type BuildResult, type Loader, type Plugin } from "esbuild";
 
 /** Inline local modules, preserving each module's source-relative asset URLs. */
-export function projectBuildOptions(entry: string): BuildOptions {
+export interface ProjectSourceLoader {
+  /** Return a draft or the exact disk text, and record its read evidence before transformation. */
+  read(path: string): Promise<string>;
+  /** Resolve enrolled drafts with the same precedence as saved TypeScript modules. */
+  resolveLocal?(specifier: string, directory: string, diskPath?: string): Promise<string | undefined>;
+}
+export function projectBuildOptions(entry: string, sourceLoader?: ProjectSourceLoader): BuildOptions {
   const sources: Plugin = { name: "oxitone-project-sources", setup(api) {
+    if (sourceLoader?.resolveLocal) api.onResolve({ filter: /^(?:\.{1,2}\/|\/)/ }, async args => {
+      if (args.pluginData?.resolved || args.kind === "entry-point") return;
+      const found = await api.resolve(args.path, { importer: args.importer, resolveDir: args.resolveDir,
+        kind: args.kind, pluginData: { resolved: true } });
+      const path = await sourceLoader.resolveLocal!(args.path, args.resolveDir, found.errors.length ? undefined : found.path);
+      return path ? { path } : found;
+    });
     api.onResolve({ filter: /^[^./]|^#/ }, async args => {
       if (args.pluginData?.resolved || args.kind === "entry-point" || isAbsolute(args.path)) return;
       if (isBuiltin(args.path) || args.path.startsWith("file:")) return { path: args.path, external: true };
@@ -18,10 +31,11 @@ export function projectBuildOptions(entry: string): BuildOptions {
       // Package imports (#aliases) remain project code. Installed npm dependencies stay external.
       return args.path.startsWith("#") ? { path: found.path } : { path: pathToFileURL(found.path).href, external: true };
     });
-    api.onLoad({ filter: /\.[cm]?[jt]sx?$/ }, async args => {
+    api.onLoad({ filter: /\.(?:[cm]?[jt]sx?|json)$/ }, async args => {
+      if (extname(args.path) === ".json") return { contents: await (sourceLoader ? sourceLoader.read(args.path) : readFile(args.path, "utf8")), loader: "json" };
       const suffix = extname(args.path);
       const loader: Loader = suffix.endsWith("tsx") ? "tsx" : suffix.endsWith("jsx") ? "jsx" : suffix.includes("t") ? "ts" : "js";
-      const result = await transform(await readFile(args.path, "utf8"), { loader, sourcefile: args.path,
+      const result = await transform(await (sourceLoader ? sourceLoader.read(args.path) : readFile(args.path, "utf8")), { loader, sourcefile: args.path,
         format: "esm", target: "node22", sourcemap: "inline", define: {
           "import.meta.url": JSON.stringify(pathToFileURL(args.path).href),
           "import.meta.dirname": JSON.stringify(dirname(args.path)), "import.meta.filename": JSON.stringify(args.path),

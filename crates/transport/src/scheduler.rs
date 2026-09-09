@@ -27,6 +27,8 @@ use crate::tempo::CompiledTempoMap;
 pub struct ClipSource<'a> {
     pub clip: &'a PatternClipSpec,
     pub pattern: &'a PatternSpec,
+    /// Composite parts share their root period, including the silence after shorter leaves.
+    pub period: Beat,
     pub channel_id: &'a EntityId,
     pub swing: f64,
     pub track_tempo: Option<f64>,
@@ -125,7 +127,7 @@ fn expand_source(
         ));
     }
 
-    let pattern_len = source.pattern.length_beats;
+    let pattern_len = source.period;
     if pattern_len == Beat::ZERO {
         return Err(invalid(
             "pattern lengthBeats must be > 0",
@@ -197,7 +199,7 @@ fn expand_source(
                 ));
             }
         }
-        if !beat_cmp(note.start, pattern_len).is_lt() {
+        if !beat_cmp(note.start, source.pattern.length_beats).is_lt() {
             return Err(invalid(
                 "note start must be inside the pattern length",
                 format!("{note_path}.start"),

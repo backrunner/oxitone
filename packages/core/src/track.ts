@@ -19,6 +19,8 @@ export class Track {
   private readonly clipList: PatternClip[] = [];
   private readonly sampleClipList: SampleClip[] = [];
   private enabledValue = true;
+  private muteValue = false;
+  private soloValue = false;
   private midiChannelValue: number | undefined;
   private tempoValue: number | undefined;
   private restoredSpec?: TrackSpec;
@@ -42,6 +44,8 @@ export class Track {
     const track = new Track(project, spec.id, spec.name);
     track.channelIdList.push(...spec.channelIds);
     track.enabledValue = spec.enabled ?? true;
+    track.muteValue = spec.mute ?? false;
+    track.soloValue = spec.solo ?? false;
     track.tempoValue = spec.tempo;
     track.midiChannelValue = spec.midiChannel;
     track.restoredSpec = spec;
@@ -70,7 +74,30 @@ export class Track {
       });
     }
     this.enabledValue = value;
-    if (this.restoredSpec !== undefined) this.restoredSpec.enabled = value;
+    if (this.restoredSpec !== undefined) {
+      if (value) delete this.restoredSpec.enabled; else this.restoredSpec.enabled = false;
+    }
+    this.project.touch();
+  }
+
+  get mute(): boolean { return this.muteValue; }
+  set mute(value: boolean) {
+    this.project.assertMutable();
+    if (typeof value !== "boolean") throw new OxitoneError(ErrorCode.InvalidProject, "track mute must be a boolean");
+    this.muteValue = value;
+    if (this.restoredSpec !== undefined) {
+      if (value) this.restoredSpec.mute = true; else delete this.restoredSpec.mute;
+    }
+    this.project.touch();
+  }
+  get solo(): boolean { return this.soloValue; }
+  set solo(value: boolean) {
+    this.project.assertMutable();
+    if (typeof value !== "boolean") throw new OxitoneError(ErrorCode.InvalidProject, "track solo must be a boolean");
+    this.soloValue = value;
+    if (this.restoredSpec !== undefined) {
+      if (value) this.restoredSpec.solo = true; else delete this.restoredSpec.solo;
+    }
     this.project.touch();
   }
 
@@ -142,6 +169,10 @@ export class Track {
   attachClip(clip: PatternClip): void {
     this.clipList.push(clip);
   }
+  /** @internal Playlist transactions preserve clip identity while moving membership. */
+  detachClip(clip: PatternClip): void { const index = this.clipList.indexOf(clip); if (index >= 0) this.clipList.splice(index, 1); }
+  /** @internal */
+  detachSampleClip(clip: SampleClip): void { const index = this.sampleClipList.indexOf(clip); if (index >= 0) this.sampleClipList.splice(index, 1); }
 
   /** Wire form. */
   toSpec(): TrackSpec {
@@ -156,6 +187,8 @@ export class Track {
       spec.name = this.trackName;
     }
     if (!this.enabledValue) spec.enabled = false;
+    if (this.muteValue) spec.mute = true;
+    if (this.soloValue) spec.solo = true;
     if (this.tempoValue !== undefined) spec.tempo = this.tempoValue;
     if (this.midiChannelValue !== undefined) spec.midiChannel = this.midiChannelValue;
     return spec;

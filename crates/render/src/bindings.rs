@@ -113,11 +113,7 @@ pub(crate) fn binding_due(graph: &RenderGraph, binding: &RtBinding, frame: u64) 
     graph.plan.bindings[binding.plan_binding]
         .lanes
         .iter()
-        .any(|lane| {
-            let a = oxitone_graph::compile::lane_beat(lane, previous);
-            let b = oxitone_graph::compile::lane_beat(lane, beat);
-            b < a || lane.automation.has_edge(a, b, &graph.eval_ctx)
-        })
+        .any(|lane| oxitone_graph::compile::lane_has_edge(lane, previous, beat, &graph.eval_ctx))
 }
 
 /// Apply automation at a block start or an intra-block edge.

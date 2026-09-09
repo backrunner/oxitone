@@ -1,4 +1,4 @@
-use crate::{playback_controls::frame, position, shortcuts, tests::engine, timeline_input, wire};
+use crate::{playback_controls::frame, shortcuts, tests::engine, timeline_input, wire};
 use oxitone_core::Beat;
 use serde_json::json;
 
@@ -28,10 +28,6 @@ fn pointer_coordinates_respect_scroll_tempo_repeats_and_clip_truncation() {
 fn fractional_positions_and_shortcuts_follow_musical_time() {
     let mut engine = engine();
     let p = std::sync::Arc::get_mut(engine.current.as_mut().unwrap()).unwrap();
-    assert_eq!(position::resolve(p, "3.1.480").unwrap(), 198000);
-    for text in ["1.1.960", "1.1.-1", "1.1.0.0", "3.4", "1..1"] {
-        assert!(position::resolve(p, text).is_err(), "{text}");
-    }
     assert_eq!(shortcuts::step(p, 192000, 1, true), 228000); // 3/4 bar at 240 BPM
     assert_eq!(shortcuts::step(p, 168000, 1, false), 192000); // crosses the tempo change
     p.snapshot.markers = serde_json::from_value(json!([

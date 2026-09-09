@@ -13,8 +13,8 @@ import type { Track } from "./track.js";
 export class PatternClip {
   readonly id: string;
   readonly pattern: Pattern;
-  readonly track: Track;
-  readonly startBeat: number;
+  track: Track;
+  startBeat: number;
   private readonly project: Project;
   private loopCountValue: number | undefined;
   private lastBeatValue: number | undefined;
@@ -56,6 +56,24 @@ export class PatternClip {
 
   get durationBeats(): number | undefined {
     return this.durationValue === undefined ? undefined : beatFromWire(this.durationValue);
+  }
+
+  relocate(track: Track, beat: number): void {
+    this.project.assertMutable();
+    if (!this.project.tracks.includes(track) || !Number.isFinite(beat) || beat < 0) throw new OxitoneError(ErrorCode.InvalidProject, "Invalid clip destination");
+    const routes = this.track.channelIds;
+    for (const id of routes) {
+      const channel = this.project.channels.find(candidate => candidate.id === id);
+      if (channel) track.use(channel);
+    }
+    if (this.track !== track) { this.track.detachClip(this); track.attachClip(this); }
+    if (this.lastBeatValue !== undefined) {
+      this.lastBeatValue += beat - this.startBeat;
+      if (this.restoredSpec) this.restoredSpec.lastBeat = beatToWire(this.lastBeatValue);
+    }
+    this.track = track; this.startBeat = beat;
+    if (this.restoredSpec) { this.restoredSpec.trackId = track.id; this.restoredSpec.startBeat = beatToWire(beat); }
+    this.project.touch();
   }
 
   /** Explicit clip length; undefined uses the pattern/loop boundary. */
@@ -193,7 +211,9 @@ export class PatternClip {
     this.project.assertMutable();
     if (typeof on !== "boolean") throw new OxitoneError(ErrorCode.InvalidProject, "enabled must be a boolean");
     this.enabledValue = on;
-    if (this.restoredSpec !== undefined) this.restoredSpec.enabled = on;
+    if (this.restoredSpec !== undefined) {
+      if (on) delete this.restoredSpec.enabled; else this.restoredSpec.enabled = false;
+    }
     this.project.touch();
     return this;
   }

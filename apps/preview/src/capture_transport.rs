@@ -10,7 +10,7 @@ pub fn enabled() -> bool {
 pub struct Smoke {
     source: Option<String>,
     cue: u64,
-    detail: Option<WindowHandle<PluginWindow>>,
+    detail: Option<Entity<PluginWindow>>,
 }
 fn key(window: &mut Window, cx: &mut App, text: &str) {
     window.dispatch_keystroke(Keystroke::parse(text).unwrap(), cx);
@@ -106,18 +106,12 @@ impl Smoke {
                     state.loop_end = 8.;
                 });
                 key(window, cx, "l");
-                key(window, cx, "g");
             }
             14 => {
-                key(window, cx, "space");
-                assert!(
-                    !view.read(cx).is_playing(),
-                    "position field blocks playback shortcut"
-                );
-                for ch in "12.2.480".chars() {
-                    key(window, cx, &ch.to_string());
-                }
-                key(window, cx, "enter");
+                view.update(cx, |state, cx| {
+                    state.locate_frame(frame(state.project.as_ref().unwrap(), 45.5));
+                    cx.notify();
+                });
             }
             16 => {
                 let state = view.read(cx);
@@ -165,30 +159,26 @@ impl Smoke {
                 );
                 self.detail = view.update(cx, |state, cx| state.open_plugin(target, cx));
             }
-            25 => {
-                cx.update_window(self.detail.unwrap().into(), |_, window, cx| {
-                    key(window, cx, "space")
-                })
-                .unwrap();
-            }
+            25 => key(window, cx, "space"),
             28 => {
                 assert!(
                     view.read(cx).playback.playing,
                     "plugin window forwards transport keys"
                 );
-                cx.update_window(self.detail.unwrap().into(), |_, window, cx| {
-                    key(window, cx, "shift-space")
-                })
-                .unwrap();
+
+                key(window, cx, "shift-space")
             }
             30 => {
                 assert!(!view.read(cx).playback.playing);
                 assert_eq!(view.read(cx).playback.cursor, self.cue);
-                self.detail
-                    .take()
-                    .unwrap()
-                    .update(cx, |_, window, _| window.remove_window())
-                    .unwrap();
+                let entity = self.detail.take().unwrap();
+                view.update(cx, |state, cx| {
+                    state.close_internal(
+                        crate::window_manager::WindowId::Plugin(entity.entity_id().as_u64()),
+                        window,
+                    );
+                    cx.notify();
+                });
             }
             32 => {
                 view.read(cx).workspace_focus.focus(window);

@@ -13,8 +13,10 @@ fn b(value: f64) -> Beat {
 fn lane() -> AutomationLaneSpec {
     let value = |bpm: f64| (bpm / 20.0).ln() / (999.0_f64 / 20.0).ln();
     AutomationLaneSpec {
+        playback: None,
         id: "auto_tempo".into(),
         target: AutomationTarget {
+            scope: None,
             entity_id: "prj_test".into(),
             parameter_id: "tempo".into(),
         },

@@ -1,0 +1,217 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "formatVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "plugins": {
+      "minItems": 1,
+      "maxItems": 256,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "vendor": {
+            "type": "string",
+            "maxLength": 256
+          },
+          "license": {
+            "type": "string",
+            "maxLength": 256
+          },
+          "manifest": {
+            "type": "object",
+            "properties": {
+              "pluginId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "pluginVersion": {
+                "type": "string",
+                "minLength": 1
+              },
+              "abiMajor": {
+                "type": "number",
+                "const": 1
+              },
+              "abiMinor": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "minHostVersion": {
+                "type": "string",
+                "minLength": 1
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "instrument",
+                  "effect"
+                ]
+              },
+              "inputLayout": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "mono",
+                  "stereo"
+                ]
+              },
+              "outputLayout": {
+                "type": "string",
+                "enum": [
+                  "mono",
+                  "stereo"
+                ]
+              },
+              "parameters": {
+                "maxItems": 256,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "unit": {
+                      "type": "string",
+                      "enum": [
+                        "normalized",
+                        "db",
+                        "hz",
+                        "semitones",
+                        "seconds",
+                        "beats",
+                        "enum"
+                      ]
+                    },
+                    "min": {
+                      "type": "number"
+                    },
+                    "max": {
+                      "type": "number"
+                    },
+                    "default": {
+                      "type": "number"
+                    },
+                    "smoothing": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "linear",
+                        "one-pole"
+                      ]
+                    },
+                    "rate": {
+                      "type": "string",
+                      "enum": [
+                        "control",
+                        "audio"
+                      ]
+                    },
+                    "automation": {
+                      "type": "boolean"
+                    },
+                    "mapping": {
+                      "type": "string",
+                      "enum": [
+                        "linear",
+                        "log",
+                        "bipolar",
+                        "enum"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "label",
+                    "unit",
+                    "min",
+                    "max",
+                    "default",
+                    "smoothing",
+                    "rate"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "sidechainInput": {
+                "type": "boolean"
+              },
+              "reportsTail": {
+                "type": "boolean"
+              },
+              "maxPolyphony": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 65536
+              }
+            },
+            "required": [
+              "pluginId",
+              "pluginVersion",
+              "abiMajor",
+              "abiMinor",
+              "minHostVersion",
+              "kind",
+              "inputLayout",
+              "outputLayout",
+              "parameters",
+              "sidechainInput",
+              "reportsTail"
+            ],
+            "additionalProperties": false
+          },
+          "platforms": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "library": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                }
+              },
+              "required": [
+                "library",
+                "sha256"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "displayName",
+          "vendor",
+          "manifest",
+          "platforms"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "formatVersion",
+    "plugins"
+  ],
+  "additionalProperties": false
+}

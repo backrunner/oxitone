@@ -159,6 +159,7 @@ pub fn render_wav(
             block_size: options.block_size,
             seed: options.seed,
             tail_seconds: Some(tail_seconds),
+            respect_solo: options.respect_solo,
         },
         master_limiter: options.master_limiter,
         respect_solo: options.respect_solo,

@@ -15,6 +15,7 @@ import { parseAuthoring } from "../authoring-validation.js";
 export interface AutomationLaneTarget {
   entityId: EntityId;
   parameterId: string;
+  scope?: "plugin" | "effectHost" | undefined;
 }
 
 export type AutomationCombine = "replace" | "add" | "multiply" | "max";
@@ -30,6 +31,7 @@ export interface AutomationLoopInput {
 /** Options for `project.addAutomationLane(...)`. */
 export interface AutomationLaneOptions {
   combine?: AutomationCombine;
+  playback?: "global" | "playlist";
   loop?: AutomationLoopInput;
   lastBeat?: number;
 }
@@ -73,6 +75,10 @@ export class AutomationLane {
   readonly lastBeat?: number;
   private readonly loopSpec?: LoopSpec;
   private restoredSpec?: AutomationLaneSpec;
+  private playbackMode: "global" | "playlist" | undefined;
+  get playback(): "global" | "playlist" { return this.playbackMode ?? "global"; }
+  /** @internal Project placement permanently changes the lane timeline. */
+  usePlaylist(): void { this.playbackMode = "playlist"; }
 
   /** @internal Use `project.addAutomationLane(...)` instead. */
   constructor(
@@ -82,6 +88,7 @@ export class AutomationLane {
     options: AutomationLaneOptions = {},
   ) {
     this.id = id;
+    this.playbackMode = options.playback;
     this.target = Object.freeze({ ...target });
     this.source = source;
     if (options.combine !== undefined) {
@@ -107,7 +114,7 @@ export class AutomationLane {
   static fromSpec(input: AutomationLaneSpec): AutomationLane {
     const spec = parseAuthoring(automationLaneSpecSchema, input, "automation");
     const loop = spec.loop;
-    const options: AutomationLaneOptions = {};
+    const options: AutomationLaneOptions = { ...(spec.playback ? { playback: spec.playback } : {}) };
     if (spec.combine !== undefined) options.combine = spec.combine;
     if (spec.lastBeat !== undefined) options.lastBeat = beatFromWire(spec.lastBeat);
     if (loop !== undefined) {
@@ -121,10 +128,11 @@ export class AutomationLane {
 
   /** Wire form for `ProjectSnapshot.automation`. */
   toSpec(): AutomationLaneSpec {
-    if (this.restoredSpec !== undefined) return structuredClone(this.restoredSpec);
+    if (this.restoredSpec !== undefined) return { ...structuredClone(this.restoredSpec), ...(this.playbackMode ? { playback: this.playbackMode } : {}) };
     return {
       id: this.id,
-      target: { entityId: this.target.entityId, parameterId: this.target.parameterId },
+      ...(this.playbackMode ? { playback: this.playbackMode } : {}),
+      target: { ...this.target },
       source: this.source.toSpec(),
       ...(this.combine !== undefined ? { combine: this.combine } : {}),
       ...(this.loopSpec !== undefined ? { loop: structuredClone(this.loopSpec) } : {}),

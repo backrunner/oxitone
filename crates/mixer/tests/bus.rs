@@ -42,6 +42,7 @@ fn compressor_uses_self_detector_unless_an_external_route_exists() {
 
 fn effect(plugin_id: &str, parameters: &[(&str, f64)]) -> EffectRef {
     EffectRef {
+        instance_id: None,
         plugin_id: plugin_id.to_string(),
         plugin_version: "1.0.0".to_string(),
         parameters: parameters

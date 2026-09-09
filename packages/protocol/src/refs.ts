@@ -12,6 +12,8 @@ export const trackSpecSchema = z.object({
   patternClipIds: z.array(entityIdSchema),
   sampleClipIds: z.array(entityIdSchema),
   enabled: z.boolean().optional(),
+  mute: z.boolean().optional(),
+  solo: z.boolean().optional(),
   midiChannel: z.number().int().min(1).max(16).optional(),
 });
 export type TrackSpec = z.infer<typeof trackSpecSchema>;
@@ -44,6 +46,7 @@ export const sampleRefSchema = z.object({
 export type SampleRef = z.infer<typeof sampleRefSchema>;
 
 export const instrumentRefSchema = z.object({
+  instanceId: entityIdSchema.optional(),
   pluginId: z.string().min(1),
   pluginVersion: z.string().min(1),
   parameters: z.record(z.string(), z.number().finite()),
@@ -53,6 +56,7 @@ export const instrumentRefSchema = z.object({
 export type InstrumentRef = z.infer<typeof instrumentRefSchema>;
 
 export const effectRefSchema = z.object({
+  instanceId: entityIdSchema.optional(),
   pluginId: z.string().min(1),
   pluginVersion: z.string().min(1),
   parameters: z.record(z.string(), z.number().finite()),

@@ -20,8 +20,9 @@ import { panel } from "./panel.js";
 export default () => {
   ${mode === "runtime" ? 'throw new Error("Panel smoke runtime failure");' : ""}
   const p = createProject();
+  ${mode === "native" ? 'p.addChannel({ name: "Missing plugin", instrument: { pluginId: "missing.instrument", pluginVersion: "1.0.0", parameters: {} } });' : ""}
   const channel = ${synth ? 'p.channels.find(c => c.instrument.pluginId === "oxitone.wavetable")' : "p.channels[0]"};
-  channel.instrument = { ...channel.instrument, pluginId: ${JSON.stringify(mode === "native" ? "missing.instrument" : pluginId)},
+  channel.instrument = { ...channel.instrument, pluginId: ${JSON.stringify(pluginId)},
     parameters: { ${synth ? '"oscA.morphTo":5,"lfo.rateHz":4.7,"lfo.cutoff":12,' : "...channel.instrument.parameters,"}
       ${JSON.stringify(parameterId)}: ${mode === "recovered" ? 0.42 : 0.85} } };
   p.channels[0].effectChain = p.channels[0].effectChain.map(e => ({...e, mix: ${mode === "recovered" ? 0.37 : 0.8}}));

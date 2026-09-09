@@ -11,6 +11,7 @@ use super::curve::CurveData;
 
 #[derive(Debug, Clone)]
 pub(crate) enum Node {
+    Range(super::range::RangeNode),
     Constant(f64),
     Curve(CurveData),
     Gate {
@@ -53,6 +54,7 @@ pub(crate) enum Node {
 impl Node {
     pub(crate) fn value_at(&self, nodes: &[Node], t: f64, ctx: &EvalContext) -> f64 {
         match self {
+            Node::Range(range) => range.value_at(nodes, t, ctx),
             Node::Constant(value) => *value,
             Node::Curve(curve) => curve.value_at(t),
             Node::Gate {
@@ -143,6 +145,7 @@ impl Node {
             ((start - phase) / period).floor() != ((end - phase) / period).floor()
         };
         match self {
+            Node::Range(range) => range.has_edge(nodes, start, end, ctx),
             Node::Gate {
                 period,
                 phase,
@@ -178,6 +181,7 @@ impl Node {
         out: &mut Vec<f64>,
     ) {
         match self {
+            Node::Range(range) => range.discontinuities(nodes, start, end, ctx, out),
             Node::Constant(_) => {}
             Node::Wave {
                 wave,

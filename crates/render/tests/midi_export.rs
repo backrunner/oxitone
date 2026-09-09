@@ -63,6 +63,7 @@ fn base_snapshot() -> ProjectSnapshot {
         channels: vec![],
         mixer_channels: vec![],
         automation: vec![],
+        automation_clips: None,
     }
 }
 
@@ -75,6 +76,8 @@ fn track(id: &str, clip_ids: &[&str], midi_channel: Option<u8>) -> TrackSpec {
         pattern_clip_ids: clip_ids.iter().map(|s| s.to_string()).collect(),
         sample_clip_ids: vec![],
         enabled: None,
+        mute: None,
+        solo: None,
         midi_channel,
     }
 }
@@ -101,6 +104,7 @@ fn pattern(id: &str, length: (i64, u32), notes: Vec<NoteSpec>) -> PatternSpec {
         name: None,
         length_beats: beat(length.0, length.1),
         notes,
+        parts: None,
     }
 }
 
@@ -245,6 +249,24 @@ fn export_is_deterministic() {
         hash.iter().map(|b| format!("{b:02x}")).collect::<String>(),
         "f4d56369ba95658493e4c77c244c3140fd1969ebb4ce0779a8d4e0a546ce9c95"
     );
+}
+
+#[test]
+fn midi_omits_muted_tracks_and_ignores_audition_solo() {
+    let mut s = demo_snapshot();
+    let baseline = export_midi(&s, &MidiExportOptions::default()).unwrap();
+    s.tracks[0].solo = Some(true);
+    assert_eq!(
+        export_midi(&s, &MidiExportOptions::default())
+            .unwrap()
+            .bytes,
+        baseline.bytes
+    );
+    for track in &mut s.tracks {
+        track.mute = Some(true);
+    }
+    let muted = export_midi(&s, &MidiExportOptions::default()).unwrap();
+    assert_eq!(parse_smf(&muted.bytes).track_count, 1, "conductor only");
 }
 
 #[test]
@@ -616,8 +638,10 @@ fn skipped_automation_and_markers_are_reported() {
         start_beat: beat(4, 1),
     }];
     snapshot.automation = vec![AutomationLaneSpec {
+        playback: None,
         id: "lane_a".into(),
         target: AutomationTarget {
+            scope: None,
             entity_id: "ch_a".into(),
             parameter_id: "level".into(),
         },

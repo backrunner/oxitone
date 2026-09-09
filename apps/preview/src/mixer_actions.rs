@@ -57,6 +57,7 @@ impl Preview {
     }
 
     pub fn select_mixer(&mut self, id: &str) {
+        self.document.playlist.focused = false;
         let Some(project) = &self.project else {
             return;
         };

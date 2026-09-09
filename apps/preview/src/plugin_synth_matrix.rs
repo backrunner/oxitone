@@ -3,10 +3,10 @@ use super::{choice, group, knob, Page};
 pub fn page() -> Page {
     Page {
         id: "matrix".into(),
-        title: "Matrix / Macros".into(),
+        title: "Matrix".into(),
         groups: std::iter::once(group(
             "macros",
-            "MACROS",
+            "Macros",
             4,
             (1..=4)
                 .map(|i| knob(&format!("macro{i}"), &format!("Macro {i}")))
@@ -15,8 +15,8 @@ pub fn page() -> Page {
         .chain((0..8).map(|i| {
             group(
                 &format!("route{i}"),
-                &format!("ROUTE {}", i + 1),
-                4,
+                &format!("Route {}", i + 1),
+                2,
                 vec![
                     choice(
                         &format!("mod.{i}.source"),

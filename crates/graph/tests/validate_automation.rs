@@ -11,8 +11,10 @@ use oxitone_graph::validate;
 
 fn lane_to(entity: &str, parameter: &str) -> AutomationLaneSpec {
     AutomationLaneSpec {
+        playback: None,
         id: "auto_0001".to_string(),
         target: AutomationTarget {
+            scope: None,
             entity_id: entity.to_string(),
             parameter_id: parameter.to_string(),
         },

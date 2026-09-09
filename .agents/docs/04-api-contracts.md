@@ -1,5 +1,22 @@
 # Oxitone TypeScript / Rust API 契约
 
+`ProjectDocument`、Document control 2.0、完整工程 GPUI 音符编辑和静态插件目录的增量
+契约见 [18-project-daw.md](18-project-daw.md)，该 control 版本独立于 Engine snapshot 1.2。
+实例参数与效果器排序 API 见 [20-plugin-instances.md](20-plugin-instances.md)，插件 ABI 保持 1。
+`Project.configure`、扩展的 `Project.arrange`、`withPluginRegistration` 与 Document
+`assignPlugin` 的行为、范围、错误和回写约束见 [23-daw-controls.md](23-daw-controls.md)。
+Engine 1.2 的 TrackSpec 新增可选 mute/solo boolean；Track configure 接受 enabled/mute/solo
+中至少一个字段，未提供字段保持原值。低于 1.2 的快照携带这些字段时拒绝，不静默忽略。
+
+发布前已移除单 Pattern 文档/evaluator，源码编辑只使用 ProjectDocument；DocumentView 必须
+提供 projectRoot，请求身份只接受单调 stream。ParameterSmoothing 的 one-pole 拼写在 TS/Rust
+完全一致，不再接受 onePole 内部别名。未发布旧格式/旧接口不要求提供兼容 shim。
+
+新增独立 authoring `PatternSourceDocument` format 1 与 Pattern edit/组合 API，精确定义见
+[15-source-authoring.md](15-source-authoring.md)。引擎 1.2 同时支持 leaf PatternSpec 与引用独立 Channel leaf 的 parts，详见 [18](18-project-daw.md)；这不等于
+已支持 wire 2、持久随机 origin 或完整 AuthoringDocument。发布前已授权按
+[统一设计](../designs/source-daw/README.md) 重定义 API/协议/ABI，无需保留旧 major 兼容层。
+
 新增 `@oxitone/web`：复用本文件 ProjectSnapshot 与 authoring 合约，通过独立 ABI v1
 提供 WasmEngine 和 WebAudioSession。内存资产、帧游标、WAV/MIDI bytes、生命周期、
 浏览器宿主约束和错误边界见 `12-wasm-web-audio.md` 与 `docs/web.md`；N-API 的

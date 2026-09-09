@@ -139,6 +139,7 @@ pub fn base_registry() -> PluginRegistry {
 
 pub fn instrument_ref() -> InstrumentRef {
     InstrumentRef {
+        instance_id: None,
         plugin_id: SYNTH_ID.to_string(),
         plugin_version: PLUGIN_VERSION.to_string(),
         parameters: Default::default(),
@@ -180,6 +181,8 @@ pub fn base_snapshot() -> ProjectSnapshot {
             pattern_clip_ids: vec![],
             sample_clip_ids: vec![],
             enabled: None,
+            mute: None,
+            solo: None,
             midi_channel: None,
         }],
         patterns: vec![],
@@ -210,5 +213,6 @@ pub fn base_snapshot() -> ProjectSnapshot {
             solo: None,
         }],
         automation: vec![],
+        automation_clips: None,
     }
 }

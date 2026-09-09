@@ -109,7 +109,7 @@ export class SampleClip {
   private readonly startBar: number;
   constructor(
     private readonly project: Project,
-    readonly track: Track,
+    public track: Track,
     readonly sample: Sample,
     id: EntityId,
     start: BarBeatPosition,
@@ -132,6 +132,11 @@ export class SampleClip {
   }
 
   get id(): EntityId { return this.spec.id; }
+  relocate(track: Track, startBeat: number): void {
+    if (!this.project.tracks.includes(track) || !Number.isFinite(startBeat) || startBeat < 0) throw new OxitoneError(ErrorCode.InvalidProject, "Invalid sample destination");
+    this.update({ trackId: track.id, startBeat: beatToWire(startBeat) });
+    if (this.track !== track) { this.track.detachSampleClip(this); track.attachSampleClip(this); this.track = track; }
+  }
 
   /** @internal Restore wire timing; bar lookup is only used by subsequent fitBars calls. */
   static fromSpec(project: Project, track: Track, sample: Sample, input: SampleClipSpec): SampleClip {

@@ -1,5 +1,5 @@
 //! Opt-in developer capture of the real GPUI window, even without display-link ticks.
-//! Never changes system appearance or authoring data. Transport smoke uses simulated audio.
+//! Never changes system appearance. Only explicit DAW smoke edits its disposable source fixture.
 use crate::ui::Preview;
 use gpui::*;
 
@@ -36,6 +36,8 @@ pub fn schedule(window: &Window, cx: &mut Context<Preview>) {
     let plugin = std::env::var("OXITONE_PREVIEW_CAPTURE_PLUGIN").unwrap_or_default();
     let mixer = std::env::var("OXITONE_PREVIEW_CAPTURE_MIXER").unwrap_or_default();
     let transport = crate::capture_transport::enabled();
+    let daw = crate::capture_daw::enabled();
+    let builtin = std::env::var("OXITONE_PREVIEW_CAPTURE_BUILTIN").unwrap_or_default();
     let watch = !plugin.is_empty()
         && std::env::var("OXITONE_PREVIEW_CAPTURE_WATCH").is_ok_and(|v| v == "1");
     assert!(
@@ -52,18 +54,34 @@ pub fn schedule(window: &Window, cx: &mut Context<Preview>) {
     };
     cx.spawn(async move |this, cx| {
         surface.appearance(&appearance);
-        let mut details = Vec::new();
         let mut closed = None;
         let mut ready_frames = 0;
         let mut transport_smoke = crate::capture_transport::Smoke::default();
+        let mut daw_smoke = crate::capture_daw::Smoke::default();
+        let mut builtin_smoke = crate::capture_builtin::Smoke::default();
         let mut watch_state = String::new();
-        for _ in 0..if watch { 600 } else { 150 } {
+        let mut settled_frames = 0;
+        for _ in 0..if std::env::var_os("OXITONE_PREVIEW_CAPTURE_EDITING").is_some()
+            || std::env::var_os("OXITONE_PREVIEW_CAPTURE_UI_REVIEW").is_some()
+            || !builtin.is_empty()
+        {
+            900
+        } else if watch {
+            600
+        } else if daw {
+            300
+        } else {
+            150
+        } {
             Timer::after(std::time::Duration::from_millis(100)).await;
             let Ok(current) = this.update(cx, |this, _| {
                 this.project.as_ref().map(|p| p.snapshot.revision)
             }) else {
                 return;
             };
+            // Metal may grow its instance buffer and request another frame. Without a
+            // display link, explicitly invalidate the scene so that retry is presented.
+            let _ = cx.update_window(window_handle, |_, window, _| window.refresh());
             surface.redraw();
             if current.is_some() {
                 ready_frames += 1;
@@ -77,40 +95,26 @@ pub fn schedule(window: &Window, cx: &mut Context<Preview>) {
             if !plugin.is_empty() {
                 // Let AppKit finish presenting/closing between lifecycle steps.
                 // Closing in the creation dispatch leaves GPUI's initial native draw queued.
-                let handles = if ready_frames == 2 {
+                if ready_frames == 2 {
                     this.update(cx, |this, cx| {
                         crate::plugin_capture::open(this, &plugin, cx)
                     })
                     .unwrap()
                 } else if ready_frames == 6 {
-                    details.clear();
                     closed = Some(
                         this.update(cx, |this, cx| crate::plugin_capture::close_effect(this, cx))
                             .unwrap(),
                     );
-                    Vec::new()
                 } else if ready_frames == 8 {
                     this.update(cx, |this, cx| {
                         crate::plugin_capture::reopen(this, closed.take().unwrap(), &plugin, cx)
                     })
                     .unwrap()
                 } else {
-                    Vec::new()
                 };
-                for handle in handles {
-                    if let Ok(Some(detail)) =
-                        cx.update_window(handle.into(), |_, window, _| Surface::new(window))
-                    {
-                        detail.appearance(&appearance);
-                        details.push(detail);
-                    }
-                }
                 if ready_frames == 8 {
                     eprintln!("Preview plugin windows opened");
                 }
-            }
-            for detail in &details {
-                detail.redraw();
             }
             if watch && ready_frames >= 8 {
                 let state = this
@@ -122,8 +126,12 @@ pub fn schedule(window: &Window, cx: &mut Context<Preview>) {
                 }
             }
             if !plugin.is_empty() {
-                this.update(cx, |this, cx| {
-                    crate::plugin_capture::navigate(this, ready_frames, cx)
+                cx.update_window(window_handle, |_, window, cx| {
+                    if let Some(entity) = this.upgrade() {
+                        let plugins: Vec<_> =
+                            entity.read(cx).plugin_windows.values().cloned().collect();
+                        crate::plugin_capture::navigate(&plugins, ready_frames, window, cx);
+                    }
                 })
                 .unwrap();
             }
@@ -142,6 +150,10 @@ pub fn schedule(window: &Window, cx: &mut Context<Preview>) {
                 });
             }
             if transport {
+                assert!(
+                    !daw,
+                    "DAW capture must run separately from transport capture"
+                );
                 cx.update_window(window_handle, |_, window, cx| {
                     if let Some(view) = this.upgrade() {
                         transport_smoke.step(ready_frames, &view, window, cx);
@@ -149,14 +161,37 @@ pub fn schedule(window: &Window, cx: &mut Context<Preview>) {
                 })
                 .unwrap();
             }
+            if daw {
+                cx.update_window(window_handle, |_, window, cx| {
+                    if let Some(view) = this.upgrade() {
+                        daw_smoke.step(ready_frames, &view, window, cx);
+                    }
+                })
+                .unwrap();
+            }
+            if !builtin.is_empty() {
+                cx.update_window(window_handle, |_, window, cx| {
+                    if let Some(view) = this.upgrade() {
+                        builtin_smoke.step(&builtin, &view, window, cx);
+                    }
+                })
+                .unwrap();
+            }
             if ready_frames >= if transport { 36 } else { 14 }
                 && current.is_some_and(|v| v >= revision)
+                && (!daw || daw_smoke.complete())
+                && (builtin.is_empty() || builtin_smoke.complete())
             {
+                // Let the final workspace transition reach the native surface before capture.
+                settled_frames += 1;
+                if settled_frames < 4 {
+                    continue;
+                }
                 if !plugin.is_empty() {
                     this.update(cx, |this, cx| crate::plugin_capture::verify(this, cx))
                         .unwrap();
                 }
-                let number = details.last().map_or(surface.number, |s| s.number);
+                let number = surface.number;
                 let result = cx
                     .background_executor()
                     .spawn(async move {
@@ -171,7 +206,11 @@ pub fn schedule(window: &Window, cx: &mut Context<Preview>) {
                     other => eprintln!("Preview capture failed: {other:?}"),
                 }
                 // Exercise the main window's native close callback with details still open.
-                surface.close();
+                if std::env::var_os("OXITONE_PREVIEW_CAPTURE_UI_REVIEW").is_some() {
+                    this.update(cx, |this, cx| this.save_and_close(cx)).unwrap();
+                } else {
+                    surface.close();
+                }
                 return;
             }
         }

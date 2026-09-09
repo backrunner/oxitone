@@ -27,7 +27,7 @@ pub enum ParameterUnit {
 pub enum ParameterSmoothing {
     None,
     Linear,
-    #[serde(rename = "one-pole", alias = "onePole")]
+    #[serde(rename = "one-pole")]
     OnePole,
 }
 
@@ -35,17 +35,16 @@ pub enum ParameterSmoothing {
 mod smoothing_tests {
     use super::ParameterSmoothing;
     #[test]
-    fn one_pole_uses_public_wire_spelling_and_reads_legacy_spelling() {
+    fn one_pole_uses_only_public_wire_spelling() {
         assert_eq!(
             serde_json::to_string(&ParameterSmoothing::OnePole).unwrap(),
             "\"one-pole\""
         );
-        for wire in ["\"one-pole\"", "\"onePole\""] {
-            assert_eq!(
-                serde_json::from_str::<ParameterSmoothing>(wire).unwrap(),
-                ParameterSmoothing::OnePole
-            );
-        }
+        assert_eq!(
+            serde_json::from_str::<ParameterSmoothing>("\"one-pole\"").unwrap(),
+            ParameterSmoothing::OnePole
+        );
+        assert!(serde_json::from_str::<ParameterSmoothing>("\"onePole\"").is_err());
     }
 }
 
@@ -164,7 +163,20 @@ pub struct TrackSpec {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub enabled: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mute: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub solo: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub midi_channel: Option<u8>,
+}
+
+impl TrackSpec {
+    /// Arrangement gating, independent of the Channels shared by Tracks.
+    pub fn audible(&self, solo_active: bool) -> bool {
+        self.enabled != Some(false)
+            && self.mute != Some(true)
+            && (!solo_active || self.solo == Some(true))
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -274,6 +286,8 @@ pub struct SampleRef {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct InstrumentRef {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub instance_id: Option<EntityId>,
     pub plugin_id: String,
     pub plugin_version: String,
     pub parameters: BTreeMap<String, f64>,
@@ -288,6 +302,8 @@ pub struct InstrumentRef {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EffectRef {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub instance_id: Option<EntityId>,
     pub plugin_id: String,
     pub plugin_version: String,
     pub parameters: BTreeMap<String, f64>,

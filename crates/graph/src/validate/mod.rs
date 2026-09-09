@@ -7,6 +7,7 @@ mod clips;
 mod ids;
 mod levels;
 mod numeric;
+mod playlist;
 mod plugins;
 mod refs;
 mod state;
@@ -22,6 +23,7 @@ use crate::topology::build_mixer_routing;
 /// references → plugin tables → plugin state → automation targets → mixer
 /// topology) so the same snapshot always fails with the same error.
 pub fn validate(snapshot: &ProjectSnapshot, registry: &PluginRegistry) -> Result<(), OxitoneError> {
+    oxitone_core::wire::check_snapshot_version(snapshot)?;
     ids::validate_ids(snapshot)?;
     numeric::validate_numeric(snapshot)?;
     refs::validate_refs(snapshot)?;

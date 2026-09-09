@@ -92,6 +92,7 @@ pub fn sixteenth_pattern(id: &str, length: (i64, u32), base_pitch: u8) -> Patter
         name: None,
         length_beats: beat(n, d),
         notes,
+        parts: None,
     }
 }
 
@@ -104,12 +105,15 @@ pub fn track(id: &str, channel_ids: &[&str], pattern_clips: &[&str]) -> TrackSpe
         pattern_clip_ids: pattern_clips.iter().map(|s| s.to_string()).collect(),
         sample_clip_ids: vec![],
         enabled: None,
+        mute: None,
+        solo: None,
         midi_channel: None,
     }
 }
 
 pub fn wavetable_ref(parameters: &[(&str, f64)]) -> InstrumentRef {
     InstrumentRef {
+        instance_id: None,
         plugin_id: "oxitone.wavetable".into(),
         plugin_version: "1.0.0".into(),
         parameters: parameters
@@ -123,6 +127,7 @@ pub fn wavetable_ref(parameters: &[(&str, f64)]) -> InstrumentRef {
 
 pub fn effect_ref(plugin_id: &str, parameters: &[(&str, f64)]) -> EffectRef {
     EffectRef {
+        instance_id: None,
         plugin_id: plugin_id.into(),
         plugin_version: "1.0.0".into(),
         parameters: parameters
@@ -207,8 +212,10 @@ pub fn lane(
     source: AutomationSourceSpec,
 ) -> AutomationLaneSpec {
     AutomationLaneSpec {
+        playback: None,
         id: id.into(),
         target: AutomationTarget {
+            scope: None,
             entity_id: entity.into(),
             parameter_id: parameter.into(),
         },
@@ -298,6 +305,7 @@ pub fn base_snapshot() -> ProjectSnapshot {
         channels: vec![],
         mixer_channels: vec![],
         automation: vec![],
+        automation_clips: None,
     }
 }
 

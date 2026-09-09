@@ -16,6 +16,9 @@ pub const MAX_FRAME: usize = 64 * 1024 * 1024;
     rename_all_fields = "camelCase"
 )]
 pub enum Frame {
+    Document {
+        message: crate::document_wire::DocumentMessage,
+    },
     Snapshot {
         snapshot: Box<ProjectSnapshot>,
         asset_base_dir: String,

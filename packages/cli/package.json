@@ -5,21 +5,26 @@
   "license": "Apache-2.0",
   "type": "module",
   "bin": { "oxitone": "dist/index.js" },
-  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./source": { "types": "./dist/source/index.d.ts", "import": "./dist/source/index.js" },
+    "./editor": { "types": "./dist/editor/index.d.ts", "import": "./dist/editor/index.js" }
+  },
   "files": ["dist"],
   "engines": { "node": ">=20" },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "node scripts/build.mjs",
     "lint": "eslint src test",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --no-file-parallelism --testTimeout=30000"
   },
   "dependencies": {
+    "typescript": "^5.7.0",
     "esbuild": "^0.25.0",
     "tsx": "^4.20.0",
     "@oxitone/core": "workspace:*",
     "@oxitone/protocol": "workspace:*",
     "@oxitone/native": "workspace:*"
   },
-  "devDependencies": { "typescript": "^5.7.0", "vitest": "^3.2.0" }
+  "devDependencies": { "vitest": "^3.2.0" }
 }

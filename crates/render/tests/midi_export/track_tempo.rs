@@ -12,6 +12,34 @@ fn seconds_at(tempos: &[(u64, u32)], tick: u64, ppq: u16) -> f64 {
 }
 
 #[test]
+fn composite_midi_uses_the_root_period_for_shorter_parts() {
+    let mut s = base_snapshot();
+    s.patterns = vec![
+        pattern("pat_short", (4, 1), vec![note(60, (1, 1), (1, 1), 0.7)]),
+        pattern("pat_root", (8, 1), vec![]),
+    ];
+    s.patterns[1].parts = Some(vec![oxitone_core::wire::PatternPartSpec {
+        channel_id: "chn_a".into(),
+        pattern_id: "pat_short".into(),
+    }]);
+    let mut c = clip("pcl_a", "pat_root", "trk_a");
+    c.loop_count = Some(2);
+    s.pattern_clips.push(c);
+    s.tracks.push(track("trk_a", &["pcl_a"], None));
+    let result = export_midi(&s, &MidiExportOptions::default()).unwrap();
+    let parsed = parse_smf(&result.bytes);
+    let ons: Vec<_> = note_events(&parsed.tracks[1])
+        .into_iter()
+        .filter(|e| e.data[0] & 0xF0 == 0x90 && e.data[2] > 0)
+        .map(|e| e.tick)
+        .collect();
+    assert_eq!(
+        ons,
+        vec![u64::from(DEFAULT_PPQ), u64::from(DEFAULT_PPQ) * 9]
+    );
+}
+
+#[test]
 fn independent_track_audio_and_midi_match_across_effective_clocks() {
     for mode in 0..4 {
         for bounded in [false, true] {
@@ -28,8 +56,10 @@ fn independent_track_audio_and_midi_match_across_effective_clocks() {
             });
             if mode == 3 {
                 s.automation.push(AutomationLaneSpec {
+                    playback: None,
                     id: "auto_tempo".into(),
                     target: AutomationTarget {
+                        scope: None,
                         entity_id: s.id.clone(),
                         parameter_id: "tempo".into(),
                     },
@@ -73,6 +103,7 @@ fn independent_track_audio_and_midi_match_across_effective_clocks() {
                 .map(|(c, t)| ClipSource {
                     clip: c,
                     pattern: &s.patterns[0],
+                    period: s.patterns[0].length_beats,
                     channel_id: &channel,
                     swing: 0.0,
                     track_tempo: t.tempo,

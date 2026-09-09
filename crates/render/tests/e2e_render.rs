@@ -20,8 +20,10 @@ fn lane(
     source: AutomationSourceSpec,
 ) -> AutomationLaneSpec {
     AutomationLaneSpec {
+        playback: None,
         id: id.into(),
         target: AutomationTarget {
+            scope: None,
             entity_id: entity.into(),
             parameter_id: parameter.into(),
         },
@@ -127,6 +129,7 @@ fn e2e_snapshot() -> oxitone_core::wire::ProjectSnapshot {
             },
         ),
         AutomationLaneSpec {
+            playback: None,
             combine: Some(AutomationCombine::Replace),
             ..lane(
                 "auto_chance",

@@ -11,6 +11,7 @@ fn scenario() -> ProjectSnapshot {
     let mut s = common::typical_snapshot(1, 4, 0);
     s.automation.clear();
     let effect = EffectRef {
+        instance_id: None,
         plugin_id: "oxitone.utility".into(),
         plugin_version: "1.0.0".into(),
         parameters: Default::default(),
@@ -40,8 +41,10 @@ fn scenario() -> ProjectSnapshot {
         .collect();
     for (i, owner) in owners.into_iter().enumerate() {
         s.automation.push(AutomationLaneSpec {
+            playback: None,
             id: format!("auto_insert_{i}"),
             target: AutomationTarget {
+                scope: None,
                 entity_id: owner,
                 parameter_id: "insert.0.parameter.polarity".into(),
             },
@@ -85,6 +88,32 @@ fn bench(c: &mut Criterion) {
     group.bench_function("render_128", |b| {
         b.iter(|| {
             g.process_block(black_box(&mut l), black_box(&mut r));
+            black_box(&l);
+        })
+    });
+    group.finish();
+    let mut typed = s.clone();
+    typed.protocol_version = "1.1".into();
+    for channel in &mut typed.channels {
+        channel.effect_chain[0].instance_id = Some(format!("ins_{}", channel.id));
+    }
+    for bus in &mut typed.mixer_channels {
+        bus.inserts[0].instance_id = Some(format!("ins_{}", bus.id));
+    }
+    for lane in &mut typed.automation {
+        lane.target.scope = Some(ParameterScope::Plugin);
+        lane.target.entity_id = format!("ins_{}", lane.target.entity_id);
+        lane.target.parameter_id = "polarity".into();
+    }
+    let mut typed_graph = RenderGraph::compile(&typed, &registry, &store, &options).unwrap();
+    typed_graph.transport_mut().play_from(0, Some((0, 96_000)));
+    let mut group = c.benchmark_group("insert/typed_automation");
+    group.bench_function("compile", |b| {
+        b.iter(|| RenderGraph::compile(black_box(&typed), &registry, &store, &options).unwrap())
+    });
+    group.bench_function("render_128", |b| {
+        b.iter(|| {
+            typed_graph.process_block(black_box(&mut l), black_box(&mut r));
             black_box(&l);
         })
     });

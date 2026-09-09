@@ -43,6 +43,42 @@ impl Compiler<'_> {
             ));
         }
         let node = match spec {
+            AutomationSourceSpec::ReplaceRange {
+                base,
+                replacement,
+                start_beat,
+                end_beat,
+                fade_beats,
+            } => {
+                let (start, end, fade) = (
+                    start_beat.to_f64(),
+                    end_beat.to_f64(),
+                    fade_beats.map_or(0., |beat| beat.to_f64()),
+                );
+                if start < 0. || end <= start || fade < 0. || fade > (end - start) / 2. {
+                    return Err(OxitoneError::with_path(
+                        codes::AUTOMATION_RANGE,
+                        "invalid replacement interval or fade",
+                        path,
+                    ));
+                }
+                // Range overlays preserve the existing base seed path. They do not re-key its chance nodes.
+                let base =
+                    self.push(base, depth + 1, format!("{path}.base"), source_path.clone())?;
+                let replacement = self.push(
+                    replacement,
+                    depth + 1,
+                    format!("{path}.replacement"),
+                    format!("{source_path}.range"),
+                )?;
+                Node::Range(super::range::RangeNode {
+                    base,
+                    replacement,
+                    start,
+                    end,
+                    fade,
+                })
+            }
             AutomationSourceSpec::Constant { value } => {
                 check_finite(*value, &format!("{path}.value"))?;
                 Node::Constant(*value)
@@ -199,6 +235,13 @@ impl Compiler<'_> {
                 }
             }
         };
+        if self.nodes.len() >= MAX_NODES {
+            return Err(OxitoneError::with_path(
+                codes::AUTOMATION_NODE_LIMIT,
+                "automation AST node count exceeded",
+                err_path,
+            ));
+        }
         self.nodes.push(node);
         Ok(self.nodes.len() - 1)
     }

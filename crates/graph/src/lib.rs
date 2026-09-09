@@ -11,6 +11,7 @@ pub mod builtin_params;
 pub mod compile;
 pub mod descriptor;
 pub mod insert_params;
+pub mod instance_targets;
 pub mod multisampler;
 pub mod registry;
 pub mod topology;

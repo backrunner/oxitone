@@ -1,4 +1,4 @@
-use crate::{analysis::NodeAnalysis, engine::Engine, position, wire};
+use crate::{analysis::NodeAnalysis, engine::Engine, wire};
 use oxitone_render::preview::NoteEcho;
 use serde_json::json;
 
@@ -33,13 +33,6 @@ fn layout_uses_compiled_clock_local_clip_boundaries_and_time_signature_positions
     clip.loop_count = None;
     clip.duration_beats = Some(oxitone_core::Beat::new(2, 1).unwrap());
     assert_eq!(project.clip_bounds(&clip), (8., 16.));
-    assert_eq!(position::resolve(&project, "3.1").unwrap(), 192000);
-    assert_eq!(position::resolve(&project, "4.1").unwrap(), 228000);
-    assert_eq!(position::resolve(&project, "0:08").unwrap(), 384000);
-    assert_eq!(position::resolve(&project, "8s").unwrap(), 384000);
-    for invalid in ["0.1", "1.0", "0:60", "NaNs", "-1s", ""] {
-        assert!(position::resolve(&project, invalid).is_err());
-    }
 }
 
 #[test]

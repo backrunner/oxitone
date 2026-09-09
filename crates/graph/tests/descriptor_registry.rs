@@ -141,7 +141,7 @@ fn layout_and_polyphony_rules() {
 fn parameter_spec_struct_fields_match_wire() {
     let spec: ParameterSpec = serde_json::from_str(
         r#"{"id":"cutoff","label":"Cutoff","unit":"hz","min":20,"max":20000,
-            "default":1000,"smoothing":"onePole","rate":"audio","automation":true,"mapping":"log"}"#,
+            "default":1000,"smoothing":"one-pole","rate":"audio","automation":true,"mapping":"log"}"#,
     )
     .unwrap();
     assert!(validate_parameter_specs(&[spec]).is_ok());

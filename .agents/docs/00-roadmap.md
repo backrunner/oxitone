@@ -1,5 +1,9 @@
 # Oxitone 实现路线图
 
+新的发布目标是完整代码/GPUI DAW 双向 authoring，按 [P0–P5](../designs/source-daw/06-delivery.md)
+推进，包含外部插件 ABI 2 与 GPUI 插件管理器；下文 SDK-only 定位和 M0–M8 作为已有基线保留。
+当前开始实现生成式 Pattern 核心，契约见 [15](15-source-authoring.md)，不代表整个 P1 完成。
+
 当前落地状态与缺口见 [实现核对](10-implementation-status.md)。下文是目标与出口条件，
 不能仅根据某一层已有代码推定整个里程碑完成。
 

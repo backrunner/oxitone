@@ -1,9 +1,14 @@
 import { z } from "zod";
 import {
   engineOptionsSchema,
+  patternSourceDocumentSchema,
+  documentViewSchema,
+  documentRequestSchema,
+  documentMessageSchema,
   compileOptionsSchema,
   projectFileSchema,
   pluginManifestSchema,
+  pluginInstallManifestSchema,
   pluginUiManifestSchema,
   multisamplerStateSchema,
   pluginInfoSchema,
@@ -25,6 +30,7 @@ import {
 } from "../index.js";
 import { write } from "./output.js";
 import { pluginUiFixture } from "./plugin-ui.js";
+import { automationRangeFixture } from "./automation-range.js";
 
 function writeSchema(rel: string, schema: z.ZodType): void {
   const json = z.toJSONSchema(schema, { target: "draft-2020-12" });
@@ -32,6 +38,11 @@ function writeSchema(rel: string, schema: z.ZodType): void {
 }
 
 export function generateSchemas(): void {
+  write("schemas/fixtures/automation-range.json", `${JSON.stringify(automationRangeFixture, null, 2)}\n`);
+  writeSchema("schemas/pattern-source.schema.json", patternSourceDocumentSchema);
+  writeSchema("schemas/document-view.schema.json", documentViewSchema);
+  writeSchema("schemas/document-request.schema.json", documentRequestSchema);
+  writeSchema("schemas/document-message.schema.json", documentMessageSchema);
   writeSchema("schemas/project-snapshot.schema.json", projectSnapshotSchema);
   writeSchema("schemas/project-file.schema.json", projectFileSchema);
   writeSchema("schemas/compile-options.schema.json", compileOptionsSchema);
@@ -47,6 +58,7 @@ export function generateSchemas(): void {
   writeSchema("schemas/beat-duration-query.schema.json", beatDurationQuerySchema);
   writeSchema("schemas/beat-duration-result.schema.json", beatDurationResultSchema);
   writeSchema("schemas/plugin-manifest.schema.json", pluginManifestSchema);
+  writeSchema("schemas/plugin-install-manifest.schema.json", pluginInstallManifestSchema);
   writeSchema("schemas/plugin-ui.schema.json", pluginUiManifestSchema);
   writeSchema("schemas/multisampler-state.schema.json", multisamplerStateSchema);
   write("schemas/fixtures/plugin-ui.json", `${JSON.stringify(pluginUiManifestSchema.parse(pluginUiFixture), null, 2)}\n`);
@@ -107,6 +119,11 @@ function automationSourceJsonSchema(): unknown {
       },
       source: {
         oneOf: [
+          {
+            type: "object", required: ["kind", "base", "replacement", "startBeat", "endBeat"],
+            properties: { kind: { const: "replaceRange" }, base: { $ref: "#/$defs/source" }, replacement: { $ref: "#/$defs/source" },
+              startBeat: { $ref: "#/$defs/beat" }, endBeat: { $ref: "#/$defs/beat" }, fadeBeats: { $ref: "#/$defs/beat" } },
+          },
           {
             type: "object",
             required: ["kind", "value"],

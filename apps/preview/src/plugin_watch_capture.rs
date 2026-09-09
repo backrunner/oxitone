@@ -5,7 +5,7 @@ use serde_json::json;
 
 pub fn state(this: &Preview, cx: &App) -> String {
     let windows: Vec<_> = this.plugin_windows.values().filter_map(|handle| {
-        let window = handle.read(cx).ok()?;
+        let window = handle.read(cx);
         let details = window.details.as_ref()?;
         let descriptor = &details.info.descriptor;
         Some(json!({"pluginId":descriptor.plugin_id,"revision":window.project.snapshot.revision,

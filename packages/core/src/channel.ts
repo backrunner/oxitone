@@ -11,6 +11,9 @@ import { parseAuthoring } from "./authoring-validation.js";
 import type { AutomationLane, AutomationLaneOptions } from "./automation/lane.js";
 import type { AutomationSource } from "./automation/source.js";
 import type { Project } from "./project.js";
+import { ConfigurationSources } from "./configuration-sources.js";
+import { PluginInstances } from "./plugin-instances.js";
+import type { PluginInstance } from "./plugin-instance.js";
 
 /** Built-in wavetable instrument used when no explicit instrument is supplied. */
 export const DEFAULT_INSTRUMENT: InstrumentRef = {
@@ -35,6 +38,9 @@ export interface ChannelOptions {
 /** Instrument and ordered insert effects routed to a project mixer bus. */
 export class Channel {
   private spec: ChannelSpec;
+  private readonly instances: PluginInstances;
+  /** @internal Original value identities for the source evaluator; not execution state. */
+  readonly configurationSources: ConfigurationSources;
 
   /** @internal Use `project.addChannel(...)` instead. */
   constructor(
@@ -42,6 +48,7 @@ export class Channel {
     options: ChannelOptions,
     mixerChannelId: string,
     private readonly project?: Project,
+    restored?: ChannelSpec,
   ) {
     this.spec = parseAuthoring(channelSpecSchema, {
       ...options, id, instrument: options.instrument ?? DEFAULT_INSTRUMENT,
@@ -49,6 +56,11 @@ export class Channel {
       mixerChannelId: options.mixerChannelId ?? mixerChannelId,
     }, "channel");
     this.project?.requireMixerChannel(this.spec.mixerChannelId);
+    this.instances = new PluginInstances(this, project);
+    const refs = restored ? this.instances.restore([this.spec.instrument, ...this.spec.effectChain]) : this.instances.adopt([this.spec.instrument, ...this.spec.effectChain]);
+    this.spec.instrument = refs[0]!;
+    this.spec.effectChain = refs.slice(1);
+    this.configurationSources = new ConfigurationSources(options.instrument, options.effectChain ?? []);
   }
 
   get id(): EntityId {
@@ -62,6 +74,32 @@ export class Channel {
   }
   set instrument(value: InstrumentRef) {
     this.update({ instrument: value });
+  }
+  get instrumentInstance(): PluginInstance { return this.instances.handle(this.spec.instrument, "instrument"); }
+  get effectInstances(): readonly PluginInstance[] { return this.spec.effectChain.map(ref => this.instances.handle(ref, "effect")); }
+  reorderEffects(order: readonly PluginInstance[]): void {
+    order.forEach(instance => this.instances.require(instance, "effect"));
+    if (order.length !== this.spec.effectChain.length || new Set(order).size !== order.length) throw new OxitoneError(ErrorCode.EditScopeConflict, "effect order must be a permutation of this owner's instances");
+    const sources = order.map(instance => this.configurationSources.chain[this.spec.effectChain.findIndex(ref => ref.instanceId === instance.id)]!);
+    this.effectChain = order.map(instance => this.spec.effectChain.find(ref => ref.instanceId === instance.id)!);
+    this.configurationSources.chain = sources;
+  }
+  removeEffect(instance: PluginInstance): void {
+    this.instances.require(instance, "effect");
+    const sources = this.configurationSources.chain.filter((_, index) => this.spec.effectChain[index]!.instanceId !== instance.id);
+    this.effectChain = this.spec.effectChain.filter(ref => ref.instanceId !== instance.id);
+    this.configurationSources.chain = sources;
+  }
+  /** @internal */
+  updateInstance(instance: PluginInstance, config: InstrumentRef | EffectRef): void {
+    this.instances.require(instance, instance.kind);
+    const ref = { ...config, instanceId: instance.id };
+    if (instance.kind === "instrument") this.instrument = ref;
+    else {
+      const sources = this.configurationSources.chain.map((source, index) => this.spec.effectChain[index]!.instanceId === instance.id ? config : source);
+      this.effectChain = this.spec.effectChain.map(previous => previous.instanceId === instance.id ? ref : previous);
+      this.configurationSources.chain = sources;
+    }
   }
 
   get mixerChannelId(): EntityId {
@@ -117,9 +155,12 @@ export class Channel {
     this.update({ effectChain: [...value] });
   }
 
-  addEffect(effect: EffectRef): this {
-    this.effectChain = [...this.spec.effectChain, effect];
-    return this;
+  addEffect(effect: EffectRef): PluginInstance {
+    const sources = [...this.configurationSources.chain, effect];
+    const { instanceId: _, ...config } = effect;
+    this.effectChain = [...this.spec.effectChain, config];
+    this.configurationSources.chain = sources;
+    return this.effectInstances.at(-1)!;
   }
 
   /** Bind a channel, instrument, or `insert.<index>.parameter.<id>` parameter. */
@@ -147,7 +188,12 @@ export class Channel {
 
   private update(patch: Partial<ChannelSpec>): void {
     this.project?.assertMutable();
-    this.spec = parseAuthoring(channelSpecSchema, { ...this.spec, ...patch }, "channel");
+    const next = parseAuthoring(channelSpecSchema, { ...this.spec, ...patch }, "channel");
+    const refs = this.instances.adopt([next.instrument, ...next.effectChain], [this.spec.instrument, ...this.spec.effectChain]);
+    next.instrument = refs[0]!;
+    next.effectChain = refs.slice(1);
+    this.spec = next;
+    this.configurationSources.update(patch);
     this.project?.touch();
   }
 }

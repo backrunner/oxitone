@@ -16,6 +16,7 @@ use crate::registry::PluginRegistry;
 /// One compiled lane: fixed evaluator plus combine rule and loop mapping.
 #[derive(Debug, Clone)]
 pub struct CompiledLane {
+    pub placements: Option<Vec<super::LanePlacement>>,
     pub automation: CompiledAutomation,
     pub combine: AutomationCombine,
     /// Loop region start in beats (default 0 when `loop_length` is set).
@@ -30,7 +31,7 @@ pub struct CompiledLane {
 
 /// Resolved automation target. Channel/sample-clip targets are plan indices;
 /// mixer targets carry bus IDs (the mixer engine resolves them).
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum BindingTarget {
     EffectInsert {
         entity_id: String,
@@ -73,6 +74,7 @@ pub enum BindingTarget {
 /// All lanes bound to one target, in lane-ID order.
 #[derive(Debug, Clone)]
 pub struct AutomationBinding {
+    pub fallback: f64,
     pub target: BindingTarget,
     /// Target parameter spec for the 0..1 → physical mapping.
     pub spec: ParameterSpec,
@@ -84,7 +86,7 @@ fn target_invalid(message: impl Into<String>) -> OxitoneError {
 }
 
 /// Resolve one lane target to a plan-level binding target plus its spec.
-fn resolve(
+pub(crate) fn resolve(
     snapshot: &ProjectSnapshot,
     registry: &PluginRegistry,
     channel_index: &BTreeMap<&str, usize>,
@@ -222,21 +224,32 @@ pub(crate) fn compile_bindings(
     channel_index: &BTreeMap<&str, usize>,
     clip_index: &BTreeMap<&str, usize>,
     seed: u64,
+    solo_active: bool,
 ) -> Result<Vec<AutomationBinding>, OxitoneError> {
     let mut lanes: Vec<&_> = snapshot.automation.iter().collect();
     lanes.sort_by(|a, b| a.id.cmp(&b.id));
 
-    let mut grouped: BTreeMap<(String, String), AutomationBinding> = BTreeMap::new();
+    let mut grouped = BTreeMap::<_, AutomationBinding>::new();
     for lane in lanes {
-        let Some((target, spec)) = resolve(
-            snapshot,
-            registry,
-            channel_index,
-            clip_index,
-            &lane.target.entity_id,
-            &lane.target.parameter_id,
-        )?
-        else {
+        let resolved = if let Some(scope) = lane.target.scope {
+            Some(crate::instance_targets::resolve(
+                snapshot,
+                registry,
+                &lane.target.entity_id,
+                scope,
+                &lane.target.parameter_id,
+            )?)
+        } else {
+            resolve(
+                snapshot,
+                registry,
+                channel_index,
+                clip_index,
+                &lane.target.entity_id,
+                &lane.target.parameter_id,
+            )?
+        };
+        let Some((target, spec)) = resolved else {
             continue;
         };
         let automation = CompiledAutomation::compile(&lane.source, seed).map_err(|mut err| {
@@ -260,6 +273,7 @@ pub(crate) fn compile_bindings(
             None => (0.0, None, None),
         };
         let compiled = CompiledLane {
+            placements: super::placement::compile(snapshot, lane, solo_active),
             automation,
             combine: lane.combine.unwrap_or(AutomationCombine::Replace),
             loop_start,
@@ -267,13 +281,11 @@ pub(crate) fn compile_bindings(
             loop_end,
             last_beat: lane.last_beat.map(|b| b.to_f64()),
         };
-        let key = (
-            lane.target.entity_id.clone(),
-            lane.target.parameter_id.clone(),
-        );
+        let key = target.clone();
         grouped
             .entry(key)
             .or_insert_with(|| AutomationBinding {
+                fallback: super::initial_value::normalized(snapshot, &target, &spec),
                 target,
                 spec,
                 lanes: Vec::new(),

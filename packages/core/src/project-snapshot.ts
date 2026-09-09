@@ -34,6 +34,7 @@ export function snapshotProject(
     samples: byId(project.samples).map((sample) => sample.toSpec()),
     channels: byId(project.channels).map((channel) => channel.toSpec()),
     automation: byId(project.automationLanes).map((lane) => lane.toSpec()),
+    ...(project.automationClips.length === 0 ? {} : { automationClips: byId(project.automationClips).map((clip) => clip.toSpec()) }),
     mixerChannels: byId(project.snapshotMixerChannels()).map((bus) => bus.toSpec()),
   };
   return projectSnapshotSchema.parse(snapshot);

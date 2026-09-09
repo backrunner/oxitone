@@ -1,4 +1,44 @@
-# 计划与实现核对（更新至 2026-09-08）
+# 计划与实现核对（更新至 2026-09-09）
+
+发布前清理：源码编辑统一使用 ProjectDocument，已删除早期单 Pattern 文档、专用 evaluator/
+worker、旧 exports 和 source-session 基准。journal 只接受 version 2，事务只接受单调 stream ID，
+DocumentView.projectRoot 必填；未发布兼容分支不再保留。对应取消/监听/async factory/npm
+本地化用例迁移到完整工程测试。CLI build 清理 dist，避免把已删除模块打入 npm 包。
+
+最新 [代码/DAW 全实现审查](../reports/2026-09-09-source-daw-review.md) 修复 7 项源码/同步/
+长会话缺陷，并逐项核对完整交付矩阵。真实 VS Code 与 GPUI 回归通过不代表所有能力交付；
+Arrangement/窗口/随机、插件 ABI 2 与安装迁移、完整 IDE 和发布门禁仍未完成。
+本轮继续补上源码发现与外部磁盘同步的分块读取预算：单文件 8 MiB、工程 32 MiB 在读取
+阶段生效，ProjectDocument 不再二次使用无界 `readFile`；source ownership 回归已覆盖单文件和聚合上限。
+同时新增插件生命周期控制任务：install/upgrade/uninstall/repair 经过严格包名校验和无 shell argv，
+由 Document Service 串行执行并在完成后重新求值；Project Document 也支持保守的非重叠行级三方合并；
+ABI 2、迁移和网络/签名发布门禁仍未完成。
+
+源码新建链路已补齐：未保存 `.ts`/`.mts` 模块可相对 import/re-export 并接受 DAW 音符编辑；
+journal 2 用 null 区分缺失与空文件，创建/撤销删除/Redo 重建共用保存和恢复。
+ProjectDocument 先恢复再发现文件；回归覆盖并发创建、外部空文件冲突、强杀与发布链接恢复。
+VS Code 使用服务 projectRoot，创建命令与项目命令串行；GPUI Add package 保留搜索词，
+无效输入与忙碌状态保留包名并显示诊断。完整交付门禁仍按最新审查表追踪。
+
+代码/DAW 新设计已开始实现，独立状态见 [15-source-authoring.md](15-source-authoring.md)：
+Pattern 保留 chord/arp/组合生成，支持有来源的集合 edit、共享 DAG format 1 往返，以及
+Node 侧 AST 表达式写回原语。新增测试覆盖无 ID、单轮修改、保存 TS 后 fresh build；
+engine protocol/ABI 仍为现有基线。来源插桩、Document Service 和 GPUI 音符通路已接入；
+source automation range 已接入原生与 GPUI；lane range、ABI 2 和全部 GPUI 编辑/插件管理器
+仍未完成，不能宣称整个 DAW 已交付。
+
+后续增量实现单 Pattern MVVM 文档原语、源码所有权、作用域感知的 Pattern import、
+本地拆散候选/确认和直接 literal Note 回写，范围与 adapter 限制见 [16](16-pattern-document.md)。
+真实工程选定边界插桩、独立进程 adapter、未保存 overlay、文件 watch/显式冲突、生产 TS Save
+及多文件 journal/强杀恢复已提供，见 [17](17-project-source-session.md)。后续完整 Project 求值、
+原生图校验、GPUI 音符手势/作用范围/拆散 review、跨文件 Save、editor IPC 和冲突解决已接通，
+并新增 GPUI 全内置/外部静态目录与独立 helper 验证；精确范围和未完成门禁见
+[18-project-daw.md](18-project-daw.md)。
+插件初始参数/host mix/bypass、作用范围及 npm 串联 rack 拆散已通过真实 C 插件与 GPUI
+保存重开验证，见 [19](19-plugin-configuration-source.md)。engine 1.1 实例与 scoped automation、
+GPUI 串联重排及无 ID 源码保存已验证，见 [20](20-plugin-instances.md)。实时 typed commands、
+GPUI 插件添加/替换仍待完成。VS Code linked buffers、未保存同步、journal Save、冲突 review
+与同 socket 重连见 [21](21-editor-session.md)；普通文件 tab 仍只有 disk watch。
 
 最初以 `9423ad3` 为核对基线；下表更新为当前实现，后文保留各阶段证据。
 提交继续使用 `BackRunner <dev@backrunner.top>` 与 `type(scope): description`。
@@ -558,7 +598,7 @@
 - G 聚焦 Go，支持 bar.beat.tick（960 ticks）、秒数及 mm:ss；Enter 定位、Shift+Enter 播放，
   输入屏蔽全局快捷键，完成/取消恢复工作区焦点。播放切换忽略键盘自动重复，定位键可连续重复。
   音源/效果器窗口通过弱引用共享 transport 快捷键，原有无修饰滚动键保持可用。
-- 顶部 Keys ? 和 ? 快捷键打开内置操作说明，深/浅色与最小窗口布局通过实际 GPUI 截图检查。
+- 传输栏的 ? 按钮和 ? 快捷键打开内置操作说明，深/浅色与最小窗口布局通过实际 GPUI 截图检查。
   Native 暂停/停止游标不再减去输出延迟；首次 play 前的 watch 换图保留 frame cursor/state/loop。
   所有改动位于 viewer/UI/控制线程，不改 authoring snapshot、TS 协议或音频 callback/DSP。
 - 436 项 Rust 工作区测试（含 19 项 viewer）、lint/typecheck、rustfmt 通过，无失败/忽略。

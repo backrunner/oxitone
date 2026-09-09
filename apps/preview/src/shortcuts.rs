@@ -110,6 +110,102 @@ impl Preview {
         cx: &mut Context<Self>,
     ) {
         let key = &event.keystroke;
+        if key.key == "escape" && self.document.plugin.gesture.is_some() {
+            self.document.plugin.cancel();
+            cx.stop_propagation();
+            cx.notify();
+            return;
+        }
+        if (key.modifiers.platform || key.modifiers.control)
+            && key.key == "w"
+            && !self.document.windows.hidden
+        {
+            if let Some(id) = self.document.windows.visible.last().copied() {
+                self.close_internal(id, window);
+                cx.stop_propagation();
+                cx.notify();
+                return;
+            }
+        }
+        if key.key == "escape" && self.document.windows.drag.is_some() {
+            self.document.windows.cancel();
+            cx.stop_propagation();
+            cx.notify();
+            return;
+        }
+        if self.configuration_key(event, cx) {
+            return;
+        }
+        if self.tempo_key(event) {
+            cx.stop_propagation();
+            cx.notify();
+            return;
+        }
+        if self.plugin_search_key(event, cx) {
+            return;
+        }
+        let key = &event.keystroke;
+        if key.key == "escape" && self.workspace.gesture.is_some() {
+            if let Some(crate::workspace::Gesture::Resize { region, .. }) =
+                self.workspace.gesture.take()
+            {
+                crate::workspace_resize::apply(self, region, point(px(0.), px(0.)));
+            }
+            cx.stop_propagation();
+            cx.notify();
+            return;
+        }
+        if !key.modifiers.platform && !key.modifiers.control && !key.modifiers.alt {
+            let mode = match key.key.as_str() {
+                "f7" => Some(crate::workspace_layout::EditorMode::Piano),
+                "f9" => Some(crate::workspace_layout::EditorMode::Mixer),
+                "f5" => Some(crate::workspace_layout::EditorMode::Split),
+                _ => None,
+            };
+            if let Some(mode) = mode {
+                if !event.is_held {
+                    self.toggle_editor(mode, window);
+                }
+                cx.stop_propagation();
+                cx.notify();
+                return;
+            }
+        }
+        if self.document.view.is_some()
+            && (key.modifiers.platform || key.modifiers.control)
+            && !key.modifiers.alt
+        {
+            let operation = match key.key.as_str() {
+                "s" => Some(crate::document_wire::DocumentOperation::Save),
+                "z" if key.modifiers.shift => Some(crate::document_wire::DocumentOperation::Redo),
+                "z" => Some(crate::document_wire::DocumentOperation::Undo),
+                _ => None,
+            };
+            if let Some(operation) = operation {
+                if !event.is_held {
+                    self.document_request(operation);
+                }
+                cx.stop_propagation();
+                cx.notify();
+                return;
+            }
+        }
+        if key.key == "escape"
+            && (self.document.gesture.is_some()
+                || self.document.notes.marquee.is_some()
+                || self.document.automation.gesture.is_some()
+                || self.document.playlist.drag.is_some())
+            || key.key == "escape" && self.document.mixer.gesture.is_some()
+        {
+            self.document.gesture = None;
+            self.document.notes.marquee = None;
+            self.document.automation.gesture = None;
+            self.document.playlist.drag = None;
+            self.document.mixer.gesture = None;
+            cx.stop_propagation();
+            cx.notify();
+            return;
+        }
         if self.show_shortcuts {
             if key.key == "escape" || key.key == "?" {
                 self.show_shortcuts = false;
@@ -119,9 +215,12 @@ impl Preview {
             return;
         }
         let plain = !key.modifiers.platform && !key.modifiers.control && !key.modifiers.alt;
-        if plain && key.key == "g" && !key.modifiers.shift {
-            self.position_focus.focus(window);
-        } else if plain && (key.key == "?" || (key.key == "/" && key.modifiers.shift)) {
+        if self.workspace_focus.is_focused(window) && self.playlist_key(event) {
+            cx.stop_propagation();
+            cx.notify();
+            return;
+        }
+        if plain && (key.key == "?" || (key.key == "/" && key.modifiers.shift)) {
             self.show_shortcuts = true;
             self.workspace_focus.focus(window);
         } else if let Some(shortcut) = playback(key) {

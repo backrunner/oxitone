@@ -53,6 +53,9 @@ impl Surface {
             }
             let layer: *mut Object = msg_send![*self.view, layer];
             let _: () = msg_send![*self.view, displayLayer: layer];
+            // Capture runs without a live display link on locked desktops. Commit the
+            // transaction used by GPUI's displayLayer path before the system screenshot.
+            let _: () = msg_send![class!(CATransaction), flush];
         }
     }
     pub fn close(&self) {

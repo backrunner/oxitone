@@ -21,7 +21,10 @@ pub fn view(
         .find(|s| s.id == this.selected_scope)
         .unwrap_or(master);
     let strip_height = (height - 52.).max(356.);
-    let inspector_width = if width < 650. { 228. } else { 260. };
+    let inspector_width = this
+        .workspace
+        .inspector_width
+        .clamp(190., (width - 150.).max(190.));
     let spare = width
         - strips.len() as f32 * STRIP_WIDTH
         - 11.
@@ -42,7 +45,7 @@ pub fn view(
             cx,
         ));
     }
-    if spare >= 280. {
+    if spare >= 280. && this.workspace.mixer_flow_open {
         bank = bank
             .w(px((strips.len() - 1) as f32 * STRIP_WIDTH + spare))
             .child(crate::mixer_flow::view(this, selected, spare, cx));
@@ -139,12 +142,23 @@ pub fn view(
             cx,
         ));
     if this.workspace.inspector_open {
-        body = body.child(crate::mixer_inspector::view(
-            this,
-            selected,
-            inspector_width,
-            cx,
-        ));
+        body = body
+            .child(crate::workspace_resize::divider(
+                "mixer-inspector-divider",
+                Axis::Horizontal,
+                crate::workspace_resize::Resize::Inspector {
+                    width: inspector_width,
+                    max: width - 150.,
+                },
+                this,
+                cx,
+            ))
+            .child(crate::mixer_inspector::view(
+                this,
+                selected,
+                inspector_width,
+                cx,
+            ));
     }
     div()
         .id("mixer-panel")
@@ -171,7 +185,7 @@ pub fn view(
         .bg(rgb(theme.bg))
         .child(
             div()
-                .h(px(42.))
+                .h(px(32.))
                 .flex_shrink_0()
                 .px_3()
                 .flex()
@@ -184,7 +198,11 @@ pub fn view(
                     div()
                         .text_size(px(12.))
                         .font_weight(FontWeight::SEMIBOLD)
-                        .child("Mixer"),
+                        .child(if this.document.windows.mixer_open {
+                            ""
+                        } else {
+                            "Mixer"
+                        }),
                 )
                 .child(
                     div()
@@ -193,15 +211,11 @@ pub fn view(
                         .text_color(rgb(theme.muted))
                         .min_w_0()
                         .truncate()
-                        .child(if width > 600. {
-                            format!("{} channels · Source levels", strips.len())
-                        } else {
-                            String::new()
-                        }),
+                        .child(selected.name.clone()),
                 )
                 .child(
                     theme
-                        .button("mixer-prev", "‹")
+                        .icon_button("mixer-prev", Icon::Left, "Previous channels")
                         .on_click(cx.listener(|this, _, _, cx| {
                             nudge(&this.workspace.mixer, STRIP_WIDTH * 2.);
                             cx.notify();
@@ -209,7 +223,7 @@ pub fn view(
                 )
                 .child(
                     theme
-                        .button("mixer-next", "›")
+                        .icon_button("mixer-next", Icon::Right, "Next channels")
                         .on_click(cx.listener(|this, _, _, cx| {
                             nudge(&this.workspace.mixer, -STRIP_WIDTH * 2.);
                             cx.notify();
@@ -217,28 +231,70 @@ pub fn view(
                 )
                 .child(
                     theme
-                        .button("mixer-inspector", "Details")
-                        .when(this.workspace.inspector_open, |d| d.bg(rgb(theme.selected)))
+                        .icon_tool(
+                            "mixer-inspector",
+                            Icon::Route,
+                            "Channel details",
+                            this.workspace.inspector_open,
+                        )
                         .on_click(cx.listener(|this, _, _, cx| {
                             this.workspace.inspector_open = !this.workspace.inspector_open;
                             cx.notify();
                         })),
                 )
-                .child(
-                    theme
-                        .button(
-                            "mixer-expand",
-                            if this.workspace.mixer_expanded {
-                                "Split"
-                            } else {
-                                "Expand"
-                            },
-                        )
-                        .on_click(cx.listener(|this, _, _, cx| {
-                            this.workspace.mixer_expanded = !this.workspace.mixer_expanded;
-                            cx.notify();
-                        })),
-                ),
+                .when(width > 700., |d| {
+                    d.child(
+                        theme
+                            .tool(
+                                "mixer-routing-map",
+                                "Routing map",
+                                this.workspace.mixer_flow_open,
+                            )
+                            .on_click(cx.listener(|this, _, _, cx| {
+                                this.workspace.mixer_flow_open = !this.workspace.mixer_flow_open;
+                                cx.notify();
+                            })),
+                    )
+                })
+                .when(!this.document.windows.mixer_open, |d| {
+                    d.child(
+                        theme
+                            .icon_button("mixer-float", Icon::Restore, "Float / dock mixer")
+                            .on_click(cx.listener(|this, _, window, cx| {
+                                if this.document.windows.mixer_open {
+                                    this.dock_editor(
+                                        crate::window_manager::WindowId::Mixer,
+                                        window,
+                                    );
+                                } else {
+                                    this.float_editor(crate::workspace_layout::EditorMode::Mixer);
+                                }
+                                cx.notify();
+                            })),
+                    )
+                })
+                .when(!this.document.windows.mixer_open, |d| {
+                    d.child(
+                        theme
+                            .icon_button(
+                                "mixer-expand",
+                                if this.workspace.mode == crate::workspace_layout::EditorMode::Mixer
+                                {
+                                    Icon::Restore
+                                } else {
+                                    Icon::Maximize
+                                },
+                                "Maximize / restore · F9",
+                            )
+                            .on_click(cx.listener(|this, _, window, cx| {
+                                this.toggle_editor(
+                                    crate::workspace_layout::EditorMode::Mixer,
+                                    window,
+                                );
+                                cx.notify();
+                            })),
+                    )
+                }),
         )
         .child(body)
 }

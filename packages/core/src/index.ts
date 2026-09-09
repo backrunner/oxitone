@@ -1,4 +1,7 @@
 export { Project } from "./project.js";
+export { PluginConfig, pluginConfig } from "./plugin-config.js";
+export { PluginInstance, InstanceParameter } from "./plugin-instance.js";
+export { orderEffects } from "./effect-order.js";
 export type { PluginUiManifest, PluginUiControl } from "@oxitone/protocol";
 export { createPluginPreset, createChannelPreset, validatePreset, applyPreset, presetInstrument, presetEffect } from "./preset.js";
 export type { Preset, ChannelPreset, InstrumentPreset, EffectPreset, PresetMetadata, PresetRuntimeOptions } from "./preset.js";
@@ -12,6 +15,8 @@ export { Track, SampleClipDraft } from "./track.js";
 export { PatternClip, PatternClipDraft } from "./pattern-clip.js";
 export { Pattern } from "./pattern.js";
 export type { PatternOptions } from "./pattern.js";
+export type { SourceEvent, NoteOrigin } from "./source/types.js";
+export type { NoteEdit, NoteSelector, PatternSourceDocument } from "@oxitone/protocol";
 export type { NoteInput } from "./note.js";
 export { Channel, DEFAULT_INSTRUMENT } from "./channel.js";
 export type { ChannelOptions } from "./channel.js";
@@ -50,6 +55,7 @@ export type {
   WaveOptions,
 } from "./automation/namespace.js";
 export { AutomationLane } from "./automation/lane.js";
+export { AutomationClip } from "./automation/clip.js";
 export type {
   AutomationCombine,
   AutomationLaneOptions,

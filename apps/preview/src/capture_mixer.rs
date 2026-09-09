@@ -15,7 +15,12 @@ pub fn step(this: &mut Preview, frame: usize, mode: &str, cx: &mut Context<Previ
         assert_eq!(selected.sends().count(), 2);
         this.select_mixer(&id);
         this.workspace.inspector_tab = InspectorTab::Routing;
-        this.workspace.mixer_expanded = mode == "expanded";
+        this.workspace.inspector_open = true;
+        this.workspace.mode = if mode == "expanded" {
+            crate::workspace_layout::EditorMode::Mixer
+        } else {
+            crate::workspace_layout::EditorMode::Split
+        };
         cx.notify();
     } else if frame == 5 {
         let strips = mixer_model::strips(project);

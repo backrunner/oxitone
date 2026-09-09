@@ -1,5 +1,12 @@
 # Oxitone Plugin ABI 与动态加载
 
+新增静态 npm 插件目录格式和 GPUI/helper 验证入口见 [18-project-daw.md](18-project-daw.md)。
+metadata format 1 不改变 ABI 1 的执行能力，不声称资源/state 已进入外部 C 插件。
+
+发布前已批准迁移到 [ABI 2 与插件管理器](../designs/source-daw/05-plugins.md)：参数、资源、
+configuration state、UI 事务与独立实例均进入同一 authoring 模型。下文仍记录现行 ABI 1，
+header/host/真实 C fixtures 必须一起迁移；不能让 ABI 1 插件被误认为支持新配置能力。
+
 Wasm host 静态链接自带 `example.drums`，调用相同 `oxitone_plugin_entry_v1` 和
 `plugins::from_entry` 校验/适配路径。Wasm 目标不编译 libloading/CoreAudio；
 原生 .dylib 不能上传后执行。第三方需重编译并静态集成；动态 Wasm plugin linker
@@ -43,7 +50,7 @@ try {
 - C descriptor 与 manifest 必须一致，包括参数顺序、标签、范围、默认值、
   smoothing、rate、mapping、automation。automation 缺省与 false 等价。
 - one-pole smoothing 的 wire 拼写统一为 `one-pole`（与 TS/manifest schema 一致）；
-  Rust 解码兼容旧内部拼写 `onePole`，新序列化总是输出 `one-pole`。
+  Rust 与 TS 均只接受 `one-pole`，旧内部拼写 `onePole` 已删除，fixtures 同步使用公开拼写。
 - 每个 engine 有独立注册表。相同 ID/version 且相同文件 hash 重复注册幂等；
   同 ID/version 的不同二进制报错。内置插件 ID 不允许被动态库覆盖。
 - compile 和 renderWav 使用该 engine 的注册表；后者仍按传入 snapshot 独立编译。

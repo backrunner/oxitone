@@ -201,6 +201,12 @@
           "enabled": {
             "type": "boolean"
           },
+          "mute": {
+            "type": "boolean"
+          },
+          "solo": {
+            "type": "boolean"
+          },
           "midiChannel": {
             "type": "integer",
             "minimum": 1,
@@ -338,6 +344,33 @@
                 "start",
                 "duration",
                 "velocity"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "parts": {
+            "minItems": 1,
+            "maxItems": 256,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "channelId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128,
+                  "pattern": "^[A-Za-z0-9_-]+$"
+                },
+                "patternId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128,
+                  "pattern": "^[A-Za-z0-9_-]+$"
+                }
+              },
+              "required": [
+                "channelId",
+                "patternId"
               ],
               "additionalProperties": false
             }
@@ -903,6 +936,12 @@
           "instrument": {
             "type": "object",
             "properties": {
+              "instanceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "pattern": "^[A-Za-z0-9_-]+$"
+              },
               "pluginId": {
                 "type": "string",
                 "minLength": 1
@@ -943,6 +982,12 @@
             "items": {
               "type": "object",
               "properties": {
+                "instanceId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128,
+                  "pattern": "^[A-Za-z0-9_-]+$"
+                },
                 "pluginId": {
                   "type": "string",
                   "minLength": 1
@@ -1059,6 +1104,12 @@
             "items": {
               "type": "object",
               "properties": {
+                "instanceId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128,
+                  "pattern": "^[A-Za-z0-9_-]+$"
+                },
                 "pluginId": {
                   "type": "string",
                   "minLength": 1
@@ -1172,6 +1223,13 @@
               "parameterId": {
                 "type": "string",
                 "minLength": 1
+              },
+              "scope": {
+                "type": "string",
+                "enum": [
+                  "plugin",
+                  "effectHost"
+                ]
               }
             },
             "required": [
@@ -1190,6 +1248,13 @@
               "add",
               "multiply",
               "max"
+            ]
+          },
+          "playback": {
+            "type": "string",
+            "enum": [
+              "global",
+              "playlist"
             ]
           },
           "loop": {
@@ -1291,6 +1356,82 @@
           "id",
           "target",
           "source"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "automationClips": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9_-]+$"
+          },
+          "laneId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9_-]+$"
+          },
+          "trackId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9_-]+$"
+          },
+          "startBeat": {
+            "type": "object",
+            "properties": {
+              "numerator": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "denominator": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 4294967295
+              }
+            },
+            "required": [
+              "numerator",
+              "denominator"
+            ],
+            "additionalProperties": false
+          },
+          "durationBeats": {
+            "type": "object",
+            "properties": {
+              "numerator": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "denominator": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 4294967295
+              }
+            },
+            "required": [
+              "numerator",
+              "denominator"
+            ],
+            "additionalProperties": false
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "laneId",
+          "trackId",
+          "startBeat"
         ],
         "additionalProperties": false
       }
@@ -1751,6 +1892,89 @@
             "kind",
             "wave",
             "periodBeats"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "replaceRange"
+            },
+            "base": {
+              "$ref": "#/$defs/__schema0"
+            },
+            "replacement": {
+              "$ref": "#/$defs/__schema0"
+            },
+            "startBeat": {
+              "type": "object",
+              "properties": {
+                "numerator": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "denominator": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 4294967295
+                }
+              },
+              "required": [
+                "numerator",
+                "denominator"
+              ],
+              "additionalProperties": false
+            },
+            "endBeat": {
+              "type": "object",
+              "properties": {
+                "numerator": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "denominator": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 4294967295
+                }
+              },
+              "required": [
+                "numerator",
+                "denominator"
+              ],
+              "additionalProperties": false
+            },
+            "fadeBeats": {
+              "type": "object",
+              "properties": {
+                "numerator": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "denominator": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 4294967295
+                }
+              },
+              "required": [
+                "numerator",
+                "denominator"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "kind",
+            "base",
+            "replacement",
+            "startBeat",
+            "endBeat"
           ],
           "additionalProperties": false
         },

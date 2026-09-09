@@ -47,7 +47,15 @@ fn estimate_end(snapshot: &ProjectSnapshot, tempo: &CompiledTempoMap) -> Result<
                 .to_f64(),
         );
     }
+    for clip in snapshot.automation_clips.as_deref().unwrap_or(&[]) {
+        if clip.enabled != Some(false) && track_enabled(&clip.track_id) {
+            end = end.max(clip.start_beat.to_f64() + clip.duration_beats.unwrap().to_f64());
+        }
+    }
     for lane in &snapshot.automation {
+        if lane.playback == Some(oxitone_core::wire::AutomationPlayback::Playlist) {
+            continue;
+        }
         if let Some(last) = lane.last_beat {
             end = end.max(last.to_f64());
         }

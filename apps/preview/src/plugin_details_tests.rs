@@ -25,6 +25,36 @@ fn delay(mix: f64) -> EffectRef {
 }
 
 #[test]
+fn panel_identity_follows_reordering_and_detaches_on_replacement() {
+    let mut engine = crate::tests::engine();
+    let mut snapshot = engine.current.as_ref().unwrap().snapshot.clone();
+    snapshot.protocol_version = "1.2".into();
+    let mut first = delay(0.4);
+    first.instance_id = Some("ins_first".into());
+    let mut second = delay(0.8);
+    second.instance_id = Some("ins_second".into());
+    snapshot.channels[0].effect_chain = vec![first, second];
+    accept(&mut engine, snapshot);
+    let p = engine.current.as_ref().unwrap();
+    let target = DetailTarget::ChannelInsert(p.snapshot.channels[0].id.clone(), 0);
+    let identity = crate::plugin_identity::key(p, &target);
+    let mut snapshot = p.snapshot.clone();
+    snapshot.channels[0].effect_chain.swap(0, 1);
+    accept(&mut engine, snapshot);
+    let p = engine.current.as_ref().unwrap();
+    let current = crate::plugin_identity::follow(p, &target, &identity).unwrap();
+    assert_eq!(current.slot(), Some(1));
+    assert_eq!(resolve(p, &current).unwrap().source["mix"], 0.4);
+    let mut snapshot = p.snapshot.clone();
+    snapshot.channels[0].effect_chain[1].instance_id = Some("ins_replacement".into());
+    accept(&mut engine, snapshot);
+    assert!(
+        crate::plugin_identity::follow(engine.current.as_ref().unwrap(), &target, &identity)
+            .is_none()
+    );
+}
+
+#[test]
 fn instrument_details_merge_source_defaults_and_scoped_automation() {
     let mut engine = crate::tests::engine();
     let target = DetailTarget::Instrument("chn_keys".into());

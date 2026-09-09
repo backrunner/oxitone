@@ -15,7 +15,7 @@ export function parseRestorableSnapshot(input: ProjectSnapshot): { snapshot: Pro
   if (snapshot.id === "mix_master") invalid("project ID is reserved for Master");
   for (const entity of [snapshot, ...snapshot.markers, ...snapshot.tracks, ...snapshot.channels,
     ...snapshot.mixerChannels, ...snapshot.patterns, ...snapshot.patternClips, ...snapshot.samples,
-    ...snapshot.sampleClips, ...snapshot.automation, ...snapshot.patterns.flatMap((pattern) => pattern.notes)]) {
+    ...snapshot.sampleClips, ...snapshot.automation, ...(snapshot.automationClips ?? []), ...snapshot.patterns.flatMap((pattern) => pattern.notes)]) {
     if (entity.id === undefined) continue;
     if (entity.id === "mix_master" && entity !== master) {
       invalid("entity ID is reserved for Master");
@@ -30,6 +30,12 @@ export function parseRestorableSnapshot(input: ProjectSnapshot): { snapshot: Pro
   const requireId = (id: string, entities: ReadonlySet<string>) => {
     if (!entities.has(id)) invalid(`unknown entity reference: ${id}`);
   };
+  for (const pattern of snapshot.patterns) {
+    for (const part of pattern.parts ?? []) {
+      requireId(part.channelId, channelIds);
+      requireId(part.patternId, patternIds);
+    }
+  }
   const patternClips = new Map(snapshot.patternClips.map((clip) => [clip.id, clip]));
   const sampleClips = new Map(snapshot.sampleClips.map((clip) => [clip.id, clip]));
   const membership = new Set<string>();
@@ -66,6 +72,10 @@ export function parseRestorableSnapshot(input: ProjectSnapshot): { snapshot: Pro
   const plugins = snapshot.channels.flatMap((channel) => [channel.instrument, ...channel.effectChain])
     .concat(snapshot.mixerChannels.flatMap((bus) => bus.inserts));
   for (const plugin of plugins) {
+    if (plugin.instanceId) {
+      if (ids.has(plugin.instanceId)) invalid(`duplicate plugin instance: ${plugin.instanceId}`);
+      ids.add(plugin.instanceId);
+    }
     for (const id of Object.values(plugin.resources ?? {})) {
       if (!sampleIds.has(id)) invalid(`unknown sample resource: ${id}`);
     }
@@ -77,6 +87,19 @@ export function parseRestorableSnapshot(input: ProjectSnapshot): { snapshot: Pro
   }
   for (const lane of snapshot.automation) {
     if (!ids.has(lane.target.entityId) && lane.target.entityId !== "mix_master") invalid(`unknown automation target: ${lane.target.entityId}`);
+  }
+  const laneIds = new Set(snapshot.automation.map((lane) => lane.id));
+  const trackIds = new Set(snapshot.tracks.map((track) => track.id));
+  for (const clip of snapshot.automationClips ?? []) {
+    requireId(clip.laneId, laneIds);
+    requireId(clip.trackId, trackIds);
+    if (snapshot.automation.find(lane => lane.id === clip.laneId)?.playback !== "playlist" ||
+      snapshot.tracks.find(track => track.id === clip.trackId)?.tempo !== undefined) {
+      invalid("automation clips require Playlist lanes and project-time Tracks");
+    }
+  }
+  if (snapshot.automation.some(lane => lane.playback === "playlist" && lane.target.entityId === snapshot.id)) {
+    invalid("tempo automation requires global playback");
   }
   ids.add("mix_master");
   return { snapshot, ids };

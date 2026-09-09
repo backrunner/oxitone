@@ -1,7 +1,5 @@
 use crate::{
     mixer_model::Strip,
-    mixer_routing_view::{card, empty, section, Direction},
-    plugin_details::DetailTarget,
     ui::{alpha, Preview},
     ui_icons::{icon, Icon},
     workspace::Axis,
@@ -57,7 +55,7 @@ pub fn view(
     }
     let content = match this.workspace.inspector_tab {
         InspectorTab::Routing => crate::mixer_routing_view::view(this, strip, cx),
-        InspectorTab::Chain => chain(this, strip, cx),
+        InspectorTab::Chain => crate::mixer_chain::view(this, strip, cx),
     };
     div()
         .id("mixer-detail-panel")
@@ -171,128 +169,4 @@ pub fn view(
                     cx,
                 )),
         )
-}
-fn chain(this: &Preview, strip: &Strip, cx: &mut Context<Preview>) -> Div {
-    let theme = this.theme;
-    let mut content = div().p_3().flex().flex_col().gap_2();
-    if strip.instrument {
-        let target = DetailTarget::Instrument(strip.id.clone());
-        content = content.child(section(theme, "INSTRUMENT", 1)).child(
-            div()
-                .id("inspect-instrument")
-                .p_3()
-                .rounded_md()
-                .bg(rgb(theme.panel))
-                .border_1()
-                .border_color(alpha(theme.accent, 0.45))
-                .cursor_pointer()
-                .hover(move |s| s.bg(rgb(theme.button)))
-                .on_click(cx.listener(move |this, _, _, cx| {
-                    this.open_plugin(target.clone(), cx);
-                }))
-                .child(
-                    div()
-                        .flex()
-                        .gap_2()
-                        .items_center()
-                        .child(icon(Icon::Wave, theme.accent))
-                        .child(
-                            div()
-                                .flex_1()
-                                .text_xs()
-                                .font_weight(FontWeight::MEDIUM)
-                                .child(strip.kind.clone()),
-                        )
-                        .child(div().text_color(rgb(theme.muted)).text_xs().child("↗")),
-                )
-                .child(
-                    div()
-                        .mt_1()
-                        .text_size(px(9.))
-                        .text_color(rgb(theme.muted))
-                        .child("Open instrument details"),
-                ),
-        );
-    }
-    content = content.child(section(theme, "EFFECT CHAIN", strip.effects.len()));
-    for (i, effect) in strip.effects.iter().enumerate() {
-        let target = if strip.instrument {
-            DetailTarget::ChannelInsert(strip.id.clone(), i)
-        } else {
-            DetailTarget::BusInsert(strip.id.clone(), i)
-        };
-        let tone = if effect.bypass {
-            theme.muted
-        } else {
-            theme.accent
-        };
-        content = content.child(
-            div()
-                .id(("inspect-effect", i))
-                .p_2()
-                .rounded_md()
-                .bg(rgb(theme.panel))
-                .border_1()
-                .border_color(alpha(theme.border, 0.6))
-                .cursor_pointer()
-                .hover(move |s| s.border_color(rgb(tone)).bg(rgb(theme.button)))
-                .on_click(cx.listener(move |this, _, _, cx| {
-                    this.open_plugin(target.clone(), cx);
-                }))
-                .child(
-                    div()
-                        .flex()
-                        .items_center()
-                        .gap_2()
-                        .child(
-                            div()
-                                .size(px(24.))
-                                .rounded_sm()
-                                .flex()
-                                .items_center()
-                                .justify_center()
-                                .bg(rgb(theme.button))
-                                .text_size(px(9.))
-                                .text_color(rgb(theme.muted))
-                                .child(format!("{:02}", i + 1)),
-                        )
-                        .child(
-                            div()
-                                .flex_1()
-                                .text_size(px(11.))
-                                .font_weight(FontWeight::MEDIUM)
-                                .child(effect.name.clone()),
-                        )
-                        .child(icon(Icon::Effect, tone)),
-                )
-                .child(
-                    div()
-                        .mt_2()
-                        .flex()
-                        .justify_between()
-                        .text_size(px(9.))
-                        .text_color(rgb(theme.muted))
-                        .child(if effect.bypass { "Bypassed" } else { "Active" })
-                        .child(format!("Mix {:.0}%", effect.mix * 100.)),
-                )
-                .child(
-                    div()
-                        .mt_1()
-                        .h(px(2.))
-                        .rounded_full()
-                        .bg(rgb(theme.border))
-                        .child(div().h_full().w(relative(effect.mix as f32)).bg(rgb(tone))),
-                ),
-        );
-    }
-    if strip.effects.is_empty() {
-        content = content.child(empty(theme, "Clean signal · no insert effects"));
-    }
-    content = content.child(section(theme, "OUTPUT", 1));
-    if let Some(route) = strip.output() {
-        content = content.child(card(this, route, Direction::Outgoing, cx));
-    } else {
-        content = content.child(empty(theme, "Master → Stereo device"));
-    }
-    content
 }

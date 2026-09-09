@@ -6,11 +6,12 @@ import { connect, type Socket } from "node:net";
 import { resolve, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { setTimeout as delay } from "node:timers/promises";
-import { previewResponseSchema, type PreviewFrame } from "@oxitone/protocol";
+import { previewResponseSchema, type PreviewFrame, type DocumentRequest } from "@oxitone/protocol";
 import { FrameDecoder, encodeFrame } from "./framing.js";
 import { PreviewRunner, type RunnerOptions } from "./runner.js";
+import { DawRunner } from "./daw-runner.js";
 
-export interface PreviewOptions extends RunnerOptions { viewer?: string; headless?: boolean; }
+export interface PreviewOptions extends RunnerOptions { viewer?: string; headless?: boolean; edit?: boolean; documentSocket?: string; }
 
 export function parsePreviewArgs(args: string[]): { entry: string; options: PreviewOptions } {
   const entry = args.shift();
@@ -21,23 +22,24 @@ export function parsePreviewArgs(args: string[]): { entry: string; options: Prev
     if (arg === "--watch") options.watch = true;
     else if (arg === "--no-watch") options.watch = false;
     else if (arg === "--headless") options.headless = true;
-    else if (arg === "--viewer" || arg === "--watch-path") {
+    else if (arg === "--viewer" || arg === "--watch-path" || arg === "--document-socket") {
       const value = args[++index];
       if (!value || value.startsWith("--")) throw new Error(`${arg} requires a path`);
-      if (arg === "--viewer") options.viewer = resolve(value);
+      if (arg === "--document-socket") options.documentSocket = resolve(value);
+      else if (arg === "--viewer") options.viewer = resolve(value);
       else options.watchPaths!.push(resolve(value));
     } else throw new Error(`Unknown preview option: ${arg}`);
   }
   return { entry: resolve(entry), options };
 }
 
-async function viewerPath(explicit?: string, headless = false): Promise<string> {
+async function viewerPath(explicit?: string, headless = false, editing = false): Promise<string> {
   if (explicit) { await access(explicit, constants.X_OK); return explicit; }
   const require = createRequire(import.meta.url);
   const candidates: string[] = [];
   try { candidates.push(require.resolve(`@oxitone/preview-${process.platform}-${process.arch}/bin/oxitone-preview`)); } catch { /* Local development fallback. */ }
-  for (const profile of ["release", "debug"]) {
-    if (!headless) candidates.push(fileURLToPath(new URL(`../../../../target/${profile}/Oxitone Preview.app`, import.meta.url)));
+  for (const profile of editing ? ["debug", "release"] : ["release", "debug"]) {
+    if (!headless && !editing) candidates.push(fileURLToPath(new URL(`../../../../target/${profile}/Oxitone Preview.app`, import.meta.url)));
     candidates.push(fileURLToPath(new URL(`../../../../target/${profile}/oxitone-preview`, import.meta.url)));
   }
   for (const path of candidates) { try { await access(path, constants.X_OK); return path; } catch { /* Try next installed binary. */ } }
@@ -65,11 +67,18 @@ export class PreviewConnection {
   private closed = false;
   private decoder = new FrameDecoder();
   private inFlight: PreviewFrame | undefined;
-  constructor(private readonly socket: Socket, private readonly rejected: (revision: string) => void = () => {}) {
+  constructor(private readonly socket: Socket, private readonly rejected: (revision: string) => void = () => {},
+    private readonly documentRequests: (requests: readonly DocumentRequest[]) => void = () => {}, private readonly requireDocumentProtocol = false) {
+    socket.on("end", () => this.close());
+    socket.on("close", () => this.close());
     socket.on("data", (chunk: Buffer) => {
       try {
         for (const value of this.decoder.push(chunk)) {
           const response = previewResponseSchema.parse(value);
+          if (this.requireDocumentProtocol && response.type === "state" && response.documentProtocolVersion !== "2.0") {
+            throw new Error("DAW requires a viewer supporting document protocol 2.0; rebuild oxitone-preview");
+          }
+          if (response.documentRequests?.length) this.documentRequests(response.documentRequests);
           if (response.type === "rejected") {
             console.error(`[${response.code}] ${response.message}`);
             if (this.inFlight?.type === "snapshot") this.rejected(this.inFlight.snapshot.revision);
@@ -84,12 +93,16 @@ export class PreviewConnection {
   send(frame: PreviewFrame): void {
     if (this.closed) return;
     // Status, diagnostics and snapshots are replaceable presentation messages.
-    this.queue = this.queue.filter((queued) => queued.type !== frame.type);
+    if (["snapshot", "status", "diagnostic", "query"].includes(frame.type)) this.queue = this.queue.filter(queued => queued.type !== frame.type);
+    if (frame.type === "document" && frame.message.type === "event") {
+      this.queue = this.queue.filter(queued => queued.type !== "document" || queued.message.type !== "event");
+    }
+    if (this.queue.length >= 64) { this.socket.destroy(new Error("preview command queue exceeded 64 frames")); return; }
     this.queue.push(frame);
     this.flush();
   }
   private flush(): void {
-    if (this.closed || this.busy || this.socket.destroyed) return;
+    if (this.closed || this.busy || this.socket.destroyed || !this.socket.writable || this.socket.writableEnded || this.socket.readableEnded) return;
     const frame = this.queue.shift();
     if (frame) { this.busy = true; this.inFlight = frame; this.socket.write(encodeFrame(frame)); }
   }
@@ -97,7 +110,7 @@ export class PreviewConnection {
 }
 
 export async function launchPreview(entry: string, options: PreviewOptions = {}): Promise<void> {
-  const binary = await viewerPath(options.viewer, options.headless);
+  const binary = await viewerPath(options.viewer, options.headless, options.edit);
   // Darwin's sockaddr_un is limited to 104 bytes; TMPDIR may already exceed it.
   const directory = await mkdtemp("/tmp/oxitone-preview-");
   await chmod(directory, 0o700);
@@ -111,34 +124,38 @@ export async function launchPreview(entry: string, options: PreviewOptions = {})
   viewer.on("error", (error) => { spawnError = error; });
   let socket: Socket | undefined;
   let runner: PreviewRunner | undefined;
+  let daw: DawRunner | undefined;
   let connection: PreviewConnection | undefined;
   let stop: (() => void) | undefined;
-  const signal = () => stop?.();
+  let stopping = false;
+  let failure: Error | undefined;
+  let socketFailure: NodeJS.ErrnoException | undefined;
+  const signal = () => { stopping = true; stop?.(); };
   try {
     socket = await openSocket(path, viewer);
     if (spawnError) throw spawnError;
-    connection = new PreviewConnection(socket, (revision) => runner?.rejectRevision(revision));
-    let failure: Error | undefined;
+    connection = new PreviewConnection(socket, (revision) => { runner?.rejectRevision(revision); daw?.rejectRevision(); }, requests => daw?.receive(requests), options.edit);
     const finished = new Promise<void>((done) => {
       stop = done;
-      viewer.once("exit", (code) => { if (code) failure = new Error(`Preview viewer exited ${code}`); done(); });
-      socket!.once("error", (error) => { failure = error; done(); });
+      viewer.once("exit", (code, signal) => { if (!stopping && (code !== 0 || signal)) failure = new Error(`Preview viewer exited ${signal ?? code}`); done(); });
+      socket!.once("error", (error) => { socketFailure = error; done(); });
       socket!.once("close", done);
     });
     process.once("SIGINT", signal); process.once("SIGTERM", signal);
-    runner = new PreviewRunner(entry, (frame) => {
+    const send = (frame: PreviewFrame) => {
       if (frame.type === "diagnostic") console.error(`[${frame.code}] ${frame.message}`);
       connection!.send(frame);
-    }, options);
-    await runner.start();
+    };
+    if (options.edit) { daw = new DawRunner(entry, send, { ...options, documentSocket: options.documentSocket ?? join(directory, "document") }); await daw.start(); }
+    else { runner = new PreviewRunner(entry, send, options); await runner.start(); }
     console.error(`Oxitone preview · ${options.watch === false ? "single build" : "watching"} ${entry}`);
     await finished;
-    if (failure) throw failure;
   } finally {
     process.removeListener("SIGINT", signal); process.removeListener("SIGTERM", signal);
-    await runner?.close();
     connection?.close();
-    if (socket && !socket.destroyed) socket.end(encodeFrame({ protocolVersion: "1.0", type: "shutdown" }));
+    await runner?.close();
+    await daw?.close();
+    if (socket?.writable && !socket.destroyed && !socket.writableEnded && !socket.readableEnded) socket.end(encodeFrame({ protocolVersion: "1.0", type: "shutdown" }));
     if (viewer.exitCode === null && viewer.signalCode === null) {
       await Promise.race([new Promise<void>((done) => viewer.once("exit", () => done())), delay(1500)]);
       if (viewer.exitCode === null && viewer.signalCode === null) viewer.kill("SIGKILL");
@@ -146,4 +163,8 @@ export async function launchPreview(entry: string, options: PreviewOptions = {})
     socket?.destroy();
     await rm(directory, { recursive: true, force: true });
   }
+  if (failure) throw failure;
+  // A clean viewer shutdown can race the final poll/write. Only these transport-close errors
+  // are benign after the actual child exited successfully; parse errors and crashes still fail.
+  if (socketFailure && !(viewer.exitCode === 0 && ["EPIPE", "ECONNRESET"].includes(socketFailure.code ?? ""))) throw socketFailure;
 }

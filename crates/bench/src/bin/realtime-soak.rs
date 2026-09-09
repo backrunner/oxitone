@@ -146,6 +146,7 @@ fn main() {
             .unwrap();
             for channel in &mut snapshot.channels {
                 channel.effect_chain.push(oxitone_core::wire::EffectRef {
+                    instance_id: None,
                     plugin_id: plugin.registration.plugin_id.clone(),
                     plugin_version: plugin.registration.plugin_version.clone(),
                     parameters: Default::default(),

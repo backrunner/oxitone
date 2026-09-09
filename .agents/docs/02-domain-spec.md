@@ -1,5 +1,9 @@
 # Oxitone 领域规格
 
+生成式 Pattern 的新实现契约见 [15-source-authoring.md](15-source-authoring.md)：保留 chord/
+arp 规则、输出坐标与不可变局部 edit，并新增 concat/repeat/slice/transpose/velocity。
+完整编排、typed plugin instance 与 automation range 目标见 [统一设计](../designs/source-daw/01-authoring.md)。
+
 本文定义 TypeScript authoring API 的语义。字段名称是建议的 Phase 1 契约；具体实现可以拆成多个文件，但不能改变单位和边界规则。
 
 ## Project 与时间轴
@@ -28,11 +32,12 @@
 保留旧图。Project.play 自动提交新 revision；Session 直接 play/export 则使用当前编译
 版本。bar+beat/marker 位置按该编译版本解析，seconds/frame 在 Rust  transport 边界转换。
 
-Track 是编排容器，不直接产生声音。它绑定一个或多个 `Channel`，允许多个 Track 指向同一 Channel（用于 layering），但一个 `PatternClip` 只能属于一个 Track。
+Track 是编排容器，不直接产生声音，允许 Pattern、Sample、Automation 重叠排布。Engine 1.2 的 Pattern.parts 保存各 Channel 的独立 leaf Pattern，调度按 Pattern 自身路由；旧 leaf Pattern 与 SampleClip 继续采用 Track.channelIds。一个 PatternClip 只能属于一个 Track。parts 长度、注册/恢复和编辑约束见 [18](18-project-daw.md)。
 
-TS Track 已暴露 `enabled`（默认 true）和 `midiChannel`（可选的 1..16 整数）；setter
+TS Track 已暴露 `enabled`（默认 true）、`mute`/`solo`（默认 false）和 `midiChannel`（可选的 1..16 整数）；setter
 先校验再增加 revision。disabled Track 保留编排数据，但不参与音频调度和 MIDI note track
-分配。`use(channel)` 只接受同 Project 的 Channel 对象。Track `tempo` 支持 20..999
+分配。Track M/S 独立于共享 Channel，过滤本 Track 的所有 placements，保持时间线长度；
+优先级及播放/导出策略见 [23](23-daw-controls.md)。`use(channel)` 只接受同 Project 的 Channel 对象。Track `tempo` 支持 20..999
 静态 BPM，赋 undefined 恢复 Project 时钟。局部拍位以项目时间零点为锚点，先按
 `seconds = localBeat * 60 / trackTempo` 换算，再用 Rust 有效时钟逆变换为 Project beat。
 bar/beat、duration、loop/last 均先在局部编排域解释，保留原 clip ID 和概率 seed。
@@ -48,6 +53,8 @@ track.pattern(pattern).at({ bar: 1, beat: 0 }).loop(4).last({ bar: 17 })
 - `Pattern` 是不可变 Note/automation 片段，长度 `lengthBeats > 0`。
 - `PatternClip` 有 `startBeat`、可选 `durationBeats`、`loopCount` 或 `lastBeat`，`loopCount` 与 `lastBeat` 不能同时指定。
 - `lastBeat` 是 exclusive end；循环在每个 pattern 长度边界重新计算，超出 `lastBeat` 的 Note 被裁掉。
+- DAW 移动片段同步平移 `lastBeat`，同 Track 不改变 membership 顺序；复制保留全部 placement
+  选项并创建新实例。右边缘长度与 Sample fit 的事务及限制见 [23](23-daw-controls.md)。
 - Pattern 内 Note 的 `start` 可以为 0，但不能为负；`duration > 0`。同一时间的 Note 使用稳定排序：start、channel voice hint、创建序号。
 - Clip 允许 transpose（半音整数）、velocity scale（0..2）、probability（0..1，使用项目 seed 确定性采样）；Phase 1 不随机改变 MIDI export，export 必须使用 seed 固定结果。PatternClip 和 SampleClip 都有 `enabled`（默认 true），`false` 时不参与调度但保留数据，用于编排中的快速 mute/unmute。
 

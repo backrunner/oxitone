@@ -9,7 +9,8 @@ use gpui::{prelude::*, *};
 use std::{sync::Arc, time::Duration};
 
 pub struct Preview {
-    backend: Backend,
+    pub(crate) backend: Backend,
+    pub document: crate::document_ui::DocumentUi,
     pub theme: Theme,
     pub project: Option<Arc<ViewProject>>,
     pub playback: PlaybackStatus,
@@ -17,6 +18,8 @@ pub struct Preview {
     pub requested_playing: Option<bool>,
     pub requested_position: Option<(u64, u64)>,
     pub show_shortcuts: bool,
+    pub status_details: bool,
+    pub close: crate::close_state::CloseState,
     pub analysis: AnalysisMap,
     pub selected_clip: Option<String>,
     pub selected_scope: String,
@@ -29,23 +32,21 @@ pub struct Preview {
     pub status: String,
     pub diagnostic: Option<Diagnostic>,
     pub show_scopes: bool,
-    pub position_focus: FocusHandle,
     pub piano_focus: FocusHandle,
     pub mixer_focus: FocusHandle,
     pub inspector_focus: FocusHandle,
     pub workspace_focus: FocusHandle,
-    pub position_text: String,
-    pub plugin_windows: std::collections::HashMap<
-        crate::plugin_details::DetailTarget,
-        WindowHandle<crate::plugin_window::PluginWindow>,
-    >,
+    pub plugin_windows:
+        std::collections::HashMap<String, Entity<crate::plugin_window::PluginWindow>>,
 }
 
 impl Preview {
     pub fn new(backend: Backend, window: &mut Window, cx: &mut Context<Self>) -> Self {
-        window.on_window_should_close(cx, |_, cx| {
-            cx.defer(|cx| cx.quit());
-            true
+        let owner = cx.weak_entity();
+        window.on_window_should_close(cx, move |window, cx| {
+            owner
+                .update(cx, |this, cx| this.request_close(window, cx))
+                .unwrap_or(true)
         });
         let workspace_focus = cx.focus_handle();
         workspace_focus.focus(window);
@@ -72,6 +73,7 @@ impl Preview {
         .detach();
         Self {
             backend,
+            document: Default::default(),
             theme: Theme::from_appearance(window.appearance()),
             project: None,
             playback: PlaybackStatus::default(),
@@ -79,6 +81,8 @@ impl Preview {
             requested_playing: None,
             requested_position: None,
             show_shortcuts: false,
+            status_details: false,
+            close: Default::default(),
             analysis: AnalysisMap::new(),
             selected_clip: None,
             selected_scope: "mix_master".into(),
@@ -90,13 +94,11 @@ impl Preview {
             loop_end: 16.0,
             status: "Waiting for code".into(),
             diagnostic: None,
-            show_scopes: true,
-            position_focus: cx.focus_handle(),
+            show_scopes: false,
             piano_focus: cx.focus_handle(),
             mixer_focus: cx.focus_handle(),
             inspector_focus: cx.focus_handle(),
             workspace_focus,
-            position_text: String::new(),
             plugin_windows: Default::default(),
         }
     }
@@ -104,6 +106,7 @@ impl Preview {
     fn poll(&mut self, cx: &mut Context<Self>) {
         while let Ok(event) = self.backend.events.try_recv() {
             match event {
+                UiEvent::Document(message) => self.observe_document(message),
                 UiEvent::Accepted(project) => {
                     if !project
                         .snapshot
@@ -131,6 +134,7 @@ impl Preview {
                         self.analysis.clear();
                     }
                     self.project = Some(project);
+                    self.settle_presentation();
                     self.diagnostic = None;
                     self.status = "Code up to date".into();
                 }
@@ -159,6 +163,14 @@ impl Preview {
                 UiEvent::Shutdown => cx.quit(),
             }
         }
+        if self
+            .close
+            .complete(self.document.view.as_ref(), self.document.pending.is_some())
+        {
+            self.close.cancel();
+            cx.quit();
+            return;
+        }
         if let Some(project) = &self.project {
             let epoch = project
                 .telemetry
@@ -185,75 +197,6 @@ impl Preview {
             .backend
             .commands
             .send(Command::Frame(Frame::Transport { command }, None));
-    }
-}
-
-impl Render for Preview {
-    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let theme = self.theme;
-        let mut root = div()
-            .id("preview-workspace")
-            .track_focus(&self.workspace_focus)
-            .on_key_down(cx.listener(Self::workspace_key))
-            .relative()
-            .size_full()
-            .flex()
-            .flex_col()
-            .bg(rgb(theme.bg))
-            .text_color(rgb(theme.text))
-            .font_family("Helvetica Neue")
-            .on_mouse_move(cx.listener(|this, event, window, cx| {
-                if this.workspace.gesture.is_some() {
-                    this.move_gesture(event, window);
-                    cx.notify();
-                }
-            }))
-            .on_mouse_up(
-                MouseButton::Left,
-                cx.listener(|this, _, _, _| this.workspace.gesture = None),
-            )
-            .on_mouse_up_out(
-                MouseButton::Left,
-                cx.listener(|this, _, _, _| this.workspace.gesture = None),
-            )
-            .child(self.header(window, cx))
-            .child(self.transport_bar(cx));
-        if let Some(diagnostic) = &self.diagnostic {
-            root = root.child(
-                div()
-                    .px_5()
-                    .py_2()
-                    .bg(rgb(theme.diagnostic_bg))
-                    .text_sm()
-                    .text_color(rgb(theme.diagnostic_text))
-                    .child(format!(
-                        "{} · {}  {}",
-                        diagnostic.code,
-                        diagnostic.message,
-                        diagnostic.path.as_deref().unwrap_or("")
-                    )),
-            );
-        }
-        if self.project.is_some() {
-            root = root.child(crate::workspace::panels(self, window, cx));
-        } else {
-            root = root.child(
-                div()
-                    .flex_1()
-                    .flex()
-                    .flex_col()
-                    .justify_center()
-                    .items_center()
-                    .gap_4()
-                    .child(div().text_2xl().child("Music, written in code."))
-                    .child(div().text_sm().text_color(rgb(theme.muted)).child(
-                        "Your tracks, notes and mixer appear after the first successful build.",
-                    )),
-            );
-        }
-        root.child(self.footer()).when(self.show_shortcuts, |d| {
-            d.child(crate::shortcut_help::view(self, cx))
-        })
     }
 }
 

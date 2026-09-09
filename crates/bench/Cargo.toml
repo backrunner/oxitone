@@ -99,6 +99,10 @@ name = "preview"
 harness = false
 
 [[bench]]
+name = "playlist"
+harness = false
+
+[[bench]]
 name = "synth_motion"
 harness = false
 

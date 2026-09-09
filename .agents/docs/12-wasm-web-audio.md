@@ -20,7 +20,9 @@ transport、DSP、samples、instruments、mixer、render；不创建第二套 Ja
 ## ABI v1 与生命周期
 
 每个 Wasm instance 独占一个引擎，不跨实例共享 Rust 指针。control 命令携带
-`protocolVersion: "1.0"`，使用受限 JSON 输入、结构化错误和同版本 snapshot。
+`protocolVersion: "1.0"`，使用受限 JSON 输入与结构化错误。这是独立 Wasm control 外壳；
+内部 ProjectSnapshot 已支持 engine 1.1 的插件实例/scoped automation（见 [20](20-plugin-instances.md)），
+不把 Wasm memory ABI 1 或 control 1.0 重新标成 1.1。
 宿主通过 alloc/free 管理输入区域，读取 response pointer/length 后复制结果；
 不得保留到下次控制命令后。PCM 指针在 compile 后查询，直到下次编译/释放保持有效。
 指针数值有效不代表 JS TypedArray view 有效：任何 control 都可能 grow memory，TS facade

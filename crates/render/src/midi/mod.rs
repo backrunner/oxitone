@@ -172,7 +172,7 @@ pub fn export_midi(
     let mut tracks: Vec<_> = snapshot
         .tracks
         .iter()
-        .filter(|t| t.enabled != Some(false))
+        .filter(|t| t.audible(false))
         .collect();
     tracks.sort_by(|a, b| a.id.cmp(&b.id));
 

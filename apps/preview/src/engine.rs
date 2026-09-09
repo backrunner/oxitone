@@ -50,6 +50,9 @@ impl Engine {
 
     pub fn handle(&mut self, frame: Frame) -> Value {
         let result = match frame {
+            Frame::Document { message } => message.validate().map(|()| {
+                let _ = self.events.send(UiEvent::Document(message));
+            }),
             Frame::Snapshot {
                 snapshot,
                 asset_base_dir,
@@ -138,6 +141,7 @@ impl Engine {
                     graph_latency: previous.graph_latency,
                     plugins: previous.plugins.clone(),
                     pattern_labels: previous.pattern_labels.clone(),
+                    automation_previews: previous.automation_previews.clone(),
                     mixer_strips: Default::default(),
                 });
                 self.current = Some(project.clone());
@@ -188,7 +192,10 @@ impl Engine {
             &snapshot,
             &registry,
             &SampleStore::new(Some(PathBuf::from(base))),
-            &RenderGraphOptions::default(),
+            &RenderGraphOptions {
+                respect_solo: true,
+                ..Default::default()
+            },
         )?);
         let catalog = crate::plugin_catalog::collect(&snapshot, &registry, libraries);
         let project = Arc::new(ViewProject {
@@ -203,6 +210,7 @@ impl Engine {
             plan: graph.plan().into(),
             graph_latency: graph.graph_latency_frames(),
             pattern_labels: Default::default(),
+            automation_previews: Default::default(),
             telemetry: graph.enable_preview(),
         });
         if let Some(session) = &self.session {
@@ -278,7 +286,7 @@ impl Engine {
 
     pub fn state(&self) -> Value {
         let status = self.playback();
-        json!({"protocolVersion":"1.0","type":"state", "revision":self.current.as_ref().map(|p| p.snapshot.revision.to_string()),
+        json!({"protocolVersion":"1.0","documentProtocolVersion":"2.0","type":"state", "revision":self.current.as_ref().map(|p| p.snapshot.revision.to_string()),
             "seenRevision":self.seen.map(|r| r.to_string()), "cursor":status.cursor.to_string(), "audibleFrame":status.audible.to_string(),
             "playing":status.playing,"xruns":status.xruns,"pluginFaults":status.faults,
             "tracks":self.current.as_ref().map_or(0, |p| p.snapshot.tracks.len()),

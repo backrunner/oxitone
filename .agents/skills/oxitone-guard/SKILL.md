@@ -34,8 +34,11 @@ Use this skill for any Oxitone code, API, DSP, plugin, project-format, packaging
 1. Read the relevant `.agents/docs/*` specification before editing. Update the spec when the contract changes.
 2. Identify the layer: `packages/*` for TypeScript authoring/API, `crates/*` for Rust runtime/DSP, and
    `packages/native-*` only for thin platform packaging.
-3. Define or update the versioned TS contract first, then implement Rust validation and execution. Keep
-   command/snapshot schemas backward-compatible within a major version.
+3. Define or update the versioned TS contract first, then implement Rust validation and execution.
+   The project is unpublished; the approved source/DAW redesign (`../../designs/source-daw/README.md`)
+   permits breaking changes. Migrate callers, tests and documentation together and delete superseded
+   implementations and compatibility shims. Reject unsupported versions without rewriting or deleting
+   recovery data; do not relabel old payloads as a new format.
 4. Add tests at the narrowest useful layer: pure TS model tests, Rust DSP tests, graph/transport tests,
    and an integration test through the native facade where the boundary is affected.
 5. Run formatting, type checking, Rust tests, and the focused benchmark. Record device, sample rate,
@@ -58,4 +61,7 @@ For domain details, read `../../docs/01-architecture.md`, `../../docs/02-domain-
 `07-automation-spec.md` and update its golden vectors when observable output changes. Any plugin
 loading, ABI, manifest, or third-party distribution change must read `08-plugin-abi.md` and keep
 the conformance fixtures in sync. Preview/viewer changes must read `09-preview-app.md` and keep the
-viewer strictly read-only against authoring data.
+UI writes behind the Node Document Service's semantic transactions. The approved source/DAW design
+supersedes the former read-only product restriction; the currently shipped viewer remains read-only
+until its edit protocol and accepted-revision projection are implemented. No GUI writes Rust state
+or source files directly. Never add entity IDs, UUID comments, or binding decorators to user source.

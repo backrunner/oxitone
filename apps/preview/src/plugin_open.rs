@@ -1,7 +1,9 @@
+//! Open a reusable plugin view inside the workspace; no native window or DSP creation.
 use crate::{
     plugin_details::{self, DetailTarget},
-    plugin_window::{resolve_panel, PluginWindow},
+    plugin_window::PluginWindow,
     ui::Preview,
+    window_manager::WindowId,
 };
 use gpui::*;
 impl Preview {
@@ -9,62 +11,40 @@ impl Preview {
         &mut self,
         target: DetailTarget,
         cx: &mut Context<Self>,
-    ) -> Option<WindowHandle<PluginWindow>> {
-        self.plugin_windows
-            .retain(|_, handle| handle.read(cx).is_ok());
-        if let Some(handle) = self.plugin_windows.get(&target).copied() {
-            if handle
-                .update(cx, |_, window, _| window.activate_window())
-                .is_ok()
-            {
-                return Some(handle);
-            }
-        }
+    ) -> Option<Entity<PluginWindow>> {
         let project = self.project.clone()?;
-        let details = plugin_details::resolve(&project, &target)?;
-        let panel = resolve_panel(&project, Some(&details))?;
+        let key = crate::plugin_identity::key(&project, &target);
+        if let Some(entity) = self.plugin_windows.get(&key).cloned() {
+            self.document
+                .windows
+                .focus(WindowId::Plugin(entity.entity_id().as_u64()));
+            entity.update(cx, |view, cx| {
+                view.request_focus = true;
+                cx.notify();
+            });
+            cx.notify();
+            return Some(entity);
+        }
+        plugin_details::resolve(&project, &target)?;
         let owner = cx.entity();
         let status = crate::plugin_window::sync_status(self);
-        let key = target.clone();
-        let mut bounds = Bounds::centered(
-            None,
-            size(px(panel.size.width as f32), px(panel.size.height as f32)),
-            cx,
-        );
-        let offset = px((self.plugin_windows.len() % 6) as f32 * 24.);
-        bounds.origin += point(offset, offset);
-        match cx.open_window(
-            WindowOptions {
-                window_bounds: Some(WindowBounds::Windowed(bounds)),
-                titlebar: Some(TitlebarOptions {
-                    title: Some("Oxitone · Plugin Details".into()),
-                    appears_transparent: true,
-                    traffic_light_position: Some(point(px(18.), px(21.))),
-                }),
-                window_min_size: Some(size(px(440.), px(280.))),
-                ..Default::default()
-            },
-            |window, cx| {
-                cx.new(|cx| {
-                    let detail = PluginWindow::new(target, project, owner, status, window, cx);
-                    window.set_window_title(&detail.title());
-                    detail
-                })
-            },
-        ) {
-            Ok(handle) => {
-                self.plugin_windows.insert(key, handle);
-                Some(handle)
+        let theme = self.theme;
+        let entity = cx.new(|cx| PluginWindow::new(target, project, owner, status, theme, cx));
+        let id = WindowId::Plugin(entity.entity_id().as_u64());
+        if let Some(panel) = &entity.read(cx).panel {
+            let mut bounds = self.document.windows.state(id).bounds;
+            bounds.width = panel.size.width as f32;
+            bounds.height = panel.size.height as f32 + 28.;
+            let desktop = self.document.windows.desktop.get().size;
+            if desktop.width > px(300.) && desktop.height > px(200.) {
+                bounds.width = bounds.width.min(f32::from(desktop.width) * 0.9);
+                bounds.height = bounds.height.min(f32::from(desktop.height) * 0.85);
             }
-            Err(error) => {
-                self.diagnostic = Some(crate::model::Diagnostic {
-                    code: "PreviewWindowFailed".into(),
-                    message: error.to_string(),
-                    path: None,
-                });
-                cx.notify();
-                None
-            }
+            self.document.windows.set_bounds(id, bounds);
         }
+        self.document.windows.focus(id);
+        self.plugin_windows.insert(key, entity.clone());
+        cx.notify();
+        Some(entity)
     }
 }

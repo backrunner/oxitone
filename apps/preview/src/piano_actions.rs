@@ -9,19 +9,51 @@ impl Preview {
     pub fn scroll_piano(&mut self, event: &ScrollWheelEvent) {
         let Some(l) = self.piano_layout() else { return };
         let delta = event.delta.pixel_delta(px(20.));
+        if self.document.gesture.is_some()
+            || self.document.notes.marquee.is_some()
+            || self.workspace.gesture.is_some()
+        {
+            return;
+        }
         if event.modifiers.platform || event.modifiers.control {
-            self.zoom_piano((f32::from(delta.y) / 150.).exp(), 1.);
+            let at = event.position - self.piano.origin.get();
+            let factor = (f32::from(delta.y) / 220.).exp();
+            self.zoom_piano_at(
+                if event.modifiers.shift { 1. } else { factor },
+                if event.modifiers.shift { factor } else { 1. },
+                (f32::from(at.x) - KEY_WIDTH, f32::from(at.y) - RULER),
+            );
         } else {
             let (x, y) = if event.modifiers.shift {
                 (f32::from(delta.x + delta.y), 0.)
             } else {
                 (f32::from(delta.x), f32::from(delta.y))
             };
-            self.piano.offset = Some((
+            self.piano.set_offset((
                 (l.scroll_x - x).clamp(0., l.max_x),
                 (l.scroll_y - y).clamp(0., l.max_y),
             ));
         }
+    }
+    pub fn pan_piano(&mut self, event: &MouseDownEvent) -> bool {
+        let command = event.modifiers.platform || event.modifiers.control;
+        if event.button != MouseButton::Middle
+            && !(event.button == MouseButton::Left && command && event.modifiers.alt)
+        {
+            return false;
+        }
+        if self.document.gesture.is_some() {
+            return true;
+        }
+        let Some(l) = self.piano_layout() else {
+            return false;
+        };
+        self.workspace.gesture = Some(Gesture::PianoPan {
+            pointer: event.position,
+            offset: (l.scroll_x, l.scroll_y),
+            button: event.button,
+        });
+        true
     }
     pub fn press_piano(&mut self, event: &MouseDownEvent) {
         let Some(l) = self.piano_layout() else { return };
@@ -60,7 +92,7 @@ impl Preview {
                 Axis::Horizontal => (next, l.scroll_y),
                 Axis::Vertical => (l.scroll_x, next),
             };
-            self.piano.offset = Some(offset);
+            self.piano.set_offset(offset);
             self.workspace.gesture = Some(Gesture::PianoScroll {
                 axis,
                 pointer: axis.coordinate(event.position),
@@ -89,7 +121,10 @@ impl Preview {
             "pageup" => (0., -l.grid_height),
             "pagedown" => (0., l.grid_height),
             "home" => (-l.max_x, 0.),
-            "end" => (l.max_x, 0.),
+            "end" => (
+                (l.length as f32 * l.beat_width - l.grid_width * 0.8).max(0.) - l.scroll_x,
+                0.,
+            ),
             "=" | "+" => {
                 self.zoom_piano(1.25, 1.);
                 return true;
@@ -104,41 +139,45 @@ impl Preview {
             }
             _ => return false,
         };
-        self.piano.offset = Some((
+        self.piano.set_offset((
             (l.scroll_x + dx).clamp(0., l.max_x),
             (l.scroll_y + dy).clamp(0., l.max_y),
         ));
         true
     }
     pub fn piano_layout(&self) -> Option<PianoLayout> {
-        let project = self.project.as_ref()?;
-        let clip = project
-            .snapshot
-            .pattern_clips
-            .iter()
-            .find(|c| Some(&c.id) == self.selected_clip.as_ref())?;
-        let pattern = project
-            .snapshot
-            .patterns
-            .iter()
-            .find(|p| p.id == clip.pattern_id)?;
-        Some(self.piano.layout(
-            pattern.length_beats.to_f64(),
-            pattern.notes.iter().map(|n| n.pitch),
-        ))
+        let pattern = self.piano_pattern()?;
+        Some(
+            self.piano
+                .layout(self.piano_period()?, pattern.notes.iter().map(|n| n.pitch)),
+        )
     }
     pub fn zoom_piano(&mut self, horizontal: f32, vertical: f32) {
         let Some(old) = self.piano_layout() else {
             return;
         };
-        self.piano.zoom = (self.piano.zoom * horizontal).clamp(0.25, 128.);
+        self.zoom_piano_at(
+            horizontal,
+            vertical,
+            (old.grid_width * 0.5, old.grid_height * 0.5),
+        );
+    }
+    pub fn zoom_piano_at(&mut self, horizontal: f32, vertical: f32, anchor: (f32, f32)) {
+        let Some(old) = self.piano_layout() else {
+            return;
+        };
+        self.piano.zoom = (self.piano.zoom * horizontal).clamp(1. / 96., 128.);
         self.piano.key_zoom = (self.piano.key_zoom * vertical).clamp(0.5, 4.);
         let new = self.piano_layout().unwrap();
-        self.piano.offset = Some((
-            (old.scroll_x + old.grid_width * 0.5) / old.beat_width * new.beat_width
-                - new.grid_width * 0.5,
-            (old.scroll_y + old.grid_height * 0.5) / old.key_height * new.key_height
-                - new.grid_height * 0.5,
+        let anchor = (
+            anchor.0.clamp(0., old.grid_width),
+            anchor.1.clamp(0., old.grid_height),
+        );
+        self.piano.set_offset((
+            ((old.scroll_x + anchor.0) / old.beat_width * new.beat_width - anchor.0)
+                .clamp(0., new.max_x),
+            ((old.scroll_y + anchor.1) / old.key_height * new.key_height - anchor.1)
+                .clamp(0., new.max_y),
         ));
     }
 }

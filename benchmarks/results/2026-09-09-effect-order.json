@@ -1,0 +1,2443 @@
+{
+  "date": "2026-09-09",
+  "scope": "Source/DAW control-side effect order transactions; not DSP or audio device performance",
+  "rustc": "1.98.0 (88d9e12ae 2026-08-18)",
+  "llvm": "22.1.8",
+  "host": "aarch64-apple-darwin",
+  "nativeArtifact": "Same existing workspace native artifact for baseline and final; no native implementation changes",
+  "fixture": {
+    "notes": 100,
+    "placements": 2,
+    "instrument": "wavetable defaults",
+    "effects": [
+      "delay defaults",
+      "delay feedback=0.6"
+    ],
+    "catalogEntries": 20,
+    "sampleRate": 48000,
+    "blockSize": 128
+  },
+  "gates": {
+    "smallProjectEditP95Ms": 300,
+    "dedicatedFinalMs": 258.9215409999997,
+    "wholeProjectFinalMs": 157.43120799999997,
+    "passed": true
+  },
+  "limitations": [
+    "Runs are sequential but not randomized paired comparisons; scheduling/GC and filesystem noise remain.",
+    "The 40-sample final dedicated p99 is its maximum (301.85 ms); the 10-sample whole-project p95/p99 are both its maximum.",
+    "Directory scan deduplication adds negative evidence, so final read-validation workload is not identical to baseline.",
+    "Large-project capacity, memory peaks, device, callback, audio CPU and xruns are not measured."
+  ],
+  "runs": [
+    {
+      "stage": "previous-source-daw",
+      "note": "Previous task baseline; no phase diagnostics; all original metrics retained.",
+      "nodeCompileCache": false,
+      "benchmark": "source-daw",
+      "cpu": "Apple M4",
+      "os": "darwin 27.0.0",
+      "node": "v26.5.0",
+      "notes": 100,
+      "placements": 2,
+      "plugins": 20,
+      "iterations": 10,
+      "warmup": 1,
+      "sampleRate": 48000,
+      "blockSize": 128,
+      "device": null,
+      "callbackP95": null,
+      "callbackP99": null,
+      "xruns": null,
+      "measurements": [
+        {
+          "name": "whole-project-edit-validate-accept",
+          "p50Ms": 177.81445799999983,
+          "p95Ms": 185.80500000000006,
+          "p99Ms": 185.80500000000006
+        },
+        {
+          "name": "configuration-edit-validate-accept",
+          "p50Ms": 175.0947500000002,
+          "p95Ms": 179.71804199999997,
+          "p99Ms": 179.71804199999997
+        },
+        {
+          "name": "rack-review-validate",
+          "p50Ms": 179.2999579999996,
+          "p95Ms": 202.7352919999994,
+          "p99Ms": 202.7352919999994
+        },
+        {
+          "name": "dirty-journal-save",
+          "p50Ms": 44.18774999999914,
+          "p95Ms": 49.74066700000003,
+          "p99Ms": 49.74066700000003
+        },
+        {
+          "name": "effect-order-validate-accept",
+          "p50Ms": 214.86895800000093,
+          "p95Ms": 447.6479589999999,
+          "p99Ms": 447.6479589999999
+        },
+        {
+          "name": "source-and-plugin-projection",
+          "p50Ms": 2.4444170000006125,
+          "p95Ms": 3.180916999999681,
+          "p99Ms": 3.180916999999681
+        },
+        {
+          "name": "fresh-project-reopen",
+          "p50Ms": 256.3914999999997,
+          "p95Ms": 282.9509590000016,
+          "p99Ms": 282.9509590000016
+        }
+      ]
+    },
+    {
+      "stage": "before",
+      "note": "Instrumentation only; serial read validation and TS preloading at child startup.",
+      "nodeCompileCache": false,
+      "benchmark": "effect-order",
+      "cpu": "Apple M4",
+      "os": "darwin 27.0.0",
+      "node": "v26.5.0",
+      "iterations": 40,
+      "warmup": 5,
+      "notes": 100,
+      "placements": 2,
+      "effects": 2,
+      "sampleRate": 48000,
+      "blockSize": 128,
+      "device": null,
+      "callbackP95": null,
+      "callbackP99": null,
+      "xruns": null,
+      "measurements": [
+        {
+          "phase": "effect-order-writing",
+          "p50Ms": 1.4424159999998665,
+          "p95Ms": 2.3717089999991003,
+          "p99Ms": 2.789291999999932
+        },
+        {
+          "phase": "read-validation",
+          "p50Ms": 26.60070799999994,
+          "p95Ms": 36.41258300000027,
+          "p99Ms": 42.019542000000456
+        },
+        {
+          "phase": "bundle",
+          "p50Ms": 5.228042000000642,
+          "p95Ms": 8.364125000000058,
+          "p99Ms": 8.919832999999926
+        },
+        {
+          "phase": "worker",
+          "p50Ms": 147.95249999999942,
+          "p95Ms": 222.95700000000033,
+          "p99Ms": 254.18083399999978
+        },
+        {
+          "phase": "native-validation",
+          "p50Ms": 1.1794589999999516,
+          "p95Ms": 1.735500000000684,
+          "p99Ms": 2.540291000000252
+        },
+        {
+          "phase": "effect-order",
+          "p50Ms": 186.54300000000057,
+          "p95Ms": 282.5141249999997,
+          "p99Ms": 308.402959
+        }
+      ],
+      "samples": [
+        {
+          "effect-order-writing": 1.5132910000002084,
+          "read-validation": 31.03129200000012,
+          "bundle": 6.5284999999998945,
+          "worker": 254.18083399999978,
+          "native-validation": 2.540291000000252,
+          "effect-order": 301.82183299999997
+        },
+        {
+          "effect-order-writing": 2.5490829999998823,
+          "read-validation": 42.019542000000456,
+          "bundle": 5.0636249999997744,
+          "worker": 252.3377089999999,
+          "native-validation": 1.388792000000194,
+          "effect-order": 308.402959
+        },
+        {
+          "effect-order-writing": 1.4100000000003092,
+          "read-validation": 26.40474999999924,
+          "bundle": 5.6650830000003225,
+          "worker": 164.92508399999997,
+          "native-validation": 1.5464590000001408,
+          "effect-order": 205.09154199999966
+        },
+        {
+          "effect-order-writing": 1.3382079999996677,
+          "read-validation": 30.21108299999969,
+          "bundle": 5.083542000000307,
+          "worker": 162.09258299999965,
+          "native-validation": 1.2485420000002705,
+          "effect-order": 204.202041
+        },
+        {
+          "effect-order-writing": 2.789291999999932,
+          "read-validation": 41.101541,
+          "bundle": 7.058250000000044,
+          "worker": 182.24995799999988,
+          "native-validation": 1.0360000000000582,
+          "effect-order": 238.51816699999972
+        },
+        {
+          "effect-order-writing": 1.382415999999921,
+          "read-validation": 28.889250000000175,
+          "bundle": 4.812249999999949,
+          "worker": 173.93458399999963,
+          "native-validation": 1.2313749999998436,
+          "effect-order": 213.89641699999993
+        },
+        {
+          "effect-order-writing": 1.5299169999998412,
+          "read-validation": 31.559916999999587,
+          "bundle": 6.143499999999676,
+          "worker": 160.52304200000026,
+          "native-validation": 1.1070420000000922,
+          "effect-order": 205.11149999999998
+        },
+        {
+          "effect-order-writing": 1.5253750000001673,
+          "read-validation": 31.96533299999919,
+          "bundle": 5.668042000000241,
+          "worker": 141.7040420000003,
+          "native-validation": 1.4171249999999418,
+          "effect-order": 186.19129099999918
+        },
+        {
+          "effect-order-writing": 1.5252080000000205,
+          "read-validation": 29.405499000000418,
+          "bundle": 6.929000000000087,
+          "worker": 134.0399579999994,
+          "native-validation": 1.0869160000002012,
+          "effect-order": 177.7534999999998
+        },
+        {
+          "effect-order-writing": 1.5820410000005722,
+          "read-validation": 24.981916000001547,
+          "bundle": 6.60754100000031,
+          "worker": 146.0525829999997,
+          "native-validation": 1.735500000000684,
+          "effect-order": 186.05570799999987
+        },
+        {
+          "effect-order-writing": 1.9842499999995198,
+          "read-validation": 17.31891799999903,
+          "bundle": 8.377875000000131,
+          "worker": 154.68195800000012,
+          "native-validation": 1.1301669999993464,
+          "effect-order": 188.20295800000076
+        },
+        {
+          "effect-order-writing": 1.2994580000004134,
+          "read-validation": 27.6802919999991,
+          "bundle": 5.6218330000001515,
+          "worker": 153.89983399999983,
+          "native-validation": 1.339999999999236,
+          "effect-order": 193.930292
+        },
+        {
+          "effect-order-writing": 1.417583000000377,
+          "read-validation": 36.41258300000027,
+          "bundle": 4.5503749999998035,
+          "worker": 147.416792,
+          "native-validation": 1.4440000000004147,
+          "effect-order": 195.8607919999995
+        },
+        {
+          "effect-order-writing": 1.7914580000006026,
+          "read-validation": 27.91425100000106,
+          "bundle": 4.916874999999891,
+          "worker": 151.41325000000052,
+          "native-validation": 1.1557910000001357,
+          "effect-order": 190.90991699999995
+        },
+        {
+          "effect-order-writing": 1.4424159999998665,
+          "read-validation": 26.232497999999396,
+          "bundle": 5.147209000000657,
+          "worker": 148.8361670000004,
+          "native-validation": 1.1879170000001977,
+          "effect-order": 186.54300000000057
+        },
+        {
+          "effect-order-writing": 1.6300830000000133,
+          "read-validation": 34.18083399999887,
+          "bundle": 4.67200000000048,
+          "worker": 149.79299999999967,
+          "native-validation": 1.1537910000006377,
+          "effect-order": 194.85416600000008
+        },
+        {
+          "effect-order-writing": 1.445332999999664,
+          "read-validation": 22.847375000000284,
+          "bundle": 5.959208000000217,
+          "worker": 145.99662500000068,
+          "native-validation": 1.27337499999976,
+          "effect-order": 182.48374999999942
+        },
+        {
+          "effect-order-writing": 1.3869999999997162,
+          "read-validation": 26.318500000001222,
+          "bundle": 5.228042000000642,
+          "worker": 140.48562500000025,
+          "native-validation": 1.1700419999997393,
+          "effect-order": 178.13162499999999
+        },
+        {
+          "effect-order-writing": 1.5303750000002765,
+          "read-validation": 21.095875000001797,
+          "bundle": 8.364125000000058,
+          "worker": 149.37612499999977,
+          "native-validation": 1.2185420000005251,
+          "effect-order": 185.40254100000038
+        },
+        {
+          "effect-order-writing": 1.397584000000279,
+          "read-validation": 26.191082000001188,
+          "bundle": 4.726999999999862,
+          "worker": 145.56658400000015,
+          "native-validation": 1.2669580000001588,
+          "effect-order": 182.62087499999961
+        },
+        {
+          "effect-order-writing": 1.4713330000004134,
+          "read-validation": 27.899498999999196,
+          "bundle": 4.973667000000205,
+          "worker": 143.54079199999978,
+          "native-validation": 1.1954159999995682,
+          "effect-order": 182.6338340000002
+        },
+        {
+          "effect-order-writing": 1.3774160000002666,
+          "read-validation": 27.292042000000038,
+          "bundle": 4.447165999999925,
+          "worker": 143.5171250000003,
+          "native-validation": 1.3355000000001382,
+          "effect-order": 181.4706669999996
+        },
+        {
+          "effect-order-writing": 1.5189169999994192,
+          "read-validation": 27.50804099999914,
+          "bundle": 8.919832999999926,
+          "worker": 148.26650000000063,
+          "native-validation": 1.0951249999998254,
+          "effect-order": 190.84504199999992
+        },
+        {
+          "effect-order-writing": 1.4999580000003334,
+          "read-validation": 20.703708000000006,
+          "bundle": 6.309459000000061,
+          "worker": 144.6277909999999,
+          "native-validation": 1.2239159999999174,
+          "effect-order": 178.1807920000001
+        },
+        {
+          "effect-order-writing": 1.4034169999995356,
+          "read-validation": 26.60070799999994,
+          "bundle": 4.608957999999802,
+          "worker": 152.20391699999982,
+          "native-validation": 1.172500000000582,
+          "effect-order": 189.43395899999996
+        },
+        {
+          "effect-order-writing": 1.3218749999996362,
+          "read-validation": 26.11304199999995,
+          "bundle": 6.48949999999968,
+          "worker": 145.5433750000002,
+          "native-validation": 1.935500000000502,
+          "effect-order": 188.23391699999956
+        },
+        {
+          "effect-order-writing": 1.4057089999996606,
+          "read-validation": 21.60674999999901,
+          "bundle": 7.036665999999968,
+          "worker": 143.557417,
+          "native-validation": 1.0843329999997877,
+          "effect-order": 178.8605830000006
+        },
+        {
+          "effect-order-writing": 1.6456669999997757,
+          "read-validation": 24.53153999999904,
+          "bundle": 7.345874999999978,
+          "worker": 146.42870799999946,
+          "native-validation": 1.1794589999999516,
+          "effect-order": 186.19262499999968
+        },
+        {
+          "effect-order-writing": 1.3484580000003916,
+          "read-validation": 21.316126000001532,
+          "bundle": 4.9913329999999405,
+          "worker": 148.8129170000002,
+          "native-validation": 1.0990839999994932,
+          "effect-order": 180.84279199999946
+        },
+        {
+          "effect-order-writing": 1.2072079999998095,
+          "read-validation": 25.739082999998573,
+          "bundle": 4.682667000000947,
+          "worker": 146.66687499999898,
+          "native-validation": 1.4206670000003214,
+          "effect-order": 183.618457999999
+        },
+        {
+          "effect-order-writing": 1.5195420000000013,
+          "read-validation": 34.476042000000234,
+          "bundle": 4.967625000001135,
+          "worker": 147.95249999999942,
+          "native-validation": 1.445958000000246,
+          "effect-order": 194.76137500000004
+        },
+        {
+          "effect-order-writing": 2.243625000000975,
+          "read-validation": 36.28070900000057,
+          "bundle": 8.094834000001356,
+          "worker": 222.95700000000033,
+          "native-validation": 1.1207500000000437,
+          "effect-order": 282.5141249999997
+        },
+        {
+          "effect-order-writing": 2.3717089999991003,
+          "read-validation": 26.539332000002105,
+          "bundle": 4.749541999999565,
+          "worker": 148.92824999999903,
+          "native-validation": 1.175083000000086,
+          "effect-order": 187.3518750000003
+        },
+        {
+          "effect-order-writing": 1.263542000000598,
+          "read-validation": 26.60929000000033,
+          "bundle": 4.918249999998807,
+          "worker": 146.20108400000026,
+          "native-validation": 1.08704200000102,
+          "effect-order": 183.77149999999892
+        },
+        {
+          "effect-order-writing": 1.2763750000012806,
+          "read-validation": 21.083127000001696,
+          "bundle": 4.616707999999562,
+          "worker": 146.01283299999886,
+          "native-validation": 1.1092920000010054,
+          "effect-order": 177.70350000000144
+        },
+        {
+          "effect-order-writing": 1.1103750000002037,
+          "read-validation": 22.738750000002256,
+          "bundle": 7.499958000000333,
+          "worker": 146.750082999999,
+          "native-validation": 1.076374999998734,
+          "effect-order": 183.00145800000064
+        },
+        {
+          "effect-order-writing": 1.2802090000004682,
+          "read-validation": 17.012500000000728,
+          "bundle": 7.603958000001512,
+          "worker": 145.20587499999965,
+          "native-validation": 1.0481250000011642,
+          "effect-order": 177.30662499999926
+        },
+        {
+          "effect-order-writing": 1.8200419999993755,
+          "read-validation": 27.110249999999724,
+          "bundle": 6.878208000000086,
+          "worker": 194.32300000000032,
+          "native-validation": 1.2499580000003334,
+          "effect-order": 235.93933300000026
+        },
+        {
+          "effect-order-writing": 1.2311250000002474,
+          "read-validation": 20.899083000002065,
+          "bundle": 4.941666000000623,
+          "worker": 142.51112499999908,
+          "native-validation": 1.063666000000012,
+          "effect-order": 173.8836250000004
+        },
+        {
+          "effect-order-writing": 1.223041999999623,
+          "read-validation": 29.783040999998775,
+          "bundle": 5.206791000000521,
+          "worker": 148.8129169999993,
+          "native-validation": 1.1372499999997672,
+          "effect-order": 190.9801669999997
+        }
+      ]
+    },
+    {
+      "stage": "compile-cache-experiment",
+      "note": "Same baseline with NODE_COMPILE_CACHE set; experiment only, not enabled by the implementation.",
+      "nodeCompileCache": true,
+      "benchmark": "effect-order",
+      "cpu": "Apple M4",
+      "os": "darwin 27.0.0",
+      "node": "v26.5.0",
+      "iterations": 40,
+      "warmup": 5,
+      "notes": 100,
+      "placements": 2,
+      "effects": 2,
+      "sampleRate": 48000,
+      "blockSize": 128,
+      "device": null,
+      "callbackP95": null,
+      "callbackP99": null,
+      "xruns": null,
+      "measurements": [
+        {
+          "phase": "effect-order-writing",
+          "p50Ms": 1.410874999999578,
+          "p95Ms": 1.993666999999732,
+          "p99Ms": 2.408082999999351
+        },
+        {
+          "phase": "read-validation",
+          "p50Ms": 27.34387600000082,
+          "p95Ms": 34.982998999999836,
+          "p99Ms": 42.400750000000244
+        },
+        {
+          "phase": "bundle",
+          "p50Ms": 4.7964170000000195,
+          "p95Ms": 8.477791000000252,
+          "p99Ms": 9.680000000000291
+        },
+        {
+          "phase": "worker",
+          "p50Ms": 143.40308300000106,
+          "p95Ms": 153.8677499999999,
+          "p99Ms": 195.3629579999997
+        },
+        {
+          "phase": "native-validation",
+          "p50Ms": 1.158499999999549,
+          "p95Ms": 1.3144169999995938,
+          "p99Ms": 1.5428750000000946
+        },
+        {
+          "phase": "effect-order",
+          "p50Ms": 182.7355830000006,
+          "p95Ms": 193.41358300000002,
+          "p99Ms": 239.58620799999971
+        }
+      ],
+      "samples": [
+        {
+          "effect-order-writing": 1.6481249999999363,
+          "read-validation": 17.354082000000062,
+          "bundle": 4.7964170000000195,
+          "worker": 140.35400000000004,
+          "native-validation": 1.2148329999999987,
+          "effect-order": 169.41370799999982
+        },
+        {
+          "effect-order-writing": 1.4568340000000717,
+          "read-validation": 18.887582999999722,
+          "bundle": 4.457083999999895,
+          "worker": 138.17287499999998,
+          "native-validation": 1.1955419999999322,
+          "effect-order": 167.475958
+        },
+        {
+          "effect-order-writing": 1.308334000000059,
+          "read-validation": 17.598958000000266,
+          "bundle": 4.483791999999994,
+          "worker": 138.96062500000016,
+          "native-validation": 1.1984590000001845,
+          "effect-order": 166.95345899999984
+        },
+        {
+          "effect-order-writing": 1.2463749999997162,
+          "read-validation": 22.68674899999951,
+          "bundle": 4.6549589999999625,
+          "worker": 151.39149999999972,
+          "native-validation": 1.1086249999998472,
+          "effect-order": 184.80933400000004
+        },
+        {
+          "effect-order-writing": 1.5633339999999407,
+          "read-validation": 42.400750000000244,
+          "bundle": 4.99841699999979,
+          "worker": 138.8050830000002,
+          "native-validation": 1.185624999999618,
+          "effect-order": 193.41358300000002
+        },
+        {
+          "effect-order-writing": 2.0835830000000897,
+          "read-validation": 32.10770800000046,
+          "bundle": 4.315917000000354,
+          "worker": 148.7099589999998,
+          "native-validation": 1.1501250000001164,
+          "effect-order": 191.95212500000025
+        },
+        {
+          "effect-order-writing": 1.993666999999732,
+          "read-validation": 29.90300100000013,
+          "bundle": 7.506790999999794,
+          "worker": 145.15695799999958,
+          "native-validation": 1.1483330000000933,
+          "effect-order": 190.0142920000003
+        },
+        {
+          "effect-order-writing": 1.4003749999997126,
+          "read-validation": 35.498333999999886,
+          "bundle": 5.124291000000085,
+          "worker": 142.07983300000024,
+          "native-validation": 1.3131249999996726,
+          "effect-order": 189.66800000000012
+        },
+        {
+          "effect-order-writing": 1.2721670000000813,
+          "read-validation": 28.71549899999991,
+          "bundle": 5.98575000000028,
+          "worker": 140.36266699999987,
+          "native-validation": 1.14516599999979,
+          "effect-order": 181.448625
+        },
+        {
+          "effect-order-writing": 1.4046250000001237,
+          "read-validation": 22.40083400000003,
+          "bundle": 7.511833000000024,
+          "worker": 127.46062500000016,
+          "native-validation": 1.1501250000001164,
+          "effect-order": 165.11450000000013
+        },
+        {
+          "effect-order-writing": 1.2857500000000073,
+          "read-validation": 27.355125999999473,
+          "bundle": 4.655582999999751,
+          "worker": 153.37429199999997,
+          "native-validation": 1.1510000000002947,
+          "effect-order": 191.43958299999986
+        },
+        {
+          "effect-order-writing": 1.4980420000001686,
+          "read-validation": 25.23345700000027,
+          "bundle": 6.2937080000001515,
+          "worker": 153.8677499999999,
+          "native-validation": 1.3913339999999152,
+          "effect-order": 193.5175409999997
+        },
+        {
+          "effect-order-writing": 1.590208999999959,
+          "read-validation": 29.966417000000092,
+          "bundle": 5.170125000000098,
+          "worker": 148.23099999999977,
+          "native-validation": 1.2704579999999623,
+          "effect-order": 190.3870410000004
+        },
+        {
+          "effect-order-writing": 1.3996669999996811,
+          "read-validation": 26.15020999999888,
+          "bundle": 4.748625000000175,
+          "worker": 144.84712499999978,
+          "native-validation": 1.3144169999995938,
+          "effect-order": 182.11208300000044
+        },
+        {
+          "effect-order-writing": 1.5566670000007434,
+          "read-validation": 26.763582999999016,
+          "bundle": 4.95783400000073,
+          "worker": 152.9895830000005,
+          "native-validation": 1.0904170000003433,
+          "effect-order": 191.11499999999978
+        },
+        {
+          "effect-order-writing": 1.6270000000004075,
+          "read-validation": 32.803124000000025,
+          "bundle": 5.227958999999828,
+          "worker": 135.96520799999962,
+          "native-validation": 1.162083000000166,
+          "effect-order": 180.39379199999985
+        },
+        {
+          "effect-order-writing": 1.410874999999578,
+          "read-validation": 22.324666999999863,
+          "bundle": 8.477791000000252,
+          "worker": 147.1822089999996,
+          "native-validation": 1.19733400000041,
+          "effect-order": 184.3187079999998
+        },
+        {
+          "effect-order-writing": 1.3086670000002414,
+          "read-validation": 34.982998999999836,
+          "bundle": 4.492334000000483,
+          "worker": 141.03616600000078,
+          "native-validation": 1.1642499999998108,
+          "effect-order": 186.4554590000007
+        },
+        {
+          "effect-order-writing": 1.3275830000002316,
+          "read-validation": 17.125706999999238,
+          "bundle": 7.073249999999462,
+          "worker": 145.37554199999977,
+          "native-validation": 1.1177499999994325,
+          "effect-order": 178.34887499999968
+        },
+        {
+          "effect-order-writing": 1.6462500000006912,
+          "read-validation": 30.133584000000155,
+          "bundle": 4.532583000000159,
+          "worker": 136.9572909999997,
+          "native-validation": 1.168124999999236,
+          "effect-order": 178.27049999999963
+        },
+        {
+          "effect-order-writing": 2.408082999999351,
+          "read-validation": 29.040125999999873,
+          "bundle": 4.525832999999693,
+          "worker": 137.94954099999995,
+          "native-validation": 1.1499579999999696,
+          "effect-order": 178.46699999999964
+        },
+        {
+          "effect-order-writing": 1.3811249999998836,
+          "read-validation": 26.82695800000056,
+          "bundle": 4.398791999999958,
+          "worker": 144.5997500000003,
+          "native-validation": 1.2200419999999212,
+          "effect-order": 182.07316699999956
+        },
+        {
+          "effect-order-writing": 1.6144589999994423,
+          "read-validation": 31.6347480000004,
+          "bundle": 4.533166000000165,
+          "worker": 142.3955420000002,
+          "native-validation": 1.3001249999997526,
+          "effect-order": 184.8534579999996
+        },
+        {
+          "effect-order-writing": 1.3130000000001019,
+          "read-validation": 20.541874000000462,
+          "bundle": 6.856416999999965,
+          "worker": 155.7788329999994,
+          "native-validation": 1.22454099999959,
+          "effect-order": 189.52829199999996
+        },
+        {
+          "effect-order-writing": 1.717916999999943,
+          "read-validation": 27.34387600000082,
+          "bundle": 4.767749999999978,
+          "worker": 136.9780839999994,
+          "native-validation": 1.1026250000004438,
+          "effect-order": 175.22862499999974
+        },
+        {
+          "effect-order-writing": 1.316874999999527,
+          "read-validation": 20.83562400000028,
+          "bundle": 9.680000000000291,
+          "worker": 153.5087910000002,
+          "native-validation": 1.0826669999996739,
+          "effect-order": 189.85149999999976
+        },
+        {
+          "effect-order-writing": 1.4912500000000364,
+          "read-validation": 33.24158399999851,
+          "bundle": 4.530040999999983,
+          "worker": 138.9477079999997,
+          "native-validation": 1.158499999999549,
+          "effect-order": 182.7355830000006
+        },
+        {
+          "effect-order-writing": 1.275749999999789,
+          "read-validation": 26.983874999999898,
+          "bundle": 7.624749999999949,
+          "worker": 143.62566700000025,
+          "native-validation": 1.2718749999994543,
+          "effect-order": 185.22941699999956
+        },
+        {
+          "effect-order-writing": 1.431749999999738,
+          "read-validation": 27.77599999999893,
+          "bundle": 4.81775000000016,
+          "worker": 141.52729199999976,
+          "native-validation": 1.0859580000005735,
+          "effect-order": 179.87854100000004
+        },
+        {
+          "effect-order-writing": 1.2901250000004438,
+          "read-validation": 32.43712400000095,
+          "bundle": 4.766916999999921,
+          "worker": 146.2579169999999,
+          "native-validation": 1.5428750000000946,
+          "effect-order": 190.1755830000002
+        },
+        {
+          "effect-order-writing": 1.6502089999994496,
+          "read-validation": 24.773000000001048,
+          "bundle": 8.534583999999995,
+          "worker": 140.62133300000005,
+          "native-validation": 1.189792000000125,
+          "effect-order": 181.55725000000075
+        },
+        {
+          "effect-order-writing": 1.5259589999996024,
+          "read-validation": 25.29895800000031,
+          "bundle": 7.886499999999614,
+          "worker": 195.3629579999997,
+          "native-validation": 1.1211250000005748,
+          "effect-order": 239.58620799999971
+        },
+        {
+          "effect-order-writing": 1.5261249999994106,
+          "read-validation": 29.85345799999959,
+          "bundle": 4.639874999999847,
+          "worker": 146.2911669999994,
+          "native-validation": 1.1554580000001806,
+          "effect-order": 187.24333300000035
+        },
+        {
+          "effect-order-writing": 1.5169160000004922,
+          "read-validation": 31.83558499999799,
+          "bundle": 4.755667000000358,
+          "worker": 148.9880409999996,
+          "native-validation": 1.2260420000002341,
+          "effect-order": 191.82424999999967
+        },
+        {
+          "effect-order-writing": 1.3450000000002547,
+          "read-validation": 22.02533500000027,
+          "bundle": 7.900000000000546,
+          "worker": 142.95116599999983,
+          "native-validation": 1.2405410000001211,
+          "effect-order": 179.5060000000003
+        },
+        {
+          "effect-order-writing": 1.5875409999998737,
+          "read-validation": 27.534209000000374,
+          "bundle": 7.690749999999753,
+          "worker": 141.4505420000005,
+          "native-validation": 1.103917000000365,
+          "effect-order": 183.1002499999995
+        },
+        {
+          "effect-order-writing": 1.291417000000365,
+          "read-validation": 25.76787499999955,
+          "bundle": 4.877458000000843,
+          "worker": 146.00058300000092,
+          "native-validation": 1.1083749999997963,
+          "effect-order": 182.4340830000001
+        },
+        {
+          "effect-order-writing": 1.3508339999989403,
+          "read-validation": 29.469208999998955,
+          "bundle": 4.271082999999635,
+          "worker": 135.89962500000001,
+          "native-validation": 1.1483330000010028,
+          "effect-order": 175.45970899999884
+        },
+        {
+          "effect-order-writing": 1.3278340000015305,
+          "read-validation": 20.658582999998544,
+          "bundle": 4.648584000000483,
+          "worker": 143.40308300000106,
+          "native-validation": 1.1164169999992737,
+          "effect-order": 174.40079100000003
+        },
+        {
+          "effect-order-writing": 1.1135830000002898,
+          "read-validation": 27.675624000003154,
+          "bundle": 4.336417000000438,
+          "worker": 143.5940410000003,
+          "native-validation": 1.110500000000684,
+          "effect-order": 181.26708299999882
+        }
+      ]
+    },
+    {
+      "stage": "parallel-reads",
+      "note": "Bounded parallel read validation; original child startup.",
+      "nodeCompileCache": false,
+      "benchmark": "effect-order",
+      "cpu": "Apple M4",
+      "os": "darwin 27.0.0",
+      "node": "v26.5.0",
+      "iterations": 40,
+      "warmup": 5,
+      "notes": 100,
+      "placements": 2,
+      "effects": 2,
+      "sampleRate": 48000,
+      "blockSize": 128,
+      "device": null,
+      "callbackP95": null,
+      "callbackP99": null,
+      "xruns": null,
+      "measurements": [
+        {
+          "phase": "effect-order-writing",
+          "p50Ms": 1.9102080000002388,
+          "p95Ms": 3.609042000000045,
+          "p99Ms": 4.4075410000000375
+        },
+        {
+          "phase": "read-validation",
+          "p50Ms": 17.259083999999348,
+          "p95Ms": 24.993124999999054,
+          "p99Ms": 27.377042000000074
+        },
+        {
+          "phase": "bundle",
+          "p50Ms": 8.370291999999608,
+          "p95Ms": 12.855416000000332,
+          "p99Ms": 14.018917000000329
+        },
+        {
+          "phase": "worker",
+          "p50Ms": 203.25791600000048,
+          "p95Ms": 262.8612919999996,
+          "p99Ms": 397.3197909999999
+        },
+        {
+          "phase": "native-validation",
+          "p50Ms": 1.3615840000002208,
+          "p95Ms": 2.4434999999994034,
+          "p99Ms": 2.781417000000147
+        },
+        {
+          "phase": "effect-order",
+          "p50Ms": 242.66349999999966,
+          "p95Ms": 308.0568750000002,
+          "p99Ms": 426.5008340000004
+        }
+      ],
+      "samples": [
+        {
+          "effect-order-writing": 4.4075410000000375,
+          "read-validation": 14.626082999999653,
+          "bundle": 13.01804200000015,
+          "worker": 232.0388750000002,
+          "native-validation": 1.1277909999998883,
+          "effect-order": 270.840917
+        },
+        {
+          "effect-order-writing": 2.000999999999749,
+          "read-validation": 12.486833000000388,
+          "bundle": 6.903541999999561,
+          "worker": 190.5858330000001,
+          "native-validation": 1.6302909999999429,
+          "effect-order": 218.43200000000024
+        },
+        {
+          "effect-order-writing": 2.127124999999978,
+          "read-validation": 12.765875000000051,
+          "bundle": 6.444292000000132,
+          "worker": 185.41433400000005,
+          "native-validation": 1.2038750000001528,
+          "effect-order": 213.02637499999992
+        },
+        {
+          "effect-order-writing": 2.5009579999996276,
+          "read-validation": 17.82233400000041,
+          "bundle": 6.068209000000024,
+          "worker": 183.03591700000015,
+          "native-validation": 1.275416999999834,
+          "effect-order": 216.17408400000022
+        },
+        {
+          "effect-order-writing": 1.6896669999996448,
+          "read-validation": 15.787125000000287,
+          "bundle": 10.45758300000034,
+          "worker": 217.6377090000001,
+          "native-validation": 1.074500000000171,
+          "effect-order": 251.8822500000001
+        },
+        {
+          "effect-order-writing": 1.488582999999835,
+          "read-validation": 15.266916999999921,
+          "bundle": 8.509082999999919,
+          "worker": 157.9670000000001,
+          "native-validation": 2.178457999999864,
+          "effect-order": 191.93375000000015
+        },
+        {
+          "effect-order-writing": 1.4710410000002412,
+          "read-validation": 11.242667000000438,
+          "bundle": 8.440124999999625,
+          "worker": 194.74974999999995,
+          "native-validation": 1.1887079999996786,
+          "effect-order": 222.6746250000001
+        },
+        {
+          "effect-order-writing": 1.818000000000211,
+          "read-validation": 16.993541000000278,
+          "bundle": 10.159707999999682,
+          "worker": 217.58449999999993,
+          "native-validation": 1.7249580000002425,
+          "effect-order": 254.4699169999999
+        },
+        {
+          "effect-order-writing": 1.4704169999999976,
+          "read-validation": 13.632000000000062,
+          "bundle": 6.401083999999628,
+          "worker": 162.47474999999986,
+          "native-validation": 1.7699579999998605,
+          "effect-order": 193.69395799999984
+        },
+        {
+          "effect-order-writing": 1.3539169999994556,
+          "read-validation": 18.014124999999694,
+          "bundle": 6.469208000000435,
+          "worker": 184.59079199999996,
+          "native-validation": 1.5568329999996422,
+          "effect-order": 220.06020799999988
+        },
+        {
+          "effect-order-writing": 2.651708000000326,
+          "read-validation": 12.820584000000963,
+          "bundle": 8.777332999999999,
+          "worker": 223.617166,
+          "native-validation": 1.9096659999995609,
+          "effect-order": 256.26308300000073
+        },
+        {
+          "effect-order-writing": 1.7012500000000728,
+          "read-validation": 24.993124999999054,
+          "bundle": 6.697750000000269,
+          "worker": 201.28008299999965,
+          "native-validation": 2.781417000000147,
+          "effect-order": 248.0971669999999
+        },
+        {
+          "effect-order-writing": 1.7658329999994749,
+          "read-validation": 21.212375999999495,
+          "bundle": 6.442167000000154,
+          "worker": 197.60870799999975,
+          "native-validation": 1.2305000000005748,
+          "effect-order": 235.3518750000003
+        },
+        {
+          "effect-order-writing": 1.4987920000003214,
+          "read-validation": 13.479833000000326,
+          "bundle": 8.370291999999608,
+          "worker": 176.57129199999963,
+          "native-validation": 1.3075000000008004,
+          "effect-order": 208.21762500000023
+        },
+        {
+          "effect-order-writing": 1.6089590000001408,
+          "read-validation": 13.84241700000075,
+          "bundle": 7.189624999999978,
+          "worker": 174.86654199999975,
+          "native-validation": 1.400499999999738,
+          "effect-order": 208.1412909999999
+        },
+        {
+          "effect-order-writing": 1.7810829999998532,
+          "read-validation": 17.291999999998552,
+          "bundle": 11.840541999999914,
+          "worker": 174.03870800000004,
+          "native-validation": 1.3911249999991924,
+          "effect-order": 213.95829200000026
+        },
+        {
+          "effect-order-writing": 1.8317079999997077,
+          "read-validation": 15.331457000000228,
+          "bundle": 11.659374999999272,
+          "worker": 181.906833,
+          "native-validation": 1.3068750000002183,
+          "effect-order": 217.10408300000017
+        },
+        {
+          "effect-order-writing": 2.986750000000029,
+          "read-validation": 14.48833199999899,
+          "bundle": 14.018917000000329,
+          "worker": 199.4964170000003,
+          "native-validation": 1.240791999999601,
+          "effect-order": 238.00137499999983
+        },
+        {
+          "effect-order-writing": 1.3114589999995587,
+          "read-validation": 17.589790000000903,
+          "bundle": 6.4044999999996435,
+          "worker": 161.77191700000003,
+          "native-validation": 1.1381659999997282,
+          "effect-order": 194.23820799999976
+        },
+        {
+          "effect-order-writing": 1.9102080000002388,
+          "read-validation": 12.396083000001454,
+          "bundle": 5.879167000000052,
+          "worker": 166.3007090000001,
+          "native-validation": 1.1492079999998168,
+          "effect-order": 195.78470800000014
+        },
+        {
+          "effect-order-writing": 1.3599999999996726,
+          "read-validation": 19.688248000001295,
+          "bundle": 6.416541000000507,
+          "worker": 176.06370900000002,
+          "native-validation": 1.269999999999527,
+          "effect-order": 209.72166600000037
+        },
+        {
+          "effect-order-writing": 2.5492080000003625,
+          "read-validation": 13.791956999999456,
+          "bundle": 12.083290999999917,
+          "worker": 262.66191700000036,
+          "native-validation": 1.473084000000199,
+          "effect-order": 301.8352500000001
+        },
+        {
+          "effect-order-writing": 2.0534170000000813,
+          "read-validation": 21.191666999999143,
+          "bundle": 9.669750000000022,
+          "worker": 228.1178749999999,
+          "native-validation": 2.3068750000002183,
+          "effect-order": 271.6905420000003
+        },
+        {
+          "effect-order-writing": 1.8539579999996931,
+          "read-validation": 20.46874999999909,
+          "bundle": 12.24370799999997,
+          "worker": 227.65020800000002,
+          "native-validation": 1.241624999999658,
+          "effect-order": 273.8725000000004
+        },
+        {
+          "effect-order-writing": 3.609042000000045,
+          "read-validation": 17.259083999999348,
+          "bundle": 6.645207999999911,
+          "worker": 207.74333399999978,
+          "native-validation": 1.2070420000000013,
+          "effect-order": 242.66349999999966
+        },
+        {
+          "effect-order-writing": 2.4558749999996508,
+          "read-validation": 18.222998999999618,
+          "bundle": 5.907874999999876,
+          "worker": 230.89066700000058,
+          "native-validation": 1.2878340000006574,
+          "effect-order": 265.6895000000004
+        },
+        {
+          "effect-order-writing": 3.6394170000003214,
+          "read-validation": 22.412583000001177,
+          "bundle": 8.45758400000068,
+          "worker": 219.05783299999985,
+          "native-validation": 1.8545420000009472,
+          "effect-order": 262.8779590000013
+        },
+        {
+          "effect-order-writing": 2.009417000001122,
+          "read-validation": 13.224417999999787,
+          "bundle": 8.717375000000175,
+          "worker": 397.3197909999999,
+          "native-validation": 1.1404170000005251,
+          "effect-order": 426.5008340000004
+        },
+        {
+          "effect-order-writing": 1.8833749999994325,
+          "read-validation": 20.418417999999292,
+          "bundle": 6.64837499999885,
+          "worker": 175.7524169999997,
+          "native-validation": 2.188125000000582,
+          "effect-order": 218.82791700000053
+        },
+        {
+          "effect-order-writing": 2.33758300000045,
+          "read-validation": 26.296958999997514,
+          "bundle": 7.358040999999503,
+          "worker": 184.11074999999983,
+          "native-validation": 1.1153750000012224,
+          "effect-order": 227.23041699999885
+        },
+        {
+          "effect-order-writing": 1.497957999999926,
+          "read-validation": 27.377042000000074,
+          "bundle": 7.347957999998471,
+          "worker": 219.77687499999956,
+          "native-validation": 1.4795419999991282,
+          "effect-order": 264.7435839999998
+        },
+        {
+          "effect-order-writing": 1.959458999999697,
+          "read-validation": 19.708292999999685,
+          "bundle": 9.452750000000378,
+          "worker": 228.16175000000112,
+          "native-validation": 1.4167499999985012,
+          "effect-order": 266.7294159999983
+        },
+        {
+          "effect-order-writing": 1.4219589999993332,
+          "read-validation": 13.842875000002095,
+          "bundle": 7.814291999999114,
+          "worker": 215.5317920000016,
+          "native-validation": 1.3467089999994641,
+          "effect-order": 246.91075000000092
+        },
+        {
+          "effect-order-writing": 1.6756659999991825,
+          "read-validation": 21.184124999997948,
+          "bundle": 7.97241700000086,
+          "worker": 260.8947500000013,
+          "native-validation": 1.9443750000009459,
+          "effect-order": 302.19066700000076
+        },
+        {
+          "effect-order-writing": 3.221625000000131,
+          "read-validation": 18.87341600000036,
+          "bundle": 9.695541999999477,
+          "worker": 266.89029200000004,
+          "native-validation": 1.8787090000005264,
+          "effect-order": 308.0568750000002
+        },
+        {
+          "effect-order-writing": 2.792790999999852,
+          "read-validation": 19.071375999999873,
+          "bundle": 11.825124999999389,
+          "worker": 262.8612919999996,
+          "native-validation": 2.685916999998881,
+          "effect-order": 309.3792919999996
+        },
+        {
+          "effect-order-writing": 2.204874999999447,
+          "read-validation": 22.66216699999859,
+          "bundle": 9.094292000001587,
+          "worker": 237.51129199999923,
+          "native-validation": 2.4434999999994034,
+          "effect-order": 282.12024999999994
+        },
+        {
+          "effect-order-writing": 2.070625000000291,
+          "read-validation": 15.910292000000481,
+          "bundle": 12.855416000000332,
+          "worker": 203.25791600000048,
+          "native-validation": 1.3615840000002208,
+          "effect-order": 242.49845800000003
+        },
+        {
+          "effect-order-writing": 2.795457999998689,
+          "read-validation": 13.314500000000407,
+          "bundle": 10.351333000000523,
+          "worker": 226.72891600000003,
+          "native-validation": 2.0453340000003664,
+          "effect-order": 263.08429100000103
+        },
+        {
+          "effect-order-writing": 2.2985419999986334,
+          "read-validation": 22.26545900000019,
+          "bundle": 6.52612500000032,
+          "worker": 221.63320899999962,
+          "native-validation": 1.1983749999999418,
+          "effect-order": 259.5879160000004
+        }
+      ]
+    },
+    {
+      "stage": "directory-scans",
+      "note": "Per-evaluation directory scan deduplication plus negative package/lock evidence.",
+      "nodeCompileCache": false,
+      "benchmark": "effect-order",
+      "cpu": "Apple M4",
+      "os": "darwin 27.0.0",
+      "node": "v26.5.0",
+      "iterations": 40,
+      "warmup": 5,
+      "notes": 100,
+      "placements": 2,
+      "effects": 2,
+      "sampleRate": 48000,
+      "blockSize": 128,
+      "device": null,
+      "callbackP95": null,
+      "callbackP99": null,
+      "xruns": null,
+      "measurements": [
+        {
+          "phase": "effect-order-writing",
+          "p50Ms": 1.8588750000017171,
+          "p95Ms": 2.5661249999993743,
+          "p99Ms": 3.420541999999841
+        },
+        {
+          "phase": "read-validation",
+          "p50Ms": 21.971416999999292,
+          "p95Ms": 29.300085000000763,
+          "p99Ms": 33.273832999998376
+        },
+        {
+          "phase": "bundle",
+          "p50Ms": 6.7575419999993755,
+          "p95Ms": 17.454749999999876,
+          "p99Ms": 31.24241600000005
+        },
+        {
+          "phase": "worker",
+          "p50Ms": 169.85333300000093,
+          "p95Ms": 277.6013329999987,
+          "p99Ms": 306.793541
+        },
+        {
+          "phase": "native-validation",
+          "p50Ms": 1.5361659999998665,
+          "p95Ms": 2.4585000000001855,
+          "p99Ms": 3.3898750000007567
+        },
+        {
+          "phase": "effect-order",
+          "p50Ms": 209.12733300000036,
+          "p95Ms": 336.43766700000015,
+          "p99Ms": 354.0569580000001
+        }
+      ],
+      "samples": [
+        {
+          "effect-order-writing": 1.4890829999999369,
+          "read-validation": 15.612791999999672,
+          "bundle": 5.649958999999853,
+          "worker": 146.64058400000022,
+          "native-validation": 1.4809999999997672,
+          "effect-order": 175.35116600000015
+        },
+        {
+          "effect-order-writing": 2.4583339999999225,
+          "read-validation": 17.02270800000042,
+          "bundle": 8.028250000000298,
+          "worker": 184.6894169999996,
+          "native-validation": 1.541458999999577,
+          "effect-order": 218.54245899999978
+        },
+        {
+          "effect-order-writing": 2.153291999999965,
+          "read-validation": 17.749707999999373,
+          "bundle": 6.270458999999846,
+          "worker": 189.5492919999997,
+          "native-validation": 2.4585000000001855,
+          "effect-order": 223.01804200000015
+        },
+        {
+          "effect-order-writing": 1.9352499999999964,
+          "read-validation": 18.392499000000043,
+          "bundle": 5.199041999999736,
+          "worker": 208.584875,
+          "native-validation": 1.1810420000001614,
+          "effect-order": 240.478208
+        },
+        {
+          "effect-order-writing": 1.934957999999824,
+          "read-validation": 16.572501999999986,
+          "bundle": 11.697292000000289,
+          "worker": 302.3151250000001,
+          "native-validation": 1.1802920000000086,
+          "effect-order": 337.42045899999994
+        },
+        {
+          "effect-order-writing": 1.2317079999997986,
+          "read-validation": 21.971416999999292,
+          "bundle": 5.512459000000035,
+          "worker": 157.52029200000015,
+          "native-validation": 1.3329160000002958,
+          "effect-order": 192.1929580000001
+        },
+        {
+          "effect-order-writing": 1.3507079999999405,
+          "read-validation": 14.171959000000243,
+          "bundle": 8.433874999999716,
+          "worker": 154.85029199999963,
+          "native-validation": 1.148124999999709,
+          "effect-order": 185.85291600000028
+        },
+        {
+          "effect-order-writing": 1.2360830000002352,
+          "read-validation": 19.939458999999715,
+          "bundle": 6.174165999999786,
+          "worker": 150.507791,
+          "native-validation": 2.3081660000002557,
+          "effect-order": 185.3853750000003
+        },
+        {
+          "effect-order-writing": 2.157083000000057,
+          "read-validation": 22.135291000000052,
+          "bundle": 4.701042000000143,
+          "worker": 162.26487499999985,
+          "native-validation": 1.1850829999998496,
+          "effect-order": 198.62020900000016
+        },
+        {
+          "effect-order-writing": 2.0024170000001504,
+          "read-validation": 13.162834000000203,
+          "bundle": 11.061083999999937,
+          "worker": 144.9611249999998,
+          "native-validation": 1.2482499999996435,
+          "effect-order": 176.270708
+        },
+        {
+          "effect-order-writing": 1.2943750000004002,
+          "read-validation": 24.333166999998866,
+          "bundle": 10.75145799999973,
+          "worker": 258.55912499999977,
+          "native-validation": 1.4820840000002136,
+          "effect-order": 301.4402920000002
+        },
+        {
+          "effect-order-writing": 1.891208999999435,
+          "read-validation": 33.273832999998376,
+          "bundle": 31.24241600000005,
+          "worker": 201.67062499999975,
+          "native-validation": 1.631333000000268,
+          "effect-order": 277.8283330000004
+        },
+        {
+          "effect-order-writing": 2.5661249999993743,
+          "read-validation": 22.447041999999783,
+          "bundle": 10.978041000000303,
+          "worker": 200.84204099999988,
+          "native-validation": 1.4704160000001139,
+          "effect-order": 245.8387499999999
+        },
+        {
+          "effect-order-writing": 1.4868329999999332,
+          "read-validation": 17.847458000000188,
+          "bundle": 9.686333999999988,
+          "worker": 163.6467079999993,
+          "native-validation": 1.7385409999997137,
+          "effect-order": 199.71875
+        },
+        {
+          "effect-order-writing": 1.259541999999783,
+          "read-validation": 25.270207000001392,
+          "bundle": 5.908707999999933,
+          "worker": 159.8779999999997,
+          "native-validation": 2.1423750000003565,
+          "effect-order": 199.8639579999999
+        },
+        {
+          "effect-order-writing": 2.3792920000005324,
+          "read-validation": 15.321083000000726,
+          "bundle": 12.61737499999981,
+          "worker": 148.51566699999967,
+          "native-validation": 1.1469159999996918,
+          "effect-order": 184.55862500000057
+        },
+        {
+          "effect-order-writing": 1.3893750000006548,
+          "read-validation": 27.473791999998866,
+          "bundle": 6.029875000000175,
+          "worker": 180.24404100000083,
+          "native-validation": 1.9835830000001806,
+          "effect-order": 223.61912500000017
+        },
+        {
+          "effect-order-writing": 2.2647079999997004,
+          "read-validation": 28.700791999999637,
+          "bundle": 6.986165999999685,
+          "worker": 306.793541,
+          "native-validation": 2.2864589999999225,
+          "effect-order": 354.0569580000001
+        },
+        {
+          "effect-order-writing": 3.420541999999841,
+          "read-validation": 26.87787599999956,
+          "bundle": 17.454749999999876,
+          "worker": 194.08379199999945,
+          "native-validation": 1.1551669999998921,
+          "effect-order": 248.27149999999983
+        },
+        {
+          "effect-order-writing": 1.7950000000000728,
+          "read-validation": 25.376665999999204,
+          "bundle": 6.3599169999997684,
+          "worker": 257.64887499999986,
+          "native-validation": 1.6223339999996824,
+          "effect-order": 298.61795900000016
+        },
+        {
+          "effect-order-writing": 1.9535829999995258,
+          "read-validation": 22.637000999999145,
+          "bundle": 6.319249999999556,
+          "worker": 153.93375000000015,
+          "native-validation": 1.3187920000000304,
+          "effect-order": 191.34416599999986
+        },
+        {
+          "effect-order-writing": 2.3731669999997393,
+          "read-validation": 23.939832999998544,
+          "bundle": 6.955582999999933,
+          "worker": 205.44716700000026,
+          "native-validation": 1.719625000000633,
+          "effect-order": 245.2204580000007
+        },
+        {
+          "effect-order-writing": 1.7511249999997744,
+          "read-validation": 30.95641699999942,
+          "bundle": 10.483083000000079,
+          "worker": 195.70837500000016,
+          "native-validation": 1.8957090000003518,
+          "effect-order": 249.28587499999958
+        },
+        {
+          "effect-order-writing": 2.3011249999999563,
+          "read-validation": 18.632873999998992,
+          "bundle": 14.748750000000655,
+          "worker": 148.76583300000038,
+          "native-validation": 1.0808750000005602,
+          "effect-order": 189.3497500000003
+        },
+        {
+          "effect-order-writing": 1.7486669999998412,
+          "read-validation": 26.60345799999959,
+          "bundle": 6.281707999999526,
+          "worker": 144.29720799999996,
+          "native-validation": 1.5361659999998665,
+          "effect-order": 184.82291600000008
+        },
+        {
+          "effect-order-writing": 1.9737500000001091,
+          "read-validation": 19.4105840000002,
+          "bundle": 5.828833999999915,
+          "worker": 180.27391699999953,
+          "native-validation": 2.047708000000057,
+          "effect-order": 214.8468329999996
+        },
+        {
+          "effect-order-writing": 2.3187499999994543,
+          "read-validation": 13.738874999999098,
+          "bundle": 10.538415999999415,
+          "worker": 153.74633300000005,
+          "native-validation": 1.2118749999999636,
+          "effect-order": 185.99295800000073
+        },
+        {
+          "effect-order-writing": 2.312332999999853,
+          "read-validation": 15.612958999998227,
+          "bundle": 7.954958000000261,
+          "worker": 145.61708299999918,
+          "native-validation": 1.1951250000001892,
+          "effect-order": 177.09887499999968
+        },
+        {
+          "effect-order-writing": 1.2003340000010212,
+          "read-validation": 24.754375000000437,
+          "bundle": 6.7575419999993755,
+          "worker": 158.5649169999997,
+          "native-validation": 2.3087500000001455,
+          "effect-order": 198.50533300000097
+        },
+        {
+          "effect-order-writing": 1.4485420000000886,
+          "read-validation": 16.288792999997895,
+          "bundle": 5.676124999999956,
+          "worker": 154.7046249999985,
+          "native-validation": 2.25012500000048,
+          "effect-order": 184.55825000000004
+        },
+        {
+          "effect-order-writing": 2.0887910000001284,
+          "read-validation": 29.300085000000763,
+          "bundle": 6.976125000001048,
+          "worker": 216.9349999999995,
+          "native-validation": 2.3972910000011325,
+          "effect-order": 263.08270899999843
+        },
+        {
+          "effect-order-writing": 1.8588750000017171,
+          "read-validation": 21.163249000002907,
+          "bundle": 6.0761250000014115,
+          "worker": 188.6491249999999,
+          "native-validation": 1.47545799999898,
+          "effect-order": 223.72229200000038
+        },
+        {
+          "effect-order-writing": 1.5221659999988333,
+          "read-validation": 25.95941500000299,
+          "bundle": 6.583416999999827,
+          "worker": 169.85333300000093,
+          "native-validation": 1.174124999999549,
+          "effect-order": 209.12733300000036
+        },
+        {
+          "effect-order-writing": 1.325790999999299,
+          "read-validation": 17.937583000000814,
+          "bundle": 5.228750000000218,
+          "worker": 140.65529099999912,
+          "native-validation": 1.1807090000002063,
+          "effect-order": 170.6304999999993
+        },
+        {
+          "effect-order-writing": 1.2408749999995052,
+          "read-validation": 26.800332999999227,
+          "bundle": 5.601582999999664,
+          "worker": 176.91008299999885,
+          "native-validation": 2.350125000000844,
+          "effect-order": 218.6441249999989
+        },
+        {
+          "effect-order-writing": 1.5156669999996666,
+          "read-validation": 23.507291000003534,
+          "bundle": 7.970291999999972,
+          "worker": 253.45325000000048,
+          "native-validation": 2.628584000000046,
+          "effect-order": 296.77733400000034
+        },
+        {
+          "effect-order-writing": 2.0547500000011496,
+          "read-validation": 27.841958000000886,
+          "bundle": 21.77045899999939,
+          "worker": 277.6013329999987,
+          "native-validation": 1.8537500000002183,
+          "effect-order": 336.43766700000015
+        },
+        {
+          "effect-order-writing": 2.620542000000569,
+          "read-validation": 23.096208000000843,
+          "bundle": 6.715582999999242,
+          "worker": 176.17133400000057,
+          "native-validation": 3.3898750000007567,
+          "effect-order": 217.4958749999987
+        },
+        {
+          "effect-order-writing": 1.62958400000025,
+          "read-validation": 21.424707999996826,
+          "bundle": 6.729750000000422,
+          "worker": 146.27149999999892,
+          "native-validation": 1.5655000000006112,
+          "effect-order": 189.83308299999953
+        },
+        {
+          "effect-order-writing": 1.7730830000000424,
+          "read-validation": 20.173915999999736,
+          "bundle": 9.864250000000538,
+          "worker": 167.14483400000063,
+          "native-validation": 1.3640840000007302,
+          "effect-order": 204.65079100000003
+        }
+      ]
+    },
+    {
+      "stage": "delayed-loader-experiment",
+      "note": "TS preloader delayed until after compiled host modules load.",
+      "nodeCompileCache": false,
+      "benchmark": "effect-order",
+      "cpu": "Apple M4",
+      "os": "darwin 27.0.0",
+      "node": "v26.5.0",
+      "iterations": 40,
+      "warmup": 5,
+      "notes": 100,
+      "placements": 2,
+      "effects": 2,
+      "sampleRate": 48000,
+      "blockSize": 128,
+      "device": null,
+      "callbackP95": null,
+      "callbackP99": null,
+      "xruns": null,
+      "measurements": [
+        {
+          "phase": "effect-order-writing",
+          "p50Ms": 1.4856249999998,
+          "p95Ms": 1.9503749999998945,
+          "p99Ms": 2.7696249999999054
+        },
+        {
+          "phase": "read-validation",
+          "p50Ms": 15.492792000000918,
+          "p95Ms": 22.539790999999695,
+          "p99Ms": 26.979122999999163
+        },
+        {
+          "phase": "bundle",
+          "p50Ms": 5.1551250000002256,
+          "p95Ms": 8.726541999999881,
+          "p99Ms": 9.030958000000282
+        },
+        {
+          "phase": "worker",
+          "p50Ms": 124.64149999999972,
+          "p95Ms": 138.02216700000008,
+          "p99Ms": 148.3638329999999
+        },
+        {
+          "phase": "native-validation",
+          "p50Ms": 1.1855420000001686,
+          "p95Ms": 2.0996249999998327,
+          "p99Ms": 2.261500000000524
+        },
+        {
+          "phase": "effect-order",
+          "p50Ms": 153.91529199999968,
+          "p95Ms": 178.5921670000007,
+          "p99Ms": 187.88129200000003
+        }
+      ],
+      "samples": [
+        {
+          "effect-order-writing": 1.9503749999998945,
+          "read-validation": 14.100333000000091,
+          "bundle": 4.920166999999992,
+          "worker": 121.62470799999983,
+          "native-validation": 1.0932499999998981,
+          "effect-order": 149.874417
+        },
+        {
+          "effect-order-writing": 1.6709579999999278,
+          "read-validation": 20.480084000000033,
+          "bundle": 5.140874999999824,
+          "worker": 124.82487500000002,
+          "native-validation": 1.1523749999998927,
+          "effect-order": 159.15641600000004
+        },
+        {
+          "effect-order-writing": 1.6239579999999023,
+          "read-validation": 12.586707999999817,
+          "bundle": 8.726541999999881,
+          "worker": 122.97129199999995,
+          "native-validation": 1.4435829999999896,
+          "effect-order": 150.91358400000013
+        },
+        {
+          "effect-order-writing": 1.508333999999877,
+          "read-validation": 16.12066800000025,
+          "bundle": 8.893584000000146,
+          "worker": 126.48737499999993,
+          "native-validation": 1.1072500000000218,
+          "effect-order": 157.5255410000002
+        },
+        {
+          "effect-order-writing": 1.6797080000001188,
+          "read-validation": 12.969376000000466,
+          "bundle": 7.314208000000235,
+          "worker": 120.81220899999971,
+          "native-validation": 1.2017919999998412,
+          "effect-order": 150.70112500000005
+        },
+        {
+          "effect-order-writing": 1.8890830000000278,
+          "read-validation": 13.769247999999607,
+          "bundle": 7.684582999999748,
+          "worker": 121.64470799999981,
+          "native-validation": 1.1817500000001928,
+          "effect-order": 150.23500000000013
+        },
+        {
+          "effect-order-writing": 1.5059999999998581,
+          "read-validation": 22.539790999999695,
+          "bundle": 5.2253749999999854,
+          "worker": 148.3638329999999,
+          "native-validation": 2.0977920000000267,
+          "effect-order": 187.88129200000003
+        },
+        {
+          "effect-order-writing": 1.5124579999996968,
+          "read-validation": 21.674873999999363,
+          "bundle": 5.451958999999988,
+          "worker": 133.3390000000004,
+          "native-validation": 2.199833000000126,
+          "effect-order": 169.0329999999999
+        },
+        {
+          "effect-order-writing": 1.8817079999998896,
+          "read-validation": 17.35529200000019,
+          "bundle": 4.71875,
+          "worker": 126.31050000000005,
+          "native-validation": 1.1171669999998812,
+          "effect-order": 156.72283300000026
+        },
+        {
+          "effect-order-writing": 1.5471660000002885,
+          "read-validation": 16.081792999999834,
+          "bundle": 4.498707999999624,
+          "worker": 125.35825000000023,
+          "native-validation": 1.1743749999995998,
+          "effect-order": 151.96666700000014
+        },
+        {
+          "effect-order-writing": 1.5461249999998472,
+          "read-validation": 15.416126000000077,
+          "bundle": 5.060750000000098,
+          "worker": 123.51716699999997,
+          "native-validation": 1.1478750000001128,
+          "effect-order": 150.4369999999999
+        },
+        {
+          "effect-order-writing": 1.3703749999999673,
+          "read-validation": 16.348707999999988,
+          "bundle": 4.868875000000116,
+          "worker": 124.24675000000025,
+          "native-validation": 1.2694169999999758,
+          "effect-order": 151.8447500000002
+        },
+        {
+          "effect-order-writing": 1.4856249999998,
+          "read-validation": 19.333040999999866,
+          "bundle": 5.114332999999988,
+          "worker": 126.05225000000019,
+          "native-validation": 1.1386669999997139,
+          "effect-order": 157.57079199999998
+        },
+        {
+          "effect-order-writing": 1.7815839999998389,
+          "read-validation": 15.466873999999734,
+          "bundle": 4.602624999999989,
+          "worker": 122.34204200000022,
+          "native-validation": 1.7076250000000073,
+          "effect-order": 149.58950000000004
+        },
+        {
+          "effect-order-writing": 1.5396249999998872,
+          "read-validation": 15.02558500000032,
+          "bundle": 4.447042000000238,
+          "worker": 123.60087500000009,
+          "native-validation": 1.1643330000001697,
+          "effect-order": 150.046875
+        },
+        {
+          "effect-order-writing": 1.333625000000211,
+          "read-validation": 21.028208000000177,
+          "bundle": 5.256875000000036,
+          "worker": 123.23408400000017,
+          "native-validation": 1.1062079999996968,
+          "effect-order": 155.58462499999996
+        },
+        {
+          "effect-order-writing": 1.46487500000012,
+          "read-validation": 14.410750999999891,
+          "bundle": 4.810750000000098,
+          "worker": 123.60700000000043,
+          "native-validation": 1.2396669999998267,
+          "effect-order": 150.53987499999994
+        },
+        {
+          "effect-order-writing": 1.3725839999997334,
+          "read-validation": 17.370209000000614,
+          "bundle": 5.447416999999405,
+          "worker": 127.96629200000007,
+          "native-validation": 1.234124999999949,
+          "effect-order": 157.82991700000002
+        },
+        {
+          "effect-order-writing": 1.158292000000074,
+          "read-validation": 14.136582999998609,
+          "bundle": 5.099250000000211,
+          "worker": 126.52979200000027,
+          "native-validation": 1.2137919999995574,
+          "effect-order": 153.23141699999996
+        },
+        {
+          "effect-order-writing": 1.1394579999996495,
+          "read-validation": 11.370833000000857,
+          "bundle": 8.191917000000103,
+          "worker": 122.2373749999997,
+          "native-validation": 1.1280420000002778,
+          "effect-order": 147.34258299999965
+        },
+        {
+          "effect-order-writing": 1.4000000000005457,
+          "read-validation": 22.749750999999378,
+          "bundle": 4.749624999999469,
+          "worker": 131.265042,
+          "native-validation": 1.4422500000000582,
+          "effect-order": 166.44758399999955
+        },
+        {
+          "effect-order-writing": 1.5889589999997042,
+          "read-validation": 13.242082000000664,
+          "bundle": 9.030958000000282,
+          "worker": 135.44983299999967,
+          "native-validation": 1.3636249999999563,
+          "effect-order": 164.41412500000024
+        },
+        {
+          "effect-order-writing": 2.7696249999999054,
+          "read-validation": 26.979122999999163,
+          "bundle": 5.1551250000002256,
+          "worker": 138.02216700000008,
+          "native-validation": 1.4046250000001237,
+          "effect-order": 179.03670799999963
+        },
+        {
+          "effect-order-writing": 1.612250000000131,
+          "read-validation": 21.58666600000015,
+          "bundle": 5.4623750000000655,
+          "worker": 142.12937499999953,
+          "native-validation": 1.293416999999863,
+          "effect-order": 178.5921670000007
+        },
+        {
+          "effect-order-writing": 1.4674999999997453,
+          "read-validation": 13.862625000000662,
+          "bundle": 6.879917000000205,
+          "worker": 137.28983299999982,
+          "native-validation": 1.0938329999999041,
+          "effect-order": 164.25404199999957
+        },
+        {
+          "effect-order-writing": 1.1776660000004995,
+          "read-validation": 17.75379199999952,
+          "bundle": 5.235125000000153,
+          "worker": 125.95633400000042,
+          "native-validation": 1.1841249999997672,
+          "effect-order": 156.93287500000042
+        },
+        {
+          "effect-order-writing": 1.3143749999999272,
+          "read-validation": 13.495957999999519,
+          "bundle": 8.47387499999968,
+          "worker": 121.47445900000002,
+          "native-validation": 1.4473750000006476,
+          "effect-order": 149.62229200000002
+        },
+        {
+          "effect-order-writing": 1.1697919999996884,
+          "read-validation": 19.97112499999912,
+          "bundle": 4.736582999999882,
+          "worker": 124.90341699999954,
+          "native-validation": 1.1855420000001686,
+          "effect-order": 156.2318749999995
+        },
+        {
+          "effect-order-writing": 1.3840000000000146,
+          "read-validation": 13.269999000001008,
+          "bundle": 8.467082999999548,
+          "worker": 122.23308300000008,
+          "native-validation": 2.0996249999998327,
+          "effect-order": 152.4198749999996
+        },
+        {
+          "effect-order-writing": 1.5473330000004353,
+          "read-validation": 13.692623999999341,
+          "bundle": 5.139624999999796,
+          "worker": 122.94008300000041,
+          "native-validation": 1.1066670000000158,
+          "effect-order": 149.91150000000016
+        },
+        {
+          "effect-order-writing": 1.4190829999997732,
+          "read-validation": 19.17829200000051,
+          "bundle": 5.056833999999981,
+          "worker": 117.87975000000006,
+          "native-validation": 1.2950409999994008,
+          "effect-order": 149.36966699999994
+        },
+        {
+          "effect-order-writing": 1.5082079999992857,
+          "read-validation": 14.910918000000493,
+          "bundle": 4.4360420000002705,
+          "worker": 114.46179200000006,
+          "native-validation": 1.3084579999995185,
+          "effect-order": 140.05620799999997
+        },
+        {
+          "effect-order-writing": 1.2310830000005808,
+          "read-validation": 14.989833999999973,
+          "bundle": 4.680457999999817,
+          "worker": 124.64149999999972,
+          "native-validation": 1.094082999999955,
+          "effect-order": 150.2161669999996
+        },
+        {
+          "effect-order-writing": 1.1298329999999623,
+          "read-validation": 15.492792000000918,
+          "bundle": 6.170708000000559,
+          "worker": 127.5492919999997,
+          "native-validation": 1.133625000000393,
+          "effect-order": 154.92583399999967
+        },
+        {
+          "effect-order-writing": 1.47137500000008,
+          "read-validation": 17.353625000000648,
+          "bundle": 4.659332999999606,
+          "worker": 126.52387500000077,
+          "native-validation": 1.2800829999996495,
+          "effect-order": 155.15333400000054
+        },
+        {
+          "effect-order-writing": 1.282916999999543,
+          "read-validation": 15.665084999999635,
+          "bundle": 7.930124999999862,
+          "worker": 136.1817920000003,
+          "native-validation": 1.289625000000342,
+          "effect-order": 167.92300000000068
+        },
+        {
+          "effect-order-writing": 2.4059589999997115,
+          "read-validation": 15.47849899999892,
+          "bundle": 8.644667000000481,
+          "worker": 129.10329100000035,
+          "native-validation": 1.1824580000002243,
+          "effect-order": 162.9020840000003
+        },
+        {
+          "effect-order-writing": 1.2963749999998981,
+          "read-validation": 11.837166000000252,
+          "bundle": 4.197790999999597,
+          "worker": 124.25466699999924,
+          "native-validation": 1.0952500000003056,
+          "effect-order": 146.2594170000002
+        },
+        {
+          "effect-order-writing": 1.4078329999993002,
+          "read-validation": 21.76575099999991,
+          "bundle": 5.379125000000386,
+          "worker": 124.04791599999953,
+          "native-validation": 2.261500000000524,
+          "effect-order": 158.55979200000002
+        },
+        {
+          "effect-order-writing": 1.548041000000012,
+          "read-validation": 19.362457999999606,
+          "bundle": 5.226166999999805,
+          "worker": 122.38858299999993,
+          "native-validation": 1.0772909999996045,
+          "effect-order": 153.91529199999968
+        }
+      ]
+    },
+    {
+      "stage": "final-effect-order",
+      "note": "Final built CLI; serialized after tests, no concurrent builds/tests; no NODE_COMPILE_CACHE.",
+      "nodeCompileCache": false,
+      "benchmark": "effect-order",
+      "cpu": "Apple M4",
+      "os": "darwin 27.0.0",
+      "node": "v26.5.0",
+      "iterations": 40,
+      "warmup": 5,
+      "notes": 100,
+      "placements": 2,
+      "effects": 2,
+      "sampleRate": 48000,
+      "blockSize": 128,
+      "device": null,
+      "cpuUtilization": null,
+      "callbackP95": null,
+      "callbackP99": null,
+      "xruns": null,
+      "measurements": [
+        {
+          "phase": "effect-order-writing",
+          "p50Ms": 1.4689579999994749,
+          "p95Ms": 3.280083999999988,
+          "p99Ms": 3.539292000000387
+        },
+        {
+          "phase": "read-validation",
+          "p50Ms": 21.073875000000953,
+          "p95Ms": 30.62833300000011,
+          "p99Ms": 56.03487499999983
+        },
+        {
+          "phase": "bundle",
+          "p50Ms": 6.421084000000064,
+          "p95Ms": 10.773791999999958,
+          "p99Ms": 35.158542000000125
+        },
+        {
+          "phase": "worker",
+          "p50Ms": 139.98087499999974,
+          "p95Ms": 188.5902499999993,
+          "p99Ms": 225.90454199999976
+        },
+        {
+          "phase": "native-validation",
+          "p50Ms": 1.325290999999197,
+          "p95Ms": 2.2752089999999043,
+          "p99Ms": 3.285208000000239
+        },
+        {
+          "phase": "effect-order",
+          "p50Ms": 175.33254100000022,
+          "p95Ms": 258.9215409999997,
+          "p99Ms": 301.84974999999986
+        }
+      ],
+      "samples": [
+        {
+          "effect-order-writing": 1.5028330000000096,
+          "read-validation": 18.45708300000001,
+          "bundle": 6.281999999999925,
+          "worker": 120.8174590000001,
+          "native-validation": 1.7398749999999836,
+          "effect-order": 152.7618339999999
+        },
+        {
+          "effect-order-writing": 1.3761669999998958,
+          "read-validation": 17.217791000000034,
+          "bundle": 5.67899999999986,
+          "worker": 132.96629199999984,
+          "native-validation": 1.1213749999999436,
+          "effect-order": 162.97120800000016
+        },
+        {
+          "effect-order-writing": 1.347250000000031,
+          "read-validation": 16.543332999999848,
+          "bundle": 6.703999999999951,
+          "worker": 142.01962500000013,
+          "native-validation": 1.4344999999998436,
+          "effect-order": 172.41099999999983
+        },
+        {
+          "effect-order-writing": 1.724917000000005,
+          "read-validation": 22.563334999999825,
+          "bundle": 4.9004580000000715,
+          "worker": 134.43445800000018,
+          "native-validation": 1.3888749999996435,
+          "effect-order": 169.20425000000023
+        },
+        {
+          "effect-order-writing": 1.5545419999998558,
+          "read-validation": 17.3662089999998,
+          "bundle": 8.542665999999826,
+          "worker": 137.65754199999992,
+          "native-validation": 1.1091659999997319,
+          "effect-order": 171.40816700000005
+        },
+        {
+          "effect-order-writing": 1.4132500000000618,
+          "read-validation": 16.447625000000244,
+          "bundle": 7.708957999999711,
+          "worker": 169.21187499999996,
+          "native-validation": 1.9958749999996144,
+          "effect-order": 202.85512500000004
+        },
+        {
+          "effect-order-writing": 2.076166999999714,
+          "read-validation": 30.62833300000011,
+          "bundle": 8.234165999999732,
+          "worker": 144.27591699999994,
+          "native-validation": 1.2640830000000278,
+          "effect-order": 193.94675000000007
+        },
+        {
+          "effect-order-writing": 2.7460829999999987,
+          "read-validation": 27.46683299999995,
+          "bundle": 4.642417000000023,
+          "worker": 137.62495799999988,
+          "native-validation": 1.221165999999812,
+          "effect-order": 179.22366600000032
+        },
+        {
+          "effect-order-writing": 2.321708000000399,
+          "read-validation": 13.933833999999479,
+          "bundle": 10.773791999999958,
+          "worker": 141.43920799999978,
+          "native-validation": 1.758082999999715,
+          "effect-order": 175.33254100000022
+        },
+        {
+          "effect-order-writing": 2.3616250000000036,
+          "read-validation": 56.03487499999983,
+          "bundle": 5.638666000000285,
+          "worker": 225.90454199999976,
+          "native-validation": 3.285208000000239,
+          "effect-order": 301.84974999999986
+        },
+        {
+          "effect-order-writing": 3.280083999999988,
+          "read-validation": 23.607125999999425,
+          "bundle": 35.158542000000125,
+          "worker": 153.55549999999994,
+          "native-validation": 1.1156670000000304,
+          "effect-order": 223.07225000000017
+        },
+        {
+          "effect-order-writing": 1.541957999999795,
+          "read-validation": 23.83745799999997,
+          "bundle": 6.421084000000064,
+          "worker": 146.90920800000004,
+          "native-validation": 2.2752089999999043,
+          "effect-order": 186.03499999999985
+        },
+        {
+          "effect-order-writing": 1.6987919999996848,
+          "read-validation": 19.554333000000042,
+          "bundle": 7.060750000000098,
+          "worker": 139.98087499999974,
+          "native-validation": 1.174167000000125,
+          "effect-order": 173.81854199999998
+        },
+        {
+          "effect-order-writing": 1.4005839999999807,
+          "read-validation": 26.13274999999976,
+          "bundle": 7.58429200000046,
+          "worker": 181.79391699999996,
+          "native-validation": 2.4065419999997175,
+          "effect-order": 224.47641600000043
+        },
+        {
+          "effect-order-writing": 1.3654999999998836,
+          "read-validation": 27.559000000000196,
+          "bundle": 8.538540999999896,
+          "worker": 164.59941700000036,
+          "native-validation": 1.421875,
+          "effect-order": 208.80475000000024
+        },
+        {
+          "effect-order-writing": 1.9162500000002183,
+          "read-validation": 26.604958000000806,
+          "bundle": 6.202874999999949,
+          "worker": 139.72062499999993,
+          "native-validation": 1.1763330000003407,
+          "effect-order": 182.19137500000033
+        },
+        {
+          "effect-order-writing": 1.5420420000000377,
+          "read-validation": 16.776542999999947,
+          "bundle": 6.051249999999527,
+          "worker": 117.69250000000011,
+          "native-validation": 1.1701670000002196,
+          "effect-order": 148.76091599999927
+        },
+        {
+          "effect-order-writing": 1.3495410000004995,
+          "read-validation": 13.52941699999883,
+          "bundle": 7.167957999999999,
+          "worker": 132.39845799999966,
+          "native-validation": 1.6603750000003856,
+          "effect-order": 162.10825000000023
+        },
+        {
+          "effect-order-writing": 1.615125000000262,
+          "read-validation": 24.677584000000024,
+          "bundle": 7.235375000000204,
+          "worker": 148.0980840000002,
+          "native-validation": 1.2819170000002487,
+          "effect-order": 188.30616699999973
+        },
+        {
+          "effect-order-writing": 1.457792000000154,
+          "read-validation": 23.624832999998944,
+          "bundle": 4.570416999999907,
+          "worker": 163.34895899999992,
+          "native-validation": 1.7179580000001806,
+          "effect-order": 199.61162499999955
+        },
+        {
+          "effect-order-writing": 3.539292000000387,
+          "read-validation": 14.044166999999106,
+          "bundle": 12.86016600000039,
+          "worker": 162.6322909999999,
+          "native-validation": 1.4325830000007045,
+          "effect-order": 199.93562500000007
+        },
+        {
+          "effect-order-writing": 1.451082999999926,
+          "read-validation": 22.467249999998785,
+          "bundle": 7.468332999999802,
+          "worker": 132.19970899999953,
+          "native-validation": 1.1482499999992797,
+          "effect-order": 169.16550000000007
+        },
+        {
+          "effect-order-writing": 1.3457500000004075,
+          "read-validation": 15.532250999999633,
+          "bundle": 5.4635419999995065,
+          "worker": 118.87966700000015,
+          "native-validation": 1.1812500000005457,
+          "effect-order": 148.47583300000042
+        },
+        {
+          "effect-order-writing": 1.4375829999999041,
+          "read-validation": 13.988501000000724,
+          "bundle": 5.047582999999577,
+          "worker": 126.96683399999984,
+          "native-validation": 1.325290999999197,
+          "effect-order": 152.13004199999978
+        },
+        {
+          "effect-order-writing": 1.4837500000003274,
+          "read-validation": 17.929916999999477,
+          "bundle": 5.163292000000183,
+          "worker": 121.284584,
+          "native-validation": 1.703708000000006,
+          "effect-order": 151.3944160000001
+        },
+        {
+          "effect-order-writing": 2.2326670000002196,
+          "read-validation": 24.369290999999976,
+          "bundle": 4.8012079999998605,
+          "worker": 130.66099999999915,
+          "native-validation": 1.1597499999998035,
+          "effect-order": 167.2420830000001
+        },
+        {
+          "effect-order-writing": 1.3130000000001019,
+          "read-validation": 24.876666000000114,
+          "bundle": 6.125749999999243,
+          "worker": 134.8535410000004,
+          "native-validation": 1.1604170000000522,
+          "effect-order": 173.18962499999998
+        },
+        {
+          "effect-order-writing": 1.4689579999994749,
+          "read-validation": 14.306876000001466,
+          "bundle": 9.49474999999984,
+          "worker": 127.92404199999964,
+          "native-validation": 1.1047920000000886,
+          "effect-order": 159.5222079999994
+        },
+        {
+          "effect-order-writing": 1.4193749999994907,
+          "read-validation": 22.725623999999698,
+          "bundle": 5.721291999999266,
+          "worker": 125.47020799999973,
+          "native-validation": 1.4559579999995549,
+          "effect-order": 161.21045800000047
+        },
+        {
+          "effect-order-writing": 1.3396249999996144,
+          "read-validation": 15.212041000000681,
+          "bundle": 6.5170829999997295,
+          "worker": 150.54754199999934,
+          "native-validation": 1.1440000000002328,
+          "effect-order": 179.88479199999983
+        },
+        {
+          "effect-order-writing": 1.2012920000006488,
+          "read-validation": 16.077958999998373,
+          "bundle": 5.883291000000099,
+          "worker": 127.90120899999965,
+          "native-validation": 1.1566249999996217,
+          "effect-order": 156.82566700000007
+        },
+        {
+          "effect-order-writing": 1.2689169999994192,
+          "read-validation": 21.073875000000953,
+          "bundle": 7.912458999999217,
+          "worker": 134.80654099999992,
+          "native-validation": 1.0782500000004802,
+          "effect-order": 171.17416699999922
+        },
+        {
+          "effect-order-writing": 1.1735829999997804,
+          "read-validation": 16.497666999999637,
+          "bundle": 5.0806249999996,
+          "worker": 123.65612499999952,
+          "native-validation": 1.3238750000000437,
+          "effect-order": 155.91720900000018
+        },
+        {
+          "effect-order-writing": 2.191750000000866,
+          "read-validation": 21.93345799999952,
+          "bundle": 8.891083999999864,
+          "worker": 188.08358399999997,
+          "native-validation": 1.8260000000000218,
+          "effect-order": 286.29633399999966
+        },
+        {
+          "effect-order-writing": 1.3670420000007653,
+          "read-validation": 22.559167000000343,
+          "bundle": 5.26654199999939,
+          "worker": 177.13329199999953,
+          "native-validation": 1.6140829999994821,
+          "effect-order": 212.5802080000003
+        },
+        {
+          "effect-order-writing": 2.119499999999789,
+          "read-validation": 24.897249000001466,
+          "bundle": 5.608374999999796,
+          "worker": 218.7676249999995,
+          "native-validation": 1.9018750000013824,
+          "effect-order": 258.9215409999997
+        },
+        {
+          "effect-order-writing": 1.328083999998853,
+          "read-validation": 31.464250000000902,
+          "bundle": 10.449375000000146,
+          "worker": 188.5902499999993,
+          "native-validation": 1.906582999999955,
+          "effect-order": 238.60000000000036
+        },
+        {
+          "effect-order-writing": 3.5029580000009446,
+          "read-validation": 20.498500999996395,
+          "bundle": 7.3741250000002765,
+          "worker": 154.45987500000047,
+          "native-validation": 1.3072919999995065,
+          "effect-order": 192.4592909999992
+        },
+        {
+          "effect-order-writing": 1.4210409999996045,
+          "read-validation": 24.81341700000121,
+          "bundle": 8.714125000000422,
+          "worker": 185.8520410000001,
+          "native-validation": 1.5335830000003625,
+          "effect-order": 226.90295900000092
+        },
+        {
+          "effect-order-writing": 1.5237079999988055,
+          "read-validation": 15.812417000001005,
+          "bundle": 6.086332999999286,
+          "worker": 151.06420799999978,
+          "native-validation": 1.8027910000000702,
+          "effect-order": 184.19912499999919
+        }
+      ]
+    },
+    {
+      "stage": "final-source-daw",
+      "note": "Final built CLI; serialized after dedicated benchmark; no NODE_COMPILE_CACHE.",
+      "nodeCompileCache": false,
+      "benchmark": "source-daw",
+      "cpu": "Apple M4",
+      "os": "darwin 27.0.0",
+      "node": "v26.5.0",
+      "notes": 100,
+      "placements": 2,
+      "plugins": 20,
+      "iterations": 10,
+      "warmup": 1,
+      "sampleRate": 48000,
+      "blockSize": 128,
+      "device": null,
+      "callbackP95": null,
+      "callbackP99": null,
+      "xruns": null,
+      "measurements": [
+        {
+          "name": "whole-project-edit-validate-accept",
+          "p50Ms": 160.2695000000001,
+          "p95Ms": 194.76150000000007,
+          "p99Ms": 194.76150000000007
+        },
+        {
+          "name": "configuration-edit-validate-accept",
+          "p50Ms": 153.15824999999995,
+          "p95Ms": 160.609958,
+          "p99Ms": 160.609958
+        },
+        {
+          "name": "rack-review-validate",
+          "p50Ms": 158.3506669999997,
+          "p95Ms": 182.16862499999934,
+          "p99Ms": 182.16862499999934
+        },
+        {
+          "name": "dirty-journal-save",
+          "p50Ms": 44.7704590000003,
+          "p95Ms": 62.722667,
+          "p99Ms": 62.722667
+        },
+        {
+          "name": "effect-order-validate-accept",
+          "p50Ms": 148.9568339999987,
+          "p95Ms": 157.43120799999997,
+          "p99Ms": 157.43120799999997
+        },
+        {
+          "name": "source-and-plugin-projection",
+          "p50Ms": 1.3364579999997659,
+          "p95Ms": 1.7192500000001019,
+          "p99Ms": 1.7192500000001019
+        },
+        {
+          "name": "fresh-project-reopen",
+          "p50Ms": 159.1832919999997,
+          "p95Ms": 163.93337500000052,
+          "p99Ms": 163.93337500000052
+        }
+      ]
+    }
+  ]
+}

@@ -1,15 +1,14 @@
 //! Piano rendering is clipped to the viewport; keys/ruler/velocity stay pinned.
 use crate::{piano_layout::*, theme::Theme, ui::alpha};
 use gpui::*;
-use oxitone_core::wire::PatternSpec;
 
-struct Painter<'a> {
-    origin: Point<Pixels>,
-    window: &'a mut Window,
+pub(crate) struct Painter<'a> {
+    pub origin: Point<Pixels>,
+    pub window: &'a mut Window,
     cx: &'a mut App,
 }
 impl Painter<'_> {
-    fn rect(&mut self, x: f32, y: f32, w: f32, h: f32, color: Rgba) {
+    pub fn rect(&mut self, x: f32, y: f32, w: f32, h: f32, color: Rgba) {
         if w > 0. && h > 0. {
             self.window.paint_quad(fill(
                 Bounds::new(self.origin + point(px(x), px(y)), size(px(w), px(h))),
@@ -17,7 +16,14 @@ impl Painter<'_> {
             ));
         }
     }
-    fn text(&mut self, x: f32, y: f32, label: impl Into<SharedString>, color: u32, height: f32) {
+    pub fn text(
+        &mut self,
+        x: f32,
+        y: f32,
+        label: impl Into<SharedString>,
+        color: u32,
+        height: f32,
+    ) {
         let label = label.into();
         let run = TextRun {
             len: label.len(),
@@ -46,9 +52,10 @@ pub fn paint(
     bounds: Bounds<Pixels>,
     l: PianoLayout,
     theme: Theme,
-    pattern: &PatternSpec,
+    notes: &[crate::piano_note_paint::PaintedNote],
     sounding: &[bool; 128],
     phase: Option<f64>,
+    snap: Snap,
     window: &mut Window,
     cx: &mut App,
 ) {
@@ -80,7 +87,7 @@ pub fn paint(
                 alpha(theme.border, if pitch % 12 == 0 { 1. } else { 0.4 }),
             );
         }
-        let step = l.grid_step();
+        let step = l.grid_step().max(snap.step());
         let first = (l.beat(KEY_WIDTH) / step).floor() as usize;
         let last = (l.beat(KEY_WIDTH + l.grid_width) / step).ceil() as usize;
         for tick in first..=last {
@@ -90,45 +97,19 @@ pub fn paint(
                 RULER,
                 1.,
                 l.grid_height,
-                alpha(theme.border, if beat.fract() == 0. { 1. } else { 0.4 }),
+                alpha(
+                    theme.border,
+                    if beat.rem_euclid(4.) == 0. {
+                        1.
+                    } else if beat.fract() == 0. {
+                        0.65
+                    } else {
+                        0.28
+                    },
+                ),
             );
         }
-        for note in &pattern.notes {
-            let x = l.x(note.start.to_f64());
-            let width = (note.duration.to_f64() as f32 * l.beat_width - 1.).max(7.);
-            let y = l.y(note.pitch);
-            if x > KEY_WIDTH + l.grid_width
-                || x + width < KEY_WIDTH
-                || y > RULER + l.grid_height
-                || y + l.key_height < RULER
-            {
-                continue;
-            }
-            let active = sounding[usize::from(note.pitch)]
-                && phase.is_some_and(|beat| {
-                    beat >= note.start.to_f64()
-                        && beat < note.start.to_f64() + note.duration.to_f64()
-                });
-            p.rect(
-                x,
-                y + 2.,
-                width,
-                (l.key_height - 4.).max(3.),
-                alpha(theme.accent, 0.55 + note.velocity as f32 * 0.45),
-            );
-            if active {
-                p.rect(x, y + 2., width, 2., rgb(theme.gold));
-            }
-            if width >= 34. && l.key_height >= 16. {
-                p.text(
-                    x + 4.,
-                    y,
-                    note_name(note.pitch),
-                    theme.on_accent,
-                    l.key_height,
-                );
-            }
-        }
+        crate::piano_note_paint::paint_notes(&mut p, l, theme, notes, sounding, phase);
         if let Some(phase) = phase {
             p.rect(l.x(phase), RULER, 2., l.grid_height, rgb(theme.gold));
         }
@@ -160,7 +141,7 @@ pub fn paint(
                     theme.keys[usize::from(black)]
                 }),
             );
-            if l.key_height >= 8. {
+            if l.key_height >= 8. && (pitch % 12 == 0 || on) {
                 p.text(
                     8.,
                     y,
@@ -182,14 +163,13 @@ pub fn paint(
     };
     let velocity_y = RULER + l.grid_height;
     p.rect(0., 0., l.width, RULER, rgb(theme.panel));
-    p.rect(0., velocity_y, l.width, VELOCITY, rgb(theme.panel));
+    p.rect(0., velocity_y, l.width, l.velocity_height, rgb(theme.panel));
     p.rect(0., velocity_y, l.width, 1., rgb(theme.border));
-    p.text(9., 0., "NOTE", theme.muted, RULER);
-    p.text(8., velocity_y + 5., "VELOCITY", theme.muted, 18.);
-    p.text(8., velocity_y + 26., "0 – 127", theme.muted, 18.);
+    p.text(9., 0., "Notes", theme.muted, RULER);
+    p.text(8., velocity_y + 5., "Velocity", theme.muted, 18.);
     let mask = Bounds::new(
         bounds.origin + point(px(KEY_WIDTH), px(0.)),
-        size(px(l.grid_width), px(velocity_y + VELOCITY)),
+        size(px(l.grid_width), px(velocity_y + l.velocity_height)),
     );
     p.window
         .with_content_mask(Some(ContentMask { bounds: mask }), |window| {
@@ -198,6 +178,10 @@ pub fn paint(
                 window,
                 cx: p.cx,
             };
+            for value in [0., 0.25, 0.5, 0.75, 1.] {
+                let y = velocity_y + l.velocity_height - 5. - value * (l.velocity_height - 12.);
+                p.rect(KEY_WIDTH, y, l.grid_width, 1., alpha(theme.border, 0.35));
+            }
             let step = l.grid_step().max(1.);
             let first = (l.beat(KEY_WIDTH) / step).floor() as usize;
             let last = (l.beat(KEY_WIDTH + l.grid_width) / step).ceil() as usize;
@@ -212,13 +196,36 @@ pub fn paint(
                 );
                 p.rect(l.x(beat), RULER - 5., 1., 5., rgb(theme.border));
             }
-            for note in &pattern.notes {
-                let x = l.x(note.start.to_f64());
+            for item in notes {
+                let note = &item.note;
+                let x = l.x(note.start);
                 if x < KEY_WIDTH - 7. || x > KEY_WIDTH + l.grid_width {
                     continue;
                 }
-                let h = (note.velocity as f32 * (VELOCITY - 12.)).max(2.);
-                p.rect(x, velocity_y + VELOCITY - 5. - h, 4., h, rgb(theme.accent));
+                let h = (note.velocity as f32 * (l.velocity_height - 12.)).max(2.);
+                let color = if item.selected {
+                    theme.gold
+                } else {
+                    theme.accent
+                };
+                p.rect(
+                    x + 2.,
+                    velocity_y + l.velocity_height - 5. - h,
+                    2.,
+                    h,
+                    alpha(color, 0.7),
+                );
+                p.window.paint_quad(quad(
+                    Bounds::new(
+                        p.origin + point(px(x), px(velocity_y + l.velocity_height - 7. - h)),
+                        size(px(6.), px(5.)),
+                    ),
+                    px(2.),
+                    rgb(color),
+                    px(0.),
+                    rgb(color),
+                    BorderStyle::default(),
+                ));
             }
             if let Some(phase) = phase {
                 p.rect(l.x(phase), 0., 2., RULER, rgb(theme.gold));

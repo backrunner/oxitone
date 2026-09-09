@@ -4,7 +4,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use super::authoring::{
-    AutomationLaneSpec, ChannelSpec, MixerChannelSpec, PatternClipSpec, PatternSpec, SampleClipSpec,
+    AutomationClipSpec, AutomationLaneSpec, ChannelSpec, MixerChannelSpec, PatternClipSpec,
+    PatternSpec, SampleClipSpec,
 };
 use super::basic::{MarkerSpec, SampleRef, TempoSegment, TimeSignatureSegment, TrackSpec};
 use super::serde_util::u64_string;
@@ -37,6 +38,8 @@ pub struct ProjectSnapshot {
     pub channels: Vec<ChannelSpec>,
     pub mixer_channels: Vec<MixerChannelSpec>,
     pub automation: Vec<AutomationLaneSpec>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub automation_clips: Option<Vec<AutomationClipSpec>>,
 }
 
 /// Decode a project JSON document. Unknown fields are ignored; an unknown
@@ -49,11 +52,69 @@ pub fn decode_project_snapshot(json: &str) -> Result<ProjectSnapshot, OxitoneErr
         .and_then(Value::as_str)
         .ok_or_else(|| OxitoneError::new(codes::INVALID_PROJECT, "missing protocolVersion"))?;
     check_protocol_version(version)?;
-    serde_json::from_value(value)
-        .map_err(|e| OxitoneError::new(codes::INVALID_PROJECT, format!("invalid snapshot: {e}")))
+    let snapshot = serde_json::from_value(value)
+        .map_err(|e| OxitoneError::new(codes::INVALID_PROJECT, format!("invalid snapshot: {e}")))?;
+    check_snapshot_version(&snapshot)?;
+    Ok(snapshot)
+}
+
+/// Check both the version and feature floor, including in-memory snapshot callers.
+pub fn check_snapshot_version(snapshot: &ProjectSnapshot) -> Result<(), OxitoneError> {
+    check_protocol_version(&snapshot.protocol_version)?;
+    let minor = snapshot
+        .protocol_version
+        .split_once('.')
+        .unwrap()
+        .1
+        .parse::<u64>()
+        .unwrap();
+    if minor < 2
+        && (snapshot.patterns.iter().any(|p| p.parts.is_some())
+            || snapshot
+                .tracks
+                .iter()
+                .any(|t| t.mute.is_some() || t.solo.is_some())
+            || snapshot.automation_clips.is_some()
+            || snapshot
+                .automation
+                .iter()
+                .any(|lane| lane.playback.is_some()))
+    {
+        return Err(OxitoneError::with_path(
+            codes::PROTOCOL_VERSION_UNSUPPORTED,
+            "Pattern parts, Track mute/solo and Playlist automation require protocol 1.2",
+            "$.protocolVersion",
+        ));
+    }
+    let has_instances = snapshot.channels.iter().any(|channel| {
+        channel.instrument.instance_id.is_some()
+            || channel
+                .effect_chain
+                .iter()
+                .any(|effect| effect.instance_id.is_some())
+    }) || snapshot.mixer_channels.iter().any(|bus| {
+        bus.inserts
+            .iter()
+            .any(|effect| effect.instance_id.is_some())
+    });
+    if minor < 1
+        && (has_instances
+            || snapshot
+                .automation
+                .iter()
+                .any(|lane| lane.target.scope.is_some()))
+    {
+        return Err(OxitoneError::with_path(
+            codes::PROTOCOL_VERSION_UNSUPPORTED,
+            "plugin instances and scoped automation require engine protocol 1.1",
+            "$.protocolVersion",
+        ));
+    }
+    Ok(())
 }
 
 /// Serialize a snapshot as canonical JSON (with trailing LF).
 pub fn encode_project_snapshot(snapshot: &ProjectSnapshot) -> Result<String, OxitoneError> {
+    check_snapshot_version(snapshot)?;
     to_canonical_json(snapshot)
 }

@@ -1,6 +1,14 @@
 # Oxitone 总体架构
 
+发布前目标已改为 [代码/DAW 双向 authoring](../designs/source-daw/README.md)：Node Document
+Service 拥有可变源码，GPUI 提交语义事务，Rust 继续独占实时执行。下文的 read-only、
+core/native 耦合与旧协议描述是迁移基线，不再是目标限制。当前增量见
+[source authoring 契约](15-source-authoring.md)，未完成的边界不能标记为协议 2。
+
 ## 分层原则
+
+代码模块化、文件大小和依赖方向遵循 [工程化规范](22-engineering.md)。手写文件聚焦单一职责，
+目标 150–250 行，接近 300 行时按领域边界拆分；不通过压缩格式规避。
 
 TypeScript 是声明式 authoring layer：负责创建对象、组合 patterns、注册插件、保存项目和发出控制命令。Rust 是 execution layer：负责把快照编译成不可变 render graph，执行调度、DSP、混音、设备输出和离线导出。
 
@@ -29,6 +37,7 @@ oxitone/
     sdk/                  # oxitone: unified public authoring/native/sample entry
     native-generated/     # generated N-API TS declarations; never hand edit
     cli/                  # @oxitone/cli: render/export-midi/doctor and preview/watch runner
+    editor-vscode/        # oxitone-vscode (private VSIX): VS Code buffers and Document Service adapter
   crates/
     core/                 # oxitone-core: IDs, units, errors, immutable data
     graph/                # oxitone-graph: validation and RenderGraph compiler

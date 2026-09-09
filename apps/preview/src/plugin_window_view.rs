@@ -4,60 +4,6 @@ use crate::{
 };
 use gpui::{prelude::*, *};
 
-pub fn header(this: &PluginWindow, window: &Window) -> impl IntoElement {
-    let theme = this.theme;
-    div()
-        .id("plugin-window-drag")
-        .window_control_area(WindowControlArea::Drag)
-        .h(px(52.))
-        .flex_shrink_0()
-        .pl(px(if window.is_fullscreen() { 20. } else { 100. }))
-        .pr_4()
-        .flex()
-        .items_center()
-        .gap_3()
-        .border_b_1()
-        .border_color(rgb(theme.border))
-        .on_mouse_down(MouseButton::Left, |event, window, cx| {
-            if window.is_fullscreen() {
-                return;
-            }
-            if event.click_count == 2 {
-                window.titlebar_double_click();
-            } else {
-                crate::window_chrome::start_drag(window, cx);
-            }
-        })
-        .child(
-            div()
-                .flex_1()
-                .min_w_0()
-                .text_xs()
-                .child(
-                    div().truncate().font_weight(FontWeight::SEMIBOLD).child(
-                        this.panel
-                            .as_ref()
-                            .map_or_else(|| this.title(), |p| p.title.clone()),
-                    ),
-                )
-                .child(
-                    div()
-                        .truncate()
-                        .text_size(px(9.))
-                        .text_color(rgb(theme.muted))
-                        .child(this.details.as_ref().map_or_else(String::new, |d| {
-                            format!("{} · {}", d.owner_name, d.target.label())
-                        })),
-                ),
-        )
-        .child(
-            div()
-                .text_size(px(9.))
-                .text_color(rgb(theme.muted))
-                .child("OXITONE"),
-        )
-}
-
 pub fn view(this: &PluginWindow, width: f32, cx: &mut Context<PluginWindow>) -> impl IntoElement {
     let theme = this.theme;
     let Some(details) = &this.details else {
@@ -82,7 +28,7 @@ pub fn view(this: &PluginWindow, width: f32, cx: &mut Context<PluginWindow>) -> 
         .border_b_1()
         .border_color(rgb(theme.border));
     for (tab, title) in [
-        (DetailTab::Panel, "Panel"),
+        (DetailTab::Panel, "Source controls"),
         (DetailTab::Parameters, "Inspect"),
         (DetailTab::Resources, "Assets"),
         (DetailTab::Plugin, "Info"),
@@ -97,22 +43,51 @@ pub fn view(this: &PluginWindow, width: f32, cx: &mut Context<PluginWindow>) -> 
                 })),
         );
     }
-    tabs = tabs.child(div().flex_1()).child(
-        theme
-            .button(
-                "copy-plugin-reference",
-                if this.copied { "Copied" } else { "Copy JSON" },
+    tabs = tabs
+        .child(div().flex_1())
+        .when(this.tab == DetailTab::Plugin, |tabs| {
+            tabs.child(
+                theme
+                    .button(
+                        "copy-plugin-reference",
+                        if this.copied { "Copied" } else { "Copy JSON" },
+                    )
+                    .on_click(cx.listener(|this, _, _, cx| {
+                        if let Some(details) = &this.details {
+                            cx.write_to_clipboard(ClipboardItem::new_string(
+                                serde_json::to_string_pretty(&details.source).unwrap(),
+                            ));
+                            this.copied = true;
+                            cx.notify();
+                        }
+                    })),
             )
-            .on_click(cx.listener(|this, _, _, cx| {
-                if let Some(details) = &this.details {
-                    cx.write_to_clipboard(ClipboardItem::new_string(
-                        serde_json::to_string_pretty(&details.source).unwrap(),
-                    ));
-                    this.copied = true;
-                    cx.notify();
-                }
-            })),
-    );
+        });
+    if this.tab != DetailTab::Plugin
+        && this
+            .owner
+            .upgrade()
+            .is_some_and(|owner| owner.read(cx).document.view.is_some())
+    {
+        tabs = tabs.child(
+            theme
+                .button("plugin-edit-source", "Configure")
+                .relative()
+                .child({
+                    let bounds = this.source_button.clone();
+                    canvas(move |area, _, _| bounds.set(area), |_, _, _, _| {})
+                        .absolute()
+                        .inset_0()
+                        .size_full()
+                })
+                .on_click(cx.listener(|this, _, window, cx| {
+                    let target = this.target.clone();
+                    let _ = this.owner.update(cx, |owner, cx| {
+                        owner.edit_plugin_source(&target, window, cx)
+                    });
+                })),
+        );
+    }
     let mut content = div().w_full().flex().flex_col();
     match this.tab {
         DetailTab::Panel => content = crate::plugin_panel::view(this, width, cx),
@@ -179,7 +154,17 @@ pub fn view(this: &PluginWindow, width: f32, cx: &mut Context<PluginWindow>) -> 
         .min_h_0()
         .flex()
         .flex_col()
-        .child(crate::plugin_controls::mix(this))
+        .when(this.sync_status != "Synced", |d| {
+            d.child(
+                div()
+                    .px_4()
+                    .py_1()
+                    .text_size(px(10.))
+                    .text_color(rgb(theme.muted))
+                    .child(this.sync_status.clone()),
+            )
+        })
+        .child(crate::plugin_host_controls::view(this, cx))
         .child(tabs)
         .child(
             div()

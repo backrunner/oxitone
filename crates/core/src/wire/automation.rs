@@ -92,6 +92,14 @@ impl ChanceSpec {
     rename_all_fields = "camelCase"
 )]
 pub enum AutomationSourceSpec {
+    ReplaceRange {
+        base: Box<AutomationSourceSpec>,
+        replacement: Box<AutomationSourceSpec>,
+        start_beat: Beat,
+        end_beat: Beat,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        fade_beats: Option<Beat>,
+    },
     Constant {
         value: f64,
     },
@@ -152,6 +160,9 @@ impl AutomationSourceSpec {
     /// Structural checks that do not need graph context.
     pub fn validate(&self) -> Result<(), OxitoneError> {
         match self {
+            AutomationSourceSpec::ReplaceRange {
+                base, replacement, ..
+            } => base.validate().and_then(|()| replacement.validate()),
             AutomationSourceSpec::Chance(spec) => spec.validate(),
             AutomationSourceSpec::Map { input, .. } => input.validate(),
             AutomationSourceSpec::Unary { input, .. } => input.validate(),

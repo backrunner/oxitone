@@ -1,10 +1,11 @@
 //! Semantic colors selected from the window's current system appearance.
-use gpui::{prelude::*, *};
+use gpui::WindowAppearance;
 
 #[derive(Clone, Copy)]
 pub struct Theme {
     pub bg: u32,
     pub panel: u32,
+    pub raised: u32,
     pub border: u32,
     pub text: u32,
     pub muted: u32,
@@ -32,25 +33,26 @@ impl Theme {
     pub fn from_appearance(appearance: WindowAppearance) -> Self {
         match appearance {
             WindowAppearance::Dark | WindowAppearance::VibrantDark => Self {
-                bg: 0x0d1118,
-                panel: 0x151b25,
-                border: 0x303c4d,
-                text: 0xe4ebf4,
-                muted: 0xa2afc1,
+                bg: 0x111215,
+                panel: 0x1a1c20,
+                raised: 0x22252b,
+                border: 0x34373f,
+                text: 0xe9ebef,
+                muted: 0xa6adb9,
                 accent: 0x69c7b8,
                 on_accent: 0x102b28,
                 gold: 0xe8b977,
                 danger: 0xf19a88,
                 diagnostic_bg: 0x3b272a,
                 diagnostic_text: 0xf4c0b3,
-                button: 0x252f3e,
-                button_hover: 0x334154,
-                selected: 0x20383c,
-                lanes: [0x141c27, 0x111822],
-                piano_rows: [0x1c2430, 0x111720],
-                keys: [0x303b49, 0x0a1018],
+                button: 0x26292f,
+                button_hover: 0x343840,
+                selected: 0x233632,
+                lanes: [0x1b1d22, 0x17191d],
+                piano_rows: [0x24272d, 0x1b1d22],
+                keys: [0x343941, 0x111317],
                 key_text: [0xc0cbd9, 0xa2afc1],
-                scope: 0x0a1017,
+                scope: 0x131519,
                 meter: 0x080f16,
                 secondary: 0x7baad4,
                 tracks: [0x69c7b8, 0xe8b977, 0xb5aff2, 0x80bce2, 0xe2a1b4],
@@ -59,6 +61,7 @@ impl Theme {
             WindowAppearance::Light | WindowAppearance::VibrantLight => Self {
                 bg: 0xf4f6f9,
                 panel: 0xffffff,
+                raised: 0xf5f8fc,
                 border: 0xcbd4df,
                 text: 0x202d40,
                 muted: 0x4c5c70,
@@ -84,57 +87,7 @@ impl Theme {
         }
     }
 
-    pub fn button(
-        self,
-        id: impl Into<SharedString>,
-        label: impl Into<SharedString>,
-    ) -> Stateful<Div> {
-        div()
-            .id(ElementId::Name(id.into()))
-            .px_2()
-            .py_1()
-            .rounded_md()
-            .border_1()
-            .border_color(crate::ui::alpha(self.border, 0.65))
-            .bg(rgb(self.button))
-            .text_color(rgb(self.text))
-            .hover(move |style| style.bg(rgb(self.button_hover)))
-            .active(move |style| style.bg(rgb(self.selected)))
-            .text_xs()
-            .cursor_pointer()
-            .child(label.into())
-    }
-
-    pub fn label(self, text: impl Into<SharedString>) -> Div {
-        div()
-            .text_xs()
-            .font_weight(FontWeight::SEMIBOLD)
-            .text_color(rgb(self.muted))
-            .child(text.into())
-    }
-
     pub fn track(self, index: usize) -> u32 {
         self.tracks[index % self.tracks.len()]
-    }
-
-    pub fn tab(self, id: &'static str, label: String, selected: bool) -> Stateful<Div> {
-        div()
-            .id(id)
-            .h_full()
-            .flex()
-            .items_center()
-            .px_1()
-            .border_b_2()
-            .border_color(if selected {
-                rgb(self.accent)
-            } else {
-                crate::ui::alpha(self.border, 0.)
-            })
-            .text_size(px(11.))
-            .font_weight(FontWeight::MEDIUM)
-            .text_color(rgb(if selected { self.text } else { self.muted }))
-            .cursor_pointer()
-            .hover(move |s| s.text_color(rgb(self.text)))
-            .child(label)
     }
 }

@@ -16,13 +16,14 @@ const fixtures = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..",
 const snapshotText = readFileSync(join(fixtures, "project-snapshot.canonical.json"), "utf8");
 
 describe("protocol version", () => {
-  it("exposes 1.0", () => {
-    expect(PROTOCOL_VERSION).toBe("1.0");
+  it("exposes 1.2 and accepts the legacy minor", () => {
+    expect(PROTOCOL_VERSION).toBe("1.2");
     expect(() => checkProtocolVersion("1.0")).not.toThrow();
+    expect(() => checkProtocolVersion("1.1")).not.toThrow();
   });
 
   it("rejects unknown major versions and newer minors", () => {
-    for (const version of ["2.0", "0.9", "1.1", "banana"]) {
+    for (const version of ["2.0", "0.9", "1.3", "banana"]) {
       expect(() => checkProtocolVersion(version)).toThrowError(
         expect.objectContaining({ code: ErrorCode.ProtocolVersionUnsupported }) as Error,
       );
@@ -31,6 +32,27 @@ describe("protocol version", () => {
 });
 
 describe("project snapshot codec", () => {
+  it("round-trips Track M/S and rejects them below their protocol floor", () => {
+    const snapshot = decodeProjectSnapshot(snapshotText);
+    snapshot.tracks[0]!.mute = true; snapshot.tracks[0]!.solo = false;
+    expect(() => encodeProjectSnapshot(snapshot)).toThrowError(expect.objectContaining({ code: ErrorCode.ProtocolVersionUnsupported }));
+    snapshot.protocolVersion = PROTOCOL_VERSION;
+    expect(decodeProjectSnapshot(encodeProjectSnapshot(snapshot))).toEqual(snapshot);
+  });
+  it("rejects instance semantics mislabeled with the legacy minor", () => {
+    const snapshot = decodeProjectSnapshot(snapshotText);
+    snapshot.channels[0]!.instrument.instanceId = "ins_test";
+    expect(projectSnapshotSchema.safeParse(snapshot).success).toBe(false);
+    for (const operation of [() => encodeProjectSnapshot(snapshot), () => decodeProjectSnapshot(JSON.stringify(snapshot))]) {
+      expect(operation).toThrowError(expect.objectContaining({ code: ErrorCode.ProtocolVersionUnsupported }));
+    }
+    snapshot.protocolVersion = PROTOCOL_VERSION;
+    expect(decodeProjectSnapshot(encodeProjectSnapshot(snapshot))).toEqual(snapshot);
+    delete snapshot.channels[0]!.instrument.instanceId;
+    snapshot.automation[0]!.target.scope = "plugin";
+    snapshot.protocolVersion = "1.0";
+    expect(projectSnapshotSchema.safeParse(snapshot).success).toBe(false);
+  });
   it("decodes the canonical fixture and re-encodes byte-identically", () => {
     const snapshot = decodeProjectSnapshot(snapshotText);
     expect(encodeProjectSnapshot(snapshot)).toBe(snapshotText);
@@ -91,6 +113,8 @@ describe("error codes", () => {
   it("covers every stable code named in the docs", () => {
     const expected = [
       "InvalidProject", "TempoRange", "TempoMapOrder", "TempoMapComplexity",
+      "EditTargetMissing", "EditTargetAmbiguous", "EditScopeConflict", "EditNotRepresentable",
+      "SourceChanged", "DraftInvalid", "BudgetExceeded",
       "AutomationNonFinite", "AutomationRange", "AutomationPeriod",
       "AutomationChanceFrequency", "AutomationPoints", "AutomationExponentialZero",
       "AutomationDepthLimit", "AutomationNodeLimit", "AutomationRateBudget",
@@ -98,7 +122,7 @@ describe("error codes", () => {
       "AutomationTargetInvalid", "MidiChannelLimit", "SampleStretchRange",
       "SampleFormatUnsupported",
       "AssetUnavailable", "DeviceUnavailable", "RealtimeFault", "WavTooLarge",
-      "PluginAbiMismatch", "PluginManifestMismatch", "PerformanceWarning",
+      "PluginAbiMismatch", "PluginInstallFailed", "PluginManifestMismatch", "PluginMigrationFailed", "PluginTaskConflict", "PerformanceWarning",
     ];
     expect([...ERROR_CODES].sort()).toEqual([...expected, "ProtocolVersionUnsupported"].sort());
   });

@@ -48,9 +48,12 @@ pub fn ensure_transport_invariant(spec: &AutomationSourceSpec) -> Result<(), Oxi
         AutomationSourceSpec::Map { input, .. } | AutomationSourceSpec::Unary { input, .. } => {
             ensure_transport_invariant(input)
         }
-        AutomationSourceSpec::Binary { left, right, .. } => {
-            ensure_transport_invariant(left).and_then(|()| ensure_transport_invariant(right))
-        }
+        AutomationSourceSpec::Binary { left, right, .. }
+        | AutomationSourceSpec::ReplaceRange {
+            base: left,
+            replacement: right,
+            ..
+        } => ensure_transport_invariant(left).and_then(|()| ensure_transport_invariant(right)),
         _ => Ok(()),
     }
 }

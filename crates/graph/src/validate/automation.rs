@@ -131,7 +131,12 @@ fn check_tempo_source(path: &str, source: &AutomationSourceSpec) -> Result<(), O
         AutomationSourceSpec::Map { input, .. } | AutomationSourceSpec::Unary { input, .. } => {
             return check_tempo_source(path, input)
         }
-        AutomationSourceSpec::Binary { left, right, .. } => {
+        AutomationSourceSpec::Binary { left, right, .. }
+        | AutomationSourceSpec::ReplaceRange {
+            base: left,
+            replacement: right,
+            ..
+        } => {
             check_tempo_source(path, left)?;
             return check_tempo_source(path, right);
         }
@@ -151,20 +156,54 @@ pub(super) fn validate_automation(
     snapshot: &ProjectSnapshot,
     registry: &PluginRegistry,
 ) -> Result<(), OxitoneError> {
-    let mut lanes_per_target: BTreeMap<(&str, &str), Vec<usize>> = BTreeMap::new();
+    let mut lanes_per_target = BTreeMap::<_, Vec<usize>>::new();
+    let mut channels: Vec<_> = snapshot.channels.iter().collect();
+    channels.sort_by_key(|channel| &channel.id);
+    let channel_index = channels
+        .iter()
+        .enumerate()
+        .map(|(index, channel)| (channel.id.as_str(), index))
+        .collect();
+    let clip_index = snapshot
+        .sample_clips
+        .iter()
+        .enumerate()
+        .map(|(index, clip)| (clip.id.as_str(), index))
+        .collect();
     for (i, lane) in snapshot.automation.iter().enumerate() {
         let path = format!("$.automation[{i}].target");
         lane.source.validate().map_err(|mut err| {
             err.path = Some(format!("$.automation[{i}].source"));
             err
         })?;
-        let spec = resolve_target(
-            snapshot,
-            registry,
-            &path,
-            &lane.target.entity_id,
-            &lane.target.parameter_id,
-        )?;
+        let scoped = lane
+            .target
+            .scope
+            .map(|scope| {
+                crate::instance_targets::resolve(
+                    snapshot,
+                    registry,
+                    &lane.target.entity_id,
+                    scope,
+                    &lane.target.parameter_id,
+                )
+            })
+            .transpose()
+            .map_err(|mut error| {
+                error.path = Some(path.clone());
+                error
+            })?;
+        let spec = if let Some((_, spec)) = &scoped {
+            spec.clone()
+        } else {
+            resolve_target(
+                snapshot,
+                registry,
+                &path,
+                &lane.target.entity_id,
+                &lane.target.parameter_id,
+            )?
+        };
         if spec.automation != Some(true) {
             return Err(target_invalid(
                 &format!("{path}.parameterId"),
@@ -174,13 +213,22 @@ pub(super) fn validate_automation(
                 ),
             ));
         }
-        lanes_per_target
-            .entry((
-                lane.target.entity_id.as_str(),
-                lane.target.parameter_id.as_str(),
-            ))
-            .or_default()
-            .push(i);
+        let target = if let Some((target, _)) = scoped {
+            Some(target)
+        } else {
+            crate::compile::resolve_automation_target(
+                snapshot,
+                registry,
+                &channel_index,
+                &clip_index,
+                &lane.target.entity_id,
+                &lane.target.parameter_id,
+            )?
+            .map(|(target, _)| target)
+        };
+        if let Some(target) = target {
+            lanes_per_target.entry(target).or_default().push(i);
+        }
     }
 
     let tempo_lanes: Vec<usize> = snapshot
@@ -206,7 +254,7 @@ pub(super) fn validate_automation(
         )?;
     }
 
-    for ((entity, parameter), lanes) in &lanes_per_target {
+    for (target, lanes) in &lanes_per_target {
         if lanes.len() > 1
             && lanes
                 .iter()
@@ -214,9 +262,7 @@ pub(super) fn validate_automation(
         {
             return Err(OxitoneError::with_path(
                 codes::AUTOMATION_TARGET_INVALID,
-                format!(
-                    "multiple lanes target {entity:?}.{parameter:?}; every lane must declare combine"
-                ),
+                format!("multiple lanes target {target:?}; every lane must declare combine"),
                 format!("$.automation[{}].combine", lanes[0]),
             ));
         }

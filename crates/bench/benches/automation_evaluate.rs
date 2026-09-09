@@ -36,6 +36,26 @@ fn sources() -> Vec<(&'static str, AutomationSourceSpec)> {
         ("chance_rate4", chance_source(0.5, 4.0, 3)),
         ("chance_rate16", chance_source(0.5, 16.0, 3)),
         ("composite_16nodes", composite(16)),
+        (
+            "range_hard",
+            AutomationSourceSpec::ReplaceRange {
+                base: Box::new(chance_source(0.5, 4.0, 3)),
+                replacement: Box::new(wave_source(WaveKind::Sine, (4, 1))),
+                start_beat: common::beat(32, 1),
+                end_beat: common::beat(34, 1),
+                fade_beats: None,
+            },
+        ),
+        (
+            "range_fade",
+            AutomationSourceSpec::ReplaceRange {
+                base: Box::new(chance_source(0.5, 4.0, 3)),
+                replacement: Box::new(wave_source(WaveKind::Sine, (4, 1))),
+                start_beat: common::beat(32, 1),
+                end_beat: common::beat(34, 1),
+                fade_beats: Some(common::beat(1, 2)),
+            },
+        ),
     ]
 }
 

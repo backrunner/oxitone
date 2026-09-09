@@ -5,6 +5,13 @@
  */
 export const ErrorCode = {
   InvalidProject: "InvalidProject",
+  EditTargetMissing: "EditTargetMissing",
+  EditTargetAmbiguous: "EditTargetAmbiguous",
+  EditScopeConflict: "EditScopeConflict",
+  SourceChanged: "SourceChanged",
+  EditNotRepresentable: "EditNotRepresentable",
+  DraftInvalid: "DraftInvalid",
+  BudgetExceeded: "BudgetExceeded",
   ProtocolVersionUnsupported: "ProtocolVersionUnsupported",
   TempoRange: "TempoRange",
   TempoMapOrder: "TempoMapOrder",
@@ -30,6 +37,9 @@ export const ErrorCode = {
   WavTooLarge: "WavTooLarge",
   PluginAbiMismatch: "PluginAbiMismatch",
   PluginManifestMismatch: "PluginManifestMismatch",
+  PluginInstallFailed: "PluginInstallFailed",
+  PluginTaskConflict: "PluginTaskConflict",
+  PluginMigrationFailed: "PluginMigrationFailed",
   PerformanceWarning: "PerformanceWarning",
 } as const;
 

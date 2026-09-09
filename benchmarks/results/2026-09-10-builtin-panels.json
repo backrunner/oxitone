@@ -1,0 +1,19 @@
+{
+  "date": "2026-09-10",
+  "cpu": "Apple M4",
+  "os": "macOS 27.0",
+  "command": "cargo test --release -p oxitone-preview benchmark_builtin_plots -- --ignored --nocapture",
+  "scope": "Build all 26 bundled effect parameter-response models per sample. UI model only; excludes GPU drawing, source transactions, DSP processing and audio callbacks.",
+  "warmup": 100,
+  "samples": 1000,
+  "sampleRate": 48000,
+  "fixtureBlockSize": 128,
+  "p95Us": 173.625,
+  "p99Us": 272.583,
+  "device": null,
+  "callbackP95Us": null,
+  "callbackP99Us": null,
+  "cpuUtilization": null,
+  "xruns": null,
+  "gpuFrameTime": null
+}

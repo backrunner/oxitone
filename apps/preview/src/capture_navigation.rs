@@ -9,7 +9,17 @@ pub fn step(frame: usize, view: &Entity<Preview>, window: &mut Window, cx: &mut 
     match frame {
         3 => view.read(cx).piano_focus.focus(window),
         4 => {
-            window.dispatch_keystroke(Keystroke::parse("+").unwrap(), cx);
+            // Short patterns use a capped default beat width and may still fit after one step.
+            for _ in 0..12 {
+                if view.read(cx).piano_layout().unwrap().max_x > 0. {
+                    break;
+                }
+                window.dispatch_keystroke(Keystroke::parse("+").unwrap(), cx);
+            }
+            assert!(
+                view.read(cx).piano_layout().unwrap().max_x > 0.,
+                "zoom must create scrollable content"
+            );
         }
         5 => {
             assert!(view.read(cx).piano.zoom > 1., "piano keyboard focus/zoom");
@@ -56,7 +66,15 @@ pub fn step(frame: usize, view: &Entity<Preview>, window: &mut Window, cx: &mut 
                 cx.notify();
             });
         }
-        7 => view.read(cx).mixer_focus.focus(window),
+        7 => {
+            // Arrange now defaults to the full-width piano dock. Open Mixer before focusing it.
+            window.dispatch_keystroke(Keystroke::parse("f9").unwrap(), cx);
+            assert_eq!(
+                view.read(cx).workspace.mode,
+                crate::workspace_layout::EditorMode::Mixer
+            );
+            view.read(cx).mixer_focus.focus(window);
+        }
         8 => {
             window.dispatch_keystroke(Keystroke::parse("end").unwrap(), cx);
         }

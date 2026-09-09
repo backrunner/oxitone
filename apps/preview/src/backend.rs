@@ -18,6 +18,7 @@ use std::{
 };
 
 pub enum Command {
+    Document(crate::document_wire::DocumentRequest),
     Frame(Frame, Option<Sender<Value>>),
     Invalid(String),
     Shutdown,
@@ -43,13 +44,40 @@ impl Backend {
         let thread = thread::Builder::new()
             .name("oxitone-preview-control".into())
             .spawn(move || {
+                let document_events = events_tx.clone();
                 let mut engine = Engine::new(simulated, events_tx);
+                let mut document_requests = std::collections::VecDeque::new();
                 while !engine_stop.load(Ordering::Relaxed) {
                     match receiver.recv_timeout(Duration::from_millis(33)) {
+                        Ok(Command::Document(request)) => {
+                            if document_requests.len() < 64 {
+                                document_requests.push_back(request);
+                            } else {
+                                let _ = document_events.send(UiEvent::Document(
+                                    crate::document_wire::DocumentMessage::Response {
+                                        document_protocol_version: "2.0".into(),
+                                        session_id: request.session_id,
+                                        request_id: request.request_id,
+                                        revision: request.base_revision,
+                                        accepted: false,
+                                        error: Some(crate::document_wire::DocumentError {
+                                            code: "BudgetExceeded".into(),
+                                            message: "document request queue is full".into(),
+                                        }),
+                                    },
+                                ));
+                            }
+                        }
                         Ok(Command::Frame(frame, reply)) => {
                             let shutdown = matches!(frame, Frame::Shutdown);
-                            let response = engine.handle(frame);
+                            let mut response = engine.handle(frame);
                             if let Some(reply) = reply {
+                                if !document_requests.is_empty() {
+                                    response["documentRequests"] = serde_json::to_value(
+                                        document_requests.drain(..).collect::<Vec<_>>(),
+                                    )
+                                    .unwrap();
+                                }
                                 let _ = reply.send(response);
                             }
                             if shutdown {

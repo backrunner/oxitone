@@ -85,6 +85,7 @@ export {
   sendSpecSchema,
   mixerChannelSpecSchema,
   automationLaneSpecSchema,
+  automationClipSpecSchema,
 } from "./authoring.js";
 export type {
   NoteSpec,
@@ -95,6 +96,7 @@ export type {
   SendSpec,
   MixerChannelSpec,
   AutomationLaneSpec,
+  AutomationClipSpec,
 } from "./authoring.js";
 export {
   projectSnapshotSchema,
@@ -170,3 +172,11 @@ export { multisamplerStateSchema, multisamplerOptionsSchema } from "./multisampl
 export type { MultisamplerState, MultisamplerOptions } from "./multisampler.js";
 export { effectParameterSchemas, effectPluginIds } from "./effects.js";
 export type { EffectKind, EffectParameters } from "./effects.js";
+export { PATTERN_SOURCE_FORMAT, PATTERN_SOURCE_LIMITS, sourceNoteSchema, noteSelectorSchema,
+  noteEditSchema, patternSourceNodeSchema, patternSourceDocumentSchema } from "./pattern-source.js";
+export type { SourceNote, NoteSelector, NoteEdit, PatternSourceNode, PatternSourceDocument } from "./pattern-source.js";
+export * from "./source-daw.js";
+export * from "./arrangement.js";
+export * from "./project-edit.js";
+export * from "./plugin-catalog.js";
+export * from "./configuration-source.js";

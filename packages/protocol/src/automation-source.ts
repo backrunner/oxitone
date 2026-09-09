@@ -38,7 +38,8 @@ export type AutomationSourceSpec =
   | { kind: "wave"; wave: WaveKind; periodBeats: BeatWireValue; phase?: BeatWireValue | undefined; min?: number | undefined; max?: number | undefined; pulseWidth?: number | undefined }
   | { kind: "map"; input: AutomationSourceSpec; min: number; max: number }
   | { kind: "unary"; op: "clamp" | "invert" | "quantize" | "scale" | "offset"; input: AutomationSourceSpec; steps?: number | undefined; amount?: number | undefined; min?: number | undefined; max?: number | undefined }
-  | { kind: "binary"; op: "mix" | "add" | "multiply" | "min" | "max"; left: AutomationSourceSpec; right: AutomationSourceSpec; amount?: number | undefined };
+  | { kind: "binary"; op: "mix" | "add" | "multiply" | "min" | "max"; left: AutomationSourceSpec; right: AutomationSourceSpec; amount?: number | undefined }
+  | { kind: "replaceRange"; base: AutomationSourceSpec; replacement: AutomationSourceSpec; startBeat: BeatWireValue; endBeat: BeatWireValue; fadeBeats?: BeatWireValue | undefined };
 
 export const WAVE_KINDS = ["sine", "cos", "triangle", "saw", "ramp", "square"] as const;
 export type WaveKind = (typeof WAVE_KINDS)[number];
@@ -105,6 +106,8 @@ export const automationSourceSchema: z.ZodType<AutomationSourceSpec> = z.lazy(()
     gateSourceSchema,
     chanceSourceSchema,
     waveSourceSchema,
+    z.object({ kind: z.literal("replaceRange"), base: automationSourceSchema, replacement: automationSourceSchema,
+      startBeat: beatWireSchema, endBeat: beatWireSchema, fadeBeats: beatWireSchema.optional() }),
     z.object({ kind: z.literal("map"), input: automationSourceSchema, min: unitInterval, max: unitInterval }),
     z.object({
       kind: z.literal("unary"),

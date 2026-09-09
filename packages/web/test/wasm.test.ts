@@ -2,7 +2,7 @@ import { readFile, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { Pattern, Project, wavetable, sampler } from "@oxitone/core";
+import { Pattern, Project, wavetable, sampler, createAutomationNamespace } from "@oxitone/core";
 import { WasmEngine } from "../src/wasm.js";
 
 const engines: WasmEngine[] = [];
@@ -50,6 +50,12 @@ describe("actual import-free Wasm engine", () => {
   it("matches the native WAV encoder/DSP and keeps offline exports independent of transport", async () => {
     const e=await engine(), p=song(), dir=await mkdtemp(join(tmpdir(),"oxitone-wasm-"));
     try {
+      const channel = p.channels[0]!, motion = createAutomationNamespace();
+      channel.instrumentInstance.param("level").automate(motion.constant(.2));
+      const original = channel.effectInstances[0]!;
+      const added = channel.addEffect(channel.effectChain[0]!);
+      original.host.param("mix").automate(motion.constant(.3));
+      channel.reorderEffects([added, original]);
       e.compile(p); e.transport({command:"play",frame:1234}); const before=e.state();
       const wav=e.renderWav({frames:96000,bitDepth:32});
       await p.renderWav({path:join(dir,"native.wav"),end:{frames:"96000"},tailSeconds:0,bitDepth:"float32",dither:"none"});

@@ -63,6 +63,8 @@ fn playable_snapshot() -> ProjectSnapshot {
             pattern_clip_ids: vec!["pcl_a".into()],
             sample_clip_ids: vec![],
             enabled: None,
+            mute: None,
+            solo: None,
             midi_channel: None,
         }],
         patterns: vec![PatternSpec {
@@ -70,6 +72,7 @@ fn playable_snapshot() -> ProjectSnapshot {
             name: None,
             length_beats: beat(4, 1),
             notes: vec![note(60, (0, 1)), note(64, (1, 1)), note(67, (2, 1))],
+            parts: None,
         }],
         pattern_clips: vec![PatternClipSpec {
             id: "pcl_a".into(),
@@ -90,6 +93,7 @@ fn playable_snapshot() -> ProjectSnapshot {
             id: "chn_a".into(),
             name: None,
             instrument: InstrumentRef {
+                instance_id: None,
                 plugin_id: "oxitone.wavetable".into(),
                 plugin_version: "1.0.0".into(),
                 parameters: BTreeMap::new(),
@@ -106,6 +110,7 @@ fn playable_snapshot() -> ProjectSnapshot {
         }],
         mixer_channels: vec![],
         automation: vec![],
+        automation_clips: None,
     }
 }
 

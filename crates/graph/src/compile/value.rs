@@ -128,10 +128,12 @@ pub fn lane_beat(lane: &CompiledLane, beat: f64) -> f64 {
 pub fn binding_value_at(binding: &AutomationBinding, beat: f64, ctx: &EvalContext) -> f64 {
     let mut acc = None;
     for lane in &binding.lanes {
-        let value = lane.automation.value_at(lane_beat(lane, beat), ctx);
+        let Some(value) = super::placement::value(lane, beat, ctx) else {
+            continue;
+        };
         acc = Some(combine_value(acc, lane.combine, value));
     }
-    acc.unwrap_or(0.0).clamp(0.0, 1.0)
+    acc.unwrap_or(binding.fallback).clamp(0.0, 1.0)
 }
 
 #[cfg(test)]
@@ -186,6 +188,7 @@ mod tests {
     #[test]
     fn lane_beat_loop_wraps_and_holds() {
         let lane = |loop_start, loop_length, loop_end, last_beat| CompiledLane {
+            placements: None,
             automation: CompiledAutomation::compile(
                 &oxitone_core::wire::AutomationSourceSpec::Constant { value: 1.0 },
                 1,

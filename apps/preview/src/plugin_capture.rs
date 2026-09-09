@@ -1,170 +1,110 @@
-//! Developer smoke through the same window-opening path as Mixer clicks.
+//! Real embedded plugin lifecycle smoke; native window count remains one.
 use crate::{
-    plugin_details::DetailTarget,
-    plugin_window::{DetailTab, PluginWindow},
-    ui::Preview,
+    plugin_details::DetailTarget, plugin_window::DetailTab, ui::Preview, window_manager::WindowId,
 };
 use gpui::*;
 
-pub fn open(
-    this: &mut Preview,
-    mode: &str,
-    cx: &mut Context<Preview>,
-) -> Vec<WindowHandle<PluginWindow>> {
+pub fn open(this: &mut Preview, mode: &str, cx: &mut Context<Preview>) {
     let project = this.project.as_ref().unwrap().clone();
     let channel = project
         .snapshot
         .channels
         .iter()
         .find(|c| mode != "synth" || c.instrument.plugin_id == "oxitone.wavetable")
-        .expect("capture needs an instrument");
-    let instrument = DetailTarget::Instrument(channel.id.clone());
-    let first = this.open_plugin(instrument.clone(), cx).unwrap();
-    assert_eq!(
-        this.open_plugin(instrument.clone(), cx),
-        Some(first),
-        "repeat open reuses window"
-    );
-    let (owner, _) = project
+        .unwrap();
+    let target = DetailTarget::Instrument(channel.id.clone());
+    let first = this.open_plugin(target.clone(), cx).unwrap();
+    assert_eq!(this.open_plugin(target, cx).unwrap(), first);
+    let channel = project
         .snapshot
         .channels
         .iter()
-        .find_map(|c| c.effect_chain.first().map(|e| (c, e)))
-        .expect("capture needs an effect");
+        .find(|c| !c.effect_chain.is_empty())
+        .unwrap();
     let second = this
-        .open_plugin(DetailTarget::ChannelInsert(owner.id.clone(), 0), cx)
+        .open_plugin(DetailTarget::ChannelInsert(channel.id.clone(), 0), cx)
         .unwrap();
-    assert_ne!(first, second, "instrument/effect have independent windows");
-    select(first, second, mode, cx)
+    assert_ne!(first, second);
+    select(this, mode, cx);
 }
-
-pub fn close_effect(this: &Preview, cx: &mut Context<Preview>) -> WindowHandle<PluginWindow> {
-    let handle = *this
+pub fn close_effect(this: &mut Preview, cx: &mut Context<Preview>) -> DetailTarget {
+    let (key, target) = this
         .plugin_windows
         .iter()
-        .find(|(target, _)| target.slot().is_some())
-        .unwrap()
-        .1;
-    handle
-        .update(cx, |_, window, _| window.remove_window())
+        .find(|(_, entity)| entity.read(cx).target.slot().is_some())
+        .map(|(key, entity)| (key.clone(), entity.read(cx).target.clone()))
         .unwrap();
-    handle
+    this.plugin_windows.remove(&key);
+    assert_eq!(this.plugin_windows.len(), 1);
+    target
 }
-
-pub fn reopen(
-    this: &mut Preview,
-    closed: WindowHandle<PluginWindow>,
-    mode: &str,
-    cx: &mut Context<Preview>,
-) -> Vec<WindowHandle<PluginWindow>> {
-    let (target, _) = this
-        .plugin_windows
-        .iter()
-        .find(|(_, h)| **h == closed)
-        .unwrap();
-    let target = target.clone();
-    let first = *this
-        .plugin_windows
-        .iter()
-        .find(|(t, _)| t.slot().is_none())
-        .unwrap()
-        .1;
-    assert!(
-        first.read(cx).is_ok(),
-        "closing an effect keeps the instrument open"
-    );
-    let second = this.open_plugin(target, cx).unwrap();
-    assert_ne!(closed, second, "closed window can be reopened");
+pub fn reopen(this: &mut Preview, target: DetailTarget, mode: &str, cx: &mut Context<Preview>) {
+    this.open_plugin(target, cx).unwrap();
     assert_eq!(this.plugin_windows.len(), 2);
-    select(first, second, mode, cx)
+    select(this, mode, cx);
 }
-
-fn select(
-    first: WindowHandle<PluginWindow>,
-    second: WindowHandle<PluginWindow>,
-    mode: &str,
-    cx: &mut Context<Preview>,
-) -> Vec<WindowHandle<PluginWindow>> {
-    match mode {
-        "instrument" | "synth" => {
-            first
-                .update(cx, |view, window, cx| {
-                    if let Ok(page) = std::env::var("OXITONE_PREVIEW_CAPTURE_PAGE") {
-                        assert!(view
-                            .panel
-                            .as_ref()
-                            .unwrap()
-                            .pages
-                            .iter()
-                            .any(|p| p.id == page));
-                        view.page = page;
-                    }
-                    if let Ok(dimensions) = std::env::var("OXITONE_PREVIEW_CAPTURE_PLUGIN_SIZE") {
-                        let (w, h) = dimensions
-                            .split_once('x')
-                            .expect("plugin size must be WIDTHxHEIGHT");
-                        window.resize(size(
-                            px(w.parse::<f32>().unwrap().clamp(440., 1200.)),
-                            px(h.parse::<f32>().unwrap().clamp(280., 900.)),
-                        ));
-                    }
-                    window.activate_window();
-                    cx.notify();
-                })
-                .unwrap();
-            vec![second, first]
-        }
-        "effect" | "info" => {
-            second
-                .update(cx, |view, window, cx| {
-                    if mode == "info" {
-                        view.tab = DetailTab::Plugin;
-                        cx.notify();
-                    }
-                    window.activate_window();
-                })
-                .unwrap();
-            vec![first, second]
-        }
-        _ => panic!("OXITONE_PREVIEW_CAPTURE_PLUGIN must be instrument, synth, effect or info"),
+fn select(this: &mut Preview, mode: &str, cx: &mut Context<Preview>) {
+    let instrument = matches!(mode, "instrument" | "synth");
+    let entity = this
+        .plugin_windows
+        .iter()
+        .find(|(_, entity)| entity.read(cx).target.slot().is_none() == instrument)
+        .unwrap()
+        .1
+        .clone();
+    let id = WindowId::Plugin(entity.entity_id().as_u64());
+    this.document.windows.focus(id);
+    if let Ok(dimensions) = std::env::var("OXITONE_PREVIEW_CAPTURE_PLUGIN_SIZE") {
+        let (w, h) = dimensions.split_once('x').unwrap();
+        let mut bounds = this.document.windows.state(id).bounds;
+        bounds.width = w.parse().unwrap();
+        bounds.height = h.parse().unwrap();
+        this.document.windows.set_bounds(id, bounds);
     }
+    entity.update(cx, |view, cx| {
+        if let Ok(page) = std::env::var("OXITONE_PREVIEW_CAPTURE_PAGE") {
+            view.page = page;
+        }
+        if mode == "info" {
+            view.tab = DetailTab::Plugin;
+        }
+        view.request_focus = true;
+        cx.notify();
+    });
 }
-
-pub fn navigate(this: &Preview, frame: usize, cx: &mut Context<Preview>) {
+pub fn navigate(
+    entities: &[Entity<crate::plugin_window::PluginWindow>],
+    frame: usize,
+    window: &mut Window,
+    cx: &mut App,
+) {
     if !(10..=13).contains(&frame) {
         return;
     }
-    let handle = this
-        .plugin_windows
+    let entity = entities
         .iter()
-        .find(|(t, _)| t.slot().is_none())
+        .find(|entity| entity.read(cx).target.slot().is_none())
         .unwrap()
-        .1;
+        .clone();
     if frame == 10 || frame == 12 {
-        cx.update_window((*handle).into(), |_, window, cx| {
-            window.dispatch_keystroke(
-                Keystroke::parse(if frame == 10 { "end" } else { "home" }).unwrap(),
-                cx,
-            );
-        })
-        .unwrap();
+        entity.update(cx, |view, _| view.focus(window));
+        window.dispatch_keystroke(
+            Keystroke::parse(if frame == 10 { "end" } else { "home" }).unwrap(),
+            cx,
+        );
     } else {
-        let view = handle.read(cx).unwrap();
+        let view = entity.read(cx);
         let expected = if frame == 11 {
             -view.scroll.max_offset().height
         } else {
             px(0.)
         };
-        assert!(
-            (f32::from(view.scroll.offset().y - expected)).abs() < 1.,
-            "detail keyboard scrolling"
-        );
+        assert!(f32::from(view.scroll.offset().y - expected).abs() < 1.);
     }
 }
-
 pub fn verify(this: &Preview, cx: &App) {
     for handle in this.plugin_windows.values() {
-        let detail = handle.read(cx).unwrap();
+        let detail = handle.read(cx);
         assert_eq!(
             detail.project.snapshot.revision,
             this.project.as_ref().unwrap().snapshot.revision

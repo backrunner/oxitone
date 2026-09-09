@@ -37,6 +37,13 @@ pub(super) fn validate_refs(snapshot: &ProjectSnapshot) -> Result<(), OxitoneErr
         .iter()
         .map(|c| c.id.as_str())
         .collect();
+    let automation_lane_ids: HashSet<&str> = snapshot
+        .automation
+        .iter()
+        .map(|lane| lane.id.as_str())
+        .collect();
+
+    super::playlist::validate_playlist(snapshot)?;
 
     for (i, clip) in snapshot.pattern_clips.iter().enumerate() {
         if !pattern_ids.contains(clip.pattern_id.as_str()) {
@@ -65,6 +72,28 @@ pub(super) fn validate_refs(snapshot: &ProjectSnapshot) -> Result<(), OxitoneErr
         if !track_ids.contains(clip.track_id.as_str()) {
             return Err(dangling(
                 &format!("$.sampleClips[{i}].trackId"),
+                "track",
+                &clip.track_id,
+            ));
+        }
+    }
+    for (i, clip) in snapshot
+        .automation_clips
+        .as_deref()
+        .unwrap_or(&[])
+        .iter()
+        .enumerate()
+    {
+        if !automation_lane_ids.contains(clip.lane_id.as_str()) {
+            return Err(dangling(
+                &format!("$.automationClips[{i}].laneId"),
+                "automation lane",
+                &clip.lane_id,
+            ));
+        }
+        if !track_ids.contains(clip.track_id.as_str()) {
+            return Err(dangling(
+                &format!("$.automationClips[{i}].trackId"),
                 "track",
                 &clip.track_id,
             ));

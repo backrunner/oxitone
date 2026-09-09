@@ -7,9 +7,9 @@ use oxitone_core::wire::EffectRef;
 pub const STRIP_WIDTH: f32 = 92.;
 #[derive(Clone)]
 pub struct EffectSlot {
+    pub instance: Option<String>,
     pub name: String,
     pub bypass: bool,
-    pub mix: f64,
 }
 pub struct Strip {
     pub id: String,
@@ -53,9 +53,9 @@ fn build(project: &ViewProject) -> Vec<Strip> {
         chain
             .iter()
             .map(|e| EffectSlot {
+                instance: e.instance_id.clone(),
                 name: plugin_name(&e.plugin_id),
                 bypass: e.bypass.unwrap_or(false),
-                mix: e.mix.unwrap_or(1.),
             })
             .collect()
     };
@@ -140,6 +140,9 @@ fn build(project: &ViewProject) -> Vec<Strip> {
     result
 }
 pub fn plugin_name(id: &str) -> String {
+    if id == "oxitone.eq" {
+        return "EQ".into();
+    }
     id.rsplit('.')
         .next()
         .unwrap_or(id)

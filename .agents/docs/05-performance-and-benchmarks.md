@@ -15,6 +15,33 @@
 
 ## 必备 benchmark
 
+- `preview/editing`：`cargo test --release -p oxitone-preview benchmark_editing_gestures -- --ignored --nocapture`。
+  UI/control 线程测 128/10000 音符组变换与内容投影、128/4096 片段跨轨拖拽投影、
+  128/4096 点原生曲线编译及 1024 点预览求值，
+  100 次预热、1000 次采样，记录 p50/p95/p99。GPU 帧率、设备、sample rate、block size、
+  callback、CPU utilization、xrun 未测记 null；不能用此基准宣称达到 FL Studio 完整交互/实时性能。
+
+- `source-daw`：`pnpm --filter @oxitone/cli build && node packages/cli/bench/source-daw.mjs`。
+  测完整工程 edit/原生校验/接受、实际 dirty journal Save、投影和重开。报告源码控制延迟，
+  不代替 GPUI 帧率或 callback/xrun 实测。每次 Save 测量前先在计时区外修改文档。
+  单 Pattern 文档及其 source-session 基准已删除；只维护实际工程使用的 source-daw 路径。
+
+- `source-writing`：`pnpm --filter @oxitone/cli build && node packages/cli/bench/source-writing.mjs`。
+  100/1000 音符的 sparse edit 文本补丁、含 import 的拆散和 literal 回写；3 次预热、20 次
+  测量。包含 TS 解析/局部符号绑定/打印与 Pattern 校验，不包含文件发布、用户 TS 执行或音频。
+
+- `effect-order`：先 build CLI，运行 `node packages/cli/bench/effect-order.mjs`。
+  100 notes/2 placements/2 delays，5 次预热、40 次排序事务；报告 p50/p95/p99 和全部样本。
+  内部 `oxitone.source.timing` diagnostics channel 仅在订阅时测量，发布 phase/耗时，
+  不含源码、路径或插件值。分段涵盖 AST writing、所有 read validation 的累计耗时、bundle、
+  disposable worker、native validation 与总事务；嵌套阶段不可重复相加。此基准验证控制延迟，
+  不打开设备，不测 DSP/callback/xrun。记录 Node compile-cache 是否启用；采样期间禁止 build、
+  包管理器或并行测试改变读集、占用 CPU。需同时跑 source-daw，覆盖累计编辑后的排序。
+
+- `source-authoring`：`pnpm --filter @oxitone/core build && node packages/core/bench/source-authoring.mjs`。
+  1k/100k 音符的单音与 128 音集合 edit、JSON DAG 重建；3 次预热、20 次测量，报告
+  authoring p50/p95/p99 和包含 GC 的 heap net delta（非峰值）。没有设备、DSP 或 callback。
+
 - `song-profile`：离线处理实际导出的 demo snapshot 与 hash-pinned 本地鼓机注册，
   不创建音频设备。命令 `cargo run --release -p oxitone-bench --bin song-profile --
   target/examples/full-songs/after-the-horizon.snapshot.json

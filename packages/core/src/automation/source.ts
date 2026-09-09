@@ -1,5 +1,6 @@
 import {
   automationSourceSchema,
+  beatToWire,
   ErrorCode,
   OxitoneError,
   type AutomationSourceSpec,
@@ -29,6 +30,21 @@ export class AutomationSource {
   /** Protocol-validated wire form (deep copy). */
   toSpec(): AutomationSourceSpec {
     return automationSourceSchema.parse(structuredClone(this.spec));
+  }
+
+  /** Replace [start,end) in this source's beat domain. Replacement beat zero is start. */
+  replaceRange(range: { start: number; end: number; fadeBeats?: number }, replacement: AutomationSource | readonly { beat: number; value: number; curve?: Curve | undefined }[]): AutomationSource {
+    if (Array.isArray(replacement)) replacement = new AutomationSource({ kind: "curve", interpolation: "linear",
+      points: replacement.map(point => ({ beat: beatToWire(point.beat), value: point.value, ...(point.curve === undefined ? {} : { curve: point.curve }) })) });
+    if (!(replacement instanceof AutomationSource)) fail("InvalidProject", "replacement must be an AutomationSource or control points", "range.replacement");
+    checkBeat(range.start, "range.start"); checkBeat(range.end, "range.end");
+    if (range.end <= range.start) fail("AutomationRange", "replacement interval must have positive length", "range.end");
+    const fade = range.fadeBeats ?? 0; checkBeat(fade, "range.fadeBeats");
+    if (fade > (range.end - range.start) / 2) fail("AutomationRange", "fade must fit within both ends of the interval", "range.fadeBeats");
+    const base = fade === 0 && this.spec.kind === "replaceRange" && this.spec.startBeat.numerator / this.spec.startBeat.denominator === range.start
+      && this.spec.endBeat.numerator / this.spec.endBeat.denominator === range.end ? this.spec.base : this.spec;
+    return new AutomationSource({ kind: "replaceRange", base, replacement: replacement.toSpec(), startBeat: beatToWire(range.start), endBeat: beatToWire(range.end),
+      ...(fade ? { fadeBeats: beatToWire(fade) } : {}) });
   }
 }
 
@@ -126,6 +142,7 @@ function childrenOf(spec: AutomationSourceSpec): AutomationSourceSpec[] {
       return [spec.input];
     case "binary":
       return [spec.left, spec.right];
+    case "replaceRange": return [spec.base, spec.replacement];
     default:
       return [];
   }
@@ -136,6 +153,13 @@ function validateNode(spec: AutomationSourceSpec, path: string): void {
     case "constant":
       checkFinite(spec.value, `${path}.value`);
       break;
+    case "replaceRange": {
+      const start = spec.startBeat.numerator / spec.startBeat.denominator, end = spec.endBeat.numerator / spec.endBeat.denominator;
+      const fade = spec.fadeBeats ? spec.fadeBeats.numerator / spec.fadeBeats.denominator : 0;
+      checkBeat(start, `${path}.startBeat`); checkBeat(end, `${path}.endBeat`); checkBeat(fade, `${path}.fadeBeats`);
+      if (end <= start || fade > (end - start) / 2) fail("AutomationRange", "invalid replacement interval or fade", path);
+      break;
+    }
     case "curve":
       validateCurve(spec, path);
       break;
@@ -217,7 +241,7 @@ export function validateAutomationSpec(spec: AutomationSourceSpec, path = "$.sou
     }
     validateNode(current, currentPath);
     for (const [index, child] of childrenOf(current).entries()) {
-      walk(child, depth + 1, `${currentPath}.${current.kind === "binary" ? (index === 0 ? "left" : "right") : "input"}`);
+      walk(child, depth + 1, `${currentPath}.${current.kind === "binary" ? (index === 0 ? "left" : "right") : current.kind === "replaceRange" ? (index === 0 ? "base" : "replacement") : "input"}`);
     }
   };
   walk(spec, 1, path);
