@@ -2,15 +2,15 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { chanceOptionsToWire } from "../src/automation-source.js";
-import { beatToWire } from "../src/beat.js";
-import { ErrorCode, ERROR_CODES, OxitoneError } from "../src/errors.js";
+import { chanceOptionsToWire } from "../src/authoring/automation-source.js";
+import { beatToWire } from "../src/base/beat.js";
+import { ErrorCode, ERROR_CODES, OxitoneError } from "../src/base/errors.js";
 import {
   decodeProjectSnapshot,
   encodeProjectSnapshot,
   projectSnapshotSchema,
-} from "../src/snapshot.js";
-import { checkProtocolVersion, PROTOCOL_VERSION } from "../src/version.js";
+} from "../src/engine/snapshot.js";
+import { checkProtocolVersion, PROTOCOL_VERSION } from "../src/base/version.js";
 
 const fixtures = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "schemas", "fixtures");
 const snapshotText = readFileSync(join(fixtures, "project-snapshot.canonical.json"), "utf8");

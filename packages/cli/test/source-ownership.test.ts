@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { SourceOwnership } from "../src/source/index.js";
-import { projectSourceFiles, readSourceText } from "../src/source/project-files.js";
+import { projectSourceFiles, readSourceText } from "../src/source/files/project-files.js";
 
 describe("project source ownership", () => {
   it("requires explicit files and rejects dependencies, build output and declarations", async () => {

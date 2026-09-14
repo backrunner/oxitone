@@ -1,7 +1,7 @@
 import { ErrorCode, OxitoneError, PATTERN_SOURCE_FORMAT, PATTERN_SOURCE_LIMITS, patternSourceDocumentSchema,
   patternSourceNodeSchema, type PatternSourceDocument, type PatternSourceNode } from "@oxitone/protocol";
 import { parseAuthoring } from "../authoring-validation.js";
-import { validateNote } from "../note.js";
+import { validateNote } from "../notes/note.js";
 import { sourceNoteInput } from "./notes.js";
 import { resolveSource, sourceReferences, withReferences } from "./evaluate.js";
 import { freezeSource, type SourceValue } from "./types.js";

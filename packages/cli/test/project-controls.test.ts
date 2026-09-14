@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
 import { ProjectDocument } from "../src/source/index.js";
-import { DocumentDispatcher } from "../src/source/document-dispatch.js";
+import { DocumentDispatcher } from "../src/source/document/document-dispatch.js";
 
 it("saves coalesced mixer/tempo/track edits, copy/resize/delete and plugin assignments across Undo and reopen", async () => {
   const root = await mkdtemp(join(tmpdir(), "oxitone-controls-")); let document: ProjectDocument | undefined;

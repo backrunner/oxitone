@@ -2,9 +2,9 @@ import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promis
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
-import { ProjectDocument } from "../src/source/project-document.js";
-import { materializePatternReference } from "../src/source/materialize.js";
-import { anchorPatternExpression } from "../src/source/pattern-writer.js";
+import { ProjectDocument } from "../src/source/document/project-document.js";
+import { materializePatternReference } from "../src/source/editing/materialize.js";
+import { anchorPatternExpression } from "../src/source/editing/pattern-writer.js";
 import { chord } from "@oxitone/core";
 
 it("keeps a same-line directive prologue while inserting the required runtime import", () => {

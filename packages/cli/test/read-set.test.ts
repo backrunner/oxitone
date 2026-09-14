@@ -2,7 +2,7 @@ import { mkdtemp, rm, stat, symlink, unlink, utimes, writeFile } from "node:fs/p
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, expect, it } from "vitest";
-import { captureMissingSource, captureSourceReads, checkSourceReads } from "../src/source/read-set.js";
+import { captureMissingSource, captureSourceReads, checkSourceReads } from "../src/source/files/read-set.js";
 
 const roots: string[] = [];
 afterEach(async () => { for (const root of roots.splice(0)) await rm(root, { recursive: true, force: true }); });

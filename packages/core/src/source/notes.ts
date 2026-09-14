@@ -1,5 +1,5 @@
 import type { SourceNote } from "@oxitone/protocol";
-import type { NoteInput } from "../note.js";
+import type { NoteInput } from "../notes/note.js";
 import type { ReadonlySourceNote } from "./types.js";
 
 /** Convert schema optional values to the exact authoring shape. */

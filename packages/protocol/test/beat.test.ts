@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { beatFromWire, beatToWire, rationalFromF64 } from "../src/beat.js";
-import { OxitoneError } from "../src/errors.js";
+import { beatFromWire, beatToWire, rationalFromF64 } from "../src/base/beat.js";
+import { OxitoneError } from "../src/base/errors.js";
 
 describe("beatToWire", () => {
   it("normalizes integers", () => {

@@ -3,8 +3,8 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, expect, it } from "vitest";
 import { ProjectDocument } from "../src/source/index.js";
-import { watchProjectDocument } from "../src/source/document-watch.js";
-import { runEvaluationProcess } from "../src/source/evaluation-process.js";
+import { watchProjectDocument } from "../src/source/document/document-watch.js";
+import { runEvaluationProcess } from "../src/source/eval/evaluation-process.js";
 import { until } from "./preview-helpers.js";
 
 const cleanup: (() => Promise<void>)[] = [];

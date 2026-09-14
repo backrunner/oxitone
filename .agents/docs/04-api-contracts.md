@@ -150,7 +150,7 @@ export interface EffectRef {
 
 Electronic effects retain this reference format. The typed `effect(kind, parameters?,
 {mix?, bypass?})` helper uses physical units and returns `EffectRef`; supported names
-and ranges are in `packages/protocol/src/effects.ts`. `convolver(sampleId, parameters?,
+and ranges are in `packages/protocol/src/authoring/effects.ts`. `convolver(sampleId, parameters?,
 options?)` adds `resources: {impulse: sampleId}`. Compile validates the reference and
 prepares 1..262144 resampled impulse frames before graph publication. Invalid helper
 values/resource graphs return `InvalidProject`; unavailable decoded assets return

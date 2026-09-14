@@ -7,9 +7,9 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { afterEach, expect, it } from "vitest";
 import { ProjectDocument, SourceOwnership, SourceSaveStore } from "../src/source/index.js";
-import { prepareImages, publishImage, writeJournal } from "../src/source/save-journal.js";
-import { stagingPath } from "../src/source/save-staging.js";
-import { sourceHash } from "../src/source/syntax.js";
+import { prepareImages, publishImage, writeJournal } from "../src/source/save/save-journal.js";
+import { stagingPath } from "../src/source/save/save-staging.js";
+import { sourceHash } from "../src/source/syntax/program.js";
 
 const cleanup: (() => Promise<void>)[] = [];
 afterEach(async () => { for (const close of cleanup.splice(0).reverse()) await close(); });

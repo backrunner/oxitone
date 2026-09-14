@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { mergeThreeWay } from "../src/source/three-way-merge.js";
+import { mergeThreeWay } from "../src/source/save/three-way-merge.js";
 
 it("merges disjoint line edits and identical edits", () => {
   const base = "one\ntwo\nthree\n";

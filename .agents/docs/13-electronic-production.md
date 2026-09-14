@@ -27,7 +27,7 @@ content but is not a guarantee of alias-free audio-rate FM at extreme settings.
 Two note-triggered LFOs, amp/filter/modulation envelopes, velocity, key tracking,
 deterministic note random and four macros feed eight fixed modulation slots.
 Each slot declares source/target/amount/curve. Source IDs and target IDs are
-ordered by `packages/protocol/src/synth-modulation.ts`; sources are bipolar for
+ordered by `packages/protocol/src/authoring/synth-modulation.ts`; sources are bipolar for
 LFO/keytrack/random and unipolar for envelopes/velocity/macros. Amount ±1 spans
 ±24 semitones for pitch, ±48 semitones for cutoff and ±1 for normalized targets.
 Targets sum before clamping. Feedback between modulation slots is not allowed.

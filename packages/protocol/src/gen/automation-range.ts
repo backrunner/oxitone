@@ -1,5 +1,5 @@
-import { beatToWire } from "../beat.js";
-import type { AutomationSourceSpec } from "../automation-source.js";
+import { beatToWire } from "../base/beat.js";
+import type { AutomationSourceSpec } from "../authoring/automation-source.js";
 
 const source: AutomationSourceSpec = { kind: "replaceRange", base: { kind: "constant", value: 0.25 },
   replacement: { kind: "curve", interpolation: "linear", points: [{ beat: beatToWire(0), value: 0.2 }, { beat: beatToWire(1), value: 0.8 }] },

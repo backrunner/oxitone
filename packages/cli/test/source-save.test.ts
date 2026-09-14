@@ -6,8 +6,8 @@ import { execFile } from "node:child_process";
 import { createRequire } from "node:module";
 import { promisify } from "node:util";
 import { SourceOwnership, SourceSaveStore, captureSourceReads } from "../src/source/index.js";
-import { prepareImages, writeJournal } from "../src/source/save-journal.js";
-import { sourceHash } from "../src/source/syntax.js";
+import { prepareImages, writeJournal } from "../src/source/save/save-journal.js";
+import { sourceHash } from "../src/source/syntax/program.js";
 
 const roots: string[] = [];
 afterEach(async () => { for (const root of roots.splice(0)) await rm(root, { recursive: true, force: true }); });

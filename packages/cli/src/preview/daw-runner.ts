@@ -1,8 +1,8 @@
 import type { DocumentRequest, PreviewFrame } from "@oxitone/protocol";
-import { ProjectDocument } from "../source/project-document.js";
-import { DocumentDispatcher } from "../source/document-dispatch.js";
-import { watchProjectDocument } from "../source/document-watch.js";
-import { openDocumentBridge } from "../source/document-bridge.js";
+import { ProjectDocument } from "../source/document/project-document.js";
+import { DocumentDispatcher } from "../source/document/document-dispatch.js";
+import { watchProjectDocument } from "../source/document/document-watch.js";
+import { openDocumentBridge } from "../source/document/document-bridge.js";
 
 /** GPUI projects observe this owner; all note and code commands share one document transaction queue. */
 export class DawRunner {

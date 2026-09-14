@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { pluginUiManifestSchema } from "../src/plugin-ui.js";
+import { pluginUiManifestSchema } from "../src/plugins/plugin-ui.js";
 import { pluginUiFixture } from "../src/gen/plugin-ui.js";
 
 it("validates native panel contracts and rejects executable or unbounded shapes", () => {

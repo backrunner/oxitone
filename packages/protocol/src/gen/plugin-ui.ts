@@ -1,4 +1,4 @@
-import type { PluginUiManifest } from "../plugin-ui.js";
+import type { PluginUiManifest } from "../plugins/plugin-ui.js";
 /** Shared TypeScript → JSON → Rust compatibility fixture. */
 export const pluginUiFixture: PluginUiManifest = {
   uiVersion: "1.0", pluginId: "oxitone.wavetable", pluginVersion: "1.0.0", title: "Studio Synth",

@@ -8,9 +8,9 @@ import { promisify } from "node:util";
 import { expect, it } from "vitest";
 import { Project } from "@oxitone/core";
 import type { PreviewSnapshotFrame } from "@oxitone/protocol";
-import { discoverProjectPlugins } from "../src/source/plugin-discovery.js";
-import { ProjectPluginCatalog } from "../src/source/project-plugins.js";
-import { PluginLifecycle, type PluginTaskRunner } from "../src/source/plugin-lifecycle.js";
+import { discoverProjectPlugins } from "../src/source/plugins/plugin-discovery.js";
+import { ProjectPluginCatalog } from "../src/source/plugins/project-plugins.js";
+import { PluginLifecycle, type PluginTaskRunner } from "../src/source/plugins/plugin-lifecycle.js";
 
 it("discovers unused multi-plugin packages without executing JS, validates only the selected native library, and exposes failures", async () => {
   const root = await mkdtemp(join(tmpdir(), "oxitone-plugin-catalog-"));

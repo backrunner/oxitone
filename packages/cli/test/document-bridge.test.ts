@@ -4,9 +4,9 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
 import { documentMessageSchema, type DocumentMessage, type DocumentView } from "@oxitone/protocol";
-import { ProjectDocument } from "../src/source/project-document.js";
-import { DocumentDispatcher } from "../src/source/document-dispatch.js";
-import { openDocumentBridge } from "../src/source/document-bridge.js";
+import { ProjectDocument } from "../src/source/document/project-document.js";
+import { DocumentDispatcher } from "../src/source/document/document-dispatch.js";
+import { openDocumentBridge } from "../src/source/document/document-bridge.js";
 import { encodeFrame, FrameDecoder } from "../src/preview/framing.js";
 import { until } from "./preview-helpers.js";
 

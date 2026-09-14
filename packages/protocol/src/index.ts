@@ -1,11 +1,11 @@
-export { ErrorCode, ERROR_CODES, OxitoneError } from "./errors.js";
-export type { OxitoneErrorCode, OxitoneErrorDetails } from "./errors.js";
+export { ErrorCode, ERROR_CODES, OxitoneError } from "./base/errors.js";
+export type { OxitoneErrorCode, OxitoneErrorDetails } from "./base/errors.js";
 export {
   PROTOCOL_VERSION,
   PROTOCOL_MAJOR,
   PROTOCOL_MINOR,
   checkProtocolVersion,
-} from "./version.js";
+} from "./base/version.js";
 export {
   beatWireSchema,
   beatToWire,
@@ -13,8 +13,8 @@ export {
   rationalFromF64,
   BEAT_MAX_DENOMINATOR,
   BEAT_MAX_NUMERATOR,
-} from "./beat.js";
-export type { Beat, BeatWire } from "./beat.js";
+} from "./base/beat.js";
+export type { Beat, BeatWire } from "./base/beat.js";
 export {
   entityIdSchema,
   pitchSchema,
@@ -23,19 +23,19 @@ export {
   frameFromWire,
   timecodeSchema,
   ID_PREFIXES,
-} from "./primitives.js";
-export type { EntityId, Pitch, FrameWire, Timecode } from "./primitives.js";
-export { inspectSampleRequestSchema, sampleInfoSchema, cacheSampleRequestSchema, cachedSampleInfoSchema } from "./sample-info.js";
-export type { InspectSampleRequest, SampleInfo, CacheSampleRequest, CachedSampleInfo } from "./sample-info.js";
-export { sampleProvenanceSchema } from "./sample-provenance.js";
-export type { SampleProvenance } from "./sample-provenance.js";
-export { wavetableOptionsSchema, samplerOptionsSchema, slicerStateSchema } from "./instruments.js";
-export { modulationSources, modulationTargets } from "./synth-modulation.js";
-export type { EnvelopeOptions, OscillatorOptions, WavetableOptions, SamplerOptions, SlicerState } from "./instruments.js";
-export { curveSchema, automationPointSchema, CURVE_KINDS } from "./curve.js";
-export type { Curve, CurveKind, AutomationPoint } from "./curve.js";
-export { parameterSpecSchema } from "./parameter.js";
-export type { ParameterSpec } from "./parameter.js";
+} from "./base/primitives.js";
+export type { EntityId, Pitch, FrameWire, Timecode } from "./base/primitives.js";
+export { inspectSampleRequestSchema, sampleInfoSchema, cacheSampleRequestSchema, cachedSampleInfoSchema } from "./authoring/sample-info.js";
+export type { InspectSampleRequest, SampleInfo, CacheSampleRequest, CachedSampleInfo } from "./authoring/sample-info.js";
+export { sampleProvenanceSchema } from "./authoring/sample-provenance.js";
+export type { SampleProvenance } from "./authoring/sample-provenance.js";
+export { wavetableOptionsSchema, samplerOptionsSchema, slicerStateSchema } from "./authoring/instruments.js";
+export { modulationSources, modulationTargets } from "./authoring/synth-modulation.js";
+export type { EnvelopeOptions, OscillatorOptions, WavetableOptions, SamplerOptions, SlicerState } from "./authoring/instruments.js";
+export { curveSchema, automationPointSchema, CURVE_KINDS } from "./authoring/curve.js";
+export type { Curve, CurveKind, AutomationPoint } from "./authoring/curve.js";
+export { parameterSpecSchema } from "./authoring/parameter.js";
+export type { ParameterSpec } from "./authoring/parameter.js";
 export {
   automationSourceSchema,
   chanceSourceSchema,
@@ -46,36 +46,36 @@ export {
   chanceOptionsSchema,
   chanceOptionsToWire,
   WAVE_KINDS,
-} from "./automation-source.js";
-export type { AutomationSourceSpec, ChanceOptions, WaveKind } from "./automation-source.js";
+} from "./authoring/automation-source.js";
+export type { AutomationSourceSpec, ChanceOptions, WaveKind } from "./authoring/automation-source.js";
 export {
   tempoSegmentSchema,
   timeSignatureSegmentSchema,
   loopSpecSchema,
   markerSpecSchema,
   fadeSpecSchema,
-} from "./timeline.js";
+} from "./authoring/timeline.js";
 export type {
   TempoSegment,
   TimeSignatureSegment,
   LoopSpec,
   MarkerSpec,
   FadeSpec,
-} from "./timeline.js";
+} from "./authoring/timeline.js";
 export {
   trackSpecSchema,
   sampleEditSpecSchema,
   sampleRefSchema,
   instrumentRefSchema,
   effectRefSchema,
-} from "./refs.js";
+} from "./authoring/refs.js";
 export type {
   TrackSpec,
   SampleEditSpec,
   SampleRef,
   InstrumentRef,
   EffectRef,
-} from "./refs.js";
+} from "./authoring/refs.js";
 export {
   noteSpecSchema,
   patternSpecSchema,
@@ -86,7 +86,7 @@ export {
   mixerChannelSpecSchema,
   automationLaneSpecSchema,
   automationClipSpecSchema,
-} from "./authoring.js";
+} from "./authoring/specs.js";
 export type {
   NoteSpec,
   PatternSpec,
@@ -97,13 +97,13 @@ export type {
   MixerChannelSpec,
   AutomationLaneSpec,
   AutomationClipSpec,
-} from "./authoring.js";
+} from "./authoring/specs.js";
 export {
   projectSnapshotSchema,
   decodeProjectSnapshot,
   encodeProjectSnapshot,
-} from "./snapshot.js";
-export type { ProjectSnapshot } from "./snapshot.js";
+} from "./engine/snapshot.js";
+export type { ProjectSnapshot } from "./engine/snapshot.js";
 export {
   nativeCommandSchema,
   nativeEventSchema,
@@ -111,8 +111,8 @@ export {
   transportStateSchema,
   NATIVE_EVENT_TYPES,
   TRANSPORT_STATES,
-} from "./commands.js";
-export type { NativeCommand, NativeEvent, TransportCommand, TransportState } from "./commands.js";
+} from "./engine/commands.js";
+export type { NativeCommand, NativeEvent, TransportCommand, TransportState } from "./engine/commands.js";
 export {
   engineOptionsSchema,
   renderPositionSchema,
@@ -130,7 +130,7 @@ export {
   midiExportReportSchema,
   MIDI_DEFAULT_PPQ,
   MIDI_MAX_PPQ,
-} from "./options.js";
+} from "./engine/options.js";
 export type {
   EngineOptions,
   RenderPosition,
@@ -145,38 +145,38 @@ export type {
   MidiSkippedAutomation,
   MidiDiagnostics,
   MidiExportReport,
-} from "./options.js";
-export { canonicalize, canonicalEncode } from "./canonical.js";
-export { PROJECT_FORMAT_VERSION, projectFileSchema, type ProjectFile } from "./project-file.js";
-export { compileOptionsSchema, type CompileOptions } from "./options.js";
-export { beatDurationQuerySchema, beatDurationResultSchema } from "./timing.js";
-export type { BeatDurationQuery } from "./timing.js";
+} from "./engine/options.js";
+export { canonicalize, canonicalEncode } from "./base/canonical.js";
+export { PROJECT_FORMAT_VERSION, projectFileSchema, type ProjectFile } from "./document/project-file.js";
+export { compileOptionsSchema, type CompileOptions } from "./engine/options.js";
+export { beatDurationQuerySchema, beatDurationResultSchema } from "./authoring/timing.js";
+export type { BeatDurationQuery } from "./authoring/timing.js";
 export {
   Pcg32,
   PCG32_MULTIPLIER,
   PCG32_INCREMENT,
   hash64,
   hash64Input,
-} from "./pcg32.js";
-export type { Hash64Part } from "./pcg32.js";
-export { pluginManifestSchema, registerPluginOptionsSchema, registeredPluginSchema, pluginDiagnosticsSchema } from "./plugin.js";
-export type { PluginManifest, RegisterPluginOptions, RegisteredPlugin, PluginDiagnostics, PluginInfo } from "./plugin.js";
-export { pluginInfoSchema } from "./plugin.js";
-export { presetSchema } from "./preset.js";
-export { previewFrameSchema, previewResponseSchema, PREVIEW_MAX_FRAME_BYTES } from "./preview.js";
-export type { PreviewFrame, PreviewSnapshotFrame, PreviewResponse } from "./preview.js";
-export type { Preset, ChannelPreset, InstrumentPreset, EffectPreset } from "./preset.js";
-export { pluginUiManifestSchema, pluginUiControlSchema } from "./plugin-ui.js";
-export type { PluginUiManifest, PluginUiControl } from "./plugin-ui.js";
-export { multisamplerStateSchema, multisamplerOptionsSchema } from "./multisampler.js";
-export type { MultisamplerState, MultisamplerOptions } from "./multisampler.js";
-export { effectParameterSchemas, effectPluginIds } from "./effects.js";
-export type { EffectKind, EffectParameters } from "./effects.js";
+} from "./base/pcg32.js";
+export type { Hash64Part } from "./base/pcg32.js";
+export { pluginManifestSchema, registerPluginOptionsSchema, registeredPluginSchema, pluginDiagnosticsSchema } from "./plugins/plugin.js";
+export type { PluginManifest, RegisterPluginOptions, RegisteredPlugin, PluginDiagnostics, PluginInfo } from "./plugins/plugin.js";
+export { pluginInfoSchema } from "./plugins/plugin.js";
+export { presetSchema } from "./authoring/preset.js";
+export { previewFrameSchema, previewResponseSchema, PREVIEW_MAX_FRAME_BYTES } from "./engine/preview.js";
+export type { PreviewFrame, PreviewSnapshotFrame, PreviewResponse } from "./engine/preview.js";
+export type { Preset, ChannelPreset, InstrumentPreset, EffectPreset } from "./authoring/preset.js";
+export { pluginUiManifestSchema, pluginUiControlSchema } from "./plugins/plugin-ui.js";
+export type { PluginUiManifest, PluginUiControl } from "./plugins/plugin-ui.js";
+export { multisamplerStateSchema, multisamplerOptionsSchema } from "./authoring/multisampler.js";
+export type { MultisamplerState, MultisamplerOptions } from "./authoring/multisampler.js";
+export { effectParameterSchemas, effectPluginIds } from "./authoring/effects.js";
+export type { EffectKind, EffectParameters } from "./authoring/effects.js";
 export { PATTERN_SOURCE_FORMAT, PATTERN_SOURCE_LIMITS, sourceNoteSchema, noteSelectorSchema,
-  noteEditSchema, patternSourceNodeSchema, patternSourceDocumentSchema } from "./pattern-source.js";
-export type { SourceNote, NoteSelector, NoteEdit, PatternSourceNode, PatternSourceDocument } from "./pattern-source.js";
-export * from "./source-daw.js";
-export * from "./arrangement.js";
-export * from "./project-edit.js";
-export * from "./plugin-catalog.js";
-export * from "./configuration-source.js";
+  noteEditSchema, patternSourceNodeSchema, patternSourceDocumentSchema } from "./authoring/pattern-source.js";
+export type { SourceNote, NoteSelector, NoteEdit, PatternSourceNode, PatternSourceDocument } from "./authoring/pattern-source.js";
+export * from "./document/source-daw.js";
+export * from "./document/arrangement.js";
+export * from "./document/project-edit.js";
+export * from "./plugins/plugin-catalog.js";
+export * from "./document/configuration-source.js";

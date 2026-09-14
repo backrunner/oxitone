@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { chord, Pattern } from "@oxitone/core";
-import { noteEditExtent } from "../src/source/pattern-extent.js";
-import { anchorPatternExpression, writePatternEdit } from "../src/source/pattern-writer.js";
+import { noteEditExtent } from "../src/source/editing/pattern-extent.js";
+import { anchorPatternExpression, writePatternEdit } from "../src/source/editing/pattern-writer.js";
 
 it("grows only changed timing, leaves pre-existing tails and deletion alone", () => {
   const pattern = new Pattern({ lengthBeats: 4, notes: [{ start: 0, pitch: 60, duration: 9, velocity: .5 }] });

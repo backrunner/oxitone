@@ -3,9 +3,9 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
 import { EditorDocumentSession } from "../src/editor/index.js";
-import { ProjectDocument } from "../src/source/project-document.js";
-import { DocumentDispatcher } from "../src/source/document-dispatch.js";
-import { openDocumentBridge } from "../src/source/document-bridge.js";
+import { ProjectDocument } from "../src/source/document/project-document.js";
+import { DocumentDispatcher } from "../src/source/document/document-dispatch.js";
+import { openDocumentBridge } from "../src/source/document/document-bridge.js";
 import { until } from "./preview-helpers.js";
 
 it("keeps newer typing after acknowledgements, guards remote edits by editor version and reconnects dirty text to a fresh session", async () => {

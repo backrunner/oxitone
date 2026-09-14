@@ -83,7 +83,7 @@ decisionIndex = floor((t - origin) / interval)
 
 `pcg32-v1` 的 multiplier、increment、seed mixing、整数到 `[0,1)` 的转换和测试向量必须在 Rust/TS protocol fixture 中固定；算法改变需要 protocol major bump 或新的 `randomAlgorithm` ID。
 
-Phase 1 定值（实现见 `packages/protocol/src/pcg32.ts` 与 `crates/core/src/pcg32.rs`，二者必须逐位一致）：
+Phase 1 定值（实现见 `packages/protocol/src/base/pcg32.ts` 与 `crates/core/src/pcg32.rs`，二者必须逐位一致）：
 
 - multiplier = 6364136223846793005，increment = 1442695040888963407（经典 PCG32 固定流），state 为 u64。
 - seeding：`state = 0; advance; state = (state + seed) mod 2^64; advance`。

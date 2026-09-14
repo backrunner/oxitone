@@ -345,12 +345,6 @@ importers:
         specifier: ^3.2.0
         version: 3.2.7(@types/node@22.20.1)(supports-color@7.2.0)(tsx@4.23.13)
 
-  target/browser-check:
-    dependencies:
-      playwright:
-        specifier: ^1.63.0
-        version: 1.63.0
-
 packages:
 
   '@azu/format-text@1.0.2':

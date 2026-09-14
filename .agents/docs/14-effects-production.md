@@ -10,7 +10,7 @@ normalized automation, host mix/bypass and fixed prepare-time PDC. TypeScript
 New IDs are `oxitone.nonlinear-filter`, `compactor`, `multiband-dynamics`, `resonator`,
 `frequency-shifter`, `pitch-shifter`, `flanger`, `convolver`, `bitcrush`, `tape`,
 `spreader`, `limiter` (all with the `oxitone.` prefix, version 1.0.0).
-Ranges are defined in `packages/protocol/src/effects.ts` and Rust descriptors;
+Ranges are defined in `packages/protocol/src/authoring/effects.ts` and Rust descriptors;
 cross-boundary tests must keep these in agreement. Continuous controls are
 smoothed within DSP, with bounded storage allocated before processing.
 

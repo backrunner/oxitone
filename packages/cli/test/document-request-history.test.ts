@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
-import { DocumentDispatcher } from "../src/source/document-dispatch.js";
-import type { ProjectDocument } from "../src/source/project-document.js";
+import { DocumentDispatcher } from "../src/source/document/document-dispatch.js";
+import type { ProjectDocument } from "../src/source/document/project-document.js";
 
 it("keeps a long-lived client writable after thousands of requests without replaying expired commands", async () => {
   let saves = 0;

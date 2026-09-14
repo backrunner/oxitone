@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { hash64, hash64Input, Pcg32, PCG32_INCREMENT, PCG32_MULTIPLIER } from "../src/pcg32.js";
+import { hash64, hash64Input, Pcg32, PCG32_INCREMENT, PCG32_MULTIPLIER } from "../src/base/pcg32.js";
 
 const fixtures = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "schemas", "fixtures");
 

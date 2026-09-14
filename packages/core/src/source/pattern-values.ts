@@ -1,6 +1,6 @@
 import { ErrorCode, OxitoneError } from "@oxitone/protocol";
-import { Pattern } from "../pattern.js";
-import type { PatternOptions } from "../pattern.js";
+import { Pattern } from "../patterns/pattern.js";
+import type { PatternOptions } from "../patterns/pattern.js";
 import { createSource } from "./graph.js";
 import type { SourceValue } from "./types.js";
 import { noteSourceInput, sourceNoteInput } from "./notes.js";

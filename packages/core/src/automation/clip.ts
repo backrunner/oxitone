@@ -1,6 +1,6 @@
 import { automationClipSpecSchema, beatFromWire, beatToWire, ErrorCode, OxitoneError, type AutomationClipSpec, type EntityId } from "@oxitone/protocol";
-import type { Project } from "../project.js";
-import type { Track } from "../track.js";
+import type { Project } from "../project/project.js";
+import type { Track } from "../arrangement/track.js";
 
 /** Immutable wire identity with validated, revisioned placement changes. */
 export class AutomationClip {
