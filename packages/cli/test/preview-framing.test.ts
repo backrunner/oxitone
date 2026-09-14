@@ -13,7 +13,8 @@ it("decodes fragmented headers/bodies, UTF-8 and consecutive messages with bound
     expect(result).toEqual(values);
   }
   for (const length of [0, PREVIEW_MAX_FRAME_BYTES + 1]) {
-    const header = Buffer.alloc(4); header.writeUInt32BE(length);
+    const header = Buffer.alloc(4);
+    header.writeUInt32BE(length);
     expect(() => new FrameDecoder().push(header)).toThrow("length");
   }
   expect(() => new FrameDecoder().push(Buffer.from([0, 0, 0, 1, 120]))).toThrow();
@@ -21,8 +22,13 @@ it("decodes fragmented headers/bodies, UTF-8 and consecutive messages with bound
 
 it("validates preview options and defaults to dependency watch", () => {
   expect(parsePreviewArgs(["song.ts"]).options.watch).toBe(true);
-  expect(parsePreviewArgs(["song.ts", "--no-watch", "--headless"]).options).toMatchObject({ watch: false, headless: true });
-  expect(parsePreviewArgs(["song.ts", "--document-socket", "/tmp/oxitone-test/document"]).options.documentSocket).toBe("/tmp/oxitone-test/document");
+  expect(parsePreviewArgs(["song.ts", "--no-watch", "--headless"]).options).toMatchObject({
+    watch: false,
+    headless: true,
+  });
+  expect(parsePreviewArgs(["song.ts", "--document-socket", "/tmp/oxitone-test/document"]).options.documentSocket).toBe(
+    "/tmp/oxitone-test/document",
+  );
   expect(() => parsePreviewArgs(["song.ts", "--document-socket"])).toThrow("requires a path");
   expect(() => parsePreviewArgs(["song.ts", "--viewer"])).toThrow("requires a path");
   expect(() => parsePreviewArgs(["song.ts", "--edit"])).toThrow("Unknown");

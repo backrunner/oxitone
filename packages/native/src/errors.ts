@@ -1,9 +1,4 @@
-import {
-  ERROR_CODES,
-  ErrorCode,
-  OxitoneError,
-  type OxitoneErrorCode,
-} from "@oxitone/protocol";
+import { ERROR_CODES, ErrorCode, OxitoneError, type OxitoneErrorCode } from "@oxitone/protocol";
 
 interface WireError {
   code: OxitoneErrorCode;
@@ -45,11 +40,7 @@ export function toOxitoneError(error: unknown): OxitoneError {
   const raw = error instanceof Error ? error.message : String(error);
   const wire = parseWireError(raw);
   if (wire === undefined) {
-    return new OxitoneError(
-      ErrorCode.RealtimeFault,
-      "native call failed without a structured error",
-      { cause: error },
-    );
+    return new OxitoneError(ErrorCode.RealtimeFault, "native call failed without a structured error", { cause: error });
   }
   const details: Record<string, unknown> = { ...wire.details };
   if (wire.path !== undefined) {

@@ -17,17 +17,17 @@
 VST3/AU、原生 UI companion、动态 Wasm 插件不能因为加入管理器就标为支持。
 浏览器无法加载 macOS dylib；现有 Wasm 仅静态集成插件，平台能力要单独列明。
 
-| 能力 | 当前实现证据 | 接入源码 DAW 的要求 |
-| --- | --- | --- |
-| 外部音源/效果器注册 | `Project.registerPlugin`、native `registerPlugin`、Rust `load_plugin` | 保存显式注册来源、准确版本与实际 hash，所有执行入口一致 |
-| 参数描述与初始值 | manifest 与 C descriptor 有序参数表必须相符 | 名称、单位、范围、默认值、mapping/rate/smoothing 取已验证 descriptor |
-| 参数事件与 automation | C ABI 使用参数索引传物理值，宿主提供归一化 automation | 通用控件发同一语义命令，Rust 做最终校验，不让 UI 决定 DSP 参数语义 |
-| host mix/bypass、sidechain、PDC | 按宿主/descriptor 能力处理 | 区分 host 参数和插件参数，结构改动重新校验路由和延迟 |
-| 声明式 GPUI 面板 | `registerPluginUi` + uiVersion 1.0，内外插件共用 | 扩展为可编辑时复用统一命令路径；坏面板回退通用面板 |
-| 注册与实例故障诊断 | hash/签名/ABI 错误，process fault latch/count | 管理器展示准确来源与诊断；目前计数按插件版本聚合，不伪装成逐实例 CPU |
-| 插件注册信息持久化 | 当前不进入 ProjectSnapshot/Project.save 的 manifest | TS 保存必须写注册代码/import，不能仅保存在管理器数据库 |
-| resources / structured state | 内置插件有支持；C ABI v1 没有传输接口 | 外部插件不能宣称支持，需显式能力检查与后续 ABI 扩展 |
-| 原生 UI / 任意内部状态回读 | 当前没有对应 C ABI 接口 | 不能从插件窗口直接偷改 DSP，再假装已保存到 TS |
+| 能力                            | 当前实现证据                                                          | 接入源码 DAW 的要求                                                  |
+| ------------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| 外部音源/效果器注册             | `Project.registerPlugin`、native `registerPlugin`、Rust `load_plugin` | 保存显式注册来源、准确版本与实际 hash，所有执行入口一致              |
+| 参数描述与初始值                | manifest 与 C descriptor 有序参数表必须相符                           | 名称、单位、范围、默认值、mapping/rate/smoothing 取已验证 descriptor |
+| 参数事件与 automation           | C ABI 使用参数索引传物理值，宿主提供归一化 automation                 | 通用控件发同一语义命令，Rust 做最终校验，不让 UI 决定 DSP 参数语义   |
+| host mix/bypass、sidechain、PDC | 按宿主/descriptor 能力处理                                            | 区分 host 参数和插件参数，结构改动重新校验路由和延迟                 |
+| 声明式 GPUI 面板                | `registerPluginUi` + uiVersion 1.0，内外插件共用                      | 扩展为可编辑时复用统一命令路径；坏面板回退通用面板                   |
+| 注册与实例故障诊断              | hash/签名/ABI 错误，process fault latch/count                         | 管理器展示准确来源与诊断；目前计数按插件版本聚合，不伪装成逐实例 CPU |
+| 插件注册信息持久化              | 当前不进入 ProjectSnapshot/Project.save 的 manifest                   | TS 保存必须写注册代码/import，不能仅保存在管理器数据库               |
+| resources / structured state    | 内置插件有支持；C ABI v1 没有传输接口                                 | 外部插件不能宣称支持，需显式能力检查与后续 ABI 扩展                  |
+| 原生 UI / 任意内部状态回读      | 当前没有对应 C ABI 接口                                               | 不能从插件窗口直接偷改 DSP，再假装已保存到 TS                        |
 
 代码依据：`packages/core/src/project-playback.ts`、`packages/protocol/src/plugin.ts`、
 `parameter.ts`、`plugin-ui.ts`、`include/oxitone_plugin.h`、`crates/render/src/plugins/`、
@@ -89,16 +89,16 @@ Channel 的 level/pan/mute/swing，`insert.*` 也有宿主路径含义。外部�
 
 ## 3. 与高阶生成、复制、替换和重排兼容
 
-| 场景 | 必须满足的编辑语义 |
-| --- | --- |
-| loop/map 生成多个外部音源 Channel | 某实例参数变化只派生该输出配置，其他实例仍跟随原 factory |
-| 一个效果器配置复用于多条链 | 编辑选中 insert 的引用，不能把同 pluginId/version 的全部实例一起改掉 |
-| 外部包提供生成式 Note/Pattern helper | 按高阶函数审计的输出边界处理；不需要该 npm 包公开源码 |
-| 复制外部插件实例 | 复制可保存的 authoring 配置、host 设置和明确绑定；不复制运行中 DSP 内存 |
-| insert 重排 | 迁移相应 `insert.<index>.*` automation、窗口选择和待提交事务；不能让它们跟错槽位 |
-| 替换音源/效果器 | 选定范围内重建引用；检查参数/能力/资源/sidechain/automation，再提交候选 |
-| 效果器 bypass | 保留实例配置与链位置；不等同删除/卸载，缺库时不能假定 bypass 能免除加载 |
-| 外部插件产生内部随机声部/私有琶音 | 宿主只编辑公开参数；未暴露为 authoring 数据的音符不能假装可逐音反写 |
+| 场景                                 | 必须满足的编辑语义                                                               |
+| ------------------------------------ | -------------------------------------------------------------------------------- |
+| loop/map 生成多个外部音源 Channel    | 某实例参数变化只派生该输出配置，其他实例仍跟随原 factory                         |
+| 一个效果器配置复用于多条链           | 编辑选中 insert 的引用，不能把同 pluginId/version 的全部实例一起改掉             |
+| 外部包提供生成式 Note/Pattern helper | 按高阶函数审计的输出边界处理；不需要该 npm 包公开源码                            |
+| 复制外部插件实例                     | 复制可保存的 authoring 配置、host 设置和明确绑定；不复制运行中 DSP 内存          |
+| insert 重排                          | 迁移相应 `insert.<index>.*` automation、窗口选择和待提交事务；不能让它们跟错槽位 |
+| 替换音源/效果器                      | 选定范围内重建引用；检查参数/能力/资源/sidechain/automation，再提交候选          |
+| 效果器 bypass                        | 保留实例配置与链位置；不等同删除/卸载，缺库时不能假定 bypass 能免除加载          |
+| 外部插件产生内部随机声部/私有琶音    | 宿主只编辑公开参数；未暴露为 authoring 数据的音符不能假装可逐音反写              |
 
 同名参数也不证明两个插件的单位、mapping、范围和含义相同。跨插件替换默认使用新插件
 默认配置，只有明确兼容的映射才迁移参数；未映射 automation 作为待解决项目保留，
@@ -115,14 +115,14 @@ GUI、通用插件面板、自定义 GPUI 面板与未来原生 UI adapter 都�
 
 建议采用左侧筛选、中央列表、右侧详情与使用位置的布局：
 
-| 区域 | 用户看到的内容 |
-| --- | --- |
-| 分类 | 全部、音源、效果器、工程使用、缺失/不可用；可筛选内置与外部 |
-| 搜索 | 插件名称、包名、厂商（元数据存在时）与插件标识 |
-| 列表 | 名称、类型、版本、本机可用状态、工程使用数量；正在执行的管理任务有进度 |
-| 详情 | 支持的平台、参数、面板可用性、来源、版本；技术细节折叠显示 ABI/hash/路径 |
-| 工程引用 | Channel/Bus/Master 与槽位，可跳转；区分草稿和当前播放版本的引用 |
-| 问题 | 缺依赖、库缺失、架构不匹配、ABI/签名/hash/descriptor 错误及重新验证入口 |
+| 区域     | 用户看到的内容                                                           |
+| -------- | ------------------------------------------------------------------------ |
+| 分类     | 全部、音源、效果器、工程使用、缺失/不可用；可筛选内置与外部              |
+| 搜索     | 插件名称、包名、厂商（元数据存在时）与插件标识                           |
+| 列表     | 名称、类型、版本、本机可用状态、工程使用数量；正在执行的管理任务有进度   |
+| 详情     | 支持的平台、参数、面板可用性、来源、版本；技术细节折叠显示 ABI/hash/路径 |
+| 工程引用 | Channel/Bus/Master 与槽位，可跳转；区分草稿和当前播放版本的引用          |
+| 问题     | 缺依赖、库缺失、架构不匹配、ABI/签名/hash/descriptor 错误及重新验证入口  |
 
 插件名称/厂商不是当前 manifest 的必填字段，不能从 pluginId 猜造。缺省用现有
 pluginId 展示；未来安装元数据提供可选 displayName/vendor/tags，不能改变音频身份。
@@ -208,13 +208,13 @@ release 为 SignedOnly。新 resolver/manager 必须把工程策略显式传到�
 
 ABI v1 扩展的目标要单独明确：
 
-| 后续能力 | 必需契约 |
-| --- | --- |
-| 外部采样资源 | 控制侧声明、资源寻址/hash、准备数据与所有权、版本化传递接口 |
-| 外部 structured state | 可序列化配置/schema/version、验证与迁移、控制侧恢复；不保存 DSP 内存 |
-| 插件内部 UI 编辑 | gesture 开始/变更/结束通过宿主事务；有能力时提交 state/参数，最终由源码接受 |
-| 原生 UI companion | 独立于 audio ABI，按 11 的生命周期扩展；缺 companion 仍可用通用面板 |
-| 实时有效值反馈 | 有界遥测、graph generation、来源/默认/有效值区分，不能从 UI 推测 |
+| 后续能力              | 必需契约                                                                    |
+| --------------------- | --------------------------------------------------------------------------- |
+| 外部采样资源          | 控制侧声明、资源寻址/hash、准备数据与所有权、版本化传递接口                 |
+| 外部 structured state | 可序列化配置/schema/version、验证与迁移、控制侧恢复；不保存 DSP 内存        |
+| 插件内部 UI 编辑      | gesture 开始/变更/结束通过宿主事务；有能力时提交 state/参数，最终由源码接受 |
+| 原生 UI companion     | 独立于 audio ABI，按 11 的生命周期扩展；缺 companion 仍可用通用面板         |
+| 实时有效值反馈        | 有界遥测、graph generation、来源/默认/有效值区分，不能从 UI 推测            |
 
 兼容旧 C ABI v1 的参数型插件是必过门槛。扩展遵循 ABI record size/版本协商，不能只在
 TS InstrumentRef 上增加字段就宣称外部插件支持。VST3/AU 需要额外 adapter 与各自状态/UI

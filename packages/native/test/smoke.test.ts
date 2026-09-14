@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  ErrorCode,
-  OxitoneError,
-  PROTOCOL_VERSION,
-  type ProjectSnapshot,
-} from "@oxitone/protocol";
+import { ErrorCode, OxitoneError, PROTOCOL_VERSION, type ProjectSnapshot } from "@oxitone/protocol";
 import { compile, createEngine, dispose, enqueueTransport, getProtocolVersion } from "../src/index.js";
 
 const minimalSnapshot: ProjectSnapshot = {
@@ -37,12 +32,16 @@ describe("native facade smoke test", () => {
       expect(enqueueTransport(engine, { command: "pause" }).cursor).toBe("30000");
       for (const extra of [{ frame: "1" }, { beat: { numerator: 1, denominator: 1 } }]) {
         expect(() => enqueueTransport(engine, { command: "seek", seconds: 1, ...extra })).toThrowError(
-          expect.objectContaining({ code: ErrorCode.InvalidProject }));
+          expect.objectContaining({ code: ErrorCode.InvalidProject }),
+        );
       }
       expect(() => enqueueTransport(engine, { command: "seek", seconds: 1e30 })).toThrowError(
-        expect.objectContaining({ code: ErrorCode.InvalidProject }));
+        expect.objectContaining({ code: ErrorCode.InvalidProject }),
+      );
       expect(enqueueTransport(engine, { command: "pause" }).cursor).toBe("30000");
-    } finally { dispose(engine); }
+    } finally {
+      dispose(engine);
+    }
   });
   it("reports the protocol version", () => {
     expect(getProtocolVersion()).toBe(PROTOCOL_VERSION);

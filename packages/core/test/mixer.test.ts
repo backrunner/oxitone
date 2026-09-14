@@ -3,7 +3,10 @@ import { ErrorCode, type EffectRef } from "@oxitone/protocol";
 import { createAutomationNamespace, Project } from "../src/index.js";
 
 const utility = (): EffectRef => ({
-  pluginId: "oxitone.utility", pluginVersion: "1.0.0", parameters: { polarity: 1 }, mix: 0.5,
+  pluginId: "oxitone.utility",
+  pluginVersion: "1.0.0",
+  parameters: { polarity: 1 },
+  mix: 0.5,
 });
 
 describe("mixer and insert authoring", () => {
@@ -17,11 +20,11 @@ describe("mixer and insert authoring", () => {
     project.master.addEffect(utility());
     project.master.level = 0.75;
     const snapshot = project.snapshot();
-    expect(snapshot.mixerChannels.map((entry) => entry.id)).toEqual(
-      [project.master.id, bus.id].sort(),
-    );
+    expect(snapshot.mixerChannels.map((entry) => entry.id)).toEqual([project.master.id, bus.id].sort());
     expect(snapshot.mixerChannels.find((entry) => entry.id === project.master.id)).toMatchObject({
-      level: 0.75, inserts: [utility()], sends: [],
+      level: 0.75,
+      inserts: [utility()],
+      sends: [],
     });
     expect(snapshot.channels[0]).toMatchObject({ mixerChannelId: bus.id, swing: 0.2, mute: true, solo: true });
     channel.mixerChannelId = project.master.id;
@@ -80,13 +83,27 @@ describe("mixer and insert authoring", () => {
     const channel = project.addChannel();
     const foreign = new Project().addMixerChannel(); // Same seed/ID still belongs to another project.
     const mutations = [
-      () => { bus.level = Number.NaN; },
-      () => { bus.balance = 1.1; },
-      () => { bus.masterSendRatio = 2; },
-      () => { project.master.masterSendRatio = 0; },
-      () => { channel.swing = -1; },
-      () => { channel.pan = Number.POSITIVE_INFINITY; },
-      () => { channel.mixerChannelId = "mix_missing"; },
+      () => {
+        bus.level = Number.NaN;
+      },
+      () => {
+        bus.balance = 1.1;
+      },
+      () => {
+        bus.masterSendRatio = 2;
+      },
+      () => {
+        project.master.masterSendRatio = 0;
+      },
+      () => {
+        channel.swing = -1;
+      },
+      () => {
+        channel.pan = Number.POSITIVE_INFINITY;
+      },
+      () => {
+        channel.mixerChannelId = "mix_missing";
+      },
       () => channel.addEffect({ ...utility(), mix: 1.1 }),
       () => bus.addEffect({ ...utility(), parameters: { gainDb: Number.NaN } }),
       () => bus.send(fx, { ratio: -1 }),
@@ -109,13 +126,41 @@ describe("mixer and insert authoring", () => {
     const bus = project.addMixerChannel();
     const channel = project.addChannel();
     const mutations = [
-      () => { bus.level = 0.5; }, () => { bus.balance = 0.2; },
-      () => { bus.mute = true; }, () => { bus.solo = true; },
-      () => { bus.masterSendRatio = 0.25; }, () => bus.addEffect(utility()),
-      () => { channel.level = 0.4; }, () => { channel.pan = -0.4; },
-      () => { channel.swing = 0.5; }, () => { channel.mute = true; },
-      () => { channel.solo = true; }, () => channel.addEffect(utility()),
-      () => { channel.mixerChannelId = bus.id; },
+      () => {
+        bus.level = 0.5;
+      },
+      () => {
+        bus.balance = 0.2;
+      },
+      () => {
+        bus.mute = true;
+      },
+      () => {
+        bus.solo = true;
+      },
+      () => {
+        bus.masterSendRatio = 0.25;
+      },
+      () => bus.addEffect(utility()),
+      () => {
+        channel.level = 0.4;
+      },
+      () => {
+        channel.pan = -0.4;
+      },
+      () => {
+        channel.swing = 0.5;
+      },
+      () => {
+        channel.mute = true;
+      },
+      () => {
+        channel.solo = true;
+      },
+      () => channel.addEffect(utility()),
+      () => {
+        channel.mixerChannelId = bus.id;
+      },
     ];
     for (const mutate of mutations) {
       const revision = project.revision;

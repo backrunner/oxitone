@@ -38,11 +38,9 @@ export interface AutomationLaneOptions {
 
 function loopToWire(loop: AutomationLoopInput): LoopSpec {
   if (!Number.isFinite(loop.lengthBeats) || loop.lengthBeats <= 0) {
-    throw new OxitoneError(
-      ErrorCode.InvalidProject,
-      `loop lengthBeats must be > 0, got ${loop.lengthBeats}`,
-      { details: { path: "automation.loop.lengthBeats" } },
-    );
+    throw new OxitoneError(ErrorCode.InvalidProject, `loop lengthBeats must be > 0, got ${loop.lengthBeats}`, {
+      details: { path: "automation.loop.lengthBeats" },
+    });
   }
   if (loop.count !== undefined && (!Number.isInteger(loop.count) || loop.count < 1)) {
     throw new OxitoneError(ErrorCode.InvalidProject, `loop count must be an integer >= 1`, {
@@ -76,9 +74,13 @@ export class AutomationLane {
   private readonly loopSpec?: LoopSpec;
   private restoredSpec?: AutomationLaneSpec;
   private playbackMode: "global" | "playlist" | undefined;
-  get playback(): "global" | "playlist" { return this.playbackMode ?? "global"; }
+  get playback(): "global" | "playlist" {
+    return this.playbackMode ?? "global";
+  }
   /** @internal Project placement permanently changes the lane timeline. */
-  usePlaylist(): void { this.playbackMode = "playlist"; }
+  usePlaylist(): void {
+    this.playbackMode = "playlist";
+  }
 
   /** @internal Use `project.addAutomationLane(...)` instead. */
   constructor(
@@ -100,11 +102,9 @@ export class AutomationLane {
     }
     if (options.lastBeat !== undefined) {
       if (!Number.isFinite(options.lastBeat) || options.lastBeat < 0) {
-        throw new OxitoneError(
-          ErrorCode.InvalidProject,
-          `lane lastBeat must be >= 0, got ${options.lastBeat}`,
-          { details: { path: "automation.lastBeat" } },
-        );
+        throw new OxitoneError(ErrorCode.InvalidProject, `lane lastBeat must be >= 0, got ${options.lastBeat}`, {
+          details: { path: "automation.lastBeat" },
+        });
       }
       this.lastBeat = options.lastBeat;
     }
@@ -118,8 +118,12 @@ export class AutomationLane {
     if (spec.combine !== undefined) options.combine = spec.combine;
     if (spec.lastBeat !== undefined) options.lastBeat = beatFromWire(spec.lastBeat);
     if (loop !== undefined) {
-      options.loop = { lengthBeats: beatFromWire(loop.lengthBeats), ...(loop.startBeat === undefined ? {} : { startBeat: beatFromWire(loop.startBeat) }),
-        ...(loop.count === undefined ? {} : { count: loop.count }), ...(loop.lastBeat === undefined ? {} : { lastBeat: beatFromWire(loop.lastBeat) }) };
+      options.loop = {
+        lengthBeats: beatFromWire(loop.lengthBeats),
+        ...(loop.startBeat === undefined ? {} : { startBeat: beatFromWire(loop.startBeat) }),
+        ...(loop.count === undefined ? {} : { count: loop.count }),
+        ...(loop.lastBeat === undefined ? {} : { lastBeat: beatFromWire(loop.lastBeat) }),
+      };
     }
     const lane = new AutomationLane(spec.id, spec.target, new AutomationSource(spec.source), options);
     lane.restoredSpec = spec;
@@ -128,7 +132,8 @@ export class AutomationLane {
 
   /** Wire form for `ProjectSnapshot.automation`. */
   toSpec(): AutomationLaneSpec {
-    if (this.restoredSpec !== undefined) return { ...structuredClone(this.restoredSpec), ...(this.playbackMode ? { playback: this.playbackMode } : {}) };
+    if (this.restoredSpec !== undefined)
+      return { ...structuredClone(this.restoredSpec), ...(this.playbackMode ? { playback: this.playbackMode } : {}) };
     return {
       id: this.id,
       ...(this.playbackMode ? { playback: this.playbackMode } : {}),

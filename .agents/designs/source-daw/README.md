@@ -48,34 +48,34 @@ flowchart LR
 Rust RenderGraph 都是带版本的派生状态，不是三个独立的持久化事实来源。
 Authoring Graph 保留生成语义；RenderGraph 保留高效执行所需的编译结果；两者不混为一图。
 
-| 决策 | 采用方式 |
-| --- | --- |
-| 生成器表示 | chord/arp/集合组合/loop/automation 保留显式表达式节点与输出来源 |
-| 局部例外 | 使用普通 TS 的 `.edit(...)`、配置派生与时间区间覆盖表达式 |
-| 通用 TS | 继续执行普通函数；在可追踪输出边界包装编辑，不静态求解任意函数体 |
-| 源码修改 | AST/符号分析定位，文本区间补丁保留注释和风格；不用 snapshot 重印整个项目 |
-| 实例身份 | 会话 handle + source revision；wire ID 自动生成；与随机种子分离 |
-| 随机性 | 音乐 seed + 稳定的生成坐标；不依赖 AST 路径、wire ID、创建顺序 |
-| 参数地址 | owner 与 target kind、原样 parameterId 分字段；插件实例成为图中一等节点 |
-| 自动化 | 保留函数结构，增加原生区间覆盖、独立时钟映射与显式 lane 优先级 |
-| 插件 ABI | 统一采用新 ABI 2，支持参数、资源、配置 state、能力与独立 UI 协议 |
-| 工程文件 | TS 源码 + package/插件依赖锁 + 内容寻址资产；缓存和恢复日志不承载唯一音乐语义 |
-| 版本 | 目标 wire protocol 2.0、authoring document format 1、plugin ABI 2、UI protocol 2 |
+| 决策       | 采用方式                                                                         |
+| ---------- | -------------------------------------------------------------------------------- |
+| 生成器表示 | chord/arp/集合组合/loop/automation 保留显式表达式节点与输出来源                  |
+| 局部例外   | 使用普通 TS 的 `.edit(...)`、配置派生与时间区间覆盖表达式                        |
+| 通用 TS    | 继续执行普通函数；在可追踪输出边界包装编辑，不静态求解任意函数体                 |
+| 源码修改   | AST/符号分析定位，文本区间补丁保留注释和风格；不用 snapshot 重印整个项目         |
+| 实例身份   | 会话 handle + source revision；wire ID 自动生成；与随机种子分离                  |
+| 随机性     | 音乐 seed + 稳定的生成坐标；不依赖 AST 路径、wire ID、创建顺序                   |
+| 参数地址   | owner 与 target kind、原样 parameterId 分字段；插件实例成为图中一等节点          |
+| 自动化     | 保留函数结构，增加原生区间覆盖、独立时钟映射与显式 lane 优先级                   |
+| 插件 ABI   | 统一采用新 ABI 2，支持参数、资源、配置 state、能力与独立 UI 协议                 |
+| 工程文件   | TS 源码 + package/插件依赖锁 + 内容寻址资产；缓存和恢复日志不承载唯一音乐语义    |
+| 版本       | 目标 wire protocol 2.0、authoring document format 1、plugin ABI 2、UI protocol 2 |
 
 版本号标识新设计，不表示已有实现。没有为旧 ABI 1 保留长期运行分支的要求。
 旧示例/工程的迁移是一次工程重构；不可自动迁移的任意函数输出提供可审查的 TS 转换。
 
 ## 3. 完整规格导航
 
-| 文档 | 决定的问题 |
-| --- | --- |
-| [01-authoring.md](01-authoring.md) | 公共 API、表达式图、生成器与实例局部编辑、所有现有高阶能力 |
-| [02-source-writing.md](02-source-writing.md) | AST/来源追踪、无显式 ID、代码写回、普通 TS、重开与代码质量 |
-| [03-document-session.md](03-document-session.md) | 草稿/播放/保存状态、IPC、Undo、外部修改、GPUI 交互与保存事务 |
-| [04-runtime.md](04-runtime.md) | 随机性、时钟与循环、automation、增量换图、实时约束 |
-| [05-plugins.md](05-plugins.md) | ABI 2、插件配置与 UI、注册/发现/依赖、完整 GPUI 插件管理器 |
-| [06-delivery.md](06-delivery.md) | 包/crate 归属、协议迁移、分阶段实施、验收矩阵与性能门槛 |
-| [07-mvvm-and-localization.md](07-mvvm-and-localization.md) | MVVM 实时同步、import/export、npm 边界与音符/效果器组合拆散 |
+| 文档                                                       | 决定的问题                                                   |
+| ---------------------------------------------------------- | ------------------------------------------------------------ |
+| [01-authoring.md](01-authoring.md)                         | 公共 API、表达式图、生成器与实例局部编辑、所有现有高阶能力   |
+| [02-source-writing.md](02-source-writing.md)               | AST/来源追踪、无显式 ID、代码写回、普通 TS、重开与代码质量   |
+| [03-document-session.md](03-document-session.md)           | 草稿/播放/保存状态、IPC、Undo、外部修改、GPUI 交互与保存事务 |
+| [04-runtime.md](04-runtime.md)                             | 随机性、时钟与循环、automation、增量换图、实时约束           |
+| [05-plugins.md](05-plugins.md)                             | ABI 2、插件配置与 UI、注册/发现/依赖、完整 GPUI 插件管理器   |
+| [06-delivery.md](06-delivery.md)                           | 包/crate 归属、协议迁移、分阶段实施、验收矩阵与性能门槛      |
+| [07-mvvm-and-localization.md](07-mvvm-and-localization.md) | MVVM 实时同步、import/export、npm 边界与音符/效果器组合拆散  |
 
 ## 4. 两类必须诚实保留的边界
 

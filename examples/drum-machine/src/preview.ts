@@ -13,9 +13,13 @@ export default function createProject() {
     [`target/release/liboxitone_example_drums${suffix}`, "crates/example-drums/manifest.json"],
     [`target/examples/drum-machine/plugins/reference-gain${suffix}`, "crates/render/tests/fixtures/gain.json"],
   ]) {
-    project.registerPlugin({ libraryPath: fileURLToPath(new URL(library!, root)),
-      manifest: pluginManifestSchema.parse(JSON.parse(readFileSync(new URL(manifest!, root), "utf8"))) },
-    { allowPlugins: "any" }); // Explicit trust for these two local development fixtures.
+    project.registerPlugin(
+      {
+        libraryPath: fileURLToPath(new URL(library!, root)),
+        manifest: pluginManifestSchema.parse(JSON.parse(readFileSync(new URL(manifest!, root), "utf8"))),
+      },
+      { allowPlugins: "any" },
+    ); // Explicit trust for these two local development fixtures.
   }
   return project.registerPluginUi(drumPanel).registerPluginUi(gainPanel);
 }

@@ -75,18 +75,18 @@ Project、Pattern、音源 helpers、importSample 等 authoring 导出，无循�
 
 ## Package ownership
 
-| Layer | Owns | Must not own |
-| --- | --- | --- |
-| `@oxitone/core` | IDs, TS builders, Chord/Arp, validation hints | audio buffers, device handles, native state |
-| `@oxitone/protocol` | schema version, encode/decode, compatibility | DSP decisions or mutable runtime state |
-| `@oxitone/samples` | non-destructive edit descriptors and metadata | decoding in JS or realtime transforms |
-| `oxitone-napi` | command/snapshot bridge, error translation | render loop, graph ownership, business logic |
-| `oxitone-graph` | graph validation、编译成不可变 `RenderPlan`（纯数据）、plugin manifests | OS APIs, N-API, file I/O, 插件实例所有权 |
-| `oxitone-dsp` | sample/block DSP primitives | allocation, locks, logging, clocks |
-| `oxitone-io-macos` | CoreAudio setup/callback/device enumeration | project semantics or plugin policy |
-| `oxitone-render` | 插件实例与运行时状态、transport-driven graph rendering、offline WAV sink、SMF MIDI export | TypeScript objects, UI concerns |
-| `oxitone-transport` | tempo map/time signature、事件调度、automation evaluator 与 tempo lane 烘焙 | 音频 buffer、插件实例 |
-| `oxitone-preview` | GPUI viewer 状态归约、scope 分析（UI 线程）、transport 交互 | 音频语义、authoring 写回、编辑能力 |
+| Layer               | Owns                                                                                      | Must not own                                 |
+| ------------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `@oxitone/core`     | IDs, TS builders, Chord/Arp, validation hints                                             | audio buffers, device handles, native state  |
+| `@oxitone/protocol` | schema version, encode/decode, compatibility                                              | DSP decisions or mutable runtime state       |
+| `@oxitone/samples`  | non-destructive edit descriptors and metadata                                             | decoding in JS or realtime transforms        |
+| `oxitone-napi`      | command/snapshot bridge, error translation                                                | render loop, graph ownership, business logic |
+| `oxitone-graph`     | graph validation、编译成不可变 `RenderPlan`（纯数据）、plugin manifests                   | OS APIs, N-API, file I/O, 插件实例所有权     |
+| `oxitone-dsp`       | sample/block DSP primitives                                                               | allocation, locks, logging, clocks           |
+| `oxitone-io-macos`  | CoreAudio setup/callback/device enumeration                                               | project semantics or plugin policy           |
+| `oxitone-render`    | 插件实例与运行时状态、transport-driven graph rendering、offline WAV sink、SMF MIDI export | TypeScript objects, UI concerns              |
+| `oxitone-transport` | tempo map/time signature、事件调度、automation evaluator 与 tempo lane 烘焙               | 音频 buffer、插件实例                        |
+| `oxitone-preview`   | GPUI viewer 状态归约、scope 分析（UI 线程）、transport 交互                               | 音频语义、authoring 写回、编辑能力           |
 
 ## Plugin model
 

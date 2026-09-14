@@ -1,4 +1,11 @@
-import { beatToWire, beatFromWire, patternClipSpecSchema, ErrorCode, OxitoneError, type PatternClipSpec } from "@oxitone/protocol";
+import {
+  beatToWire,
+  beatFromWire,
+  patternClipSpecSchema,
+  ErrorCode,
+  OxitoneError,
+  type PatternClipSpec,
+} from "@oxitone/protocol";
 import { parseAuthoring } from "../authoring-validation.js";
 import type { Pattern } from "../patterns/pattern.js";
 import type { Project } from "../project/project.js";
@@ -37,9 +44,12 @@ export class PatternClip {
   /** @internal Restore exact wire positions and explicit defaults. */
   static fromSpec(project: Project, track: Track, pattern: Pattern, input: PatternClipSpec): PatternClip {
     const spec = parseAuthoring(patternClipSpecSchema, input, "patternClip");
-    if (spec.durationBeats?.numerator === 0 || (spec.lastBeat !== undefined &&
-      BigInt(spec.lastBeat.numerator) * BigInt(spec.startBeat.denominator) <=
-      BigInt(spec.startBeat.numerator) * BigInt(spec.lastBeat.denominator))) {
+    if (
+      spec.durationBeats?.numerator === 0 ||
+      (spec.lastBeat !== undefined &&
+        BigInt(spec.lastBeat.numerator) * BigInt(spec.startBeat.denominator) <=
+          BigInt(spec.startBeat.numerator) * BigInt(spec.lastBeat.denominator))
+    ) {
       throw new OxitoneError(ErrorCode.InvalidProject, "invalid pattern clip duration or end");
     }
     const clip = new PatternClip(project, track, pattern, spec.id, beatFromWire(spec.startBeat));
@@ -60,19 +70,27 @@ export class PatternClip {
 
   relocate(track: Track, beat: number): void {
     this.project.assertMutable();
-    if (!this.project.tracks.includes(track) || !Number.isFinite(beat) || beat < 0) throw new OxitoneError(ErrorCode.InvalidProject, "Invalid clip destination");
+    if (!this.project.tracks.includes(track) || !Number.isFinite(beat) || beat < 0)
+      throw new OxitoneError(ErrorCode.InvalidProject, "Invalid clip destination");
     const routes = this.track.channelIds;
     for (const id of routes) {
-      const channel = this.project.channels.find(candidate => candidate.id === id);
+      const channel = this.project.channels.find((candidate) => candidate.id === id);
       if (channel) track.use(channel);
     }
-    if (this.track !== track) { this.track.detachClip(this); track.attachClip(this); }
+    if (this.track !== track) {
+      this.track.detachClip(this);
+      track.attachClip(this);
+    }
     if (this.lastBeatValue !== undefined) {
       this.lastBeatValue += beat - this.startBeat;
       if (this.restoredSpec) this.restoredSpec.lastBeat = beatToWire(this.lastBeatValue);
     }
-    this.track = track; this.startBeat = beat;
-    if (this.restoredSpec) { this.restoredSpec.trackId = track.id; this.restoredSpec.startBeat = beatToWire(beat); }
+    this.track = track;
+    this.startBeat = beat;
+    if (this.restoredSpec) {
+      this.restoredSpec.trackId = track.id;
+      this.restoredSpec.startBeat = beatToWire(beat);
+    }
     this.project.touch();
   }
 
@@ -115,18 +133,14 @@ export class PatternClip {
   loop(count: number): this {
     this.project.assertMutable();
     if (this.lastBeatValue !== undefined) {
-      throw new OxitoneError(
-        ErrorCode.InvalidProject,
-        "loopCount and lastBeat are mutually exclusive",
-        { details: { path: "patternClip.loopCount" } },
-      );
+      throw new OxitoneError(ErrorCode.InvalidProject, "loopCount and lastBeat are mutually exclusive", {
+        details: { path: "patternClip.loopCount" },
+      });
     }
     if (!Number.isInteger(count) || count < 1) {
-      throw new OxitoneError(
-        ErrorCode.InvalidProject,
-        `loop count must be an integer >= 1, got ${count}`,
-        { details: { path: "patternClip.loopCount" } },
-      );
+      throw new OxitoneError(ErrorCode.InvalidProject, `loop count must be an integer >= 1, got ${count}`, {
+        details: { path: "patternClip.loopCount" },
+      });
     }
     this.loopCountValue = count;
     if (this.restoredSpec !== undefined) this.restoredSpec.loopCount = count;
@@ -138,19 +152,15 @@ export class PatternClip {
   last(position: BarBeatPosition): this {
     this.project.assertMutable();
     if (this.loopCountValue !== undefined) {
-      throw new OxitoneError(
-        ErrorCode.InvalidProject,
-        "loopCount and lastBeat are mutually exclusive",
-        { details: { path: "patternClip.lastBeat" } },
-      );
+      throw new OxitoneError(ErrorCode.InvalidProject, "loopCount and lastBeat are mutually exclusive", {
+        details: { path: "patternClip.lastBeat" },
+      });
     }
     const beat = this.project.barBeatToBeats(position);
     if (beat <= this.startBeat) {
-      throw new OxitoneError(
-        ErrorCode.InvalidProject,
-        `lastBeat ${beat} must be after startBeat ${this.startBeat}`,
-        { details: { path: "patternClip.lastBeat" } },
-      );
+      throw new OxitoneError(ErrorCode.InvalidProject, `lastBeat ${beat} must be after startBeat ${this.startBeat}`, {
+        details: { path: "patternClip.lastBeat" },
+      });
     }
     this.lastBeatValue = beat;
     if (this.restoredSpec !== undefined) this.restoredSpec.lastBeat = beatToWire(beat);
@@ -162,11 +172,9 @@ export class PatternClip {
   transpose(semitones: number): this {
     this.project.assertMutable();
     if (!Number.isInteger(semitones)) {
-      throw new OxitoneError(
-        ErrorCode.InvalidProject,
-        `transpose must be an integer, got ${semitones}`,
-        { details: { path: "patternClip.transpose" } },
-      );
+      throw new OxitoneError(ErrorCode.InvalidProject, `transpose must be an integer, got ${semitones}`, {
+        details: { path: "patternClip.transpose" },
+      });
     }
     this.transposeValue = semitones;
     if (this.restoredSpec !== undefined) this.restoredSpec.transpose = semitones;
@@ -178,11 +186,9 @@ export class PatternClip {
   velocityScale(factor: number): this {
     this.project.assertMutable();
     if (!Number.isFinite(factor) || factor < 0 || factor > 2) {
-      throw new OxitoneError(
-        ErrorCode.InvalidProject,
-        `velocityScale must be in 0..2, got ${factor}`,
-        { details: { path: "patternClip.velocityScale" } },
-      );
+      throw new OxitoneError(ErrorCode.InvalidProject, `velocityScale must be in 0..2, got ${factor}`, {
+        details: { path: "patternClip.velocityScale" },
+      });
     }
     this.velocityScaleValue = factor;
     if (this.restoredSpec !== undefined) this.restoredSpec.velocityScale = factor;
@@ -194,11 +200,9 @@ export class PatternClip {
   probability(value: number): this {
     this.project.assertMutable();
     if (!Number.isFinite(value) || value < 0 || value > 1) {
-      throw new OxitoneError(
-        ErrorCode.InvalidProject,
-        `probability must be in 0..1, got ${value}`,
-        { details: { path: "patternClip.probability" } },
-      );
+      throw new OxitoneError(ErrorCode.InvalidProject, `probability must be in 0..1, got ${value}`, {
+        details: { path: "patternClip.probability" },
+      });
     }
     this.probabilityValue = value;
     if (this.restoredSpec !== undefined) this.restoredSpec.probability = value;
@@ -212,7 +216,8 @@ export class PatternClip {
     if (typeof on !== "boolean") throw new OxitoneError(ErrorCode.InvalidProject, "enabled must be a boolean");
     this.enabledValue = on;
     if (this.restoredSpec !== undefined) {
-      if (on) delete this.restoredSpec.enabled; else this.restoredSpec.enabled = false;
+      if (on) delete this.restoredSpec.enabled;
+      else this.restoredSpec.enabled = false;
     }
     this.project.touch();
     return this;

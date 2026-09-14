@@ -11,14 +11,25 @@ import { Track } from "../arrangement/track.js";
 /** Restore after bus identities and clocks; membership has already been checked. */
 export function restoreEntities(project: Project, snapshot: ProjectSnapshot) {
   const channels = snapshot.channels.map((spec) => {
-    const options: ChannelOptions = { instrument: spec.instrument, effectChain: spec.effectChain,
-      level: spec.level, pan: spec.pan, mixerChannelId: spec.mixerChannelId,
-      ...(spec.name === undefined ? {} : { name: spec.name }), ...(spec.swing === undefined ? {} : { swing: spec.swing }),
-      ...(spec.mute === undefined ? {} : { mute: spec.mute }), ...(spec.solo === undefined ? {} : { solo: spec.solo }) };
+    const options: ChannelOptions = {
+      instrument: spec.instrument,
+      effectChain: spec.effectChain,
+      level: spec.level,
+      pan: spec.pan,
+      mixerChannelId: spec.mixerChannelId,
+      ...(spec.name === undefined ? {} : { name: spec.name }),
+      ...(spec.swing === undefined ? {} : { swing: spec.swing }),
+      ...(spec.mute === undefined ? {} : { mute: spec.mute }),
+      ...(spec.solo === undefined ? {} : { solo: spec.solo }),
+    };
     return new Channel(spec.id, options, spec.mixerChannelId, project, spec);
   });
-  const leaves = new Map(snapshot.patterns.filter(spec => !spec.parts).map(spec => [spec.id, Pattern.fromSpec(spec)]));
-  const patterns = new Map(snapshot.patterns.map(spec => [spec.id, spec.parts ? Pattern.fromSpec(spec, leaves) : leaves.get(spec.id)!]));
+  const leaves = new Map(
+    snapshot.patterns.filter((spec) => !spec.parts).map((spec) => [spec.id, Pattern.fromSpec(spec)]),
+  );
+  const patterns = new Map(
+    snapshot.patterns.map((spec) => [spec.id, spec.parts ? Pattern.fromSpec(spec, leaves) : leaves.get(spec.id)!]),
+  );
   const samples = snapshot.samples.map(Sample.fromSpec);
   const sampleById = new Map(samples.map((sample) => [sample.id, sample]));
   const patternClips = new Map(snapshot.patternClips.map((spec) => [spec.id, spec]));
@@ -35,5 +46,12 @@ export function restoreEntities(project: Project, snapshot: ProjectSnapshot) {
     }
     return track;
   });
-  return { channels, patterns, samples, tracks, automation: snapshot.automation.map(AutomationLane.fromSpec), automationClips: (snapshot.automationClips ?? []).map(spec => new AutomationClip(project, spec)) };
+  return {
+    channels,
+    patterns,
+    samples,
+    tracks,
+    automation: snapshot.automation.map(AutomationLane.fromSpec),
+    automationClips: (snapshot.automationClips ?? []).map((spec) => new AutomationClip(project, spec)),
+  };
 }

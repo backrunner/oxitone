@@ -173,8 +173,8 @@ Phase 1 没有音频输入，延迟敏感点只有 transport 响应和参数变�
 - Offline render 不经过 ring，直接驱动 block renderer。
 
 模拟设备线程用于测试时，按名义 period 拉取 ring。线程调度落后时从当前时刻等待
-  一个完整 period 再拉取，禁止连续补拉旧 period；测试机器的 consumer 延迟不能被
-  转换成人造的 producer underrun。真实 HAL callback 仍由设备时钟驱动。
+一个完整 period 再拉取，禁止连续补拉旧 period；测试机器的 consumer 延迟不能被
+转换成人造的 producer underrun。真实 HAL callback 仍由设备时钟驱动。
 
 Worker 仅在设备重采样开启时保留 SRC 额外输出帧余量；相同采样率每次写入恰好
 blockSize 帧，必须使用完整配置的 ring horizon，不能因额外余量损失一整块缓冲。

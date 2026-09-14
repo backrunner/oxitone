@@ -13,13 +13,27 @@ export const hashFile = (path: string): string => createHash("sha256").update(re
 export function verifyPlugins(engine: EngineHandle, output: string) {
   const project = new Project({ name: "Dynamic instrument/effect verification", seed: 42 });
   const channel = project.addChannel({ instrument: drumInstrument(), effectChain: [referenceGain], level: 0.4 });
-  project.addTrack("All four pads").use(channel).add(new Pattern({ lengthBeats: 4,
-    notes: [36, 38, 42, 46].map((pitch, i) => ({ pitch, start: i, duration: 0.1, velocity: 0.8 })) })).at({ bar: 1 });
+  project
+    .addTrack("All four pads")
+    .use(channel)
+    .add(
+      new Pattern({
+        lengthBeats: 4,
+        notes: [36, 38, 42, 46].map((pitch, i) => ({ pitch, start: i, duration: 0.1, velocity: 0.8 })),
+      }),
+    )
+    .at({ bar: 1 });
   const input = project.snapshot();
   input.channels[0]!.instrument.parameters.volume = 0.8;
   const render = (name: string, snapshot: ProjectSnapshot = input, blockSize: 64 | 128 | 256 = 128) => {
-    const report = renderWav(engine, snapshot, { path: join(output, `${name}.wav`),
-      end: { beat: beatToWire(4) }, tailSeconds: 0.5, bitDepth: "float32", dither: "none", blockSize });
+    const report = renderWav(engine, snapshot, {
+      path: join(output, `${name}.wav`),
+      end: { beat: beatToWire(4) },
+      tailSeconds: 0.5,
+      bitDepth: "float32",
+      dither: "none",
+      blockSize,
+    });
     return { ...report.files[0]!, sha256: hashFile(report.files[0]!.path) };
   };
   compile(engine, input);
@@ -29,7 +43,10 @@ export function verifyPlugins(engine: EngineHandle, output: string) {
   dry.channels[0]!.effectChain = [];
   assert.equal(render("dry", dry).sha256, unity.sha256, "Dynamic unity effect changed PCM");
   const results: Record<string, number> = {};
-  for (const [parameterId, initial] of [["volume", 0.8], ["insert.0.parameter.gain", 1]] as const) {
+  for (const [parameterId, initial] of [
+    ["volume", 0.8],
+    ["insert.0.parameter.gain", 1],
+  ] as const) {
     compile(engine, input);
     setParameter(engine, channel.id, parameterId, initial / 2);
     const host = render(`${parameterId}-host`);
@@ -41,8 +58,11 @@ export function verifyPlugins(engine: EngineHandle, output: string) {
     compile(engine, assigned);
     assert.equal(render(`${parameterId}-initial`, assigned).sha256, host.sha256);
     const automated = structuredClone(input);
-    automated.automation.push({ id: "auto_verify", target: { entityId: channel.id, parameterId },
-      source: { kind: "constant", value: parameterId === "volume" ? 0.4 : 0.25 } });
+    automated.automation.push({
+      id: "auto_verify",
+      target: { entityId: channel.id, parameterId },
+      source: { kind: "constant", value: parameterId === "volume" ? 0.4 : 0.25 },
+    });
     compile(engine, automated);
     assert.equal(render(`${parameterId}-automation`, automated).sha256, host.sha256);
     // Automation wins over a competing host event and the snapshot's initial value.

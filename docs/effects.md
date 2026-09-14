@@ -9,14 +9,16 @@ watch workflow. Rejected builds retain the last valid graph.
 import { Project, effect, createAutomationNamespace } from "oxitone";
 
 const project = new Project({ bpm: 140 });
-const chords = project.addMixerChannel({ name: "Chords", inserts: [
-  effect("nonlinearFilter", { cutoffHz: 6500, driveDb: 6, resonance: 0.2 }),
-  effect("multibandDynamics", { depth: 0.25, upwardDb: 9 }, { mix: 0.6 }),
-  effect("spreader", { bassMonoHz: 220, amount: 0.3 }),
-] });
+const chords = project.addMixerChannel({
+  name: "Chords",
+  inserts: [
+    effect("nonlinearFilter", { cutoffHz: 6500, driveDb: 6, resonance: 0.2 }),
+    effect("multibandDynamics", { depth: 0.25, upwardDb: 9 }, { mix: 0.6 }),
+    effect("spreader", { bassMonoHz: 220, amount: 0.3 }),
+  ],
+});
 const automation = createAutomationNamespace();
-chords.automate("insert.0.parameter.cutoffHz",
-  automation.sine({ periodBeats: 1, min: 0.35, max: 0.85 }));
+chords.automate("insert.0.parameter.cutoffHz", automation.sine({ periodBeats: 1, min: 0.35, max: 0.85 }));
 project.master.addEffect(effect("limiter", { ceilingDb: -1, releaseMs: 120 }));
 ```
 
@@ -25,24 +27,24 @@ uses normalized values mapped through the descriptor. A filter sweep changes
 brightness; use gain envelopes or a sidechain compressor when you also want volume
 ducking. Keep the sub on a separate centered path when widening chords or midbass.
 
-| Helper kind | Controls / use |
-| --- | --- |
-| `nonlinearFilter` | Driven LP/HP/BP/notch, cutoff, resonance; 2x processing |
-| `compactor` | Bounded upward compression, transient emphasis/suppression |
-| `multibandDynamics` | Three LR4 bands, upward/downward dynamics, timing and trims |
-| `resonator` | Four tuned modes, decay, brightness, inharmonicity, stereo |
-| `frequencyShifter` | Signed additive Hz shift and stereo offset |
-| `pitchShifter` | ±24 semitones, ±100 cents; fixed duration |
-| `flanger` | Fractional delay sweep, signed feedback, stereo phase |
-| `convolver` | Stereo impulse response, predelay, wet high/low cuts |
-| `bitcrush` | Quantization, sample-and-hold rate, deterministic clock jitter |
-| `tape` | 2x saturation, bandwidth, wow/flutter |
-| `spreader` | High-band decorrelation, M/S width, bass centering |
-| `limiter` | Stereo-linked 4x lookahead, input gain, ceiling, release |
-| `compressor` | Peak/RMS detector, knee, makeup, detector highpass, sidechain |
-| `gate` | Attack/hold/release, hysteresis, attenuation range, sidechain |
-| `delay` | Beat or seconds time, filtered feedback, ping-pong, wet ducking |
-| `reverb` | Decay, damping, predelay, wet filtering, ducking and width |
+| Helper kind         | Controls / use                                                  |
+| ------------------- | --------------------------------------------------------------- |
+| `nonlinearFilter`   | Driven LP/HP/BP/notch, cutoff, resonance; 2x processing         |
+| `compactor`         | Bounded upward compression, transient emphasis/suppression      |
+| `multibandDynamics` | Three LR4 bands, upward/downward dynamics, timing and trims     |
+| `resonator`         | Four tuned modes, decay, brightness, inharmonicity, stereo      |
+| `frequencyShifter`  | Signed additive Hz shift and stereo offset                      |
+| `pitchShifter`      | ±24 semitones, ±100 cents; fixed duration                       |
+| `flanger`           | Fractional delay sweep, signed feedback, stereo phase           |
+| `convolver`         | Stereo impulse response, predelay, wet high/low cuts            |
+| `bitcrush`          | Quantization, sample-and-hold rate, deterministic clock jitter  |
+| `tape`              | 2x saturation, bandwidth, wow/flutter                           |
+| `spreader`          | High-band decorrelation, M/S width, bass centering              |
+| `limiter`           | Stereo-linked 4x lookahead, input gain, ceiling, release        |
+| `compressor`        | Peak/RMS detector, knee, makeup, detector highpass, sidechain   |
+| `gate`              | Attack/hold/release, hysteresis, attenuation range, sidechain   |
+| `delay`             | Beat or seconds time, filtered feedback, ping-pong, wet ducking |
+| `reverb`            | Decay, damping, predelay, wet filtering, ducking and width      |
 
 The existing EQ, Filter, Limit, Clipper, Phaser, Chorus, Saturator, Utility,
 Distortion and broad-band Multiband remain available through their `EffectRef`
@@ -57,7 +59,8 @@ import { convolver, importSample } from "oxitone";
 const impulse = await importSample("./assets/room.wav");
 const sample = project.addSample(impulse);
 const room = project.addMixerChannel({
-  name: "Room", inserts: [convolver(sample.id, { highpassHz: 250, lowpassHz: 8000 })],
+  name: "Room",
+  inserts: [convolver(sample.id, { highpassHz: 250, lowpassHz: 8000 })],
 });
 chords.send(room, { ratio: 0.12 });
 ```

@@ -12,9 +12,7 @@ export const engineOptionsSchema = z.object({
   audioBackend: z.enum(["device", "simulated"]).optional(),
   deviceRatePolicy: z.enum(["adapt-device", "resample"]).optional(),
   deviceChangePolicy: z.enum(["follow-default", "pause"]).optional(),
-  metronome: z
-    .object({ enabled: z.boolean(), level: z.number().finite().min(0).max(1).optional() })
-    .optional(),
+  metronome: z.object({ enabled: z.boolean(), level: z.number().finite().min(0).max(1).optional() }).optional(),
 });
 export type EngineOptions = z.infer<typeof engineOptionsSchema>;
 

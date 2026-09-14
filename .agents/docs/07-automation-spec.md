@@ -157,19 +157,19 @@ source beat，结束后保持最终 phase；恰好结束在整周期边界时保
 
 至少提供以下稳定 code，并附带 source JSON path：
 
-| Code | 条件 |
-| --- | --- |
-| `AutomationNonFinite` | 任意数值为 NaN/Infinity |
-| `AutomationRange` | probability/duty/value/min/max/pulseWidth 越界 |
-| `AutomationPeriod` | period/duration/rate/interval 非正 |
-| `AutomationChanceFrequency` | frequency/rate/intervalBeats 中不是恰好一个，或所选值非正 |
-| `AutomationPoints` | points 为空、beat 不递增或重复 |
-| `AutomationExponentialZero` | exponential 端点不大于 0 |
-| `AutomationDepthLimit` | AST 深度超过 64 |
-| `AutomationNodeLimit` | AST 节点超过 256 |
-| `AutomationRateBudget` | audio-rate evaluator 超出 graph 性能预算 |
+| Code                         | 条件                                                        |
+| ---------------------------- | ----------------------------------------------------------- |
+| `AutomationNonFinite`        | 任意数值为 NaN/Infinity                                     |
+| `AutomationRange`            | probability/duty/value/min/max/pulseWidth 越界              |
+| `AutomationPeriod`           | period/duration/rate/interval 非正                          |
+| `AutomationChanceFrequency`  | frequency/rate/intervalBeats 中不是恰好一个，或所选值非正   |
+| `AutomationPoints`           | points 为空、beat 不递增或重复                              |
+| `AutomationExponentialZero`  | exponential 端点不大于 0                                    |
+| `AutomationDepthLimit`       | AST 深度超过 64                                             |
+| `AutomationNodeLimit`        | AST 节点超过 256                                            |
+| `AutomationRateBudget`       | audio-rate evaluator 超出 graph 性能预算                    |
 | `AutomationTempoRestriction` | tempo lane 使用 `chance`/`restart` 语义，或烘焙超出分段预算 |
-| `TempoAutomationConflict` | 存在多条 tempo lane 或其 combine 冲突 |
+| `TempoAutomationConflict`    | 存在多条 tempo lane 或其 combine 冲突                       |
 
 ## 7. 必测向量
 

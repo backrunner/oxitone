@@ -1,7 +1,15 @@
-import { checkProtocolVersion, ErrorCode, OxitoneError, projectSnapshotSchema, type ProjectSnapshot } from "@oxitone/protocol";
+import {
+  checkProtocolVersion,
+  ErrorCode,
+  OxitoneError,
+  projectSnapshotSchema,
+  type ProjectSnapshot,
+} from "@oxitone/protocol";
 import { parseAuthoring } from "../authoring-validation.js";
 
-function invalid(message: string): never { throw new OxitoneError(ErrorCode.InvalidProject, message); }
+function invalid(message: string): never {
+  throw new OxitoneError(ErrorCode.InvalidProject, message);
+}
 
 /** Validate ownership before constructing builders. Full DSP/plugin/DAG validation remains in Rust. */
 export function parseRestorableSnapshot(input: ProjectSnapshot): { snapshot: ProjectSnapshot; ids: Set<string> } {
@@ -13,9 +21,20 @@ export function parseRestorableSnapshot(input: ProjectSnapshot): { snapshot: Pro
   const ids = new Set<string>();
   const master = snapshot.mixerChannels.find((bus) => bus.id === "mix_master");
   if (snapshot.id === "mix_master") invalid("project ID is reserved for Master");
-  for (const entity of [snapshot, ...snapshot.markers, ...snapshot.tracks, ...snapshot.channels,
-    ...snapshot.mixerChannels, ...snapshot.patterns, ...snapshot.patternClips, ...snapshot.samples,
-    ...snapshot.sampleClips, ...snapshot.automation, ...(snapshot.automationClips ?? []), ...snapshot.patterns.flatMap((pattern) => pattern.notes)]) {
+  for (const entity of [
+    snapshot,
+    ...snapshot.markers,
+    ...snapshot.tracks,
+    ...snapshot.channels,
+    ...snapshot.mixerChannels,
+    ...snapshot.patterns,
+    ...snapshot.patternClips,
+    ...snapshot.samples,
+    ...snapshot.sampleClips,
+    ...snapshot.automation,
+    ...(snapshot.automationClips ?? []),
+    ...snapshot.patterns.flatMap((pattern) => pattern.notes),
+  ]) {
     if (entity.id === undefined) continue;
     if (entity.id === "mix_master" && entity !== master) {
       invalid("entity ID is reserved for Master");
@@ -41,10 +60,14 @@ export function parseRestorableSnapshot(input: ProjectSnapshot): { snapshot: Pro
   const membership = new Set<string>();
   for (const track of snapshot.tracks) {
     for (const id of track.channelIds) requireId(id, channelIds);
-    for (const [list, clips] of [[track.patternClipIds, patternClips], [track.sampleClipIds, sampleClips]] as const) {
+    for (const [list, clips] of [
+      [track.patternClipIds, patternClips],
+      [track.sampleClipIds, sampleClips],
+    ] as const) {
       for (const id of list) {
         const clip = clips.get(id);
-        if (clip === undefined || clip.trackId !== track.id || membership.has(id)) invalid(`inconsistent clip ownership: ${id}`);
+        if (clip === undefined || clip.trackId !== track.id || membership.has(id))
+          invalid(`inconsistent clip ownership: ${id}`);
         membership.add(id);
       }
     }
@@ -69,7 +92,8 @@ export function parseRestorableSnapshot(input: ProjectSnapshot): { snapshot: Pro
       destinations.add(send.destinationId);
     }
   }
-  const plugins = snapshot.channels.flatMap((channel) => [channel.instrument, ...channel.effectChain])
+  const plugins = snapshot.channels
+    .flatMap((channel) => [channel.instrument, ...channel.effectChain])
     .concat(snapshot.mixerChannels.flatMap((bus) => bus.inserts));
   for (const plugin of plugins) {
     if (plugin.instanceId) {
@@ -81,24 +105,33 @@ export function parseRestorableSnapshot(input: ProjectSnapshot): { snapshot: Pro
     }
     if (plugin.pluginId === "oxitone.slicer" && "state" in plugin) {
       const state = plugin.state;
-      if (typeof state !== "object" || state === null || !("sampleId" in state) ||
-        typeof state.sampleId !== "string" || !sampleIds.has(state.sampleId)) invalid("unknown slicer sample resource");
+      if (
+        typeof state !== "object" ||
+        state === null ||
+        !("sampleId" in state) ||
+        typeof state.sampleId !== "string" ||
+        !sampleIds.has(state.sampleId)
+      )
+        invalid("unknown slicer sample resource");
     }
   }
   for (const lane of snapshot.automation) {
-    if (!ids.has(lane.target.entityId) && lane.target.entityId !== "mix_master") invalid(`unknown automation target: ${lane.target.entityId}`);
+    if (!ids.has(lane.target.entityId) && lane.target.entityId !== "mix_master")
+      invalid(`unknown automation target: ${lane.target.entityId}`);
   }
   const laneIds = new Set(snapshot.automation.map((lane) => lane.id));
   const trackIds = new Set(snapshot.tracks.map((track) => track.id));
   for (const clip of snapshot.automationClips ?? []) {
     requireId(clip.laneId, laneIds);
     requireId(clip.trackId, trackIds);
-    if (snapshot.automation.find(lane => lane.id === clip.laneId)?.playback !== "playlist" ||
-      snapshot.tracks.find(track => track.id === clip.trackId)?.tempo !== undefined) {
+    if (
+      snapshot.automation.find((lane) => lane.id === clip.laneId)?.playback !== "playlist" ||
+      snapshot.tracks.find((track) => track.id === clip.trackId)?.tempo !== undefined
+    ) {
       invalid("automation clips require Playlist lanes and project-time Tracks");
     }
   }
-  if (snapshot.automation.some(lane => lane.playback === "playlist" && lane.target.entityId === snapshot.id)) {
+  if (snapshot.automation.some((lane) => lane.playback === "playlist" && lane.target.entityId === snapshot.id)) {
     invalid("tempo automation requires global playback");
   }
   ids.add("mix_master");

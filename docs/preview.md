@@ -101,14 +101,17 @@ Default-export a Project or a sync/async factory returning one. Named `createPro
 and `project` exports are accepted too:
 
 ```ts
-import { Project, Pattern, wavetable } from 'oxitone';
+import { Project, Pattern, wavetable } from "oxitone";
 
 export default function createProject() {
-  const project = new Project({ name: 'Live code', seed: 42 });
-  const keys = project.addChannel({ name: 'Keys', instrument: wavetable() });
-  project.addTrack('Phrase').use(keys).add(new Pattern({ lengthBeats: 4,
-    notes: [{ pitch: 60, start: 0, duration: 1, velocity: 0.8 }],
-  })).at({ bar: 1 }).loop(8);
+  const project = new Project({ name: "Live code", seed: 42 });
+  const keys = project.addChannel({ name: "Keys", instrument: wavetable() });
+  project
+    .addTrack("Phrase")
+    .use(keys)
+    .add(new Pattern({ lengthBeats: 4, notes: [{ pitch: 60, start: 0, duration: 1, velocity: 0.8 }] }))
+    .at({ bar: 1 })
+    .loop(8);
   return project;
 }
 ```
@@ -127,13 +130,13 @@ the musical snapshot. Library discovery and runtime downloading are not performe
 
 Useful options:
 
-| Option | Behavior |
-| --- | --- |
-| `--watch` | Default; debounce source changes by 150 ms |
-| `--no-watch` | Execute once and keep the viewer open |
-| `--watch-path <path>` | Also watch a runtime-read file/directory or dynamic import; repeatable |
-| `--viewer <path>` | Use an installed binary or macOS `.app` bundle |
-| `--headless` | Use the native compiler and simulated sink without GPUI for integration tests |
+| Option                | Behavior                                                                      |
+| --------------------- | ----------------------------------------------------------------------------- |
+| `--watch`             | Default; debounce source changes by 150 ms                                    |
+| `--no-watch`          | Execute once and keep the viewer open                                         |
+| `--watch-path <path>` | Also watch a runtime-read file/directory or dynamic import; repeatable        |
+| `--viewer <path>`     | Use an installed binary or macOS `.app` bundle                                |
+| `--headless`          | Use the native compiler and simulated sink without GPUI for integration tests |
 
 Each execution has a 10-second timeout and 64 MiB result limit. Syntax/runtime
 errors and rejected native graphs appear in diagnostics while the previous graph
@@ -233,17 +236,17 @@ registration is saved in the current project, and musical edits leave npm packag
 - The footer shows native load, estimated output/graph latency, xruns and dynamic
   plugin faults. Error diagnostics include code/path where available.
 
-| Shortcut | Action |
-| --- | --- |
-| Space | Play / pause |
-| Enter | Replay from cue |
-| Shift+Space | Stop and return to cue |
-| Option/Alt+Left / Right | Move one beat backward / forward |
+| Shortcut                      | Action                                           |
+| ----------------------------- | ------------------------------------------------ |
+| Space                         | Play / pause                                     |
+| Enter                         | Replay from cue                                  |
+| Shift+Space                   | Stop and return to cue                           |
+| Option/Alt+Left / Right       | Move one beat backward / forward                 |
 | Option/Alt+Shift+Left / Right | Move by one bar using the current time signature |
-| Command/Ctrl+Home / End | Move to project start / end |
-| `[` / `]` | Previous / next marker |
-| L | Toggle loop |
-| ? | Show shortcut guide; Escape closes it |
+| Command/Ctrl+Home / End       | Move to project start / end                      |
+| `[` / `]`                     | Previous / next marker                           |
+| L                             | Toggle loop                                      |
+| ?                             | Show shortcut guide; Escape closes it            |
 
 Playback, cue, beat/bar, marker and loop shortcuts also work in plugin windows.
 Held toggle keys do not repeatedly start/stop playback; navigation keys can repeat. Plain arrow/Home/End
@@ -285,9 +288,9 @@ Paint fills a continuous passage, including fast vertical and diagonal strokes.
 Command/Ctrl-click toggles notes, Command/Ctrl-drag selects a box, Shift-drag copies,
 and right-drag erases. Command/Ctrl-A selects all, D with Command/Ctrl duplicates,
 Q quantizes starts and Delete removes the selection. Shift-arrows change octave or
-  duration. The magnet button toggles the selectable snap grid; Alt while inserting or
-  dragging temporarily releases it for 1/960-beat placement. The grid remains visible
-  while the magnet is off.
+duration. The magnet button toggles the selectable snap grid; Alt while inserting or
+dragging temporarily releases it for 1/960-beat placement. The grid remains visible
+while the magnet is off.
 Middle-drag or Command/Ctrl-Alt-drag pans the piano. Command/Ctrl-scroll zooms time;
 adding Shift zooms key height around the pointer. Escape
 cancels the current gesture. An entire gesture has one undo entry. The grid keeps

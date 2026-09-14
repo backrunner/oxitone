@@ -52,9 +52,13 @@ export class Track {
     return track;
   }
 
-  get enabled(): boolean { return this.enabledValue; }
+  get enabled(): boolean {
+    return this.enabledValue;
+  }
   /** Static local BPM (20..999); undefined follows the project clock. */
-  get tempo(): number | undefined { return this.tempoValue; }
+  get tempo(): number | undefined {
+    return this.tempoValue;
+  }
   set tempo(value: number | undefined) {
     this.project.assertMutable();
     if (value !== undefined && (!Number.isFinite(value) || value < 20 || value > 999)) {
@@ -75,34 +79,43 @@ export class Track {
     }
     this.enabledValue = value;
     if (this.restoredSpec !== undefined) {
-      if (value) delete this.restoredSpec.enabled; else this.restoredSpec.enabled = false;
+      if (value) delete this.restoredSpec.enabled;
+      else this.restoredSpec.enabled = false;
     }
     this.project.touch();
   }
 
-  get mute(): boolean { return this.muteValue; }
+  get mute(): boolean {
+    return this.muteValue;
+  }
   set mute(value: boolean) {
     this.project.assertMutable();
     if (typeof value !== "boolean") throw new OxitoneError(ErrorCode.InvalidProject, "track mute must be a boolean");
     this.muteValue = value;
     if (this.restoredSpec !== undefined) {
-      if (value) this.restoredSpec.mute = true; else delete this.restoredSpec.mute;
+      if (value) this.restoredSpec.mute = true;
+      else delete this.restoredSpec.mute;
     }
     this.project.touch();
   }
-  get solo(): boolean { return this.soloValue; }
+  get solo(): boolean {
+    return this.soloValue;
+  }
   set solo(value: boolean) {
     this.project.assertMutable();
     if (typeof value !== "boolean") throw new OxitoneError(ErrorCode.InvalidProject, "track solo must be a boolean");
     this.soloValue = value;
     if (this.restoredSpec !== undefined) {
-      if (value) this.restoredSpec.solo = true; else delete this.restoredSpec.solo;
+      if (value) this.restoredSpec.solo = true;
+      else delete this.restoredSpec.solo;
     }
     this.project.touch();
   }
 
   /** Explicit MIDI channel (1..16); omitted means deterministic auto allocation. */
-  get midiChannel(): number | undefined { return this.midiChannelValue; }
+  get midiChannel(): number | undefined {
+    return this.midiChannelValue;
+  }
   set midiChannel(value: number | undefined) {
     this.project.assertMutable();
     if (value !== undefined && (!Number.isInteger(value) || value < 1 || value > 16)) {
@@ -125,7 +138,9 @@ export class Track {
     return [...this.clipList];
   }
 
-  get sampleClips(): readonly SampleClip[] { return [...this.sampleClipList]; }
+  get sampleClips(): readonly SampleClip[] {
+    return [...this.sampleClipList];
+  }
 
   /** Start placing a Sample; finish with `.at({ bar, beat })`. */
   sample(sample: Sample): SampleClipDraft {
@@ -138,7 +153,9 @@ export class Track {
   }
 
   /** @internal */
-  attachSampleClip(clip: SampleClip): void { this.sampleClipList.push(clip); }
+  attachSampleClip(clip: SampleClip): void {
+    this.sampleClipList.push(clip);
+  }
 
   /** Bind a channel to this track (idempotent; layering is allowed). */
   use(channel: Channel): this {
@@ -170,9 +187,15 @@ export class Track {
     this.clipList.push(clip);
   }
   /** @internal Playlist transactions preserve clip identity while moving membership. */
-  detachClip(clip: PatternClip): void { const index = this.clipList.indexOf(clip); if (index >= 0) this.clipList.splice(index, 1); }
+  detachClip(clip: PatternClip): void {
+    const index = this.clipList.indexOf(clip);
+    if (index >= 0) this.clipList.splice(index, 1);
+  }
   /** @internal */
-  detachSampleClip(clip: SampleClip): void { const index = this.sampleClipList.indexOf(clip); if (index >= 0) this.sampleClipList.splice(index, 1); }
+  detachSampleClip(clip: SampleClip): void {
+    const index = this.sampleClipList.indexOf(clip);
+    if (index >= 0) this.sampleClipList.splice(index, 1);
+  }
 
   /** Wire form. */
   toSpec(): TrackSpec {
@@ -198,7 +221,11 @@ export class Track {
 /** Intermediate builder returned by `track.sample(sample)` before placement. */
 export class SampleClipDraft {
   private placed = false;
-  constructor(private readonly project: Project, private readonly track: Track, private readonly sampleValue: Sample) {}
+  constructor(
+    private readonly project: Project,
+    private readonly track: Track,
+    private readonly sampleValue: Sample,
+  ) {}
   at(position: BarBeatPosition, options: SampleClipOptions = {}): SampleClip {
     if (this.placed) throw new OxitoneError(ErrorCode.InvalidProject, "sample clip draft is already placed");
     const clip = this.project.createSampleClip(this.track, this.sampleValue, position, options);

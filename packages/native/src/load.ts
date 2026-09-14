@@ -47,9 +47,7 @@ function platformPackageBinary(): string | undefined {
   // Optional platform packages use the reserved
   // `@oxitone/native-<platform>-<arch>` name; local build outputs remain a
   // development fallback until those packages are published.
-  return siblingBinary(
-    `@oxitone/native-${process.platform}-${process.arch}/package.json`,
-  );
+  return siblingBinary(`@oxitone/native-${process.platform}-${process.arch}/package.json`);
 }
 
 function devBuildBinaries(): string[] {

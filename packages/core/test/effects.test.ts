@@ -14,7 +14,11 @@ describe("electronic effect authoring and native contracts", () => {
     expect(() => effect("limiter", { ceilingDb: NaN })).toThrow();
     expect(() => effect("tape", {}, { mix: 2 })).toThrow();
     expect(convolver("smp_room").resources).toEqual({ impulse: "smp_room" });
-    expect(effect("limiter", { ceilingDb: undefined })).toEqual({ pluginId: "oxitone.limiter", pluginVersion: "1.0.0", parameters: {} });
+    expect(effect("limiter", { ceilingDb: undefined })).toEqual({
+      pluginId: "oxitone.limiter",
+      pluginVersion: "1.0.0",
+      parameters: {},
+    });
   });
 
   it("keeps every typed parameter and range in agreement with the native descriptor", () => {
@@ -23,32 +27,49 @@ describe("electronic effect authoring and native contracts", () => {
       for (const kind of Object.keys(effectPluginIds) as EffectKind[]) {
         const descriptor = getPluginInfo(engine, effectPluginIds[kind], "1.0.0");
         const schema = effectParameterSchemas[kind];
-        expect(Object.keys(schema.shape).sort()).toEqual(descriptor.parameters.map(p => p.id).sort());
+        expect(Object.keys(schema.shape).sort()).toEqual(descriptor.parameters.map((p) => p.id).sort());
         for (const spec of descriptor.parameters) {
-          for (const value of [spec.min, spec.default, spec.max]) expect(schema.safeParse({ [spec.id]: value }).success, `${kind}.${spec.id}=${value}`).toBe(true);
-          for (const value of [spec.min - 1, spec.max + 1, NaN, Infinity]) expect(schema.safeParse({ [spec.id]: value }).success).toBe(false);
+          for (const value of [spec.min, spec.default, spec.max])
+            expect(schema.safeParse({ [spec.id]: value }).success, `${kind}.${spec.id}=${value}`).toBe(true);
+          for (const value of [spec.min - 1, spec.max + 1, NaN, Infinity])
+            expect(schema.safeParse({ [spec.id]: value }).success).toBe(false);
         }
         expect(schema.safeParse({ unknown: 1 }).success).toBe(false);
       }
-    } finally { dispose(engine); }
+    } finally {
+      dispose(engine);
+    }
   });
 
   it("compiles every processor with insert mix and parameter automation through the native facade", async () => {
     const project = new Project({ seed: 19 });
     const channel = project.addChannel();
-    project.addTrack().use(channel).add(new Pattern({ lengthBeats: 1, notes: [{ pitch: 60, start: 0, duration: 1, velocity: 0.5 }] })).at({ bar: 1 });
+    project
+      .addTrack()
+      .use(channel)
+      .add(new Pattern({ lengthBeats: 1, notes: [{ pitch: 60, start: 0, duration: 1, velocity: 0.5 }] }))
+      .at({ bar: 1 });
     try {
       for (const kind of Object.keys(effectPluginIds) as EffectKind[]) {
         channel.effectChain = [effect(kind, {}, { mix: 0.5 })];
         await project.compile({ audioBackend: "simulated" });
       }
       channel.effectChain = [effect("nonlinearFilter", { cutoffHz: 400 })];
-      const lane = channel.automate("insert.0.parameter.cutoffHz", createAutomationNamespace().sine({ periodBeats: 1 }));
+      const lane = channel.automate(
+        "insert.0.parameter.cutoffHz",
+        createAutomationNamespace().sine({ periodBeats: 1 }),
+      );
       await project.compile({ audioBackend: "simulated" });
-      expect(() => { channel.effectChain = [convolver("smp_missing")]; }).toThrowError(expect.objectContaining({ code: ErrorCode.EditScopeConflict }));
+      expect(() => {
+        channel.effectChain = [convolver("smp_missing")];
+      }).toThrowError(expect.objectContaining({ code: ErrorCode.EditScopeConflict }));
       project.removeAutomationLane(lane);
       channel.effectChain = [convolver("smp_missing")];
-      await expect(project.compile({ audioBackend: "simulated" })).rejects.toMatchObject({ code: ErrorCode.InvalidProject });
-    } finally { await project.session?.dispose(); }
+      await expect(project.compile({ audioBackend: "simulated" })).rejects.toMatchObject({
+        code: ErrorCode.InvalidProject,
+      });
+    } finally {
+      await project.session?.dispose();
+    }
   }, 120000);
 });

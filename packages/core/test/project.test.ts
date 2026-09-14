@@ -74,22 +74,16 @@ describe("time signature map", () => {
   it("requires power-of-two denominators", () => {
     const project = new Project();
     expect(() => project.setTimeSignature(3, 3)).toThrowError(OxitoneError);
-    expect(() => project.addTimeSignature({ startBar: 2, numerator: 6, denominator: 5 })).toThrowError(
-      OxitoneError,
-    );
+    expect(() => project.addTimeSignature({ startBar: 2, numerator: 6, denominator: 5 })).toThrowError(OxitoneError);
     project.setTimeSignature(6, 8);
     expect(project.timeSignatureMap[0]).toEqual({ startBar: 1, numerator: 6, denominator: 8 });
   });
 
   it("requires bars from 1 and strictly increasing", () => {
     const project = new Project();
-    expect(() =>
-      project.addTimeSignature({ startBar: 0, numerator: 3, denominator: 4 }),
-    ).toThrowError(OxitoneError);
+    expect(() => project.addTimeSignature({ startBar: 0, numerator: 3, denominator: 4 })).toThrowError(OxitoneError);
     project.addTimeSignature({ startBar: 5, numerator: 3, denominator: 4 });
-    expect(() =>
-      project.addTimeSignature({ startBar: 5, numerator: 7, denominator: 8 }),
-    ).toThrowError(OxitoneError);
+    expect(() => project.addTimeSignature({ startBar: 5, numerator: 7, denominator: 8 })).toThrowError(OxitoneError);
   });
 });
 

@@ -16,7 +16,7 @@ async function run(cwd: string, ...args: string[]) {
 }
 function rejection(...args: string[]) {
   return execute(process.execPath, [cli, ...args], { encoding: "utf8" }).then(
-    result => ({ status: 0, stderr: result.stderr }),
+    (result) => ({ status: 0, stderr: result.stderr }),
     (error: { code?: string | number; stderr: string }) => ({ status: error.code, stderr: error.stderr }),
   );
 }
@@ -26,8 +26,11 @@ describe("CLI project inputs", () => {
     const root = await mkdtemp(join(tmpdir(), "oxitone-cli-"));
     try {
       const synth = new Project();
-      synth.addTrack().use(synth.addChannel()).add(new Pattern({ lengthBeats: 1,
-        notes: [{ pitch: 60, start: 0, duration: 1, velocity: 1 }] })).at({ bar: 1 });
+      synth
+        .addTrack()
+        .use(synth.addChannel())
+        .add(new Pattern({ lengthBeats: 1, notes: [{ pitch: 60, start: 0, duration: 1, velocity: 1 }] }))
+        .at({ bar: 1 });
       const source = join(root, "source.wav");
       await synth.renderWav({ path: source, end: { seconds: 0.1 }, tailSeconds: 0 });
       const info = inspectSample(source);
@@ -50,7 +53,9 @@ describe("CLI project inputs", () => {
       await run(root, "export-midi", "midi-project", "cli.mid");
       await synth.exportMidi({ path: join(root, "sdk.mid") });
       expect(await readFile(join(root, "cli.mid"))).toEqual(await readFile(join(root, "sdk.mid")));
-    } finally { await rm(root, { recursive: true, force: true }); }
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   }, 60_000); // Several real child-process renders; speed is measured by dedicated benchmarks.
 
   it("reports structured load errors and preserves output on rejection", async () => {
@@ -75,6 +80,8 @@ describe("CLI project inputs", () => {
       const invalid = await rejection("render", malformed, output);
       expect(invalid.status).toBe(1);
       expect(JSON.parse(invalid.stderr)).toMatchObject({ code: "InvalidProject" });
-    } finally { await rm(root, { recursive: true, force: true }); }
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 });

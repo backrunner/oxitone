@@ -1,8 +1,4 @@
-import {
-  ErrorCode,
-  OxitoneError,
-  type TimeSignatureSegment,
-} from "@oxitone/protocol";
+import { ErrorCode, OxitoneError, type TimeSignatureSegment } from "@oxitone/protocol";
 
 /** Bar/beat authoring position; bars count from 1, beats from 0. */
 export interface BarBeatPosition {
@@ -41,9 +37,7 @@ function validateSignature(numerator: number, denominator: number): void {
  * bar 1.
  */
 export class TimeSignatureMap {
-  private segments: TimeSignatureSegment[] = [
-    { startBar: 1, numerator: 4, denominator: 4 },
-  ];
+  private segments: TimeSignatureSegment[] = [{ startBar: 1, numerator: 4, denominator: 4 }];
 
   /** Replace the whole map with a single signature starting at bar 1. */
   set(numerator: number, denominator: number): void {
@@ -125,16 +119,10 @@ export class TimeSignatureMap {
     const { bar } = position;
     const beat = position.beat ?? 0;
     if (!Number.isInteger(bar) || bar < 1) {
-      throw new OxitoneError(
-        ErrorCode.InvalidProject,
-        `bar must be an integer >= 1, got ${bar}`,
-      );
+      throw new OxitoneError(ErrorCode.InvalidProject, `bar must be an integer >= 1, got ${bar}`);
     }
     if (!Number.isFinite(beat) || beat < 0) {
-      throw new OxitoneError(
-        ErrorCode.InvalidProject,
-        `beat must be finite and >= 0, got ${beat}`,
-      );
+      throw new OxitoneError(ErrorCode.InvalidProject, `beat must be finite and >= 0, got ${beat}`);
     }
     let beats = 0;
     for (let i = 0; i < this.segments.length; i += 1) {

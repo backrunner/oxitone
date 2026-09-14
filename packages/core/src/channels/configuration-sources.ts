@@ -5,9 +5,14 @@ export class ConfigurationSources {
   instrument: InstrumentRef | undefined;
   chain: readonly EffectRef[] = [];
   constructor(instrument: InstrumentRef | undefined, chain: readonly EffectRef[]) {
-    this.instrument = instrument; this.chain = chain;
+    this.instrument = instrument;
+    this.chain = chain;
   }
-  update(patch: { instrument?: InstrumentRef; effectChain?: readonly EffectRef[]; inserts?: readonly EffectRef[] }): void {
+  update(patch: {
+    instrument?: InstrumentRef;
+    effectChain?: readonly EffectRef[];
+    inserts?: readonly EffectRef[];
+  }): void {
     if (patch.instrument) this.instrument = patch.instrument;
     if (patch.effectChain) this.chain = patch.effectChain;
     if (patch.inserts) this.chain = patch.inserts;

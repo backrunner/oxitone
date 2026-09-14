@@ -11,12 +11,12 @@ GPUI 音符/automation 编辑与拆散 review 已见 [18](../../docs/18-project-
 打开 Oxitone 代码工程即创建 Document Session：入口、项目源码所有权、模块解析环境、
 依赖锁与素材版本共同确定工程。GPUI 订阅该 session 的 ViewModel，无需手动导入/导出快照。
 
-| 层 | 职责 |
-| --- | --- |
-| Model | Document Service 拥有源码文档/草稿、事务与 accepted Authoring Graph；已保存 TS 是持久事实来源 |
-| ViewModel | 带版本的轨道、音符、生成规则、插件实例、编辑能力、诊断、待提交投影与命令 |
-| View | GPUI Playlist/Piano/Mixer/插件面板和代码面板；绑定 ViewModel，提交语义命令 |
-| 执行层 | Rust 接受候选并维护独立的 prepared/active graph、transport 和遥测 |
+| 层        | 职责                                                                                          |
+| --------- | --------------------------------------------------------------------------------------------- |
+| Model     | Document Service 拥有源码文档/草稿、事务与 accepted Authoring Graph；已保存 TS 是持久事实来源 |
+| ViewModel | 带版本的轨道、音符、生成规则、插件实例、编辑能力、诊断、待提交投影与命令                      |
+| View      | GPUI Playlist/Piano/Mixer/插件面板和代码面板；绑定 ViewModel，提交语义命令                    |
+| 执行层    | Rust 接受候选并维护独立的 prepared/active graph、transport 和遥测                             |
 
 ViewModel 是 Model 的投影，不拥有另一份需要独立保存的音乐数据。GPUI Entity/通知机制
 用于视图订阅；不能靠两个 mutable object 的属性观察器互相赋值建立保存语义。
@@ -74,12 +74,10 @@ watch 回声只在路径、已发布 hash 和保存事务均匹配时去重。�
 有限、声明式的外部输出具有与本地输出相同的局部编辑能力：
 
 ```ts
-import { makeChorus } from '@acme/arrangements';
+import { makeChorus } from "@acme/arrangements";
 
-const chorus = makeChorus({ key: 'C', bars: 8 });
-const localChorus = chorus.edit([
-  { select: { iteration: 2, note: { step: 3 } }, set: { pitch: 65 } },
-]);
+const chorus = makeChorus({ key: "C", bars: 8 });
+const localChorus = chorus.edit([{ select: { iteration: 2, note: { step: 3 } }, set: { pitch: 65 } }]);
 ```
 
 此示例要求返回 source 确实声明对应 selector。返回 literal 时使用音乐条件与 occurrence/
@@ -110,7 +108,7 @@ LocalizePlan 至少包括：accepted source/dependency revisions、所选实例/
 Note 本地化示例（展示已解析结果，不保存 `makeChorus(...).notes` 继续依赖动态生成）：
 
 ```ts
-import { Pattern } from 'oxitone';
+import { Pattern } from "oxitone";
 
 export const chorusLocal = new Pattern({
   lengthBeats: 2,
@@ -144,16 +142,16 @@ export const chorusLocal = new Pattern({
 跟踪 alias、default/named import、namespace import、re-export/barrel、type-only import、
 导出绑定与可写引用位置；类型解析与执行解析不一致时报错，不能改到另一个条件导出。
 
-| 情况 | 回写规则 |
-| --- | --- |
-| 项目内直接变量/调用 | 在选中引用处派生；只有选择定义范围才改共享定义 |
-| `import { phrase as p }` | 实例编辑写 `p.edit(...)` 或本地替代引用，不赋值 imported binding |
-| `import * as parts` | 在使用处派生 `parts.phrase`，不写 namespace 属性 |
-| 项目内 default/named export | 保留导出名称/默认形式；定义修改列出所有受影响消费者 |
-| `export { phrase } from 'pkg'` | 实例修改落在消费者；项目导出整体本地化则改项目 re-export 为本地同名导出 |
-| `export * from 'pkg'` | 原 star export 保留；只对已唯一解析且明确选中的名称加本地显式导出；歧义时拒绝 |
-| async factory / dynamic import | 在已解析的返回/await 结果引用边界操作，不复制调用或改变 await 次序 |
-| CJS/自定义 loader/计算型导出 | 按 adapter 能力提供项目边界编辑；无法证明模块语义则拒绝模块重写，不改依赖 |
+| 情况                           | 回写规则                                                                      |
+| ------------------------------ | ----------------------------------------------------------------------------- |
+| 项目内直接变量/调用            | 在选中引用处派生；只有选择定义范围才改共享定义                                |
+| `import { phrase as p }`       | 实例编辑写 `p.edit(...)` 或本地替代引用，不赋值 imported binding              |
+| `import * as parts`            | 在使用处派生 `parts.phrase`，不写 namespace 属性                              |
+| 项目内 default/named export    | 保留导出名称/默认形式；定义修改列出所有受影响消费者                           |
+| `export { phrase } from 'pkg'` | 实例修改落在消费者；项目导出整体本地化则改项目 re-export 为本地同名导出       |
+| `export * from 'pkg'`          | 原 star export 保留；只对已唯一解析且明确选中的名称加本地显式导出；歧义时拒绝 |
+| async factory / dynamic import | 在已解析的返回/await 结果引用边界操作，不复制调用或改变 await 次序            |
+| CJS/自定义 loader/计算型导出   | 按 adapter 能力提供项目边界编辑；无法证明模块语义则拒绝模块重写，不改依赖     |
 
 引入 Pattern/plugin 等值时先复用可见且未被遮蔽的运行时 import。`import type` 不算
 运行时绑定；需要值则新增合适 value import，保留其他 type imports。检查嵌套作用域、

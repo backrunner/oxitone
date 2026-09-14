@@ -40,11 +40,23 @@ export class MixerChannel {
   readonly configurationSources: ConfigurationSources;
 
   /** @internal Use `project.addMixerChannel(...)` or `project.master`. */
-  constructor(private readonly project: Project, id: EntityId, options: MixerChannelOptions = {}) {
-    this.spec = parseAuthoring(mixerChannelSpecSchema, {
-      ...options, id, level: options.level ?? 1, balance: options.balance ?? 0,
-      inserts: options.inserts ?? [], sends: [],
-    }, "mixerChannel");
+  constructor(
+    private readonly project: Project,
+    id: EntityId,
+    options: MixerChannelOptions = {},
+  ) {
+    this.spec = parseAuthoring(
+      mixerChannelSpecSchema,
+      {
+        ...options,
+        id,
+        level: options.level ?? 1,
+        balance: options.balance ?? 0,
+        inserts: options.inserts ?? [],
+        sends: [],
+      },
+      "mixerChannel",
+    );
     this.checkMaster(this.spec);
     this.instances = new PluginInstances(this, project);
     this.spec.inserts = this.instances.adopt(this.spec.inserts);
@@ -91,7 +103,7 @@ export class MixerChannel {
 
   /** Undefined on Master, which has no outgoing route. */
   get masterSendRatio(): number | undefined {
-    return this.isMaster ? undefined : this.spec.masterSendRatio ?? 1;
+    return this.isMaster ? undefined : (this.spec.masterSendRatio ?? 1);
   }
   set masterSendRatio(value: number) {
     this.update({ masterSendRatio: value });
@@ -105,25 +117,40 @@ export class MixerChannel {
     this.update({ inserts: [...value] });
   }
 
-  get effectInstances(): readonly PluginInstance[] { return this.spec.inserts.map(ref => this.instances.handle(ref, "effect")); }
+  get effectInstances(): readonly PluginInstance[] {
+    return this.spec.inserts.map((ref) => this.instances.handle(ref, "effect"));
+  }
   reorderEffects(order: readonly PluginInstance[]): void {
-    order.forEach(instance => this.instances.require(instance, "effect"));
-    if (order.length !== this.spec.inserts.length || new Set(order).size !== order.length) throw new OxitoneError(ErrorCode.EditScopeConflict, "effect order must be a permutation of this owner's instances");
-    const sources = order.map(instance => this.configurationSources.chain[this.spec.inserts.findIndex(ref => ref.instanceId === instance.id)]!);
-    this.inserts = order.map(instance => this.spec.inserts.find(ref => ref.instanceId === instance.id)!);
+    order.forEach((instance) => this.instances.require(instance, "effect"));
+    if (order.length !== this.spec.inserts.length || new Set(order).size !== order.length)
+      throw new OxitoneError(
+        ErrorCode.EditScopeConflict,
+        "effect order must be a permutation of this owner's instances",
+      );
+    const sources = order.map(
+      (instance) =>
+        this.configurationSources.chain[this.spec.inserts.findIndex((ref) => ref.instanceId === instance.id)]!,
+    );
+    this.inserts = order.map((instance) => this.spec.inserts.find((ref) => ref.instanceId === instance.id)!);
     this.configurationSources.chain = sources;
   }
   removeEffect(instance: PluginInstance): void {
     this.instances.require(instance, "effect");
-    const sources = this.configurationSources.chain.filter((_, index) => this.spec.inserts[index]!.instanceId !== instance.id);
-    this.inserts = this.spec.inserts.filter(ref => ref.instanceId !== instance.id);
+    const sources = this.configurationSources.chain.filter(
+      (_, index) => this.spec.inserts[index]!.instanceId !== instance.id,
+    );
+    this.inserts = this.spec.inserts.filter((ref) => ref.instanceId !== instance.id);
     this.configurationSources.chain = sources;
   }
   /** @internal */
   updateInstance(instance: PluginInstance, config: EffectRef): void {
     this.instances.require(instance, "effect");
-    const sources = this.configurationSources.chain.map((source, index) => this.spec.inserts[index]!.instanceId === instance.id ? config : source);
-    this.inserts = this.spec.inserts.map(previous => previous.instanceId === instance.id ? { ...config, instanceId: instance.id } : previous);
+    const sources = this.configurationSources.chain.map((source, index) =>
+      this.spec.inserts[index]!.instanceId === instance.id ? config : source,
+    );
+    this.inserts = this.spec.inserts.map((previous) =>
+      previous.instanceId === instance.id ? { ...config, instanceId: instance.id } : previous,
+    );
     this.configurationSources.chain = sources;
   }
   addEffect(effect: EffectRef): PluginInstance {
@@ -173,11 +200,7 @@ export class MixerChannel {
   }
 
   /** Bind a bus, send ratio, or `insert.<index>.mix/bypass/parameter.<id>` target. */
-  automate(
-    parameterId: string,
-    source: AutomationSource,
-    options: AutomationLaneOptions = {},
-  ): AutomationLane {
+  automate(parameterId: string, source: AutomationSource, options: AutomationLaneOptions = {}): AutomationLane {
     return this.project.addAutomationLane({ entityId: this.id, parameterId }, source, options);
   }
 

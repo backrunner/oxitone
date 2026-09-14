@@ -4,16 +4,16 @@ Oxitone compiles the existing Rust engine to one import-free `wasm32-unknown-unk
 module. Node, Wasmtime and browsers use the same graph compiler, scheduling, synthesis,
 decoders, sample edits, automation, effects, sends, sidechains, mixer and WAV/MIDI encoders.
 
-| Capability | Wasm / browser entry |
-| --- | --- |
-| Project, Pattern, tracks, notes, mixer, automation builders | Existing classes re-exported by `@oxitone/web` |
-| Compile, process planar stereo PCM, transport, parameter events | `WasmEngine` |
-| Sampler, multisampler/piano, slicer | Upload source bytes with `importSample`, then compile |
-| Built-in synths/effects and example drums | Same Rust implementations; drums use the static C ABI adapter |
-| WAV and MIDI | In-memory bytes from `renderWav` / `exportMidi` |
-| Browser playback | `WebAudioSession`, Worker + SharedArrayBuffer + AudioWorklet |
-| Code updates | `session.update(project)`; the example server watches its TS song source |
-| Local files, N-API, CoreAudio, GPUI, Mach-O dylibs | Native host capabilities; not executable in a Wasm sandbox |
+| Capability                                                      | Wasm / browser entry                                                     |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Project, Pattern, tracks, notes, mixer, automation builders     | Existing classes re-exported by `@oxitone/web`                           |
+| Compile, process planar stereo PCM, transport, parameter events | `WasmEngine`                                                             |
+| Sampler, multisampler/piano, slicer                             | Upload source bytes with `importSample`, then compile                    |
+| Built-in synths/effects and example drums                       | Same Rust implementations; drums use the static C ABI adapter            |
+| WAV and MIDI                                                    | In-memory bytes from `renderWav` / `exportMidi`                          |
+| Browser playback                                                | `WebAudioSession`, Worker + SharedArrayBuffer + AudioWorklet             |
+| Code updates                                                    | `session.update(project)`; the example server watches its TS song source |
+| Local files, N-API, CoreAudio, GPUI, Mach-O dylibs              | Native host capabilities; not executable in a Wasm sandbox               |
 
 `Project.play/compile/renderWav/save/load`, native preset validation and
 `Project.beatsForSeconds` retain their native-host contracts. In browsers use the explicit
@@ -44,26 +44,32 @@ The Wasm artifact is generated at `packages/web/dist/oxitone.wasm`, also exporte
 ## Offline and non-browser runtimes
 
 ```ts
-import { readFile, writeFile } from 'node:fs/promises';
-import { Project, Pattern, WasmEngine } from '@oxitone/web';
+import { readFile, writeFile } from "node:fs/promises";
+import { Project, Pattern, WasmEngine } from "@oxitone/web";
 
 const project = new Project({ sampleRate: 48000, seed: 7 });
-project.addTrack().use(project.addChannel()).add(new Pattern({
-  lengthBeats: 4,
-  notes: [{ pitch: 60, start: 0, duration: 1, velocity: 0.8 }],
-})).at({ bar: 1 });
+project
+  .addTrack()
+  .use(project.addChannel())
+  .add(
+    new Pattern({
+      lengthBeats: 4,
+      notes: [{ pitch: 60, start: 0, duration: 1, velocity: 0.8 }],
+    }),
+  )
+  .at({ bar: 1 });
 
-const engine = await WasmEngine.create(
-  await readFile('packages/web/dist/oxitone.wasm'),
-);
+const engine = await WasmEngine.create(await readFile("packages/web/dist/oxitone.wasm"));
 try {
   engine.compile(project);
-  engine.transport({ command: 'play' });
+  engine.transport({ command: "play" });
   const [left, right] = engine.process(); // borrowed PCM, one block
   // Consume/copy PCM before another control command or process overwrites it.
-  await writeFile('phrase.wav', engine.renderWav({ frames: 96000, bitDepth: 24 }));
-  await writeFile('phrase.mid', engine.exportMidi());
-} finally { engine.dispose(); }
+  await writeFile("phrase.wav", engine.renderWav({ frames: 96000, bitDepth: 24 }));
+  await writeFile("phrase.mid", engine.exportMidi());
+} finally {
+  engine.dispose();
+}
 ```
 
 `WasmEngine.create` accepts a URL, BufferSource or compiled WebAssembly.Module.
@@ -96,12 +102,12 @@ and writes `target/examples/wasm/wasmtime-drums.wav`.
 ## Browser host
 
 ```ts
-import { WebAudioSession } from '@oxitone/web';
+import { WebAudioSession } from "@oxitone/web";
 
 const session = await WebAudioSession.create({
-  wasmUrl: '/oxitone.wasm',
-  workerUrl: '/worker.js',
-  workletUrl: '/worklet.js',
+  wasmUrl: "/oxitone.wasm",
+  workerUrl: "/worker.js",
+  workletUrl: "/worklet.js",
 });
 // Construct your Project at session.context.sampleRate.
 await session.update(project);

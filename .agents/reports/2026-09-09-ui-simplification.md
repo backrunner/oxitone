@@ -39,16 +39,16 @@
 并保存 TS 后用新进程重开。最后的列表滚动修正另重跑三个插件库场景，增加选中行 bounds 断言，
 均通过；记录位于 [library-refinement.json](../../target/ui-review/library-refinement.json)。
 
-| 视图 | 截图 |
-| --- | --- |
-| 插件列表，深色 1440×920 | [library-dark](../../target/ui-review/library-dark.png) |
-| 插件列表，浅色 1060×720 | [library-light-small](../../target/ui-review/library-light-small.png) |
-| 外部插件维护，内部窗口 340×300 | [library-details-small](../../target/ui-review/library-details-small.png) |
-| 独立效果器配置，浅色 | [effects-light-small](../../target/ui-review/effects-light-small.png) |
-| 独立效果器配置，深色 | [effects-dark](../../target/ui-review/effects-dark.png) |
-| 钢琴工具栏与编辑 | [piano-dark](../../target/ui-review/piano-dark.png) |
-| Automation | [automation-light-small](../../target/ui-review/automation-light-small.png) |
-| Browser / Piano / Mixer 共存 | [windows-light-small](../../target/ui-review/windows-light-small.png) |
+| 视图                           | 截图                                                                        |
+| ------------------------------ | --------------------------------------------------------------------------- |
+| 插件列表，深色 1440×920        | [library-dark](../../target/ui-review/library-dark.png)                     |
+| 插件列表，浅色 1060×720        | [library-light-small](../../target/ui-review/library-light-small.png)       |
+| 外部插件维护，内部窗口 340×300 | [library-details-small](../../target/ui-review/library-details-small.png)   |
+| 独立效果器配置，浅色           | [effects-light-small](../../target/ui-review/effects-light-small.png)       |
+| 独立效果器配置，深色           | [effects-dark](../../target/ui-review/effects-dark.png)                     |
+| 钢琴工具栏与编辑               | [piano-dark](../../target/ui-review/piano-dark.png)                         |
+| Automation                     | [automation-light-small](../../target/ui-review/automation-light-small.png) |
+| Browser / Piano / Mixer 共存   | [windows-light-small](../../target/ui-review/windows-light-small.png)       |
 
 已查看上述布局及保存失败弹层。类型筛选实测鼠标命中；搜索输入、键盘选择、使用位置展开、
 稳定实例选择与未改变源码/原生投影均有断言。外部效果器测试使用真实 C fixture，

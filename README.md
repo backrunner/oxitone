@@ -44,16 +44,21 @@ melody. WAV, drum solo, MIDI, portable project and verification report go into
 The unified entry point is `oxitone`; the individual workspace packages remain available:
 
 ```ts
-import { Pattern, Project, wavetable } from 'oxitone';
+import { Pattern, Project, wavetable } from "oxitone";
 
 const project = new Project({ seed: 42 });
-const keys = project.addChannel({ instrument: wavetable({
-  oscA: { wave: 'triangle' }, amp: { release: 0.1 },
-}) });
-project.addTrack('Keys').use(keys).add(new Pattern({ lengthBeats: 4,
-  notes: [{ pitch: 60, start: 0, duration: 1, velocity: 0.8 }],
-})).at({ bar: 1 });
-await project.renderWav({ path: 'phrase.wav', tailSeconds: 0.2 });
+const keys = project.addChannel({
+  instrument: wavetable({
+    oscA: { wave: "triangle" },
+    amp: { release: 0.1 },
+  }),
+});
+project
+  .addTrack("Keys")
+  .use(keys)
+  .add(new Pattern({ lengthBeats: 4, notes: [{ pitch: 60, start: 0, duration: 1, velocity: 0.8 }] }))
+  .at({ bar: 1 });
+await project.renderWav({ path: "phrase.wav", tailSeconds: 0.2 });
 ```
 
 For device playback, use `const session = await project.play()` and dispose the

@@ -12,15 +12,15 @@ The browser/Wasm entry is `@oxitone/web`. It reuses authoring classes and adds
 (Worker + AudioWorklet playback). See [Wasm and Web Audio](web.md) for setup,
 API examples, watch, platform boundaries and verification.
 
-| Package | Use |
-| --- | --- |
-| `@oxitone/core` | Project, builders, instrument helpers, automation and project files |
-| `@oxitone/samples` | `importSample` metadata and normalized WAV caching |
-| `@oxitone/midi` | SMF export facade and option/report types |
-| `@oxitone/protocol` | Schemas, wire types, canonical encoding and error codes |
-| `oxitone` | Unified Project/builders, presets, sample import and native facade |
-| `@oxitone/native` | Lower-level engine facade and native binary resolver |
-| `@oxitone/cli` | `build`, `render`, `export-midi`, `doctor`, `preview` commands |
+| Package             | Use                                                                 |
+| ------------------- | ------------------------------------------------------------------- |
+| `@oxitone/core`     | Project, builders, instrument helpers, automation and project files |
+| `@oxitone/samples`  | `importSample` metadata and normalized WAV caching                  |
+| `@oxitone/midi`     | SMF export facade and option/report types                           |
+| `@oxitone/protocol` | Schemas, wire types, canonical encoding and error codes             |
+| `oxitone`           | Unified Project/builders, presets, sample import and native facade  |
+| `@oxitone/native`   | Lower-level engine facade and native binary resolver                |
+| `@oxitone/cli`      | `build`, `render`, `export-midi`, `doctor`, `preview` commands      |
 
 The generated native package is a build artifact interface, not an authoring API.
 
@@ -50,19 +50,20 @@ convenience and rejects values beyond JavaScript's safe-integer range.
 ## Instruments and mixer
 
 ```ts
-import { wavetable, sampler, slicer } from '@oxitone/core';
+import { wavetable, sampler, slicer } from "@oxitone/core";
 
 const synth = wavetable({
-  oscA: { bank: 'analog', position: 0.35, octave: 1, unison: 7, detune: 18 },
-  oscB: { wave: 'sine', octave: 0, level: 0 }, // Silent FM source.
-  sub: { wave: 'triangle', octave: -1, level: 0.15 },
-  fm: 0.12, filter: { type: 'lowpass', cutoff: 6000 },
+  oscA: { bank: "analog", position: 0.35, octave: 1, unison: 7, detune: 18 },
+  oscB: { wave: "sine", octave: 0, level: 0 }, // Silent FM source.
+  sub: { wave: "triangle", octave: -1, level: 0.15 },
+  fm: 0.12,
+  filter: { type: "lowpass", cutoff: 6000 },
   amp: { attack: 0.01, decay: 0.3, sustain: 0.65, release: 0.2, decayCurve: -0.4 },
-  lfo2: { shape: 'triangle', rateHz: 2 },
-  modulation: [{ source: 'lfo2', target: 'positionA', amount: 0.2 }],
+  lfo2: { shape: "triangle", rateHz: 2 },
+  modulation: [{ source: "lfo2", target: "positionA", amount: 0.2 }],
 });
-const keys = sampler(sample, { rootKey: 60, loop: 'forward' });
-const chops = slicer(sample, { slices: { grid: 8 }, tempoSync: 'repitch' });
+const keys = sampler(sample, { rootKey: 60, loop: "forward" });
+const chops = slicer(sample, { slices: { grid: 8 }, tempoSync: "repitch" });
 channel.instrument = chops;
 ```
 
@@ -121,16 +122,17 @@ a pinned, explicitly prepared CC BY 3.0 Salamander bank and its attribution.
 ## Samples and persistence
 
 ```ts
-import { importSample } from '@oxitone/samples';
+import { importSample } from "@oxitone/samples";
 
-const imported = importSample('/source/loop.mp3', {
-  assetBaseDir: '/work/song', cacheDir: 'cache',
+const imported = importSample("/source/loop.mp3", {
+  assetBaseDir: "/work/song",
+  cacheDir: "cache",
 });
 const sample = project.addSample({ ...imported, musicalLengthBeats: 8 });
-const clip = track.sample(sample).at({ bar: 1 }, { tempoSync: 'stretch' });
+const clip = track.sample(sample).at({ bar: 1 }, { tempoSync: "stretch" });
 clip.fitBars(2);
-await project.save('/work/song/project', { assetBaseDir: '/work/song' });
-const restored = await Project.load('/work/song/project');
+await project.save("/work/song/project", { assetBaseDir: "/work/song" });
+const restored = await Project.load("/work/song/project");
 ```
 
 Without `cacheDir`, import is read-only metadata inspection. With it, Rust publishes
@@ -240,11 +242,11 @@ Registration is runtime configuration and is not saved into the project snapshot
 ## Presets
 
 ```ts
-import { createChannelPreset, savePreset, loadPreset, applyPreset } from 'oxitone';
+import { createChannelPreset, savePreset, loadPreset, applyPreset } from "oxitone";
 
-const preset = createChannelPreset(channel, { name: 'Soft keys', samples: project.samples });
-await savePreset(preset, '/path/presets/keys.oxitonepreset.json', { assetBaseDir: project.assetBaseDir });
-const loaded = await loadPreset('/path/presets/keys.oxitonepreset.json');
+const preset = createChannelPreset(channel, { name: "Soft keys", samples: project.samples });
+await savePreset(preset, "/path/presets/keys.oxitonepreset.json", { assetBaseDir: project.assetBaseDir });
+const loaded = await loadPreset("/path/presets/keys.oxitonepreset.json");
 await applyPreset(project, channel, loaded.preset, { assetBaseDir: loaded.assetBaseDir });
 await project.session?.update();
 ```

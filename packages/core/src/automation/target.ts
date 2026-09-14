@@ -3,8 +3,13 @@ import type { AutomationLane, AutomationLaneTarget } from "./lane.js";
 import { AutomationSource } from "./source.js";
 
 /** Authoring ownership and the Project's unique tempo lane; Rust validates parameter descriptors. */
-export function validateLaneTarget(projectId: string, entities: ReadonlySet<string>, lanes: readonly AutomationLane[],
-  target: AutomationLaneTarget, source: AutomationSource): void {
+export function validateLaneTarget(
+  projectId: string,
+  entities: ReadonlySet<string>,
+  lanes: readonly AutomationLane[],
+  target: AutomationLaneTarget,
+  source: AutomationSource,
+): void {
   if (!(source instanceof AutomationSource)) {
     throw new OxitoneError(ErrorCode.InvalidProject, "lane source must be an AutomationSource", {
       details: { path: "automation.source" },
@@ -17,13 +22,21 @@ export function validateLaneTarget(projectId: string, entities: ReadonlySet<stri
   }
   if (target.entityId !== projectId) return;
   if (target.parameterId !== "tempo") {
-    throw new OxitoneError(ErrorCode.AutomationTargetInvalid, `project exposes only the 'tempo' parameter, got '${target.parameterId}'`, {
-      details: { path: "automation.target.parameterId" },
-    });
+    throw new OxitoneError(
+      ErrorCode.AutomationTargetInvalid,
+      `project exposes only the 'tempo' parameter, got '${target.parameterId}'`,
+      {
+        details: { path: "automation.target.parameterId" },
+      },
+    );
   }
   if (lanes.some((lane) => lane.target.entityId === projectId)) {
-    throw new OxitoneError(ErrorCode.TempoAutomationConflict, "a tempo automation lane already exists for this project", {
-      details: { path: "automation.target" },
-    });
+    throw new OxitoneError(
+      ErrorCode.TempoAutomationConflict,
+      "a tempo automation lane already exists for this project",
+      {
+        details: { path: "automation.target" },
+      },
+    );
   }
 }

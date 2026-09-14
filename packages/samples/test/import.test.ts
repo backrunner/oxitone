@@ -14,11 +14,21 @@ describe("file sample import through Rust", () => {
     const { path, bytes } = wavFile(directory);
     const imported = importSample(relative(process.cwd(), path));
     expect(imported).toEqual({
-      assetUri: path, sha256: createHash("sha256").update(bytes).digest("hex"),
-      format: "wav", channels: 1, sampleRate: 48_000, frames: 4800n,
-      provenance: { sourceSha256: createHash("sha256").update(bytes).digest("hex"),
-        sourceFormat: "wav", sourceSampleRate: 48_000,
-        sourceChannels: 1, sourceBitDepth: 16, decoder: "oxitone-wav-v1", channelLayoutAction: "kept" },
+      assetUri: path,
+      sha256: createHash("sha256").update(bytes).digest("hex"),
+      format: "wav",
+      channels: 1,
+      sampleRate: 48_000,
+      frames: 4800n,
+      provenance: {
+        sourceSha256: createHash("sha256").update(bytes).digest("hex"),
+        sourceFormat: "wav",
+        sourceSampleRate: 48_000,
+        sourceChannels: 1,
+        sourceBitDepth: 16,
+        decoder: "oxitone-wav-v1",
+        channelLayoutAction: "kept",
+      },
     });
     expect(inspectSample(path)).toMatchObject({ protocolVersion: PROTOCOL_VERSION, frames: "4800" });
     expect(readFileSync(path)).toEqual(bytes);
@@ -95,10 +105,14 @@ describe("file sample import through Rust", () => {
   it("returns stable errors for missing, corrupt and unsupported files", () => {
     const directory = tempDirectory();
     const path = join(directory, "bad.wav");
-    expect(() => importSample(path)).toThrowError(expect.objectContaining({ code: ErrorCode.AssetUnavailable, details: { path } }));
+    expect(() => importSample(path)).toThrowError(
+      expect.objectContaining({ code: ErrorCode.AssetUnavailable, details: { path } }),
+    );
     for (const bytes of [Buffer.from("not audio"), Buffer.from("RIFF\0\0\0\0WAVE")]) {
       writeFileSync(path, bytes);
-      expect(() => importSample(path)).toThrowError(expect.objectContaining({ code: ErrorCode.SampleFormatUnsupported, details: { path } }));
+      expect(() => importSample(path)).toThrowError(
+        expect.objectContaining({ code: ErrorCode.SampleFormatUnsupported, details: { path } }),
+      );
     }
   });
 
@@ -106,25 +120,32 @@ describe("file sample import through Rust", () => {
     for (const path of ["", "bad\0path"]) {
       expect(() => importSample(path)).toThrowError(expect.objectContaining({ code: ErrorCode.InvalidProject }));
       expect(() => inspectSample(path)).toThrowError(expect.objectContaining({ code: ErrorCode.InvalidProject }));
-      expect(() => importSample("file.wav", { assetBaseDir: path })).toThrowError(expect.objectContaining({ code: ErrorCode.InvalidProject }));
+      expect(() => importSample("file.wav", { assetBaseDir: path })).toThrowError(
+        expect.objectContaining({ code: ErrorCode.InvalidProject }),
+      );
     }
-    expect(() => importSample("../outside.wav", { assetBaseDir: tempDirectory() })).toThrowError(expect.objectContaining({ code: ErrorCode.InvalidProject }));
+    expect(() => importSample("../outside.wav", { assetBaseDir: tempDirectory() })).toThrowError(
+      expect.objectContaining({ code: ErrorCode.InvalidProject }),
+    );
   });
 
-  it.skipIf(process.platform !== "darwin")("imports an AAC audio track and retains compressed-source provenance", async () => {
-    const directory = tempDirectory();
-    const { path } = wavFile(directory, 2);
-    const compressed = join(directory, "source.m4a");
-    execFileSync("/usr/bin/afconvert", ["-f", "m4af", "-d", "aac", "-b", "128000", path, compressed]);
-    const imported = importSample(compressed);
-    expect(imported.format).toBe("m4a");
-    expect(imported.sha256).toBe(createHash("sha256").update(readFileSync(compressed)).digest("hex"));
-    expect(imported.provenance.decoder).toMatch(/^symphonia 0\.5\/aac$/);
-    expect(imported.frames).toBeGreaterThanOrEqual(4800n);
-    const project = new Project();
-    project.addTrack().use(project.addChannel()).sample(project.addSample(imported)).at({ bar: 1 });
-    const output = join(directory, "decoded.wav");
-    await project.renderWav({ path: output, end: { seconds: 0.2 }, tailSeconds: 0 });
-    expect(wavSamples(output).some((value) => Math.abs(value) > 0.01)).toBe(true);
-  });
+  it.skipIf(process.platform !== "darwin")(
+    "imports an AAC audio track and retains compressed-source provenance",
+    async () => {
+      const directory = tempDirectory();
+      const { path } = wavFile(directory, 2);
+      const compressed = join(directory, "source.m4a");
+      execFileSync("/usr/bin/afconvert", ["-f", "m4af", "-d", "aac", "-b", "128000", path, compressed]);
+      const imported = importSample(compressed);
+      expect(imported.format).toBe("m4a");
+      expect(imported.sha256).toBe(createHash("sha256").update(readFileSync(compressed)).digest("hex"));
+      expect(imported.provenance.decoder).toMatch(/^symphonia 0\.5\/aac$/);
+      expect(imported.frames).toBeGreaterThanOrEqual(4800n);
+      const project = new Project();
+      project.addTrack().use(project.addChannel()).sample(project.addSample(imported)).at({ bar: 1 });
+      const output = join(directory, "decoded.wav");
+      await project.renderWav({ path: output, end: { seconds: 0.2 }, tailSeconds: 0 });
+      expect(wavSamples(output).some((value) => Math.abs(value) > 0.01)).toBe(true);
+    },
+  );
 });

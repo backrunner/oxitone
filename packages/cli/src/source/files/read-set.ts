@@ -5,13 +5,21 @@ import { ErrorCode, OxitoneError } from "@oxitone/protocol";
 import { createHash } from "node:crypto";
 import { sourceSpan } from "../eval/source-timing.js";
 
-export interface SourceRead { readonly path: string; readonly realPath: string; readonly sha256: string | null }
+export interface SourceRead {
+  readonly path: string;
+  readonly realPath: string;
+  readonly sha256: string | null;
+}
 
 /** Capture a missing enrolled module; later appearance invalidates the evaluation. */
 export async function captureMissingSource(path: string): Promise<SourceRead> {
   const realPath = join(await realpath(dirname(path)), basename(path));
-  try { await lstat(path); }
-  catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return { path, realPath, sha256: null }; throw error; }
+  try {
+    await lstat(path);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return { path, realPath, sha256: null };
+    throw error;
+  }
   throw new OxitoneError(ErrorCode.SourceChanged, "missing source appeared during evaluation");
 }
 
@@ -49,14 +57,24 @@ export async function checkSourceReads(reads: readonly SourceRead[]): Promise<vo
       const batch = await Promise.allSettled(reads.slice(start, start + 16).map(checkSource));
       for (const result of batch) if (result.status === "rejected") throw result.reason;
     }
-  } finally { done(); }
+  } finally {
+    done();
+  }
 }
 
 async function checkSource(previous: SourceRead): Promise<void> {
   let current: SourceRead;
-  try { current = await (previous.sha256 === null ? captureMissingSource(previous.path) : captureSource(previous.path)); }
-  catch (cause) { throw new OxitoneError(ErrorCode.SourceChanged, "evaluation dependency is no longer readable", { details: { path: previous.path }, cause }); }
+  try {
+    current = await (previous.sha256 === null ? captureMissingSource(previous.path) : captureSource(previous.path));
+  } catch (cause) {
+    throw new OxitoneError(ErrorCode.SourceChanged, "evaluation dependency is no longer readable", {
+      details: { path: previous.path },
+      cause,
+    });
+  }
   if (current.realPath !== previous.realPath || current.sha256 !== previous.sha256) {
-    throw new OxitoneError(ErrorCode.SourceChanged, "evaluation dependency changed", { details: { path: previous.path } });
+    throw new OxitoneError(ErrorCode.SourceChanged, "evaluation dependency changed", {
+      details: { path: previous.path },
+    });
   }
 }

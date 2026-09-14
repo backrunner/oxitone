@@ -3,14 +3,28 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { it, expect } from "vitest";
 import { inspectSample } from "@oxitone/native";
-import { Project, Pattern, wavetable, sampler, createChannelPreset, createPluginPreset, applyPreset,
-  savePreset, loadPreset, validatePreset, presetEffect } from "../src/index.js";
+import {
+  Project,
+  Pattern,
+  wavetable,
+  sampler,
+  createChannelPreset,
+  createPluginPreset,
+  applyPreset,
+  savePreset,
+  loadPreset,
+  validatePreset,
+  presetEffect,
+} from "../src/index.js";
 
 function song() {
   const project = new Project({ seed: 42 });
   const channel = project.addChannel({ instrument: wavetable({ oscA: { wave: "triangle" } }), level: 0.2 });
-  project.addTrack().use(channel).add(new Pattern({ lengthBeats: 1,
-    notes: [{ pitch: 60, start: 0, duration: 0.5, velocity: 0.5 }] })).at({ bar: 1 });
+  project
+    .addTrack()
+    .use(channel)
+    .add(new Pattern({ lengthBeats: 1, notes: [{ pitch: 60, start: 0, duration: 0.5, velocity: 0.5 }] }))
+    .at({ bar: 1 });
   return { project, channel };
 }
 
@@ -39,7 +53,9 @@ it("round trips canonical channel settings and preserves authoring on invalid pr
     await expect(savePreset(preset, path)).rejects.toMatchObject({ code: "InvalidProject" });
     expect(project.snapshot()).toEqual(snapshot);
     expect(await readFile(path)).toEqual(bytes);
-  } finally { await rm(dir, { recursive: true, force: true }); }
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
 });
 
 it("moves sample presets and remaps resource IDs without embedding audio or losing playback", async () => {
@@ -82,12 +98,16 @@ it("moves sample presets and remaps resource IDs without embedding audio or losi
 });
 
 it("validates effect, format/ABI, version, range and structured-state contracts", () => {
-  const effect = createPluginPreset({ pluginId: "oxitone.delay", pluginVersion: "1.0.0",
-    parameters: { feedback: 0.3 }, mix: 0.2 }, "effect");
+  const effect = createPluginPreset(
+    { pluginId: "oxitone.delay", pluginVersion: "1.0.0", parameters: { feedback: 0.3 }, mix: 0.2 },
+    "effect",
+  );
   expect(presetEffect(validatePreset(effect)).mix).toBe(0.2);
   expect(() => validatePreset({ ...effect, abiMajor: 2 } as never)).toThrow();
   expect(() => validatePreset({ ...effect, formatVersion: "2.0" } as never)).toThrow();
   expect(() => validatePreset({ ...effect, pluginVersion: "99.0.0" } as never)).toThrow();
   expect(() => validatePreset({ ...effect, parameters: { feedback: 99 } } as never)).toThrow();
-  expect(() => validatePreset(createPluginPreset({ ...wavetable(), state: { invalid: true } }, "instrument"))).toThrow();
+  expect(() =>
+    validatePreset(createPluginPreset({ ...wavetable(), state: { invalid: true } }, "instrument")),
+  ).toThrow();
 });

@@ -9,8 +9,21 @@ try {
   const engine = createEngine(engineOptionsSchema.parse({ allowPlugins: input.allowPlugins ?? "signed-only" }));
   try {
     const registered = registerPlugin(engine, registration);
-    writeFileSync(3, JSON.stringify({ registered, info: getPluginInfo(engine, registered.pluginId, registered.pluginVersion) }));
-  } finally { dispose(engine); }
+    writeFileSync(
+      3,
+      JSON.stringify({ registered, info: getPluginInfo(engine, registered.pluginId, registered.pluginVersion) }),
+    );
+  } finally {
+    dispose(engine);
+  }
 } catch (error) {
-  writeFileSync(3, JSON.stringify({ error: { code: OxitoneError.isOxitoneError(error) ? error.code : ErrorCode.PluginManifestMismatch, message: String(error) } }));
+  writeFileSync(
+    3,
+    JSON.stringify({
+      error: {
+        code: OxitoneError.isOxitoneError(error) ? error.code : ErrorCode.PluginManifestMismatch,
+        message: String(error),
+      },
+    }),
+  );
 }

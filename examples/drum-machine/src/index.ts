@@ -9,7 +9,9 @@ import { buildPlugins } from "./plugins.js";
 import { createDrumSong } from "./song.js";
 import { hashFile, verifyPlugins } from "./verify.js";
 
-const output = resolve(process.argv[2] ?? fileURLToPath(new URL("../../../target/examples/drum-machine", import.meta.url)));
+const output = resolve(
+  process.argv[2] ?? fileURLToPath(new URL("../../../target/examples/drum-machine", import.meta.url)),
+);
 await mkdir(join(output, "verification"), { recursive: true });
 const engine = createEngine({ allowPlugins: "any" });
 try {
@@ -33,8 +35,21 @@ try {
   const drumSolo = renderWav(engine, drums, { ...options, path: join(output, "drums-only.wav") });
   const diagnostics = getPluginDiagnostics(engine);
   assert(diagnostics.every((plugin) => plugin.faults === 0));
-  const report = { title: "Midnight Circuit / 午夜回路", bpm: 112, bars: 16, sampleRate: 48000,
-    blockSize: 128, plugins, verification, mix, drumSolo, midi, sha256, restoredIdentical: true, diagnostics };
+  const report = {
+    title: "Midnight Circuit / 午夜回路",
+    bpm: 112,
+    bars: 16,
+    sampleRate: 48000,
+    blockSize: 128,
+    plugins,
+    verification,
+    mix,
+    drumSolo,
+    midi,
+    sha256,
+    restoredIdentical: true,
+    diagnostics,
+  };
   await writeFile(join(output, "report.json"), `${JSON.stringify(report, null, 2)}\n`);
   console.log(JSON.stringify(report, null, 2));
 } finally {

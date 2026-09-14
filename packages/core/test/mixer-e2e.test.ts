@@ -15,10 +15,16 @@ function rig() {
   const bus = project.addMixerChannel({ name: "instrument" });
   const fx = project.addMixerChannel({ name: "return" });
   const channel = project.addChannel({ mixerChannelId: bus.id });
-  project.addTrack().use(channel).add(new Pattern({
-    lengthBeats: 1,
-    notes: [{ pitch: 60, start: 0, duration: 1, velocity: 0.8 }],
-  })).at({ bar: 1 });
+  project
+    .addTrack()
+    .use(channel)
+    .add(
+      new Pattern({
+        lengthBeats: 1,
+        notes: [{ pitch: 60, start: 0, duration: 1, velocity: 0.8 }],
+      }),
+    )
+    .at({ bar: 1 });
   return { project, bus, fx, channel };
 }
 
@@ -38,7 +44,10 @@ async function render(project: Project): Promise<number[]> {
   const dir = mkdtempSync(join(tmpdir(), "oxitone-mixer-"));
   directories.push(dir);
   const report = await project.renderWav({
-    path: join(dir, "mix.wav"), end: { seconds: 0.15 }, tailSeconds: 0, bitDepth: "float32",
+    path: join(dir, "mix.wav"),
+    end: { seconds: 0.15 },
+    tailSeconds: 0,
+    bitDepth: "float32",
   });
   return samples(report.files[0]!.path);
 }
@@ -51,7 +60,10 @@ function scaled(actual: number[], reference: number[], gain: number): void {
 }
 
 const invert = (options: Partial<EffectRef> = {}): EffectRef => ({
-  pluginId: "oxitone.utility", pluginVersion: "1.0.0", parameters: { polarity: 1 }, ...options,
+  pluginId: "oxitone.utility",
+  pluginVersion: "1.0.0",
+  parameters: { polarity: 1 },
+  ...options,
 });
 
 describe("mixer builders through the native WAV facade", () => {
@@ -112,9 +124,17 @@ describe("mixer builders through the native WAV facade", () => {
     const dir = mkdtempSync(join(tmpdir(), "oxitone-bus-stems-"));
     directories.push(dir);
     const report = await project.renderWav({
-      path: dir, stems: "mixer-channels", end: { seconds: 0.15 }, tailSeconds: 0,
+      path: dir,
+      stems: "mixer-channels",
+      end: { seconds: 0.15 },
+      tailSeconds: 0,
     });
-    expect(report.files.map((file) => file.stem).filter(Boolean).sort()).toEqual([bus.id, fx.id].sort());
+    expect(
+      report.files
+        .map((file) => file.stem)
+        .filter(Boolean)
+        .sort(),
+    ).toEqual([bus.id, fx.id].sort());
     expect(report.files.filter((file) => file.stem === undefined)).toHaveLength(1);
     for (const file of report.files) scaled(samples(file.path), reference, 0);
   });

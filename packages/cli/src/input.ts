@@ -14,7 +14,8 @@ export async function loadInput(input: string): Promise<LoadedProject> {
   } catch (error) {
     if (OxitoneError.isOxitoneError(error)) throw error;
     throw new OxitoneError(ErrorCode.AssetUnavailable, `cannot read project input: ${path}`, {
-      cause: error, details: { path },
+      cause: error,
+      details: { path },
     });
   }
   try {
@@ -22,7 +23,8 @@ export async function loadInput(input: string): Promise<LoadedProject> {
   } catch (error) {
     if (OxitoneError.isOxitoneError(error)) throw error;
     throw new OxitoneError(ErrorCode.InvalidProject, `invalid project snapshot: ${path}`, {
-      cause: error, details: { path },
+      cause: error,
+      details: { path },
     });
   }
 }

@@ -24,12 +24,19 @@ const first = join(output, "chops.wav");
 const second = join(output, "chops-restored.wav");
 const render = await chops.renderWav({ path: first, assetBaseDir: output, tailSeconds: 0 });
 await restored.renderWav({ path: second, tailSeconds: 0 });
-const hash = async (path: string) => createHash("sha256").update(await readFile(path)).digest("hex");
+const hash = async (path: string) =>
+  createHash("sha256")
+    .update(await readFile(path))
+    .digest("hex");
 const firstHash = await hash(first);
-if (firstHash !== await hash(second)) throw new Error("Restored project rendered different audio");
+if (firstHash !== (await hash(second))) throw new Error("Restored project rendered different audio");
 if (!phrase.files.some((file) => file.peakDbfs > -60) || !render.files.some((file) => file.peakDbfs > -60)) {
   throw new Error("Expected audible example output");
 }
-const report = JSON.stringify({ output, phrase: phrase.files, chops: render.files, restoredSha256: firstHash }, null, 2);
+const report = JSON.stringify(
+  { output, phrase: phrase.files, chops: render.files, restoredSha256: firstHash },
+  null,
+  2,
+);
 await writeFile(join(output, "report.json"), `${report}\n`);
 console.log(report);

@@ -14,6 +14,8 @@
     "example:web": "pnpm --filter @oxitone/example-web start",
     "example:songs:wasm": "node scripts/render-wasm-songs.mjs",
     "test:web": "node examples/web/scripts/smoke.mjs && node examples/web/scripts/watch-smoke.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "lint": "pnpm -r --filter './packages/*' --filter './examples/*' run lint",
     "typecheck": "pnpm -r --filter './packages/*' --filter './examples/*' run typecheck",
     "test": "pnpm -r --workspace-concurrency=1 --filter './packages/*' --filter './examples/*' run test",
@@ -33,6 +35,8 @@
     "@napi-rs/cli": "^3.9.0",
     "@types/node": "^22.10.0",
     "eslint": "^9.17.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.9.6",
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.18.0"
   },

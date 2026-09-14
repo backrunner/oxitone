@@ -5,9 +5,22 @@ type ReadonlySelector<T> = { readonly [K in keyof T]: T[K] extends object ? Read
 
 /** Musical generation coordinates. These do not contain wire IDs or source locations. */
 export type NoteOrigin =
-  | { readonly kind: "literal"; readonly start: number; readonly pitch: number; readonly voice?: number; readonly occurrence: number }
+  | {
+      readonly kind: "literal";
+      readonly start: number;
+      readonly pitch: number;
+      readonly voice?: number;
+      readonly occurrence: number;
+    }
   | { readonly kind: "chord"; readonly degree: number; readonly voice: number }
-  | { readonly kind: "arp"; readonly step: number; readonly input: NoteOrigin; readonly inputOccurrence: number; readonly cycleStep: number; readonly octave: number }
+  | {
+      readonly kind: "arp";
+      readonly step: number;
+      readonly input: NoteOrigin;
+      readonly inputOccurrence: number;
+      readonly cycleStep: number;
+      readonly octave: number;
+    }
   | { readonly kind: "repeat"; readonly iteration: number; readonly input: NoteOrigin }
   | { readonly kind: "insert"; readonly note: ReadonlySourceNote; readonly occurrence: number };
 

@@ -7,15 +7,15 @@
 TS 求值产生不可变、可序列化的表达式图，Project builder 只组织引用和最终编排。
 纯值构造不加载插件、不解码音频、不创建 engine。节点分为：
 
-| 节点类型 | 内容 |
-| --- | --- |
-| NoteSource | literal notes、chord、arp、concat、repeat、slice、mapKnown、edit |
-| ArrangementSource | placement、repeat、concat、window、occurrence edit |
-| AutomationSource | 现有 source/组合器，加 replaceRange 与明确 time mapping |
-| PluginConfig | definition 引用、物理初始参数、资源、配置 state |
-| PluginInstance | 独立实例配置；Channel 音源或 ordered insert 引用 |
-| SampleSource | 原资产与非破坏性编辑链、切片/区域的生成表达 |
-| Binding | typed parameter target、AutomationSource、优先级/时间域 |
+| 节点类型          | 内容                                                             |
+| ----------------- | ---------------------------------------------------------------- |
+| NoteSource        | literal notes、chord、arp、concat、repeat、slice、mapKnown、edit |
+| ArrangementSource | placement、repeat、concat、window、occurrence edit               |
+| AutomationSource  | 现有 source/组合器，加 replaceRange 与明确 time mapping          |
+| PluginConfig      | definition 引用、物理初始参数、资源、配置 state                  |
+| PluginInstance    | 独立实例配置；Channel 音源或 ordered insert 引用                 |
+| SampleSource      | 原资产与非破坏性编辑链、切片/区域的生成表达                      |
+| Binding           | typed parameter target、AutomationSource、优先级/时间域          |
 
 内部节点 handle 自动生成，仅用于此文档执行与 wire 引用；源码只写变量和对象引用。
 note/placement/slice/region 输出携带生成坐标和来源，不能提前只剩扁平数组。
@@ -64,14 +64,14 @@ set 和相对变换分开：`set:{pitch:65}` 与 `shift:{pitch:1}` 在上游 roo
 
 不同 source 有类型化的选择器，而非通用“按 index 猜测”：
 
-| source | 可用音乐选择条件 |
-| --- | --- |
-| chord | degree/voicing 后的 voice；二者不同，编辑器选择正确层次 |
-| arp | 生成 step；也可明确 input occurrence + cycle branch + octave |
-| literal notes | beat/pitch/voice 条件和同条件 occurrence；必要时针对该数组项直接写文本 |
-| concat/repeat | 子段位置、生成轮次、子 source selector |
-| arrangements | 源放置位置/生成轮次，而非移动后的当前时间或显示顺序 |
-| slices/regions | 切片源序号/原 frame 边界；region 的键/力度矩形和样本引用 |
+| source         | 可用音乐选择条件                                                       |
+| -------------- | ---------------------------------------------------------------------- |
+| chord          | degree/voicing 后的 voice；二者不同，编辑器选择正确层次                |
+| arp            | 生成 step；也可明确 input occurrence + cycle branch + octave           |
+| literal notes  | beat/pitch/voice 条件和同条件 occurrence；必要时针对该数组项直接写文本 |
+| concat/repeat  | 子段位置、生成轮次、子 source selector                                 |
+| arrangements   | 源放置位置/生成轮次，而非移动后的当前时间或显示顺序                    |
+| slices/regions | 切片源序号/原 frame 边界；region 的键/力度矩形和样本引用               |
 
 已知生成器优先保存语义坐标，例如 arp 的 step 或 chord 的 degree；这种规则自然跟随
 root、rate 等上游参数变化，不因为旧 pitch/start 改了就让整首工程报错。源类型变化或
@@ -89,7 +89,8 @@ TS 路径，来源精度按边界能力标记，不承诺所有映射都能保�
 
 ```ts
 const arrangement = arrange(phrase, {
-  at: { bar: 1 }, repeat: { count: 8 },
+  at: { bar: 1 },
+  repeat: { count: 8 },
 }).edit([
   { select: { iteration: 2 }, move: { bar: 6 } },
   { select: { iteration: 3 }, replace: variant },

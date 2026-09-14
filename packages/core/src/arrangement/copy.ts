@@ -8,18 +8,33 @@ import type { Track } from "./track.js";
 export function copyClip(project: Project, original: PatternClip | SampleClip, track: Track, startBeat: number): void {
   if (original instanceof PatternClip) {
     for (const id of original.track.channelIds) {
-      const channel = project.channels.find(c => c.id === id);
+      const channel = project.channels.find((c) => c.id === id);
       if (channel) track.use(channel);
     }
     const allocated = project.createPatternClip(track, original.pattern, startBeat);
     const spec = original.toSpec();
-    const copy = PatternClip.fromSpec(project, track, original.pattern, { ...spec, id: allocated.id, trackId: track.id,
-      startBeat: beatToWire(startBeat), ...(original.lastBeat === undefined ? {} : { lastBeat: beatToWire(original.lastBeat + startBeat - original.startBeat) }) });
-    track.detachClip(allocated); track.attachClip(copy);
+    const copy = PatternClip.fromSpec(project, track, original.pattern, {
+      ...spec,
+      id: allocated.id,
+      trackId: track.id,
+      startBeat: beatToWire(startBeat),
+      ...(original.lastBeat === undefined
+        ? {}
+        : { lastBeat: beatToWire(original.lastBeat + startBeat - original.startBeat) }),
+    });
+    track.detachClip(allocated);
+    track.attachClip(copy);
   } else {
-    const spec = original.toSpec(), sample = project.samples.find(s => s.id === spec.sampleId)!;
+    const spec = original.toSpec(),
+      sample = project.samples.find((s) => s.id === spec.sampleId)!;
     const allocated = project.createSampleClip(track, sample, project.beatsToBarBeat(startBeat), {});
-    const copy = SampleClip.fromSpec(project, track, sample, { ...spec, id: allocated.id, trackId: track.id, startBeat: beatToWire(startBeat) });
-    track.detachSampleClip(allocated); track.attachSampleClip(copy);
+    const copy = SampleClip.fromSpec(project, track, sample, {
+      ...spec,
+      id: allocated.id,
+      trackId: track.id,
+      startBeat: beatToWire(startBeat),
+    });
+    track.detachSampleClip(allocated);
+    track.attachSampleClip(copy);
   }
 }

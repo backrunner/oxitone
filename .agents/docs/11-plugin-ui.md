@@ -26,11 +26,11 @@
 
 ## 选择：先提供由 GPUI 渲染的声明式 UI，再提供可选原生 UI
 
-| 形式 | 提供方 | 优点 | 代价 / 适用范围 |
-| --- | --- | --- | --- |
-| 通用详情（当前） | 宿主按 descriptor 生成 | 所有内置与 dylib 插件立即可查看 | 不表达插件自己的视觉结构 |
-| 声明式 UI（P1，已实现） | npm 插件包导出版本化 TS/JSON 布局 | 自定义布局/标题、统一主题和文档事务；不执行第三方 UI 代码 | 受宿主向量组件集合约束 |
-| 原生 UI（P2，可选） | 插件包附带 UI companion dylib | 插件可提供自己的 AppKit/Metal 视图 | 平台专用；同进程原生代码故障可能拖垮整个 viewer |
+| 形式                    | 提供方                            | 优点                                                      | 代价 / 适用范围                                 |
+| ----------------------- | --------------------------------- | --------------------------------------------------------- | ----------------------------------------------- |
+| 通用详情（当前）        | 宿主按 descriptor 生成            | 所有内置与 dylib 插件立即可查看                           | 不表达插件自己的视觉结构                        |
+| 声明式 UI（P1，已实现） | npm 插件包导出版本化 TS/JSON 布局 | 自定义布局/标题、统一主题和文档事务；不执行第三方 UI 代码 | 受宿主向量组件集合约束                          |
+| 原生 UI（P2，可选）     | 插件包附带 UI companion dylib     | 插件可提供自己的 AppKit/Metal 视图                        | 平台专用；同进程原生代码故障可能拖垮整个 viewer |
 
 GPUI 是宿主窗口和声明式组件的渲染层，不把 GPUI/Rust trait 或 Entity 通过 dylib ABI 暴露。
 不要求插件作者与宿主使用同一 Rust 编译器或 GPUI git revision，也不要求提供浏览器/JavaScript UI。
@@ -45,14 +45,28 @@ GPUI 是宿主窗口和声明式组件的渲染层，不把 GPUI/Rust trait 或 
 
 ```ts
 project.registerPluginUi({
-  uiVersion: "1.0", pluginId: "oxitone.delay", pluginVersion: "1.0.0",
-  title: "Echo", size: { width: 520, height: 320 },
-  pages: [{ id: "main", title: "Delay", groups: [{
-    id: "echo", title: "Echo", columns: 3, controls: [
-      { kind: "knob", parameter: "timeBeats", label: "Time" },
-      { kind: "knob", parameter: "feedback", label: "Feedback" },
-    ],
-  }] }],
+  uiVersion: "1.0",
+  pluginId: "oxitone.delay",
+  pluginVersion: "1.0.0",
+  title: "Echo",
+  size: { width: 520, height: 320 },
+  pages: [
+    {
+      id: "main",
+      title: "Delay",
+      groups: [
+        {
+          id: "echo",
+          title: "Echo",
+          columns: 3,
+          controls: [
+            { kind: "knob", parameter: "timeBeats", label: "Time" },
+            { kind: "knob", parameter: "feedback", label: "Feedback" },
+          ],
+        },
+      ],
+    },
+  ],
 });
 ```
 
@@ -89,13 +103,13 @@ project.registerPluginUi({
 
 新增 source visual controls 同样可由第三方 `registerPluginUi` 布局使用，uiVersion 仍为 1.0：
 
-| kind | 绑定与图形语义 |
-| --- | --- |
-| `oscillator` | wave/morphTo 对应 0…5 的六种内置 cycle；position/phase/spread 是 0…1，unison 为 1…16 enum，detune 为 0…100 cents。可选 bank/warpMode（0…3 enum）、warp（0…1）、octave（−4…4 enum）绑定。UI 线程读取共享准备表生成周期图，显示 source/bank 插值及 warp、octave；2D/3D 仅切换堆叠曲线 |
-| `subOscillator` | wave 为 sine/triangle/saw/square/pulse/rounded（0…5 enum），octave −4…4 enum，level 0…1；显示独立 Sub 周期、octave 和幅度 |
-| `filterResponse` | mode 对应 LP/HP/BP enum 0…2，cutoff 为正 Hz，resonance 为 0…1。用项目 sampleRate 和 Q=0.5+9.5r 的 biquad 系数计算对数频率响应 |
-| `lfoCurve` | shape 对应 sine/triangle/ramp/square enum 0…3，rate 为正 Hz，phase 为 0…1，显示一个 source 周期及周期秒数 |
-| `modulation` | routes 为 1…8 个 `{label, amount}`，amount 绑定现有参数，展示带物理单位的路由深度与双极条 |
+| kind             | 绑定与图形语义                                                                                                                                                                                                                                                                      |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `oscillator`     | wave/morphTo 对应 0…5 的六种内置 cycle；position/phase/spread 是 0…1，unison 为 1…16 enum，detune 为 0…100 cents。可选 bank/warpMode（0…3 enum）、warp（0…1）、octave（−4…4 enum）绑定。UI 线程读取共享准备表生成周期图，显示 source/bank 插值及 warp、octave；2D/3D 仅切换堆叠曲线 |
+| `subOscillator`  | wave 为 sine/triangle/saw/square/pulse/rounded（0…5 enum），octave −4…4 enum，level 0…1；显示独立 Sub 周期、octave 和幅度                                                                                                                                                           |
+| `filterResponse` | mode 对应 LP/HP/BP enum 0…2，cutoff 为正 Hz，resonance 为 0…1。用项目 sampleRate 和 Q=0.5+9.5r 的 biquad 系数计算对数频率响应                                                                                                                                                       |
+| `lfoCurve`       | shape 对应 sine/triangle/ramp/square enum 0…3，rate 为正 Hz，phase 为 0…1，显示一个 source 周期及周期秒数                                                                                                                                                                           |
+| `modulation`     | routes 为 1…8 个 `{label, amount}`，amount 绑定现有参数，展示带物理单位的路由深度与双极条                                                                                                                                                                                           |
 
 以上组件不是任意第三方算法的自动分析器；插件使用它们即声明相同 cycle/filter/LFO
 含义。单位/范围/ID 不兼容时走 `PluginUiInvalid` fallback。旧宿主遇到新 kind
@@ -127,19 +141,19 @@ Building/Last good 状态，保留最近有效参数、Mix 和布局；恢复后
 全部 26 个内置效果器和 4 个音源均有专用分组和可视化。内置图形是宿主已知算法的
 原生呈现，不新增第三方 JSON control kind；显式注册的自定义布局仍优先。
 
-| 处理器 | 图形 |
-| --- | --- |
-| EQ、Filter、Nonlinear Filter | 分段/总频响；非线性滤波明确为小信号响应 |
-| Compressor、Gate、Limit、Limiter、Compactor | 静态输入/输出与时序示意；Gate 标注迟滞区 |
-| Multiband、Multiband Dynamics | 三段动态曲线及分频/增益区域 |
-| Delay、Reverb、Convolver | 回声位置/反馈衰减、RT60 包络、IR 湿声带宽 |
-| Chorus、Flanger、Phaser | 按当前速率、深度和左右相位计算的一周期轨迹 |
-| Clipper、Saturator、Distortion、Tape | 静态整形曲线；Tape 另有 wow/flutter 延迟调制 |
-| Bitcrush | 明确标记的 1 kHz 参考信号经采样保持/量化后的阶梯 |
-| Pitch Shifter、Frequency Shifter | 音高映射、带正负号的频率平移 |
-| Utility、Spreader | 明确标记的 M/S 参考圆与宽度关系 |
-| Wavetable | 振荡器、Sub、滤波、LFO、包络及调制矩阵 |
-| Sampler、Multisampler、Slicer | 根音/键位力度区域与包络、slice 触发序列；自动切片显示检测灵敏度 |
+| 处理器                                      | 图形                                                            |
+| ------------------------------------------- | --------------------------------------------------------------- |
+| EQ、Filter、Nonlinear Filter                | 分段/总频响；非线性滤波明确为小信号响应                         |
+| Compressor、Gate、Limit、Limiter、Compactor | 静态输入/输出与时序示意；Gate 标注迟滞区                        |
+| Multiband、Multiband Dynamics               | 三段动态曲线及分频/增益区域                                     |
+| Delay、Reverb、Convolver                    | 回声位置/反馈衰减、RT60 包络、IR 湿声带宽                       |
+| Chorus、Flanger、Phaser                     | 按当前速率、深度和左右相位计算的一周期轨迹                      |
+| Clipper、Saturator、Distortion、Tape        | 静态整形曲线；Tape 另有 wow/flutter 延迟调制                    |
+| Bitcrush                                    | 明确标记的 1 kHz 参考信号经采样保持/量化后的阶梯                |
+| Pitch Shifter、Frequency Shifter            | 音高映射、带正负号的频率平移                                    |
+| Utility、Spreader                           | 明确标记的 M/S 参考圆与宽度关系                                 |
+| Wavetable                                   | 振荡器、Sub、滤波、LFO、包络及调制矩阵                          |
+| Sampler、Multisampler、Slicer               | 根音/键位力度区域与包络、slice 触发序列；自动切片显示检测灵敏度 |
 
 图形有坐标/单位，使用初始参数和声明的采样映射，不伪造实际采样波形、频谱、gain
 reduction 或 effective 遥测。数据只在参数/接受的工程变化时重新构建，绘制使用缓存的
@@ -164,14 +178,14 @@ bundled library 的准确 1.0.0 版本，外部库即使使用相同名称也不
 
 每个入口/host 表都以 `abi_major, abi_minor, struct_size` 开头，仅传固定宽度整数、计数字节切片、C 函数指针及 opaque UI handle。初始接口职责：
 
-| 操作 | 所有权与线程 |
-| --- | --- |
-| query capabilities / size | 主 UI 线程；协商 `macos-nsview`、只读模式、主题和尺寸支持；无 DSP 实例 |
-| create | 主 UI 线程；独立 UI 实例接收复制的插件身份、slot key、graph generation 和只读上下文 |
-| attach | 宿主创建窗口及原生容器 NSView，插件附加自己的 NSView；parent 为借用对象，不得销毁宿主窗口 |
-| update snapshot | 主 UI 线程；版本化、带 revision/generation 的有界 source/default 数据；调用期借用，插件要持久保存则复制 |
-| resize / scale / appearance / visibility | 宿主传逻辑 points、backing scale、语义主题及可见性；插件不能同步进入嵌套窗口事件循环 |
-| detach / destroy | 主 UI 线程；先移除子视图、取消回调/异步任务，再销毁 UI handle；最后释放该 UI library 引用 |
+| 操作                                     | 所有权与线程                                                                                            |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| query capabilities / size                | 主 UI 线程；协商 `macos-nsview`、只读模式、主题和尺寸支持；无 DSP 实例                                  |
+| create                                   | 主 UI 线程；独立 UI 实例接收复制的插件身份、slot key、graph generation 和只读上下文                     |
+| attach                                   | 宿主创建窗口及原生容器 NSView，插件附加自己的 NSView；parent 为借用对象，不得销毁宿主窗口               |
+| update snapshot                          | 主 UI 线程；版本化、带 revision/generation 的有界 source/default 数据；调用期借用，插件要持久保存则复制 |
+| resize / scale / appearance / visibility | 宿主传逻辑 points、backing scale、语义主题及可见性；插件不能同步进入嵌套窗口事件循环                    |
+| detach / destroy                         | 主 UI 线程；先移除子视图、取消回调/异步任务，再销毁 UI handle；最后释放该 UI library 引用               |
 
 GPUI 继续拥有窗口、自绘标题区和交通灯。原生内容在独立的 AppKit 容器中承载，不把外部 NSView 误当 GPUI element；输入焦点、IME、Tab、Escape/⌘W、缩放和窗口关闭须有原型验收。
 

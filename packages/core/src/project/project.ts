@@ -11,11 +11,7 @@ import { Channel, type ChannelOptions } from "../channels/channel.js";
 import { Sample, SampleClip, type SampleClipOptions, type SampleOptions } from "../arrangement/sample.js";
 import { IdGenerator } from "../ids.js";
 import { MixerChannel, type MixerChannelOptions } from "../channels/mixer-channel.js";
-import {
-  AutomationLane,
-  type AutomationLaneOptions,
-  type AutomationLaneTarget,
-} from "../automation/lane.js";
+import { AutomationLane, type AutomationLaneOptions, type AutomationLaneTarget } from "../automation/lane.js";
 import { AutomationClip } from "../automation/clip.js";
 import type { AutomationSource } from "../automation/source.js";
 import { ProjectAutomation } from "./automation.js";
@@ -48,11 +44,9 @@ const DEFAULT_BLOCK_SIZE = 128;
 
 function checkPositiveInteger(value: number, path: string): void {
   if (!Number.isInteger(value) || value < 1) {
-    throw new OxitoneError(
-      ErrorCode.InvalidProject,
-      `${path} must be an integer >= 1, got ${value}`,
-      { details: { path } },
-    );
+    throw new OxitoneError(ErrorCode.InvalidProject, `${path} must be an integer >= 1, got ${value}`, {
+      details: { path },
+    });
   }
 }
 
@@ -74,7 +68,11 @@ export class Project extends ProjectTimeline {
   private readonly channelList: Channel[] = [];
   private readonly mixerChannelList: MixerChannel[] = [];
   private readonly sampleList: Sample[] = [];
-  private readonly automationStore = new ProjectAutomation(this, prefix => this.claimId(prefix), () => this.entityIds);
+  private readonly automationStore = new ProjectAutomation(
+    this,
+    (prefix) => this.claimId(prefix),
+    () => this.entityIds,
+  );
   private readonly patternsById = new Map<string, Pattern>();
   private readonly entityIds = new Set<string>();
   private revisionCounter = 0n;
@@ -107,9 +105,15 @@ export class Project extends ProjectTimeline {
     return this.projectName;
   }
   /** Apply a Playlist placement, move or removal. Indices follow builder creation order. */
-  arrange(edit: import("@oxitone/protocol").ArrangementEdit): this { arrange(this, edit); return this; }
+  arrange(edit: import("@oxitone/protocol").ArrangementEdit): this {
+    arrange(this, edit);
+    return this;
+  }
   /** Edit mixer, Track, tempo or plugin configuration using current builder order. */
-  configure(edit: import("@oxitone/protocol").ProjectEdit): this { configure(this, edit); return this; }
+  configure(edit: import("@oxitone/protocol").ProjectEdit): this {
+    configure(this, edit);
+    return this;
+  }
 
   /** Monotonically increasing mutation counter. */
   get revision(): number {
@@ -119,7 +123,9 @@ export class Project extends ProjectTimeline {
     return Number(this.revisionCounter);
   }
 
-  get revisionBigInt(): bigint { return this.revisionCounter; }
+  get revisionBigInt(): bigint {
+    return this.revisionCounter;
+  }
 
   /** @internal Reject exhausted revisions before mutating any builder. */
   assertMutable(): void {
@@ -134,7 +140,9 @@ export class Project extends ProjectTimeline {
   }
 
   /** Master followed by user buses in creation order. */
-  get mixerChannels(): readonly MixerChannel[] { return [...this.mixerChannelList]; }
+  get mixerChannels(): readonly MixerChannel[] {
+    return [...this.mixerChannelList];
+  }
 
   addMixerChannel(options: MixerChannelOptions = {}): MixerChannel {
     this.assertMutable();
@@ -171,7 +179,9 @@ export class Project extends ProjectTimeline {
     return sample;
   }
 
-  get samples(): readonly Sample[] { return [...this.sampleList]; }
+  get samples(): readonly Sample[] {
+    return [...this.sampleList];
+  }
 
   /** Import a detached resource descriptor, preserving exact rational musical length. */
   importSampleRef(ref: import("@oxitone/protocol").SampleRef, id?: string): Sample {
@@ -184,8 +194,12 @@ export class Project extends ProjectTimeline {
     this.touch();
     return sample;
   }
-  get patterns(): readonly Pattern[] { return [...this.patternsById.values()]; }
-  get sampleClips() { return this.trackList.flatMap((track) => track.sampleClips); }
+  get patterns(): readonly Pattern[] {
+    return [...this.patternsById.values()];
+  }
+  get sampleClips() {
+    return this.trackList.flatMap((track) => track.sampleClips);
+  }
 
   /** @internal Resolve routing IDs against buses owned by this project. */
   requireMixerChannel(id: EntityId): MixerChannel {
@@ -236,16 +250,28 @@ export class Project extends ProjectTimeline {
     return [...this.channelList];
   }
 
-  addAutomationLane(target: AutomationLaneTarget, source: AutomationSource, options: AutomationLaneOptions = {}): AutomationLane {
+  addAutomationLane(
+    target: AutomationLaneTarget,
+    source: AutomationSource,
+    options: AutomationLaneOptions = {},
+  ): AutomationLane {
     return this.automationStore.addAutomationLane(target, source, options);
   }
-  get automationLanes(): readonly AutomationLane[] { return this.automationStore.automationLanes; }
-  get automationClips(): readonly AutomationClip[] { return this.automationStore.automationClips; }
+  get automationLanes(): readonly AutomationLane[] {
+    return this.automationStore.automationLanes;
+  }
+  get automationClips(): readonly AutomationClip[] {
+    return this.automationStore.automationClips;
+  }
   createAutomationClip(lane: AutomationLane, track: Track, startBeat: number, durationBeats?: number): AutomationClip {
     return this.automationStore.createAutomationClip(lane, track, startBeat, durationBeats);
   }
-  removeAutomationClip(clip: AutomationClip): void { this.automationStore.removeAutomationClip(clip); }
-  removeAutomationLane(lane: AutomationLane): void { this.automationStore.removeAutomationLane(lane); }
+  removeAutomationClip(clip: AutomationClip): void {
+    this.automationStore.removeAutomationClip(clip);
+  }
+  removeAutomationLane(lane: AutomationLane): void {
+    this.automationStore.removeAutomationLane(lane);
+  }
 
   /** @internal Create and attach a pattern clip; called by the draft API. */
   createPatternClip(track: Track, pattern: Pattern, startBeat: number): PatternClip {
@@ -275,8 +301,13 @@ export class Project extends ProjectTimeline {
   /** Restore editable builders without opening resources or instantiating plugins. */
   static fromSnapshot(input: ProjectSnapshot, options: CompileOptions = {}): Project {
     const { snapshot, ids } = parseRestorableSnapshot(input);
-    const project = new Project({ id: snapshot.id, ...(snapshot.name === undefined ? {} : { name: snapshot.name }),
-      sampleRate: snapshot.sampleRate, blockSize: snapshot.blockSize, seed: snapshot.seed });
+    const project = new Project({
+      id: snapshot.id,
+      ...(snapshot.name === undefined ? {} : { name: snapshot.name }),
+      sampleRate: snapshot.sampleRate,
+      blockSize: snapshot.blockSize,
+      seed: snapshot.seed,
+    });
     if (options.assetBaseDir !== undefined) {
       if (!options.assetBaseDir || options.assetBaseDir.includes("\0")) {
         throw new OxitoneError(ErrorCode.InvalidProject, "assetBaseDir must be a nonempty local path");
@@ -312,7 +343,9 @@ export class Project extends ProjectTimeline {
   }
 
   /** @internal Preserve an implicit Master until a user explicitly edits it. */
-  materializeMaster(): void { this.implicitMaster = false; }
+  materializeMaster(): void {
+    this.implicitMaster = false;
+  }
   /** @internal Serialized buses; implicit Master is represented by omission. */
   snapshotMixerChannels(): readonly MixerChannel[] {
     return this.mixerChannelList.filter((bus) => !this.implicitMaster || bus !== this.master);

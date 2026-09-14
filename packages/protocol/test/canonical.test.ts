@@ -41,13 +41,10 @@ describe("canonicalEncode fixtures", () => {
     expect(canonicalEncode(JSON.parse(text))).toBe(text);
   });
 
-  it.each(["gate", "wave", "chance", "curve", "nested"])(
-    "byte-reproduces the %s automation fixture",
-    (name) => {
-      const text = readFixture(`automation/${name}.canonical.json`);
-      expect(canonicalEncode(JSON.parse(text))).toBe(text);
-    },
-  );
+  it.each(["gate", "wave", "chance", "curve", "nested"])("byte-reproduces the %s automation fixture", (name) => {
+    const text = readFixture(`automation/${name}.canonical.json`);
+    expect(canonicalEncode(JSON.parse(text))).toBe(text);
+  });
 
   it("byte-reproduces the pcg32/hash64 vector files", () => {
     for (const rel of ["pcg32-v1.json", "hash64.json"]) {

@@ -10,7 +10,9 @@ import type { Project } from "./project.js";
 
 /** Detached, canonically ordered wire state; native compile validates graph semantics. */
 export function snapshotProject(
-  project: Project, patterns: readonly Pattern[], tempoMap: TempoSegment[],
+  project: Project,
+  patterns: readonly Pattern[],
+  tempoMap: TempoSegment[],
 ): ProjectSnapshot {
   const byId = <T extends { id: string }>(items: readonly T[]): T[] =>
     [...items].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
@@ -34,7 +36,9 @@ export function snapshotProject(
     samples: byId(project.samples).map((sample) => sample.toSpec()),
     channels: byId(project.channels).map((channel) => channel.toSpec()),
     automation: byId(project.automationLanes).map((lane) => lane.toSpec()),
-    ...(project.automationClips.length === 0 ? {} : { automationClips: byId(project.automationClips).map((clip) => clip.toSpec()) }),
+    ...(project.automationClips.length === 0
+      ? {}
+      : { automationClips: byId(project.automationClips).map((clip) => clip.toSpec()) }),
     mixerChannels: byId(project.snapshotMixerChannels()).map((bus) => bus.toSpec()),
   };
   return projectSnapshotSchema.parse(snapshot);

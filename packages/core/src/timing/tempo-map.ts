@@ -1,10 +1,4 @@
-import {
-  beatToWire,
-  beatFromWire,
-  ErrorCode,
-  OxitoneError,
-  type TempoSegment,
-} from "@oxitone/protocol";
+import { beatToWire, beatFromWire, ErrorCode, OxitoneError, type TempoSegment } from "@oxitone/protocol";
 
 /** Transition curve from one tempo segment to the next. */
 export type TempoCurve = "step" | "linear" | "exponential";
@@ -22,11 +16,9 @@ export const MAX_BPM = 999;
 
 function validateBpm(bpm: number): void {
   if (!Number.isFinite(bpm) || bpm < MIN_BPM || bpm > MAX_BPM) {
-    throw new OxitoneError(
-      ErrorCode.TempoRange,
-      `bpm must be a finite number in ${MIN_BPM}..${MAX_BPM}, got ${bpm}`,
-      { details: { path: "tempoMap.bpm" } },
-    );
+    throw new OxitoneError(ErrorCode.TempoRange, `bpm must be a finite number in ${MIN_BPM}..${MAX_BPM}, got ${bpm}`, {
+      details: { path: "tempoMap.bpm" },
+    });
   }
 }
 
@@ -86,8 +78,12 @@ export class TempoMap {
       throw new OxitoneError(ErrorCode.TempoMapOrder, "tempo map must start at beat zero");
     }
     this.set(first.bpm, first.curve);
-    for (const segment of segments.slice(1)) this.add({ startBeat: beatFromWire(segment.startBeat), bpm: segment.bpm,
-      ...(segment.curve === undefined ? {} : { curve: segment.curve }) });
+    for (const segment of segments.slice(1))
+      this.add({
+        startBeat: beatFromWire(segment.startBeat),
+        bpm: segment.bpm,
+        ...(segment.curve === undefined ? {} : { curve: segment.curve }),
+      });
     this.restoredBeats = segments.map((segment) => ({ ...segment.startBeat }));
   }
 

@@ -13,7 +13,8 @@ including custom layouts. Set the ratio in code:
 import { createAutomationNamespace } from "oxitone";
 
 channel.addEffect({
-  pluginId: "oxitone.delay", pluginVersion: "1.0.0",
+  pluginId: "oxitone.delay",
+  pluginVersion: "1.0.0",
   parameters: { timeBeats: 0.75, feedback: 0.3 },
   mix: 0.25, // 25% wet, 75% dry; omitted mix defaults to 1
 });
@@ -48,16 +49,23 @@ const echoPanel: PluginUiManifest = {
   pluginVersion: "1.0.0",
   title: "Echo",
   size: { width: 520, height: 320 },
-  pages: [{
-    id: "main", title: "Delay",
-    groups: [{
-      id: "echo", title: "Echo", columns: 2,
-      controls: [
-        { kind: "knob", parameter: "timeBeats", label: "Time" },
-        { kind: "knob", parameter: "feedback", label: "Feedback" },
+  pages: [
+    {
+      id: "main",
+      title: "Delay",
+      groups: [
+        {
+          id: "echo",
+          title: "Echo",
+          columns: 2,
+          controls: [
+            { kind: "knob", parameter: "timeBeats", label: "Time" },
+            { kind: "knob", parameter: "feedback", label: "Feedback" },
+          ],
+        },
       ],
-    }],
-  }],
+    },
+  ],
 };
 project.registerPluginUi(echoPanel);
 ```

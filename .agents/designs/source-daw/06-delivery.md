@@ -5,21 +5,21 @@
 先沿用已有 package/crate 名称，避免为了设计引入另一个 workspace 包映射。
 新增模块按职责拆文件，每个文件约 300 行以内；不把所有编辑逻辑塞进 preview runner。
 
-| 所在层 | 目标职责与改动 |
-| --- | --- |
-| `packages/core` / `@oxitone/core` | 纯声明式 Project/Source/Config/Instance/Target，生成与编辑语义、序列化；浏览器可用 |
-| `packages/protocol` | document format 1、engine/IPC protocol 2.0、插件/UI 描述 schema 与生成器 |
-| `packages/cli` | Document Service、TS Program/来源插桩/writer、watch/事务/恢复、插件 resolver/安装任务 |
-| `packages/native` | 新 typed control facade 与平台加载；保留薄桥，不实现 source writer |
-| `packages/samples` | 显式资源导入 facade；音频解码继续调用 Rust |
-| `packages/midi` | 复用统一 source/事件展开后的导出入口，删除重复音乐语义 |
-| `packages/sdk` / `oxitone` | 统一导出 authoring 与 runtime facade，CLI/GUI 外也能执行保存的 TS |
-| `packages/web` | 使用同一 document/随机/参数模型，经 Wasm 控制接口运行 |
-| `crates/core/graph/transport` | typed wire/targets、来源窗口、确定性事件/随机、automation DAG 与编译验证 |
-| `crates/render/instruments/samples/mixer` | ABI 2、资源/config prepare、增量实例移交、采样视图与路由执行 |
-| `crates/napi/wasm` | 协议 2 控制桥，错误与数据边界，无 JS 音频执行 |
-| `apps/preview` | 升级为 GPUI DAW：编辑控制器、视图投影、插件管理器/面板、事务状态 |
-| `schemas/include/fixtures` | 全部新协议、ABI header、TS/Rust 生成结果与 conformance |
+| 所在层                                    | 目标职责与改动                                                                        |
+| ----------------------------------------- | ------------------------------------------------------------------------------------- |
+| `packages/core` / `@oxitone/core`         | 纯声明式 Project/Source/Config/Instance/Target，生成与编辑语义、序列化；浏览器可用    |
+| `packages/protocol`                       | document format 1、engine/IPC protocol 2.0、插件/UI 描述 schema 与生成器              |
+| `packages/cli`                            | Document Service、TS Program/来源插桩/writer、watch/事务/恢复、插件 resolver/安装任务 |
+| `packages/native`                         | 新 typed control facade 与平台加载；保留薄桥，不实现 source writer                    |
+| `packages/samples`                        | 显式资源导入 facade；音频解码继续调用 Rust                                            |
+| `packages/midi`                           | 复用统一 source/事件展开后的导出入口，删除重复音乐语义                                |
+| `packages/sdk` / `oxitone`                | 统一导出 authoring 与 runtime facade，CLI/GUI 外也能执行保存的 TS                     |
+| `packages/web`                            | 使用同一 document/随机/参数模型，经 Wasm 控制接口运行                                 |
+| `crates/core/graph/transport`             | typed wire/targets、来源窗口、确定性事件/随机、automation DAG 与编译验证              |
+| `crates/render/instruments/samples/mixer` | ABI 2、资源/config prepare、增量实例移交、采样视图与路由执行                          |
+| `crates/napi/wasm`                        | 协议 2 控制桥，错误与数据边界，无 JS 音频执行                                         |
+| `apps/preview`                            | 升级为 GPUI DAW：编辑控制器、视图投影、插件管理器/面板、事务状态                      |
+| `schemas/include/fixtures`                | 全部新协议、ABI header、TS/Rust 生成结果与 conformance                                |
 
 core 从当前 native playback 副作用中解耦。播放/导出通过 runtime session facade，
 例如 `createSession(project, options)`；Project 只组织 authoring，不在 factory 求值时
@@ -102,29 +102,29 @@ PluginMigrationFailed、ParameterTargetInvalid、ResourceChanged、BudgetExceede
 
 ## 4. 必过行为矩阵
 
-| 领域 | 最低验收 |
-| --- | --- |
-| chord | 六 quality、open/inversion、单音 pitch/start/duration/velocity、增删、两个截顶同音不误选 |
-| arp | 四 order、多 octave、重复 input、单步修改、删除留空拍、插音不重算旧力度、seed 重开一致 |
-| 组合 | chord → arp → concat/repeat → transpose → placement，四种作用层次与跨文件共享引用 |
-| 源码 | literal、变量、alias、shared options、async factory、纯返回 helper、不可隔离副作用诊断 |
-| MVVM / 模块 | 双向 dirty buffer、防回环与冲突；import/export 别名/遮蔽/条件导出/副作用/循环 |
-| 本地化 | npm 编曲/效果器组合拆散提示、最小作用范围、绑定/资源/随机保留、依赖源码 hash 不变 |
-| edit 归约 | 同目标重复拖动不累加包装；insert/remove 抵消；expect 失败不猜目标；无操作字节不变 |
-| 结构 | Clip 拆分/移动/替换/跨 Track、窗口截断、共享 Pattern 派生、Loop 单轮编辑与长音延续 |
-| automation | 全 24 入口、不可逆条件、source/lane range、边界/交叉渐变、loop/hold/order、tempo 限制 |
-| 随机 | 包装/移动/重排/source span/ID 变化不改变未编辑事件；复制共享 seed、variation 独立、restart |
-| 采样 | frame/beat、trim/fit/tempoSync、Sample Split 相位、Slicer grid/onset 单片 edit 与 trigger 迁移 |
-| 分区 | grand/soft、多层/单区修改、资源/defaults 保留、键力度不重叠 |
-| 插件 | 两个同版本实例只改一个；host/plugin 同名参数；资源与 state 从 TS 经真实 ABI 2 到 DSP |
-| 面板 | 无 UI 仍可编辑；坏布局回退；原生 companion gesture、拒绝/取消、旧 generation 不误写 |
-| 重排替换 | insert 对象绑定不依赖 index；升级参数/state 迁移失败保留全部源码/automation |
-| 管理器 | 未使用内置/外部可见、缺依赖、精确版本、多插件包、平台/hash/签名、安装失败/重新定位 |
-| 保存 | 多文件崩溃点注入、恢复第三方 hash 冲突、autosave、磁盘满/权限/rename失败、备份可恢复 |
-| 并发 | 外部格式化/重命名/插入/删除/重复实例；三方文本可合并但语义冲突不误写 |
-| 进程 | runner/helper/UI 崩溃、断线重连、request 幂等、queue full/过期 candidate 与 late ack |
-| 重开 | 删全部可丢弃缓存后，仅源码/locks/assets 重建；CLI/GPUI/offline 采用同一配置与音乐 |
-| 音频 | 64/128/256 block、原点/loop边界、有效 tempo/Track clock、WAV/MIDI 事件与随机对拍 |
+| 领域        | 最低验收                                                                                       |
+| ----------- | ---------------------------------------------------------------------------------------------- |
+| chord       | 六 quality、open/inversion、单音 pitch/start/duration/velocity、增删、两个截顶同音不误选       |
+| arp         | 四 order、多 octave、重复 input、单步修改、删除留空拍、插音不重算旧力度、seed 重开一致         |
+| 组合        | chord → arp → concat/repeat → transpose → placement，四种作用层次与跨文件共享引用              |
+| 源码        | literal、变量、alias、shared options、async factory、纯返回 helper、不可隔离副作用诊断         |
+| MVVM / 模块 | 双向 dirty buffer、防回环与冲突；import/export 别名/遮蔽/条件导出/副作用/循环                  |
+| 本地化      | npm 编曲/效果器组合拆散提示、最小作用范围、绑定/资源/随机保留、依赖源码 hash 不变              |
+| edit 归约   | 同目标重复拖动不累加包装；insert/remove 抵消；expect 失败不猜目标；无操作字节不变              |
+| 结构        | Clip 拆分/移动/替换/跨 Track、窗口截断、共享 Pattern 派生、Loop 单轮编辑与长音延续             |
+| automation  | 全 24 入口、不可逆条件、source/lane range、边界/交叉渐变、loop/hold/order、tempo 限制          |
+| 随机        | 包装/移动/重排/source span/ID 变化不改变未编辑事件；复制共享 seed、variation 独立、restart     |
+| 采样        | frame/beat、trim/fit/tempoSync、Sample Split 相位、Slicer grid/onset 单片 edit 与 trigger 迁移 |
+| 分区        | grand/soft、多层/单区修改、资源/defaults 保留、键力度不重叠                                    |
+| 插件        | 两个同版本实例只改一个；host/plugin 同名参数；资源与 state 从 TS 经真实 ABI 2 到 DSP           |
+| 面板        | 无 UI 仍可编辑；坏布局回退；原生 companion gesture、拒绝/取消、旧 generation 不误写            |
+| 重排替换    | insert 对象绑定不依赖 index；升级参数/state 迁移失败保留全部源码/automation                    |
+| 管理器      | 未使用内置/外部可见、缺依赖、精确版本、多插件包、平台/hash/签名、安装失败/重新定位             |
+| 保存        | 多文件崩溃点注入、恢复第三方 hash 冲突、autosave、磁盘满/权限/rename失败、备份可恢复           |
+| 并发        | 外部格式化/重命名/插入/删除/重复实例；三方文本可合并但语义冲突不误写                           |
+| 进程        | runner/helper/UI 崩溃、断线重连、request 幂等、queue full/过期 candidate 与 late ack           |
+| 重开        | 删全部可丢弃缓存后，仅源码/locks/assets 重建；CLI/GPUI/offline 采用同一配置与音乐              |
+| 音频        | 64/128/256 block、原点/loop边界、有效 tempo/Track clock、WAV/MIDI 事件与随机对拍               |
 
 特别验证 literal 重复事件的默认随机相关性是已定义行为，不能为了测试通过隐藏生成 UUID。
 对 opaque state 验证字节保真/资源引用与恢复，不伪造能逐字段编辑私有二进制的测试。
@@ -139,15 +139,15 @@ PluginMigrationFailed、ParameterTargetInvalid、ResourceChanged、BudgetExceede
 在固定 Apple Silicon/macOS、48 kHz、128 frames、release 基线记录下列目标；这是验收预算，
 不是已测结果或跨硬件保证：
 
-| 项目 | 目标与测量范围 |
-| --- | --- |
-| GPUI 手势投影 | 60 Hz；局部 frame p95 ≤16.7 ms，重建不阻塞 UI |
-| 连续参数试听 | UI 发命令到 enqueue 的 p95 ≤30 ms；另外报告 ring/device audible latency |
-| 小工程局部 edit | warm build、无资产 I/O，源码到候选接受 p95 ≤300 ms |
-| 大工程 | 100k notes/1k placements/100 lanes，报告索引/峰值内存/局部编辑 p50/p95/p99 |
-| 插件目录 | 1k metadata 条目检索/滚动不执行代码、不阻塞 UI；验证/安装另测 |
-| 原生 realtime | 保持 05 的场景预算，记录 callback/worker p95/p99/xrun；开启编辑与管理任务对比 |
-| 随机/range | 节点共享、嵌套 edit 和密集 range 的编译/每 block 成本，含超预算诊断 |
+| 项目            | 目标与测量范围                                                                |
+| --------------- | ----------------------------------------------------------------------------- |
+| GPUI 手势投影   | 60 Hz；局部 frame p95 ≤16.7 ms，重建不阻塞 UI                                 |
+| 连续参数试听    | UI 发命令到 enqueue 的 p95 ≤30 ms；另外报告 ring/device audible latency       |
+| 小工程局部 edit | warm build、无资产 I/O，源码到候选接受 p95 ≤300 ms                            |
+| 大工程          | 100k notes/1k placements/100 lanes，报告索引/峰值内存/局部编辑 p50/p95/p99    |
+| 插件目录        | 1k metadata 条目检索/滚动不执行代码、不阻塞 UI；验证/安装另测                 |
+| 原生 realtime   | 保持 05 的场景预算，记录 callback/worker p95/p99/xrun；开启编辑与管理任务对比 |
+| 随机/range      | 节点共享、嵌套 edit 和密集 range 的编译/每 block 成本，含超预算诊断           |
 
 重建不可达目标时优先做增量索引、模块缓存、参数命令与后台 prepare，不能降低校验或
 只更新图形来“达标”。测不到的 callback/设备数据记未测，不用离线平均数冒充。

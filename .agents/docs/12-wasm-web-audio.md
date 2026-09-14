@@ -36,16 +36,16 @@ transport/parameter 命令在 process 外校验；WAV/MIDI 导出在控制侧生
 
 ABI 导出（Wasm32 指针/长度均为 u32，所有调用均同步）：
 
-| Export | 合约 |
-| --- | --- |
-| `oxi_abi_version() -> u32` | 当前 1 |
-| `oxi_alloc(len) -> ptr` / `oxi_free(ptr,len)` | 输入必须来自本实例活跃分配；一次分配只释放一次；len=0 或 >64 MiB 返回空指针 |
-| `oxi_command(jsonPtr,jsonLen,dataPtr,dataLen) -> u32` | 0=成功，1=结构化错误；JSON ≤16 MiB，binary ≤64 MiB；binary 只供 importSample |
-| `oxi_response_ptr/len()` | UTF-8 `{protocolVersion:"1.0",ok,value}` 或 `{protocolVersion:"1.0",ok:false,error:{code,message,path}}` |
-| `oxi_binary_ptr/len()` | 最近一次成功 WAV/MIDI 输出；下一 control 可使其失效 |
-| `oxi_left_ptr()` / `oxi_right_ptr()` | 两个预分配 planar f32 block，各 blockSize frames |
-| `oxi_process() -> u32` | 0=正常，1=未编译，2=graph fault；不做 control 工作 |
-| `oxi_allocations()` / `oxi_deallocations()` | Wasm 实例 allocator 累计 u32 counter（允许 wrap），供 process 检查 |
+| Export                                                | 合约                                                                                                     |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `oxi_abi_version() -> u32`                            | 当前 1                                                                                                   |
+| `oxi_alloc(len) -> ptr` / `oxi_free(ptr,len)`         | 输入必须来自本实例活跃分配；一次分配只释放一次；len=0 或 >64 MiB 返回空指针                              |
+| `oxi_command(jsonPtr,jsonLen,dataPtr,dataLen) -> u32` | 0=成功，1=结构化错误；JSON ≤16 MiB，binary ≤64 MiB；binary 只供 importSample                             |
+| `oxi_response_ptr/len()`                              | UTF-8 `{protocolVersion:"1.0",ok,value}` 或 `{protocolVersion:"1.0",ok:false,error:{code,message,path}}` |
+| `oxi_binary_ptr/len()`                                | 最近一次成功 WAV/MIDI 输出；下一 control 可使其失效                                                      |
+| `oxi_left_ptr()` / `oxi_right_ptr()`                  | 两个预分配 planar f32 block，各 blockSize frames                                                         |
+| `oxi_process() -> u32`                                | 0=正常，1=未编译，2=graph fault；不做 control 工作                                                       |
+| `oxi_allocations()` / `oxi_deallocations()`           | Wasm 实例 allocator 累计 u32 counter（允许 wrap），供 process 检查                                       |
 
 命令均有 `protocolVersion:"1.0"` 和 `type`：`compile{snapshot}`、
 `importSample{format}`（外加 binary）、`state`、

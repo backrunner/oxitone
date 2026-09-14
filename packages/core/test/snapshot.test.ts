@@ -28,7 +28,10 @@ function buildProject(): Project {
     ],
   });
   track.pattern(riff).at({ bar: 1, beat: 0 }).loop(2).transpose(12);
-  track.pattern(chord(60, "minor", { duration: 4, id: "pat_chord" })).at({ bar: 3 }).last({ bar: 6 });
+  track
+    .pattern(chord(60, "minor", { duration: 4, id: "pat_chord" }))
+    .at({ bar: 3 })
+    .last({ bar: 6 });
   track.pattern(arp([60, 64, 67], "up", 0.25, { seed: 3, id: "pat_arp" })).at({ bar: 9 });
   return project;
 }
@@ -68,9 +71,7 @@ describe("snapshot", () => {
     const clip = snapshot.patternClips[0];
     expect(clip?.startBeat).toEqual({ numerator: 0, denominator: 1 });
     // bars 1-4 in 4/4 (16 beats), bar 5 in 3/4 -> bar 6 starts at beat 19.
-    expect(beatFromWire(snapshot.patternClips[1]?.lastBeat ?? { numerator: 0, denominator: 1 })).toBe(
-      19,
-    );
+    expect(beatFromWire(snapshot.patternClips[1]?.lastBeat ?? { numerator: 0, denominator: 1 })).toBe(19);
   });
 
   it("sorts simultaneous notes by start, voice, creation order", () => {

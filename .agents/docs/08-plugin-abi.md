@@ -81,15 +81,15 @@ major 必须为 1，struct_size 至少覆盖宿主 v1 记录，minor 扩展只�
 
 生命周期：
 
-| 方法 | 线程与约束 |
-| --- | --- |
-| create | 控制线程，接收仅在调用期间有效的 host context；返回独占实例，NULL 表示失败 |
-| prepare | 控制线程，可分配；参数为 sample rate、最大 block frames，返回 0 成功 |
-| process | 实时路径，返回 0 成功；非 0 触发节点静音 |
-| reset | 实时安全的 flush，seek/loop/换图可调用；保留参数设置，清空 voices/delay state |
-| tail_frames | 实时安全；仅 reportsTail 为 true 时读取 |
-| latency_frames | 实时安全；仅 prepare 可改变，宿主参与 PDC |
-| dispose | 控制线程，释放实例；此时库仍已加载 |
+| 方法           | 线程与约束                                                                    |
+| -------------- | ----------------------------------------------------------------------------- |
+| create         | 控制线程，接收仅在调用期间有效的 host context；返回独占实例，NULL 表示失败    |
+| prepare        | 控制线程，可分配；参数为 sample rate、最大 block frames，返回 0 成功          |
+| process        | 实时路径，返回 0 成功；非 0 触发节点静音                                      |
+| reset          | 实时安全的 flush，seek/loop/换图可调用；保留参数设置，清空 voices/delay state |
+| tail_frames    | 实时安全；仅 reportsTail 为 true 时读取                                       |
+| latency_frames | 实时安全；仅 prepare 可改变，宿主参与 PDC                                     |
+| dispose        | 控制线程，释放实例；此时库仍已加载                                            |
 
 每个实例的调用串行化，但不同实例可能来自不同控制线程；实例必须能在线程间转移。
 process/reset/tail/latency 不得分配或释放 heap、加锁、阻塞、I/O、日志、读取时钟或调用 JS。

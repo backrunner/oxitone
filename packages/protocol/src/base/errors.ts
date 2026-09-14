@@ -60,11 +60,7 @@ export class OxitoneError extends Error {
   readonly code: OxitoneErrorCode;
   readonly details?: OxitoneErrorDetails;
 
-  constructor(
-    code: OxitoneErrorCode,
-    message: string,
-    options?: { details?: OxitoneErrorDetails; cause?: unknown },
-  ) {
+  constructor(code: OxitoneErrorCode, message: string, options?: { details?: OxitoneErrorDetails; cause?: unknown }) {
     super(message, options?.cause === undefined ? undefined : { cause: options.cause });
     this.name = "OxitoneError";
     this.code = code;

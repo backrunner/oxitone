@@ -4,9 +4,11 @@ import { createAutomationNamespace, Pattern, Project, type TransportPosition } f
 
 function projectWithNotes(): Project {
   const project = new Project();
-  project.addTrack().use(project.addChannel()).add(new Pattern({ lengthBeats: 4,
-    notes: [{ pitch: 60, start: 0, duration: 1, velocity: 1 }],
-  })).at({ bar: 1 });
+  project
+    .addTrack()
+    .use(project.addChannel())
+    .add(new Pattern({ lengthBeats: 4, notes: [{ pitch: 60, start: 0, duration: 1, velocity: 1 }] }))
+    .at({ bar: 1 });
   return project;
 }
 
@@ -22,7 +24,10 @@ describe("Session graph updates and compiled positions", () => {
       expect(session.revision).toBe(BigInt(project.snapshot().revision));
       expect(play).toHaveBeenCalledWith({ bar: 1, beat: 1 }, loop);
       expect((await session.seek({ beat: 3 })).cursor).toBe("48000");
-    } finally { play.mockRestore(); await session.dispose(); }
+    } finally {
+      play.mockRestore();
+      await session.dispose();
+    }
   });
   it("updates on the same engine and preserves compiled exports and positions on rejection", async () => {
     const project = projectWithNotes();
@@ -49,7 +54,9 @@ describe("Session graph updates and compiled positions", () => {
       expect(session.revision).toBe(acceptedRevision);
       expect((await session.seek({ beat: 2 })).cursor).toBe("24000");
       expect(await session.exportMidi({})).toEqual(accepted);
-    } finally { await session.dispose(); }
+    } finally {
+      await session.dispose();
+    }
   });
 
   it("resolves bar+beat, markers and timecodes against the compiled snapshot and actual engine rate", async () => {
@@ -57,7 +64,10 @@ describe("Session graph updates and compiled positions", () => {
     project.addTimeSignature({ startBar: 2, numerator: 3, denominator: 4 });
     const marker = project.addMarker("verse", 5);
     const a = createAutomationNamespace();
-    project.addAutomationLane({ entityId: project.id, parameterId: "tempo" }, a.constant(Math.log(240 / 20) / Math.log(999 / 20)));
+    project.addAutomationLane(
+      { entityId: project.id, parameterId: "tempo" },
+      a.constant(Math.log(240 / 20) / Math.log(999 / 20)),
+    );
     const session = await project.compile({ sampleRate: 24000 });
     try {
       expect((await session.seek({ bar: 2, beat: 1 })).cursor).toBe("30000");
@@ -69,13 +79,26 @@ describe("Session graph updates and compiled positions", () => {
       expect((await session.seek({ bar: 2, beat: 1 })).cursor).toBe("30000");
       await session.update();
       expect((await session.seek({ bar: 2, beat: 1 })).cursor).toBe("48000");
-      for (const position of [{ bar: 0 }, { bar: 2, beat: 7 }, { marker: "missing" },
-        { seconds: Infinity }, { seconds: -1 }, { seconds: 1e30 }, { frame: -1 },
-        { frame: Number.MAX_SAFE_INTEGER + 1 }, { seconds: 1, beat: 2 }, {}]) {
-        await expect(session.seek(position as TransportPosition)).rejects.toMatchObject({ code: ErrorCode.InvalidProject });
+      for (const position of [
+        { bar: 0 },
+        { bar: 2, beat: 7 },
+        { marker: "missing" },
+        { seconds: Infinity },
+        { seconds: -1 },
+        { seconds: 1e30 },
+        { frame: -1 },
+        { frame: Number.MAX_SAFE_INTEGER + 1 },
+        { seconds: 1, beat: 2 },
+        {},
+      ]) {
+        await expect(session.seek(position as TransportPosition)).rejects.toMatchObject({
+          code: ErrorCode.InvalidProject,
+        });
       }
       expect((await session.seek({ seconds: 0 })).cursor).toBe("0");
-    } finally { await session.dispose(); }
+    } finally {
+      await session.dispose();
+    }
   });
 
   it("clears the active session after disposal and rejects later operations consistently", async () => {
@@ -85,11 +108,20 @@ describe("Session graph updates and compiled positions", () => {
     await session.dispose();
     expect(session.disposed).toBe(true);
     expect(project.session).toBeUndefined();
-    for (const run of [() => session.update(), () => session.seek({ beat: 0 }),
-      () => session.exportMidi({}), () => session.diagnostics(), () => project.pause()]) {
+    for (const run of [
+      () => session.update(),
+      () => session.seek({ beat: 0 }),
+      () => session.exportMidi({}),
+      () => session.diagnostics(),
+      () => project.pause(),
+    ]) {
       await expect(run()).rejects.toMatchObject({ code: ErrorCode.InvalidProject });
     }
     const next = await project.compile();
-    try { expect(next.engineId).not.toBe(session.engineId); } finally { await next.dispose(); }
+    try {
+      expect(next.engineId).not.toBe(session.engineId);
+    } finally {
+      await next.dispose();
+    }
   });
 });

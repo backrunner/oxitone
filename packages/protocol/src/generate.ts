@@ -4,11 +4,7 @@
  */
 import { generateSchemas } from "./gen/schemas.js";
 import { generateSnapshotFixture } from "./gen/snapshot.js";
-import {
-  generateAutomationFixtures,
-  generateHash64Vectors,
-  generatePcg32Vectors,
-} from "./gen/vectors.js";
+import { generateAutomationFixtures, generateHash64Vectors, generatePcg32Vectors } from "./gen/vectors.js";
 
 generateSchemas();
 generateSnapshotFixture();

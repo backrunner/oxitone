@@ -8,13 +8,13 @@ frequency contrast matter alongside loudness.
 
 Research consulted on 2026-09-08:
 
-| Reference | Relevant material |
-| --- | --- |
-| Ghosthack, [Melodic Dubstep Drop from Scratch](https://www.youtube.com/watch?v=T9bK23ezyA8) | Chapters: drums/sidechain 2:34, chord stacks 4:42, bell/lead/arp 7:04, sub/growls 9:32, Reese 13:12, vowel 16:31, resampled glitches 18:52 |
-| Ghosthack, [From Drop to Track — FL Studio](https://www.youtube.com/watch?v=Cb-sT89x0-U) | Develop the second drop half (1:31), lead (15:10), intro/breakdown (23:30/36:00), build (43:18) and full form (53:30) |
-| Drayen, [Seven Lions / Trivecta / Crystal Skies-style production](https://www.youtube.com/watch?v=nHwhWUuEfVQ) | Build drums 2:21, build layers 2:50, FX 13:09, pre-drop/fills 14:24, percussion 20:06, leads/saws/basses 22:47/26:54/29:26, atmosphere/noise 31:24 |
-| Novus, [Epic Melodic Dubstep — FL Studio 21](https://www.youtube.com/watch?v=F-dnLcxXE54) | Build 6:17, drop 8:22, lead sound design 9:41, continuation 11:44; visual arrangement shows separate sustained chord stacks and rhythmic bass/fill parts |
-| EDMProd, [UK/140 dubstep guide](https://www.edmprod.com/how-to-make-dubstep/) | Written explanation of short kicks, complementary drum layers, sub/mid separation, filtered sends and build subdivisions; its explicitly sparse UK style is a comparison, not the target arrangement |
+| Reference                                                                                                      | Relevant material                                                                                                                                                                                    |
+| -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ghosthack, [Melodic Dubstep Drop from Scratch](https://www.youtube.com/watch?v=T9bK23ezyA8)                    | Chapters: drums/sidechain 2:34, chord stacks 4:42, bell/lead/arp 7:04, sub/growls 9:32, Reese 13:12, vowel 16:31, resampled glitches 18:52                                                           |
+| Ghosthack, [From Drop to Track — FL Studio](https://www.youtube.com/watch?v=Cb-sT89x0-U)                       | Develop the second drop half (1:31), lead (15:10), intro/breakdown (23:30/36:00), build (43:18) and full form (53:30)                                                                                |
+| Drayen, [Seven Lions / Trivecta / Crystal Skies-style production](https://www.youtube.com/watch?v=nHwhWUuEfVQ) | Build drums 2:21, build layers 2:50, FX 13:09, pre-drop/fills 14:24, percussion 20:06, leads/saws/basses 22:47/26:54/29:26, atmosphere/noise 31:24                                                   |
+| Novus, [Epic Melodic Dubstep — FL Studio 21](https://www.youtube.com/watch?v=F-dnLcxXE54)                      | Build 6:17, drop 8:22, lead sound design 9:41, continuation 11:44; visual arrangement shows separate sustained chord stacks and rhythmic bass/fill parts                                             |
+| EDMProd, [UK/140 dubstep guide](https://www.edmprod.com/how-to-make-dubstep/)                                  | Written explanation of short kicks, complementary drum layers, sub/mid separation, filtered sends and build subdivisions; its explicitly sparse UK style is a comparison, not the target arrangement |
 
 Scope of access: tutorial descriptions/chapter lists and public storyboard frames
 were inspected without playing through a device. Caption requests returned empty;

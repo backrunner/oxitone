@@ -25,15 +25,15 @@ GPUI capture 使用 simulated sink；查看 `target/daw-automation.png` 与
 2 placements、20 catalog entries；1 次 warmup + 10 次实测，p95/p99 均为此小样本最大值。
 source-daw benchmark 验证后接受的真实代码事务，Save 每次都有 dirty 内容：
 
-| 操作 | p50 ms | p95/p99 ms |
-| --- | ---: | ---: |
-| 音符提交 | 216.70 | 280.51 |
-| 插件参数提交 | 199.80 | 209.26 |
-| rack 候选验证 | 195.76 | 210.29 |
-| dirty journal Save | 62.60 | 67.35 |
-| 效果器重排 | 532.33 | 884.18 |
-| 文本/插件投影序列化 | 1.73 | 4.65 |
-| 新进程重开 | 457.28 | 655.66 |
+| 操作                | p50 ms | p95/p99 ms |
+| ------------------- | -----: | ---------: |
+| 音符提交            | 216.70 |     280.51 |
+| 插件参数提交        | 199.80 |     209.26 |
+| rack 候选验证       | 195.76 |     210.29 |
+| dirty journal Save  |  62.60 |      67.35 |
+| 效果器重排          | 532.33 |     884.18 |
+| 文本/插件投影序列化 |   1.73 |       4.65 |
+| 新进程重开          | 457.28 |     655.66 |
 
 上述为实例迁移后的独立重跑 `target/daw-instances-source-bench-serial.json`，此前并行测试
 重叠样本另保留 `target/daw-instances-source-bench.json`。机器有外部负载，重排/重开性能

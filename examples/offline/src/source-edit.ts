@@ -12,9 +12,7 @@ export const variation = phrase.repeat(8).edit([
 
 const project = new Project({ name: "Source edits", seed: 42 });
 project.setTempo(120);
-const keys = project.addChannel({ name: "Keys", level: 0.4,
-  instrument: wavetable({ oscA: { wave: "triangle" } }),
-});
+const keys = project.addChannel({ name: "Keys", level: 0.4, instrument: wavetable({ oscA: { wave: "triangle" } }) });
 project.addTrack("Original").use(keys).add(phrase.repeat(8)).at({ bar: 1 });
 project.addTrack("Variation").use(keys).add(variation).at({ bar: 3 });
 export default project;

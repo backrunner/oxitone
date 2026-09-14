@@ -33,10 +33,17 @@ export abstract class ProjectPlayback {
   private pluginList: RegisterPluginOptions[] = [];
   private pluginUiList: PluginUiManifest[] = [];
   private policy: EngineOptions["allowPlugins"];
-  get registeredPlugins(): RegisterPluginOptions[] { return structuredClone(this.pluginList); }
-  get pluginPolicy(): EngineOptions["allowPlugins"] { return this.policy; }
+  get registeredPlugins(): RegisterPluginOptions[] {
+    return structuredClone(this.pluginList);
+  }
+  get pluginPolicy(): EngineOptions["allowPlugins"] {
+    return this.policy;
+  }
   /** Fluent authoring registration; signature policy and hash checks are identical to registerPlugin. */
-  withPluginRegistration(input: RegisterPluginOptions): this { this.registerPlugin(input); return this; }
+  withPluginRegistration(input: RegisterPluginOptions): this {
+    this.registerPlugin(input);
+    return this;
+  }
 
   /** Register a native Preview panel for an exact built-in or dylib plugin version.
    * Layout validation is local to Preview: invalid layouts never reject valid audio.
@@ -44,12 +51,16 @@ export abstract class ProjectPlayback {
    */
   registerPluginUi(layout: PluginUiManifest): this {
     const copy = structuredClone(layout);
-    const index = this.pluginUiList.findIndex((ui) => ui.pluginId === copy.pluginId && ui.pluginVersion === copy.pluginVersion);
+    const index = this.pluginUiList.findIndex(
+      (ui) => ui.pluginId === copy.pluginId && ui.pluginVersion === copy.pluginVersion,
+    );
     if (index < 0) this.pluginUiList.push(copy);
     else this.pluginUiList[index] = copy;
     return this;
   }
-  get registeredPluginUis(): PluginUiManifest[] { return structuredClone(this.pluginUiList); }
+  get registeredPluginUis(): PluginUiManifest[] {
+    return structuredClone(this.pluginUiList);
+  }
 
   /** Register trusted plugin code for this project's current and future engines. */
   registerPlugin(input: RegisterPluginOptions, options: Pick<EngineOptions, "allowPlugins"> = {}): RegisteredPlugin {
@@ -61,16 +72,25 @@ export abstract class ProjectPlayback {
       for (const existing of this.pluginList) nativeRegisterPlugin(engine, existing);
       const result = nativeRegisterPlugin(engine, plugin);
       this.session?.registerPlugin({ ...plugin, expectedHash: result.sha256 });
-      if (!this.pluginList.some((entry) => entry.manifest.pluginId === result.pluginId && entry.manifest.pluginVersion === result.pluginVersion)) {
+      if (
+        !this.pluginList.some(
+          (entry) =>
+            entry.manifest.pluginId === result.pluginId && entry.manifest.pluginVersion === result.pluginVersion,
+        )
+      ) {
         this.pluginList.push({ ...plugin, expectedHash: result.sha256 });
       }
       this.policy = policy;
       return result;
-    } finally { nativeDispose(engine); }
+    } finally {
+      nativeDispose(engine);
+    }
   }
   protected projectAssetBaseDir: string | undefined;
   /** Absolute resource directory retained when restoring a portable project. */
-  get assetBaseDir(): string | undefined { return this.projectAssetBaseDir; }
+  get assetBaseDir(): string | undefined {
+    return this.projectAssetBaseDir;
+  }
 
   abstract snapshot(): ProjectSnapshot;
   abstract barBeatToBeats(position: BarBeatPosition): number;
@@ -107,10 +127,7 @@ export abstract class ProjectPlayback {
   private requireSession(): Session {
     const session = this.session;
     if (session === undefined) {
-      throw new OxitoneError(
-        ErrorCode.InvalidProject,
-        "no active session; call compile() or play() first",
-      );
+      throw new OxitoneError(ErrorCode.InvalidProject, "no active session; call compile() or play() first");
     }
     return session;
   }
@@ -118,8 +135,11 @@ export abstract class ProjectPlayback {
   /** One-shot offline WAV export on a temporary engine (04 §RenderOptions). */
   async renderWav(options: RenderOptions): Promise<RenderReport> {
     const snapshot = this.snapshot();
-    return withTempEngine((engine) => nativeRenderWav(engine, snapshot, { assetBaseDir: this.assetBaseDir, ...options }),
-      { allowPlugins: this.policy }, this.pluginList);
+    return withTempEngine(
+      (engine) => nativeRenderWav(engine, snapshot, { assetBaseDir: this.assetBaseDir, ...options }),
+      { allowPlugins: this.policy },
+      this.pluginList,
+    );
   }
 
   /** One-shot SMF Type 1 export on a temporary engine. */

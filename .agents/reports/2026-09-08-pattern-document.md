@@ -35,14 +35,14 @@ Rust 本次无实现修改，workspace 回归使用原有 offline/simulated sink
 `pnpm --filter @oxitone/cli build && node packages/cli/bench/source-writing.mjs`。
 Apple M4 / darwin 27.0.0 / Node v26.5.0；3 次预热、20 次测量。20 次样本的 p99 接近最大值。
 
-| 音符数 | 操作 | p50 ms | p95 ms | p99 ms |
-| --- | --- | --- | --- | --- |
-| 100 | sparse 文本回写 | 1.436 | 2.540 | 4.292 |
-| 100 | 拆散并新增 import | 3.617 | 5.271 | 5.671 |
-| 100 | literal Note 回写 | 3.071 | 4.793 | 4.877 |
-| 1,000 | sparse 文本回写 | 1.673 | 3.996 | 4.180 |
-| 1,000 | 拆散并新增 import | 19.682 | 22.445 | 26.020 |
-| 1,000 | literal Note 回写 | 24.512 | 26.124 | 27.584 |
+| 音符数 | 操作              | p50 ms | p95 ms | p99 ms |
+| ------ | ----------------- | ------ | ------ | ------ |
+| 100    | sparse 文本回写   | 1.436  | 2.540  | 4.292  |
+| 100    | 拆散并新增 import | 3.617  | 5.271  | 5.671  |
+| 100    | literal Note 回写 | 3.071  | 4.793  | 4.877  |
+| 1,000  | sparse 文本回写   | 1.673  | 3.996  | 4.180  |
+| 1,000  | 拆散并新增 import | 19.682 | 22.445 | 26.020 |
+| 1,000  | literal Note 回写 | 24.512 | 26.124 | 27.584 |
 
 测量包括 authoring 校验、AST/局部作用域与打印；不包括用户工程执行、依赖 I/O、
 文件发布、GPUI 绘制或 Rust prepare。设备、sample rate、block size、CPU utilization、

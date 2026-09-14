@@ -11,7 +11,12 @@ import { canonicalEncode, PREVIEW_MAX_FRAME_BYTES, previewFrameSchema, type Prev
 import { bundleCode, projectBuildOptions, writeBundle } from "../bundle.js";
 
 const require = createRequire(import.meta.url);
-export interface RunnerOptions { watch?: boolean; debounceMs?: number; watchPaths?: string[]; timeoutMs?: number; }
+export interface RunnerOptions {
+  watch?: boolean;
+  debounceMs?: number;
+  watchPaths?: string[];
+  timeoutMs?: number;
+}
 
 /** Watches dependencies and executes each version in an isolated Node process. */
 export class PreviewRunner {
@@ -26,31 +31,44 @@ export class PreviewRunner {
   private directory = "";
   private bundle = "";
 
-  constructor(private readonly entry: string, private readonly send: (frame: PreviewFrame) => void,
-    private readonly options: RunnerOptions = {}) {}
+  constructor(
+    private readonly entry: string,
+    private readonly send: (frame: PreviewFrame) => void,
+    private readonly options: RunnerOptions = {},
+  ) {}
 
   async start(): Promise<void> {
     this.directory = await mkdtemp(join(tmpdir(), "oxitone-project-"));
     const options = projectBuildOptions(this.entry);
-    this.buildContext = await context({ ...options,
-      plugins: [...options.plugins!, { name: "oxitone-preview", setup: (build) => {
-        build.onStart(() => {
-          this.generation++;
-          this.child?.kill("SIGKILL");
-          if (this.timer) clearTimeout(this.timer);
-          this.send({ type: "status", protocolVersion: "1.0", state: "building" });
-        });
-        build.onEnd((result) => {
-          if (this.closed) return;
-          if (result.errors.length) {
-            const error = result.errors[0]!;
-            this.diagnostic(error.text, error.location ? `${error.location.file}:${error.location.line}` : undefined);
-          } else if (result.outputFiles?.length === 1) {
-            this.bundle = bundleCode(result, this.entry);
-            this.schedule();
-          } else this.diagnostic("Project build must produce exactly one JavaScript file");
-        });
-      } }],
+    this.buildContext = await context({
+      ...options,
+      plugins: [
+        ...options.plugins!,
+        {
+          name: "oxitone-preview",
+          setup: (build) => {
+            build.onStart(() => {
+              this.generation++;
+              this.child?.kill("SIGKILL");
+              if (this.timer) clearTimeout(this.timer);
+              this.send({ type: "status", protocolVersion: "1.0", state: "building" });
+            });
+            build.onEnd((result) => {
+              if (this.closed) return;
+              if (result.errors.length) {
+                const error = result.errors[0]!;
+                this.diagnostic(
+                  error.text,
+                  error.location ? `${error.location.file}:${error.location.line}` : undefined,
+                );
+              } else if (result.outputFiles?.length === 1) {
+                this.bundle = bundleCode(result, this.entry);
+                this.schedule();
+              } else this.diagnostic("Project build must produce exactly one JavaScript file");
+            });
+          },
+        },
+      ],
     });
     if (this.options.watch === false) await this.buildContext.rebuild();
     else await this.buildContext.watch();
@@ -64,7 +82,7 @@ export class PreviewRunner {
         this.generation++;
         this.child?.kill("SIGKILL");
         this.send({ type: "status", protocolVersion: "1.0", state: "building" });
-        void this.buildContext?.rebuild().catch(error => this.diagnostic(String(error)));
+        void this.buildContext?.rebuild().catch((error) => this.diagnostic(String(error)));
       });
       watcher.on("error", (error) => this.diagnostic(error.message, target));
       this.watchers.push(watcher);
@@ -72,52 +90,78 @@ export class PreviewRunner {
   }
 
   private diagnostic(message: string, path?: string): void {
-    this.send({ type: "diagnostic", protocolVersion: "1.0", code: "PreviewBuildFailed", message,
-      ...(path === undefined ? {} : { path }) });
+    this.send({
+      type: "diagnostic",
+      protocolVersion: "1.0",
+      code: "PreviewBuildFailed",
+      message,
+      ...(path === undefined ? {} : { path }),
+    });
   }
 
   private schedule(): void {
     if (this.timer) clearTimeout(this.timer);
     const generation = this.generation;
-    this.timer = setTimeout(() => { void this.evaluate(generation).catch(error => {
-      if (!this.closed && generation === this.generation) this.diagnostic(String(error));
-    }); }, this.options.debounceMs ?? 150);
+    this.timer = setTimeout(() => {
+      void this.evaluate(generation).catch((error) => {
+        if (!this.closed && generation === this.generation) this.diagnostic(String(error));
+      });
+    }, this.options.debounceMs ?? 150);
   }
 
   private async evaluate(generation: number): Promise<void> {
     if (this.closed || generation !== this.generation) return;
     const bundle = join(this.directory, `project-${generation}.mjs`);
     await writeBundle(bundle, this.bundle);
-    if (this.closed || generation !== this.generation) { await rm(bundle, { force: true }); return; }
+    if (this.closed || generation !== this.generation) {
+      await rm(bundle, { force: true });
+      return;
+    }
     const worker = new URL("./evaluate.js", import.meta.url);
     if (!existsSync(worker)) worker.pathname = worker.pathname.replace(/\.js$/, ".ts");
-    const child = spawn(process.execPath, ["--import", require.resolve("tsx"),
-      fileURLToPath(worker), bundle, resolve(this.entry)], {
-      cwd: dirname(resolve(this.entry)), stdio: ["ignore", "pipe", "pipe", "pipe"],
-    });
+    const child = spawn(
+      process.execPath,
+      ["--import", require.resolve("tsx"), fileURLToPath(worker), bundle, resolve(this.entry)],
+      {
+        cwd: dirname(resolve(this.entry)),
+        stdio: ["ignore", "pipe", "pipe", "pipe"],
+      },
+    );
     this.child = child;
     const chunks: Buffer[] = [];
     let bytes = 0;
     let diagnostics = "";
     let loggedBytes = 0;
-    const timer = setTimeout(() => { diagnostics = "Preview execution timed out"; child.kill("SIGKILL"); }, this.options.timeoutMs ?? 10_000);
+    const timer = setTimeout(() => {
+      diagnostics = "Preview execution timed out";
+      child.kill("SIGKILL");
+    }, this.options.timeoutMs ?? 10_000);
     child.stdout?.on("data", (chunk: Buffer) => {
       if (loggedBytes < 16_384) process.stderr.write(chunk.subarray(0, 16_384 - loggedBytes));
       loggedBytes += chunk.length;
     });
-    child.stderr?.on("data", (chunk: Buffer) => { diagnostics = (diagnostics + chunk.toString()).slice(-16_384); });
+    child.stderr?.on("data", (chunk: Buffer) => {
+      diagnostics = (diagnostics + chunk.toString()).slice(-16_384);
+    });
     child.stdio[3]?.on("data", (chunk: Buffer) => {
       bytes += chunk.length;
-      if (bytes > PREVIEW_MAX_FRAME_BYTES) { diagnostics = "Preview result exceeds 64 MiB"; child.kill("SIGKILL"); }
-      else chunks.push(chunk);
+      if (bytes > PREVIEW_MAX_FRAME_BYTES) {
+        diagnostics = "Preview result exceeds 64 MiB";
+        child.kill("SIGKILL");
+      } else chunks.push(chunk);
     });
-    child.on("error", (error) => { diagnostics = error.message; });
+    child.on("error", (error) => {
+      diagnostics = error.message;
+    });
     child.on("close", (code) => {
       void rm(bundle, { force: true });
       clearTimeout(timer);
       if (this.closed || generation !== this.generation) return;
       this.child = undefined;
-      if (code !== 0 || bytes > PREVIEW_MAX_FRAME_BYTES) { this.diagnostic(diagnostics || `Preview execution exited ${code}`); return; }
+      if (code !== 0 || bytes > PREVIEW_MAX_FRAME_BYTES) {
+        this.diagnostic(diagnostics || `Preview execution exited ${code}`);
+        return;
+      }
       try {
         const value = JSON.parse(Buffer.concat(chunks).toString("utf8"));
         value.snapshot.revision = "0";
@@ -132,7 +176,9 @@ export class PreviewRunner {
         const frame = previewFrameSchema.parse({ ...value, hash, type: "snapshot", protocolVersion: "1.0" });
         this.send(frame);
         this.hash = hash;
-      } catch (error) { this.diagnostic(error instanceof Error ? error.message : String(error)); }
+      } catch (error) {
+        this.diagnostic(error instanceof Error ? error.message : String(error));
+      }
     });
   }
 

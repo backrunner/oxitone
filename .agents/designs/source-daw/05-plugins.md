@@ -41,16 +41,16 @@ Note event 增加宿主分配的 eventToken，note-off 精确对应同次 note-o
 token 只在运行事件生命周期内有效，不写入用户 TS，也不参与随机 seed。所有事件带
 frameOffset、明确 kind 与有效 count/capacity；同帧优先级和溢出错误与引擎调度协议一致。
 
-| 调用族 | 线程 / 数据 |
-| --- | --- |
-| describe | 验证 helper/控制侧；复制静态 descriptor，与 manifest 核对 |
-| validateConfig / migrateConfig | 控制侧；只读配置与有界输出，错误保留原配置 |
-| create(config, resourceViews, host) | 控制侧；实例独占，配置数据必须复制或由约定 lease 持有 |
-| prepare(rate, maxBlock, busLayout) | 控制侧；分配 DSP/事件缓冲，发布固定 latency/tail 能力 |
-| process(audio, notes, parameters) | realtime；只用预分配数据、物理参数与 frame offsets |
-| reset(reason, positionContext) | realtime-safe；原因明确，不隐式改创作配置 |
-| getConfiguration | 控制侧配置对象/安全快照；不允许并发读取运行 DSP 内存 |
-| dispose | 控制侧；先销毁实例，再释放资源与动态库 |
+| 调用族                              | 线程 / 数据                                               |
+| ----------------------------------- | --------------------------------------------------------- |
+| describe                            | 验证 helper/控制侧；复制静态 descriptor，与 manifest 核对 |
+| validateConfig / migrateConfig      | 控制侧；只读配置与有界输出，错误保留原配置                |
+| create(config, resourceViews, host) | 控制侧；实例独占，配置数据必须复制或由约定 lease 持有     |
+| prepare(rate, maxBlock, busLayout)  | 控制侧；分配 DSP/事件缓冲，发布固定 latency/tail 能力     |
+| process(audio, notes, parameters)   | realtime；只用预分配数据、物理参数与 frame offsets        |
+| reset(reason, positionContext)      | realtime-safe；原因明确，不隐式改创作配置                 |
+| getConfiguration                    | 控制侧配置对象/安全快照；不允许并发读取运行 DSP 内存      |
+| dispose                             | 控制侧；先销毁实例，再释放资源与动态库                    |
 
 配置状态和运行状态分离：TS 中的 parameters/resources/state 决定可重开配置；voice、delay
 buffer、LFO 当前相位等是运行状态，不作为普通 Save 的内容。getConfiguration 不成为每次
@@ -108,15 +108,15 @@ handle。升级/替换创建候选配置，默认新插件参数；只有用户�
 默认只显示可搜索的插件名称/类型列表。详情和工程使用位置按需展开，实例配置是独立编辑窗口；
 浏览不创建 DSP 或开启音频设备，不把参数参考表、技术元数据和统计卡片堆在管理器首页。
 
-| 区域 | 内容 / 行为 |
-| --- | --- |
-| 分类 | 直接显示 All/Instruments/Effects 筛选 |
-| 搜索与列表 | 搜索匹配 displayName/vendor/package/pluginId；行仅显示名称、类型及异常，同名时补充 vendor/version |
-| Details | 按需显示准确版本、包来源、许可与验证信息，ABI/hash/路径等仅在此披露；不显示参数参考表 |
-| Used in project | 按需列出 Channel/Bus/Master 和具体槽位，可打开实例面板或配置；不常驻引用计数 |
-| 实例配置 | 独立窗口保留准确实例目标、参数编辑、作用范围、Mix/bypass 和结构操作；浏览目录不重新定位正在编辑的实例 |
-| 管理任务 | 安装、验证、更新、重新定位、卸载的进度/失败/取消与重试 |
-| 问题恢复 | 缺库/包、错架构、hash/签名/ABI/schema/prepare 错误，不自动替换音源 |
+| 区域            | 内容 / 行为                                                                                           |
+| --------------- | ----------------------------------------------------------------------------------------------------- |
+| 分类            | 直接显示 All/Instruments/Effects 筛选                                                                 |
+| 搜索与列表      | 搜索匹配 displayName/vendor/package/pluginId；行仅显示名称、类型及异常，同名时补充 vendor/version     |
+| Details         | 按需显示准确版本、包来源、许可与验证信息，ABI/hash/路径等仅在此披露；不显示参数参考表                 |
+| Used in project | 按需列出 Channel/Bus/Master 和具体槽位，可打开实例面板或配置；不常驻引用计数                          |
+| 实例配置        | 独立窗口保留准确实例目标、参数编辑、作用范围、Mix/bypass 和结构操作；浏览目录不重新定位正在编辑的实例 |
+| 管理任务        | 安装、验证、更新、重新定位、卸载的进度/失败/取消与重试                                                |
+| 问题恢复        | 缺库/包、错架构、hash/签名/ABI/schema/prepare 错误，不自动替换音源                                    |
 
 必须区分本机发现、工程声明、已接受实例、运行中占用四个维度。已安装不等于已验证，
 目录隐藏不等于禁用工程实例，草稿删除不等于旧图已释放库。显示已知的聚合 faults，

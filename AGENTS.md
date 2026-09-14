@@ -25,8 +25,9 @@ Before changing code, read the applicable document in `.agents/docs/` and apply 
   module boundaries, generated-code exceptions and review requirements.
 - Tests must not open system audio outputs or play through speakers. Use offline PCM/WAV checks,
   simulated native sinks and browser no-device sinks; browser tests must fail if a silent sink is unavailable.
-- Required checks for implementation changes are `pnpm lint`, `pnpm typecheck`, `cargo fmt --all --check`,
-  `cargo test --workspace`, and the focused benchmark. Narrow docs-only changes may skip code checks.
+- Required checks for implementation changes are `pnpm format:check`, `pnpm lint`, `pnpm typecheck`,
+  `cargo fmt --all --check`, `cargo test --workspace`, and the focused benchmark. Narrow docs-only
+  changes may skip code checks.
 
 ## Architecture invariants
 

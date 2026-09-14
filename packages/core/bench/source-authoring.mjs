@@ -18,20 +18,47 @@ function measure(name, notes, run) {
   }
   times.sort((a, b) => a - b);
   const percentile = (p) => times[Math.min(times.length - 1, Math.ceil(times.length * p) - 1)];
-  measurements.push({ name, notes, p50Ms: percentile(0.5), p95Ms: percentile(0.95), p99Ms: percentile(0.99),
-    heapDeltaBytes: process.memoryUsage().heapUsed - before });
+  measurements.push({
+    name,
+    notes,
+    p50Ms: percentile(0.5),
+    p95Ms: percentile(0.95),
+    p99Ms: percentile(0.99),
+    heapDeltaBytes: process.memoryUsage().heapUsed - before,
+  });
 }
 for (const count of [1_000, 100_000]) {
   const base = arp(chord(60, "major"), "upDown", 0.25).repeat(count / 4);
   const edits = Array.from({ length: 128 }, (_, index) => ({
-    select: { iteration: index, note: { step: 1 } }, set: { pitch: 65 },
+    select: { iteration: index, note: { step: 1 } },
+    set: { pitch: 65 },
   }));
   measure("edit-one", count, () => base.edit([edits[0]]));
   measure("edit-128", count, () => base.edit(edits));
   const serialized = JSON.stringify(base.edit(edits).toSource());
   measure("json-rebuild", count, () => Pattern.fromSource(JSON.parse(serialized)));
 }
-console.log(JSON.stringify({ benchmark: "source-authoring", cpu: cpus()[0]?.model,
-  os: `${platform()} ${release()}`, node: process.version, warmup, iterations,
-  device: null, sampleRate: null, blockSize: null, callbackP95: null, callbackP99: null,
-  xruns: null, cpuUtilization: null, heapMeasurement: "net delta, includes GC; not peak memory", measurements, checksum }, null, 2));
+console.log(
+  JSON.stringify(
+    {
+      benchmark: "source-authoring",
+      cpu: cpus()[0]?.model,
+      os: `${platform()} ${release()}`,
+      node: process.version,
+      warmup,
+      iterations,
+      device: null,
+      sampleRate: null,
+      blockSize: null,
+      callbackP95: null,
+      callbackP99: null,
+      xruns: null,
+      cpuUtilization: null,
+      heapMeasurement: "net delta, includes GC; not peak memory",
+      measurements,
+      checksum,
+    },
+    null,
+    2,
+  ),
+);

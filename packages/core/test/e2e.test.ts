@@ -167,12 +167,8 @@ describe("native e2e (real .node)", () => {
     const engine = createEngine({ audioBackend: "simulated", renderAheadBlocks: 16 });
     try {
       // Not compiled yet: stable codes for both commands.
-      expect(codeOf(() => enqueueTransport(engine, { command: "play" }))).toBe(
-        ErrorCode.InvalidProject,
-      );
-      expect(codeOf(() => setParameter(engine, channelId, "level", 0.5))).toBe(
-        ErrorCode.InvalidProject,
-      );
+      expect(codeOf(() => enqueueTransport(engine, { command: "play" }))).toBe(ErrorCode.InvalidProject);
+      expect(codeOf(() => setParameter(engine, channelId, "level", 0.5))).toBe(ErrorCode.InvalidProject);
 
       nativeCompile(engine, project.snapshot());
 
@@ -188,15 +184,9 @@ describe("native e2e (real .node)", () => {
 
       // Valid event, then target/range errors with stable codes.
       setParameter(engine, channelId, "level", 0.5);
-      expect(codeOf(() => setParameter(engine, "chn_ghost", "level", 0.5))).toBe(
-        ErrorCode.AutomationTargetInvalid,
-      );
-      expect(codeOf(() => setParameter(engine, channelId, "nonsense", 0.5))).toBe(
-        ErrorCode.AutomationTargetInvalid,
-      );
-      expect(codeOf(() => setParameter(engine, channelId, "level", 3))).toBe(
-        ErrorCode.AutomationRange,
-      );
+      expect(codeOf(() => setParameter(engine, "chn_ghost", "level", 0.5))).toBe(ErrorCode.AutomationTargetInvalid);
+      expect(codeOf(() => setParameter(engine, channelId, "nonsense", 0.5))).toBe(ErrorCode.AutomationTargetInvalid);
+      expect(codeOf(() => setParameter(engine, channelId, "level", 3))).toBe(ErrorCode.AutomationRange);
     } finally {
       nativeDispose(engine);
     }

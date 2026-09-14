@@ -79,8 +79,13 @@ export interface EngineHandle {
 /** Synchronous duration conversion through Rust's effective tempo map; no engine needed. */
 export function resolveBeatDuration(snapshot: ProjectSnapshot, startBeat: number, durationSeconds: number): number {
   const query = beatDurationQuerySchema.safeParse({ startBeat: beatToWire(startBeat), durationSeconds });
-  if (!query.success) throw new OxitoneError(ErrorCode.InvalidProject, "invalid timing query", { details: { path: "durationSeconds" } });
-  const result = beatDurationResultSchema.parse(JSON.parse(call((binding) => binding.resolveBeatDuration(encodeProjectSnapshot(snapshot), JSON.stringify(query.data)))));
+  if (!query.success)
+    throw new OxitoneError(ErrorCode.InvalidProject, "invalid timing query", { details: { path: "durationSeconds" } });
+  const result = beatDurationResultSchema.parse(
+    JSON.parse(
+      call((binding) => binding.resolveBeatDuration(encodeProjectSnapshot(snapshot), JSON.stringify(query.data))),
+    ),
+  );
   checkProtocolVersion(result.protocolVersion);
   return result.durationBeats.numerator / result.durationBeats.denominator;
 }
@@ -113,9 +118,7 @@ export function cacheSample(path: string, cacheDir: string): CachedSampleInfo {
 
 export function createEngine(options?: EngineOptions): EngineHandle {
   const validated = options === undefined ? undefined : engineOptionsSchema.parse(options);
-  const json = call((binding) =>
-    binding.createEngine(validated === undefined ? undefined : JSON.stringify(validated)),
-  );
+  const json = call((binding) => binding.createEngine(validated === undefined ? undefined : JSON.stringify(validated)));
   const created: unknown = JSON.parse(json);
   if (typeof created !== "object" || created === null) {
     throw new OxitoneError(ErrorCode.RealtimeFault, "malformed createEngine response");
@@ -126,7 +129,10 @@ export function createEngine(options?: EngineOptions): EngineHandle {
   }
   if (options?.audioBackend === "simulated" && audioBackend !== "simulated") {
     call((binding) => binding.dispose(engineId));
-    throw new OxitoneError(ErrorCode.ProtocolVersionUnsupported, "native addon does not support simulated audio; rebuild it before testing");
+    throw new OxitoneError(
+      ErrorCode.ProtocolVersionUnsupported,
+      "native addon does not support simulated audio; rebuild it before testing",
+    );
   }
   return { id: engineId, protocolVersion };
 }
@@ -183,9 +189,7 @@ export function exportMidi(
 ): MidiExportReport {
   const validated = midiExportOptionsSchema.parse(options);
   const json = typeof snapshot === "string" ? snapshot : encodeProjectSnapshot(snapshot);
-  const report = call((binding) =>
-    binding.exportMidi(engine.id, json, JSON.stringify(validated)),
-  );
+  const report = call((binding) => binding.exportMidi(engine.id, json, JSON.stringify(validated)));
   return midiExportReportSchema.parse(JSON.parse(report));
 }
 

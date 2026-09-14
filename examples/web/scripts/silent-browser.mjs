@@ -2,7 +2,8 @@ import { chromium } from "playwright";
 
 /** Test audio never opens an output device. Muting is an additional safeguard. */
 export function launchSilentBrowser() {
-  return chromium.launch({ headless: true,
+  return chromium.launch({
+    headless: true,
     ...(process.env.OXITONE_CHROME_PATH ? { executablePath: process.env.OXITONE_CHROME_PATH } : {}),
     args: ["--autoplay-policy=no-user-gesture-required", "--mute-audio"],
   });
@@ -28,7 +29,8 @@ export async function silentPage(browser, options = {}) {
       }
     };
     Object.defineProperty(globalThis, "oxitoneTestAudioSinks", {
-      get: () => contexts.map(context => ({ sink: { type: context.sinkId?.type ?? context.sinkId }, state: context.state })),
+      get: () =>
+        contexts.map((context) => ({ sink: { type: context.sinkId?.type ?? context.sinkId }, state: context.state })),
     });
   });
   return page;

@@ -4,13 +4,13 @@ Import a local audio file into an Oxitone project. Rust owns file inspection,
 SHA-256 and decoding; JavaScript receives metadata and never receives PCM.
 
 ```ts
-import { Project } from '@oxitone/core';
-import { importSample } from '@oxitone/samples';
+import { Project } from "@oxitone/core";
+import { importSample } from "@oxitone/samples";
 
 const project = new Project();
-const sample = project.addSample(importSample('/music/loop.wav'));
-project.addTrack('audio').use(project.addChannel()).sample(sample).at({ bar: 1 });
-await project.renderWav({ path: '/music/mix.wav', tailSeconds: 0 });
+const sample = project.addSample(importSample("/music/loop.wav"));
+project.addTrack("audio").use(project.addChannel()).sample(sample).at({ bar: 1 });
+await project.renderWav({ path: "/music/mix.wav", tailSeconds: 0 });
 ```
 
 `importSample(path, { assetBaseDir? })` is synchronous. It supports the Rust

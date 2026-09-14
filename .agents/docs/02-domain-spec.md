@@ -30,7 +30,7 @@ arp 规则、输出坐标与不可变局部 edit，并新增 concat/repeat/slice
 
 编译后的 Session 保留独立快照：authoring 修改通过 `session.update()` 换入，失败时
 保留旧图。Project.play 自动提交新 revision；Session 直接 play/export 则使用当前编译
-版本。bar+beat/marker 位置按该编译版本解析，seconds/frame 在 Rust  transport 边界转换。
+版本。bar+beat/marker 位置按该编译版本解析，seconds/frame 在 Rust transport 边界转换。
 
 Track 是编排容器，不直接产生声音，允许 Pattern、Sample、Automation 重叠排布。Engine 1.2 的 Pattern.parts 保存各 Channel 的独立 leaf Pattern，调度按 Pattern 自身路由；旧 leaf Pattern 与 SampleClip 继续采用 Track.channelIds。一个 PatternClip 只能属于一个 Track。parts 长度、注册/恢复和编辑约束见 [18](18-project-daw.md)。
 
@@ -47,7 +47,7 @@ SampleClip 的 off 窗口、repitch 速率和 stretch 比例均使用局部静�
 `fitToContent` 无音乐长度时按 Track BPM 折算局部长度。
 
 ```ts
-track.pattern(pattern).at({ bar: 1, beat: 0 }).loop(4).last({ bar: 17 })
+track.pattern(pattern).at({ bar: 1, beat: 0 }).loop(4).last({ bar: 17 });
 ```
 
 - `Pattern` 是不可变 Note/automation 片段，长度 `lengthBeats > 0`。
@@ -151,10 +151,10 @@ SampleClip 的内容长度在秒域，编排在 beat 域；`tempoSync` 定义全
 Authoring 层提供纯函数 helper，把 clip 长度对齐到音乐尺度（允许分数值）：
 
 ```ts
-clip.fitBars(2)        // 长度 = clip 位置 time signature 下的 2 个 bar
-clip.fitBars(0.5)      // 1/2 bar
-clip.fitBeats(3.5)
-clip.fitToContent()    // 反向：按内容原始长度折算 beat 长度
+clip.fitBars(2); // 长度 = clip 位置 time signature 下的 2 个 bar
+clip.fitBars(0.5); // 1/2 bar
+clip.fitBeats(3.5);
+clip.fitToContent(); // 反向：按内容原始长度折算 beat 长度
 ```
 
 - `bars → beats` 的换算使用 clip startBeat 处的 time signature；跨 time signature 变化的长 clip 按 beat 累计，不按 bar 数线性外推。
@@ -252,7 +252,7 @@ Automation lane 绑定一个 `target`（entity ID + stable parameter ID），输
 const cutoff = automation.sine({ periodBeats: 8, phase: 0, min: 0.2, max: 0.9 });
 const rhythmicGate = automation.gate({ periodBeats: 0.5, duty: 0.5 });
 const humanChance = automation.chance({ frequency: 2, probability: 0.72, seed: 17, smoothBeats: 0.04 });
-channel.automate('filter.cutoff', automation.map(cutoff, { min: 0.2, max: 0.9 }));
+channel.automate("filter.cutoff", automation.map(cutoff, { min: 0.2, max: 0.9 }));
 ```
 
 `map` 的区间必须位于 0..1，物理范围映射由 target parameter spec 再次完成；source 仍只输出 0..1。`chance` 适合 gate、mute、trigger-like 参数和稀疏事件；对音高、连续滤波器等参数应显式使用 `smoothBeats` 或其它平滑组合，避免非预期 zipper noise。

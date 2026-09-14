@@ -13,9 +13,20 @@ export function materializeRack(fileName: string, text: string, site: EvaluatedR
   const { file, checker } = sourceProgram(fileName, text);
   const expression = expressionAt(file, anchor.start, anchor.end);
   const symbol = ts.isIdentifier(expression) ? checker.getSymbolAtLocation(expression) : undefined;
-  const bound = symbol?.declarations?.some(declaration => ts.isVariableDeclaration(declaration) || ts.isImportSpecifier(declaration) || ts.isImportClause(declaration) || ts.isParameter(declaration));
+  const bound = symbol?.declarations?.some(
+    (declaration) =>
+      ts.isVariableDeclaration(declaration) ||
+      ts.isImportSpecifier(declaration) ||
+      ts.isImportClause(declaration) ||
+      ts.isParameter(declaration),
+  );
   const effects = ts.factory.createArrayLiteralExpression(site.effects.map(literal), true);
-  const printed = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed }).printNode(ts.EmitHint.Expression, effects, file);
+  const printed = ts
+    .createPrinter({ newLine: ts.NewLineKind.LineFeed })
+    .printNode(ts.EmitHint.Expression, effects, file);
   const replacement = bound ? printed : `((${anchor.expression}), ${printed})`;
-  return { text: text.slice(0, anchor.start) + replacement + text.slice(anchor.end), retainsOriginalEvaluation: !bound };
+  return {
+    text: text.slice(0, anchor.start) + replacement + text.slice(anchor.end),
+    retainsOriginalEvaluation: !bound,
+  };
 }

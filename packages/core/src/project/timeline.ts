@@ -1,11 +1,23 @@
-import { beatFromWire, beatToWire, ErrorCode, OxitoneError,
-  type EntityId, type MarkerSpec, type ProjectSnapshot, type TimeSignatureSegment } from "@oxitone/protocol";
+import {
+  beatFromWire,
+  beatToWire,
+  ErrorCode,
+  OxitoneError,
+  type EntityId,
+  type MarkerSpec,
+  type ProjectSnapshot,
+  type TimeSignatureSegment,
+} from "@oxitone/protocol";
 import { resolveBeatDuration } from "@oxitone/native";
 import { ProjectPlayback } from "../engine/playback.js";
 import { TempoMap, type TempoCurve, type TempoSegmentInput } from "../timing/tempo-map.js";
 import { TimeSignatureMap, type BarBeatPosition } from "../timing/time-signature.js";
 
-export interface Marker { id: EntityId; name?: string; startBeat: number; }
+export interface Marker {
+  id: EntityId;
+  name?: string;
+  startBeat: number;
+}
 
 /** Authoring clocks and markers; serialization retains exact restored rational positions. */
 export abstract class ProjectTimeline extends ProjectPlayback {
@@ -28,8 +40,12 @@ export abstract class ProjectTimeline extends ProjectPlayback {
     this.touch();
     return this;
   }
-  get tempoMap(): TempoSegmentInput[] { return this.tempos.list(); }
-  protected tempoSegments() { return this.tempos.toWire(); }
+  get tempoMap(): TempoSegmentInput[] {
+    return this.tempos.list();
+  }
+  protected tempoSegments() {
+    return this.tempos.toWire();
+  }
 
   setTimeSignature(numerator: number, denominator: number): this {
     this.assertMutable();
@@ -43,10 +59,18 @@ export abstract class ProjectTimeline extends ProjectPlayback {
     this.touch();
     return this;
   }
-  get timeSignatureMap(): TimeSignatureSegment[] { return this.signatures.list(); }
-  barBeatToBeats(position: BarBeatPosition): number { return this.signatures.toBeats(position); }
-  beatsToBarBeat(beat: number): BarBeatPosition { return this.signatures.fromBeats(beat); }
-  beatsPerBarAt(bar: number): number { return this.signatures.beatsPerBarAt(bar); }
+  get timeSignatureMap(): TimeSignatureSegment[] {
+    return this.signatures.list();
+  }
+  barBeatToBeats(position: BarBeatPosition): number {
+    return this.signatures.toBeats(position);
+  }
+  beatsToBarBeat(beat: number): BarBeatPosition {
+    return this.signatures.fromBeats(beat);
+  }
+  beatsPerBarAt(bar: number): number {
+    return this.signatures.beatsPerBarAt(bar);
+  }
   tempoAt(beat: number): number {
     const segments = this.tempos.list();
     let bpm = segments[0]?.bpm ?? 120;
@@ -69,16 +93,22 @@ export abstract class ProjectTimeline extends ProjectPlayback {
     return { ...marker, startBeat: beat };
   }
   get markers(): readonly Marker[] {
-    return this.markerList.map((marker) => ({ id: marker.id, startBeat: beatFromWire(marker.startBeat),
-      ...(marker.name === undefined ? {} : { name: marker.name }) }));
+    return this.markerList.map((marker) => ({
+      id: marker.id,
+      startBeat: beatFromWire(marker.startBeat),
+      ...(marker.name === undefined ? {} : { name: marker.name }),
+    }));
   }
   /** @internal Detached exact wire markers for serialization. */
-  markerSpecs(): MarkerSpec[] { return structuredClone(this.markerList); }
+  markerSpecs(): MarkerSpec[] {
+    return structuredClone(this.markerList);
+  }
 
   protected restoreTimeline(snapshot: ProjectSnapshot): void {
     this.tempos.restore(snapshot.tempoMap);
     const first = snapshot.timeSignatureMap[0]!;
-    if (first.startBar !== 1) throw new OxitoneError(ErrorCode.InvalidProject, "time signature map must start at bar 1");
+    if (first.startBar !== 1)
+      throw new OxitoneError(ErrorCode.InvalidProject, "time signature map must start at bar 1");
     this.signatures.set(first.numerator, first.denominator);
     for (const segment of snapshot.timeSignatureMap.slice(1)) this.signatures.add(segment);
     this.markerList.push(...structuredClone(snapshot.markers));

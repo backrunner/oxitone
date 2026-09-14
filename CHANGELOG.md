@@ -215,7 +215,7 @@ conventional commits (`type(scope): description`).
   size) that only forward events to the monitor thread.
 - M4: render-ahead realtime engine in `oxitone-render::realtime` — SPSC
   frame ring (`max(renderAheadBlocks, ceil((deviceBuffer+deviceLatency)/
-  blockSize))`), dedicated time-constraint render worker (FTZ/DAZ, no
+blockSize))`), dedicated time-constraint render worker (FTZ/DAZ, no
   shared locks with the control thread, `park/unpark` wakeup), polyphase
   device-rate resampling with group-delay accounting, stereo→device layout
   conversion (mono downmix, N-channel zero-fill), `latencyMode: 'direct'`

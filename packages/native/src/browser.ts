@@ -1,9 +1,14 @@
 import { ErrorCode, OxitoneError } from "@oxitone/protocol";
 export type * from "./index.js";
 function unavailable(): never {
-  throw new OxitoneError(ErrorCode.DeviceUnavailable, "This API requires the native host; use WasmEngine or WebAudioSession from @oxitone/web in a browser");
+  throw new OxitoneError(
+    ErrorCode.DeviceUnavailable,
+    "This API requires the native host; use WasmEngine or WebAudioSession from @oxitone/web in a browser",
+  );
 }
-export function getProtocolVersion(): string { return "1.0"; }
+export function getProtocolVersion(): string {
+  return "1.0";
+}
 export const resolveBeatDuration: typeof import("./index.js").resolveBeatDuration = unavailable;
 export const inspectSample: typeof import("./index.js").inspectSample = unavailable;
 export const cacheSample: typeof import("./index.js").cacheSample = unavailable;

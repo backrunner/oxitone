@@ -13,15 +13,8 @@ export interface NoteInput {
   tags?: readonly string[];
 }
 
-function checkRange(
-  value: number,
-  min: number,
-  max: number,
-  path: string,
-  integer = false,
-): void {
-  const valid =
-    Number.isFinite(value) && value >= min && value <= max && (!integer || Number.isInteger(value));
+function checkRange(value: number, min: number, max: number, path: string, integer = false): void {
+  const valid = Number.isFinite(value) && value >= min && value <= max && (!integer || Number.isInteger(value));
   if (!valid) {
     throw new OxitoneError(
       ErrorCode.InvalidProject,
@@ -43,11 +36,9 @@ export function validateNote(note: NoteInput): void {
     });
   }
   if (!Number.isFinite(note.duration) || note.duration <= 0) {
-    throw new OxitoneError(
-      ErrorCode.InvalidProject,
-      `note duration must be > 0, got ${note.duration}`,
-      { details: { path: "note.duration" } },
-    );
+    throw new OxitoneError(ErrorCode.InvalidProject, `note duration must be > 0, got ${note.duration}`, {
+      details: { path: "note.duration" },
+    });
   }
   checkRange(note.velocity, 0, 1, "velocity");
   if (note.offVelocity !== undefined) {

@@ -49,9 +49,7 @@ export function canonicalize(value: unknown): unknown {
   }
   if (Array.isArray(value)) {
     const items = value.map(canonicalize);
-    const sortable =
-      items.length > 1 &&
-      items.every((item) => isPlainObject(item) && typeof item.id === "string");
+    const sortable = items.length > 1 && items.every((item) => isPlainObject(item) && typeof item.id === "string");
     if (sortable) {
       items.sort((a, b) => {
         const ai = (a as { id: string }).id;

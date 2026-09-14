@@ -29,7 +29,9 @@ export class IdGenerator {
   }
 
   /** Keep standalone generation clear of explicitly restored IDs. */
-  reserve(id: string): void { this.reserved.add(id); }
+  reserve(id: string): void {
+    this.reserved.add(id);
+  }
 
   /** Advance until a generated ID is outside a restored entity set. */
   nextUnused(prefix: string, used: ReadonlySet<string>): EntityId {

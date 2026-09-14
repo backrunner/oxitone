@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  automationSourceSchema,
-  ErrorCode,
-  OxitoneError,
-  type AutomationSourceSpec,
-} from "@oxitone/protocol";
+import { automationSourceSchema, ErrorCode, OxitoneError, type AutomationSourceSpec } from "@oxitone/protocol";
 import { createAutomationNamespace, Project } from "../src/index.js";
 
 const automation = createAutomationNamespace();
@@ -23,9 +18,7 @@ describe("constant / curve / line", () => {
   it("constant serializes and rejects non-finite values", () => {
     expect(automation.constant(0.5).toSpec()).toEqual({ kind: "constant", value: 0.5 });
     expect(codeOf(() => automation.constant(Number.NaN))).toBe(ErrorCode.AutomationNonFinite);
-    expect(codeOf(() => automation.constant(Number.POSITIVE_INFINITY))).toBe(
-      ErrorCode.AutomationNonFinite,
-    );
+    expect(codeOf(() => automation.constant(Number.POSITIVE_INFINITY))).toBe(ErrorCode.AutomationNonFinite);
   });
 
   it("curve validates points and serializes beats as wire rationals", () => {
@@ -68,12 +61,8 @@ describe("constant / curve / line", () => {
 
   it("rejects out-of-range and non-finite point values and negative beats", () => {
     expect(codeOf(() => automation.curve([{ beat: 0, value: 1.5 }]))).toBe(ErrorCode.AutomationRange);
-    expect(codeOf(() => automation.curve([{ beat: 0, value: Number.NaN }]))).toBe(
-      ErrorCode.AutomationNonFinite,
-    );
-    expect(codeOf(() => automation.curve([{ beat: -1, value: 0.5 }]))).toBe(
-      ErrorCode.AutomationRange,
-    );
+    expect(codeOf(() => automation.curve([{ beat: 0, value: Number.NaN }]))).toBe(ErrorCode.AutomationNonFinite);
+    expect(codeOf(() => automation.curve([{ beat: -1, value: 0.5 }]))).toBe(ErrorCode.AutomationRange);
   });
 
   it("rejects exponential segments with non-positive endpoints", () => {
@@ -134,18 +123,10 @@ describe("gate and wave", () => {
       periodBeats: { numerator: 1, denominator: 2 },
       duty: 0.5,
     });
-    expect(codeOf(() => automation.gate({ periodBeats: 0, duty: 0.5 }))).toBe(
-      ErrorCode.AutomationPeriod,
-    );
-    expect(codeOf(() => automation.gate({ periodBeats: 1, duty: 1.2 }))).toBe(
-      ErrorCode.AutomationRange,
-    );
-    expect(codeOf(() => automation.gate({ periodBeats: 1, duty: 0.5, on: 2 }))).toBe(
-      ErrorCode.AutomationRange,
-    );
-    expect(codeOf(() => automation.gate({ periodBeats: 1, duty: 0.5, phase: -0.5 }))).toBe(
-      ErrorCode.AutomationRange,
-    );
+    expect(codeOf(() => automation.gate({ periodBeats: 0, duty: 0.5 }))).toBe(ErrorCode.AutomationPeriod);
+    expect(codeOf(() => automation.gate({ periodBeats: 1, duty: 1.2 }))).toBe(ErrorCode.AutomationRange);
+    expect(codeOf(() => automation.gate({ periodBeats: 1, duty: 0.5, on: 2 }))).toBe(ErrorCode.AutomationRange);
+    expect(codeOf(() => automation.gate({ periodBeats: 1, duty: 0.5, phase: -0.5 }))).toBe(ErrorCode.AutomationRange);
   });
 
   it("wave aliases serialize the kind and validate min/max/pulseWidth", () => {
@@ -165,12 +146,8 @@ describe("gate and wave", () => {
     expect(automation.saw({ periodBeats: 2 }).toSpec()).toMatchObject({ wave: "saw" });
     expect(automation.ramp({ periodBeats: 2 }).toSpec()).toMatchObject({ wave: "ramp" });
     expect(codeOf(() => automation.sine({ periodBeats: -1 }))).toBe(ErrorCode.AutomationPeriod);
-    expect(codeOf(() => automation.sine({ periodBeats: 1, min: 0.8, max: 0.2 }))).toBe(
-      ErrorCode.AutomationRange,
-    );
-    expect(codeOf(() => automation.square({ periodBeats: 1, pulseWidth: 1.5 }))).toBe(
-      ErrorCode.AutomationRange,
-    );
+    expect(codeOf(() => automation.sine({ periodBeats: 1, min: 0.8, max: 0.2 }))).toBe(ErrorCode.AutomationRange);
+    expect(codeOf(() => automation.square({ periodBeats: 1, pulseWidth: 1.5 }))).toBe(ErrorCode.AutomationRange);
   });
 });
 
@@ -200,18 +177,10 @@ describe("chance", () => {
     expect(codeOf(() => automation.chance({ ...base, rate: 2, frequency: 2 } as never))).toBe(
       ErrorCode.AutomationChanceFrequency,
     );
-    expect(codeOf(() => automation.chance({ ...base, rate: 0 }))).toBe(
-      ErrorCode.AutomationChanceFrequency,
-    );
-    expect(codeOf(() => automation.chance({ ...base, rate: Number.NaN }))).toBe(
-      ErrorCode.AutomationNonFinite,
-    );
-    expect(codeOf(() => automation.chance({ ...base, rate: 1, probability: 1.5 }))).toBe(
-      ErrorCode.AutomationRange,
-    );
-    expect(codeOf(() => automation.chance({ ...base, rate: 1, seed: -1 }))).toBe(
-      ErrorCode.AutomationRange,
-    );
+    expect(codeOf(() => automation.chance({ ...base, rate: 0 }))).toBe(ErrorCode.AutomationChanceFrequency);
+    expect(codeOf(() => automation.chance({ ...base, rate: Number.NaN }))).toBe(ErrorCode.AutomationNonFinite);
+    expect(codeOf(() => automation.chance({ ...base, rate: 1, probability: 1.5 }))).toBe(ErrorCode.AutomationRange);
+    expect(codeOf(() => automation.chance({ ...base, rate: 1, seed: -1 }))).toBe(ErrorCode.AutomationRange);
   });
 });
 
@@ -305,27 +274,19 @@ describe("lane binding", () => {
   it("rejects unknown entities and non-tempo project parameters", () => {
     const project = new Project();
     const source = automation.constant(0.5);
-    expect(
-      codeOf(() => project.addAutomationLane({ entityId: "chn_missing", parameterId: "x" }, source)),
-    ).toBe(ErrorCode.AutomationTargetInvalid);
-    expect(
-      codeOf(() => project.addAutomationLane({ entityId: project.id, parameterId: "level" }, source)),
-    ).toBe(ErrorCode.AutomationTargetInvalid);
+    expect(codeOf(() => project.addAutomationLane({ entityId: "chn_missing", parameterId: "x" }, source))).toBe(
+      ErrorCode.AutomationTargetInvalid,
+    );
+    expect(codeOf(() => project.addAutomationLane({ entityId: project.id, parameterId: "level" }, source))).toBe(
+      ErrorCode.AutomationTargetInvalid,
+    );
   });
 
   it("allows exactly one project tempo lane", () => {
     const project = new Project();
-    project.addAutomationLane(
-      { entityId: project.id, parameterId: "tempo" },
-      automation.line(0, 1, 16),
-    );
+    project.addAutomationLane({ entityId: project.id, parameterId: "tempo" }, automation.line(0, 1, 16));
     expect(
-      codeOf(() =>
-        project.addAutomationLane(
-          { entityId: project.id, parameterId: "tempo" },
-          automation.constant(0.5),
-        ),
-      ),
+      codeOf(() => project.addAutomationLane({ entityId: project.id, parameterId: "tempo" }, automation.constant(0.5))),
     ).toBe(ErrorCode.TempoAutomationConflict);
   });
 

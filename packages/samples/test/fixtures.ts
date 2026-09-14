@@ -18,14 +18,22 @@ export function tempDirectory(): string {
 export function wavFile(directory: string, channels = 1, rate = 48_000): { path: string; bytes: Buffer } {
   const frames = rate / 10;
   const bytes = Buffer.alloc(44 + frames * channels * 2);
-  bytes.write("RIFF"); bytes.writeUInt32LE(bytes.length - 8, 4); bytes.write("WAVEfmt ", 8);
-  bytes.writeUInt32LE(16, 16); bytes.writeUInt16LE(1, 20); bytes.writeUInt16LE(channels, 22);
-  bytes.writeUInt32LE(rate, 24); bytes.writeUInt32LE(rate * channels * 2, 28);
-  bytes.writeUInt16LE(channels * 2, 32); bytes.writeUInt16LE(16, 34);
-  bytes.write("data", 36); bytes.writeUInt32LE(bytes.length - 44, 40);
+  bytes.write("RIFF");
+  bytes.writeUInt32LE(bytes.length - 8, 4);
+  bytes.write("WAVEfmt ", 8);
+  bytes.writeUInt32LE(16, 16);
+  bytes.writeUInt16LE(1, 20);
+  bytes.writeUInt16LE(channels, 22);
+  bytes.writeUInt32LE(rate, 24);
+  bytes.writeUInt32LE(rate * channels * 2, 28);
+  bytes.writeUInt16LE(channels * 2, 32);
+  bytes.writeUInt16LE(16, 34);
+  bytes.write("data", 36);
+  bytes.writeUInt32LE(bytes.length - 44, 40);
   for (let frame = 0; frame < frames; frame++) {
-    const sample = Math.round(0.5 * 32767 * Math.sin(2 * Math.PI * 440 * frame / rate));
-    for (let channel = 0; channel < channels; channel++) bytes.writeInt16LE(sample, 44 + (frame * channels + channel) * 2);
+    const sample = Math.round(0.5 * 32767 * Math.sin((2 * Math.PI * 440 * frame) / rate));
+    for (let channel = 0; channel < channels; channel++)
+      bytes.writeInt16LE(sample, 44 + (frame * channels + channel) * 2);
   }
   const path = join(directory, "音频 loop.dat");
   writeFileSync(path, bytes);

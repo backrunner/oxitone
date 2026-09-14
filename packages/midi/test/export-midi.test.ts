@@ -3,12 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import { Pattern, Project } from "@oxitone/core";
-import {
-  ErrorCode,
-  OxitoneError,
-  PROTOCOL_VERSION,
-  type ProjectSnapshot,
-} from "@oxitone/protocol";
+import { ErrorCode, OxitoneError, PROTOCOL_VERSION, type ProjectSnapshot } from "@oxitone/protocol";
 import { exportMidi } from "../src/index.js";
 
 function buildProject(): Project {
@@ -123,9 +118,7 @@ describe("exportMidi end-to-end through the native binding", () => {
   it("accepts a raw ProjectSnapshot", () => {
     const report = exportMidi(rawSnapshot(2), {});
     expect(report.diagnostics.noteTrackCount).toBe(2);
-    expect(
-      report.diagnostics.channelAssignments.map((assignment) => assignment.channel),
-    ).toEqual([1, 2]);
+    expect(report.diagnostics.channelAssignments.map((assignment) => assignment.channel)).toEqual([1, 2]);
   });
 
   it("fails with MidiChannelLimit and lists unassigned track IDs", () => {

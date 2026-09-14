@@ -61,7 +61,10 @@ export function generateSchemas(): void {
   writeSchema("schemas/plugin-install-manifest.schema.json", pluginInstallManifestSchema);
   writeSchema("schemas/plugin-ui.schema.json", pluginUiManifestSchema);
   writeSchema("schemas/multisampler-state.schema.json", multisamplerStateSchema);
-  write("schemas/fixtures/plugin-ui.json", `${JSON.stringify(pluginUiManifestSchema.parse(pluginUiFixture), null, 2)}\n`);
+  write(
+    "schemas/fixtures/plugin-ui.json",
+    `${JSON.stringify(pluginUiManifestSchema.parse(pluginUiFixture), null, 2)}\n`,
+  );
   writeSchema("schemas/plugin-info.schema.json", pluginInfoSchema);
   writeSchema("schemas/preset.schema.json", presetSchema);
   writeSchema("schemas/preview-frame.schema.json", previewFrameSchema);
@@ -70,10 +73,7 @@ export function generateSchemas(): void {
 
   // The recursive automation source is hand-maintained: zod cannot emit a
   // self-referential JSON Schema from the lazy union.
-  write(
-    "schemas/automation-source.schema.json",
-    `${JSON.stringify(automationSourceJsonSchema(), null, 2)}\n`,
-  );
+  write("schemas/automation-source.schema.json", `${JSON.stringify(automationSourceJsonSchema(), null, 2)}\n`);
 }
 
 function automationSourceJsonSchema(): unknown {
@@ -120,9 +120,16 @@ function automationSourceJsonSchema(): unknown {
       source: {
         oneOf: [
           {
-            type: "object", required: ["kind", "base", "replacement", "startBeat", "endBeat"],
-            properties: { kind: { const: "replaceRange" }, base: { $ref: "#/$defs/source" }, replacement: { $ref: "#/$defs/source" },
-              startBeat: { $ref: "#/$defs/beat" }, endBeat: { $ref: "#/$defs/beat" }, fadeBeats: { $ref: "#/$defs/beat" } },
+            type: "object",
+            required: ["kind", "base", "replacement", "startBeat", "endBeat"],
+            properties: {
+              kind: { const: "replaceRange" },
+              base: { $ref: "#/$defs/source" },
+              replacement: { $ref: "#/$defs/source" },
+              startBeat: { $ref: "#/$defs/beat" },
+              endBeat: { $ref: "#/$defs/beat" },
+              fadeBeats: { $ref: "#/$defs/beat" },
+            },
           },
           {
             type: "object",

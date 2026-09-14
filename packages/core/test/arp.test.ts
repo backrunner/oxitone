@@ -70,9 +70,7 @@ describe("arp", () => {
     expect(() => arp(C_MAJOR, "up", 0.25, { gate: 1.5 })).toThrowError(OxitoneError);
     expect(() => arp(C_MAJOR, "up", 0.25, { octaves: 0 })).toThrowError(OxitoneError);
     expect(() => arp([128], "up", 0.25)).toThrowError(OxitoneError);
-    expect(() => arp(C_MAJOR, "up", 0.25, { velocityCurve: { from: -0.1, to: 1 } })).toThrowError(
-      OxitoneError,
-    );
+    expect(() => arp(C_MAJOR, "up", 0.25, { velocityCurve: { from: -0.1, to: 1 } })).toThrowError(OxitoneError);
   });
 
   it("does not mutate the input array", () => {

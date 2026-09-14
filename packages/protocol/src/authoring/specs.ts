@@ -24,7 +24,11 @@ export const patternSpecSchema = z.object({
   lengthBeats: beatWireSchema,
   notes: z.array(noteSpecSchema),
   /** Independent Channel parts; leaves share the root loop period and may be shorter. */
-  parts: z.array(z.object({ channelId: entityIdSchema, patternId: entityIdSchema })).min(1).max(256).optional(),
+  parts: z
+    .array(z.object({ channelId: entityIdSchema, patternId: entityIdSchema }))
+    .min(1)
+    .max(256)
+    .optional(),
 });
 export type PatternSpec = z.infer<typeof patternSpecSchema>;
 
@@ -100,7 +104,11 @@ export type MixerChannelSpec = z.infer<typeof mixerChannelSpecSchema>;
 
 export const automationLaneSpecSchema = z.object({
   id: entityIdSchema,
-  target: z.object({ entityId: entityIdSchema, parameterId: z.string().min(1), scope: z.enum(["plugin", "effectHost"]).optional() }),
+  target: z.object({
+    entityId: entityIdSchema,
+    parameterId: z.string().min(1),
+    scope: z.enum(["plugin", "effectHost"]).optional(),
+  }),
   source: automationSourceSchema,
   combine: z.enum(["replace", "add", "multiply", "max"]).optional(),
   playback: z.enum(["global", "playlist"]).optional(),

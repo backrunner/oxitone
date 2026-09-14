@@ -7,4 +7,8 @@ if (document.view.status !== "ready") throw new Error(JSON.stringify(document.vi
 const dispatcher = new DocumentDispatcher(document);
 const stop = await openDocumentBridge(process.argv[3], document, dispatcher);
 process.stdout.write("READY\n");
-process.once("SIGTERM", async () => { await stop(); dispatcher.close(); document.close(); });
+process.once("SIGTERM", async () => {
+  await stop();
+  dispatcher.close();
+  document.close();
+});

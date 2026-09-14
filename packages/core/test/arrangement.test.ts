@@ -16,14 +16,17 @@ describe("Playlist arrangement transactions", () => {
     project.arrange({ action: "move", kind: "pattern", resource: 0, clip: 0, track: 1, startBeat: 12 });
     expect(first.clips).toHaveLength(0);
     expect(second.clips).toHaveLength(2);
-    expect(second.clips.some(clip => clip.startBeat === 12)).toBe(true);
+    expect(second.clips.some((clip) => clip.startBeat === 12)).toBe(true);
     expect(second.channelIds).toEqual([channel.id]);
   });
 
   it("places, moves and restores automation clips as reusable lane placements", () => {
     const project = new Project();
     const track = project.addTrack("Filter");
-    const lane = project.addAutomationLane({ entityId: project.addChannel().id, parameterId: "level" }, createAutomationNamespace().constant(0.5));
+    const lane = project.addAutomationLane(
+      { entityId: project.addChannel().id, parameterId: "level" },
+      createAutomationNamespace().constant(0.5),
+    );
     project.arrange({ action: "place", kind: "automation", resource: 0, track: 0, startBeat: 4, durationBeats: 8 });
     expect(project.automationClips[0]?.laneId).toBe(lane.id);
     expect(project.snapshot().automationClips?.[0]?.trackId).toBe(track.id);

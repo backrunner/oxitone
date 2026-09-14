@@ -15,8 +15,12 @@ import { fixturePiano } from "./piano-fixture.js";
 const output = mkdtempSync(join(tmpdir(), "oxitone-drums-"));
 let plugins: Awaited<ReturnType<typeof buildPlugins>>;
 // Cold compilation and Cargo's shared build lock are preparation, not DSP test time.
-beforeAll(async () => { plugins = await buildPlugins(output); }, 600_000);
-afterAll(() => { rmSync(output, { recursive: true, force: true }); });
+beforeAll(async () => {
+  plugins = await buildPlugins(output);
+}, 600_000);
+afterAll(() => {
+  rmSync(output, { recursive: true, force: true });
+});
 
 it("controls real dynamic plugins through both native and Project/Session APIs", async () => {
   const engine = createEngine({ allowPlugins: "any" });
@@ -35,7 +39,9 @@ it("controls real dynamic plugins through both native and Project/Session APIs",
       project.registeredPlugins[0]!.libraryPath = "missing";
       expect(project.registeredPlugins[0]!.libraryPath).not.toBe("missing");
       expect(() => project.registerPlugin({ ...plugins[0]!, expectedHash: "0".repeat(64) })).toThrow();
-    } finally { await session.dispose(); }
+    } finally {
+      await session.dispose();
+    }
   } finally {
     dispose(engine);
   }
@@ -47,10 +53,12 @@ it("compiles more than 16 audio tracks without MIDI assignments and checks the l
     registerPlugin(engine, plugins[0]!);
     const snapshot = createDubstepSong(fixturePiano(output)).snapshot();
     expect(snapshot.tracks.length).toBeGreaterThan(16);
-    expect(snapshot.tracks.every(t => t.midiChannel === undefined)).toBe(true);
+    expect(snapshot.tracks.every((t) => t.midiChannel === undefined)).toBe(true);
     expect(() => compile(engine, snapshot)).not.toThrow();
     expect(() => exportMidi(engine, snapshot, {})).toThrowError(expect.objectContaining({ code: "MidiChannelLimit" }));
     expect(exportMidi(engine, midiSnapshot(snapshot), {}).bytesBase64).toBeTruthy();
     expect(() => compile(engine, snapshot)).not.toThrow();
-  } finally { dispose(engine); }
+  } finally {
+    dispose(engine);
+  }
 }, 30_000);

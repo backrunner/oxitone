@@ -20,7 +20,10 @@ export type PluginManifest = z.infer<typeof pluginManifestSchema>;
 
 export const registerPluginOptionsSchema = z.object({
   libraryPath: z.string().min(1),
-  expectedHash: z.string().regex(/^[a-fA-F0-9]{64}$/).optional(),
+  expectedHash: z
+    .string()
+    .regex(/^[a-fA-F0-9]{64}$/)
+    .optional(),
   manifest: pluginManifestSchema,
 });
 export type RegisterPluginOptions = z.infer<typeof registerPluginOptionsSchema>;
@@ -40,8 +43,12 @@ export const pluginDiagnosticsSchema = z.object({
 export type PluginDiagnostics = z.infer<typeof pluginDiagnosticsSchema>;
 
 export const pluginInfoSchema = z.object({
-  protocolVersion: z.string(), pluginId: z.string(), pluginVersion: z.string(), abiMajor: z.literal(1),
-  kind: z.enum(["instrument", "effect"]), parameters: z.array(parameterSpecSchema),
+  protocolVersion: z.string(),
+  pluginId: z.string(),
+  pluginVersion: z.string(),
+  abiMajor: z.literal(1),
+  kind: z.enum(["instrument", "effect"]),
+  parameters: z.array(parameterSpecSchema),
   stateSchema: z.string().nullable(),
 });
 export type PluginInfo = z.infer<typeof pluginInfoSchema>;

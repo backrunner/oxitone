@@ -14,9 +14,15 @@ it("runs the production palette and custom IR on import-free Wasm with native PC
   try {
     const project = new Project({ seed: 73 });
     for (const [i, kind] of (Object.keys(effectPluginIds) as EffectKind[]).entries()) {
-      const channel = project.addChannel({ instrument: wavetable({ oscA: { wave: i % 2 ? "saw" : "sine" }, level: 0.06 }),
-        effectChain: [effect(kind, {}, { mix: 0.7 })] });
-      project.addTrack().use(channel).add(new Pattern({ lengthBeats: 4, notes: [{ pitch: 48 + i, start: 0, duration: 3, velocity: 0.4 }] })).at({ bar: 1 });
+      const channel = project.addChannel({
+        instrument: wavetable({ oscA: { wave: i % 2 ? "saw" : "sine" }, level: 0.06 }),
+        effectChain: [effect(kind, {}, { mix: 0.7 })],
+      });
+      project
+        .addTrack()
+        .use(channel)
+        .add(new Pattern({ lengthBeats: 4, notes: [{ pitch: 48 + i, start: 0, duration: 3, velocity: 0.4 }] }))
+        .at({ bar: 1 });
     }
     project.master.addEffect(effect("limiter", { ceilingDb: -1 }));
     engine.compile(project);
@@ -24,7 +30,8 @@ it("runs the production palette and custom IR on import-free Wasm with native PC
     const impulse = engine.renderWav({ frames: 4096, bitDepth: 32 });
     const impulseView = new DataView(impulse.buffer, impulse.byteOffset);
     let impulsePeak = 0;
-    for (let i = 44; i < impulse.length; i += 4) impulsePeak = Math.max(impulsePeak, Math.abs(impulseView.getFloat32(i, true)));
+    for (let i = 44; i < impulse.length; i += 4)
+      impulsePeak = Math.max(impulsePeak, Math.abs(impulseView.getFloat32(i, true)));
     expect(impulsePeak).toBeGreaterThan(0.001);
     const info = engine.importSample(impulse, "wav");
     const impulsePath = join(directory, "impulse.wav");
@@ -36,9 +43,11 @@ it("runs the production palette and custom IR on import-free Wasm with native PC
     const before = engine.memoryDiagnostics();
     let peak = 0;
     for (let i = 0; i < 128; i++) {
-      for (const channel of engine.process()) for (const value of channel) {
-        expect(Number.isFinite(value)).toBe(true); peak = Math.max(peak, Math.abs(value));
-      }
+      for (const channel of engine.process())
+        for (const value of channel) {
+          expect(Number.isFinite(value)).toBe(true);
+          peak = Math.max(peak, Math.abs(value));
+        }
     }
     expect(peak).toBeGreaterThan(0.005);
     const after = engine.memoryDiagnostics();
@@ -48,15 +57,37 @@ it("runs the production palette and custom IR on import-free Wasm with native PC
     await project.renderWav({ path, end: { frames: "16384" }, tailSeconds: 0, bitDepth: "float32", dither: "none" });
     const native = await readFile(path);
     expect(wasm.length).toBe(native.length);
-    const a = new DataView(wasm.buffer, wasm.byteOffset), b = new DataView(native.buffer, native.byteOffset);
+    const a = new DataView(wasm.buffer, wasm.byteOffset),
+      b = new DataView(native.buffer, native.byteOffset);
     let difference = 0;
-    for (let i = 44; i < wasm.length; i += 4) difference = Math.max(difference, Math.abs(a.getFloat32(i, true) - b.getFloat32(i, true)));
+    for (let i = 44; i < wasm.length; i += 4)
+      difference = Math.max(difference, Math.abs(a.getFloat32(i, true) - b.getFloat32(i, true)));
     expect(difference).toBeLessThan(0.0002);
-    await writeFile(new URL("../../../target/effects-wasm-parity.json", import.meta.url), JSON.stringify({
-      effects: Object.values(effectPluginIds), customImpulse: true, sampleRate: 48000, blockSize: 128,
-      processBlocks: 128, comparedFrames: 16384, maxPcmDifference: difference, tolerance: 0.0002,
-      processMemoryBefore: before, processMemoryAfter: after, peak, impulsePeak,
-      imports: WebAssembly.Module.imports(module), outputDevice: null,
-    }, null, 2) + "\n");
-  } finally { engine.dispose(); await rm(directory, { recursive: true, force: true }); }
+    await writeFile(
+      new URL("../../../target/effects-wasm-parity.json", import.meta.url),
+      JSON.stringify(
+        {
+          effects: Object.values(effectPluginIds),
+          customImpulse: true,
+          sampleRate: 48000,
+          blockSize: 128,
+          processBlocks: 128,
+          comparedFrames: 16384,
+          maxPcmDifference: difference,
+          tolerance: 0.0002,
+          processMemoryBefore: before,
+          processMemoryAfter: after,
+          peak,
+          impulsePeak,
+          imports: WebAssembly.Module.imports(module),
+          outputDevice: null,
+        },
+        null,
+        2,
+      ) + "\n",
+    );
+  } finally {
+    engine.dispose();
+    await rm(directory, { recursive: true, force: true });
+  }
 }, 180000);

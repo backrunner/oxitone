@@ -41,19 +41,40 @@ export type ProjectSnapshot = z.infer<typeof snapshotShape>;
 
 function checkSnapshotVersion(snapshot: ProjectSnapshot): void {
   checkProtocolVersion(snapshot.protocolVersion);
-  if (Number(snapshot.protocolVersion.split(".")[1]) < 2 &&
-    (snapshot.patterns.some(pattern => pattern.parts !== undefined) || snapshot.tracks.some(track => track.mute !== undefined || track.solo !== undefined) || snapshot.automationClips !== undefined || snapshot.automation.some(lane => lane.playback !== undefined))) {
-    throw new OxitoneError(ErrorCode.ProtocolVersionUnsupported, "Pattern parts, Track mute/solo and Playlist automation require protocol 1.2");
+  if (
+    Number(snapshot.protocolVersion.split(".")[1]) < 2 &&
+    (snapshot.patterns.some((pattern) => pattern.parts !== undefined) ||
+      snapshot.tracks.some((track) => track.mute !== undefined || track.solo !== undefined) ||
+      snapshot.automationClips !== undefined ||
+      snapshot.automation.some((lane) => lane.playback !== undefined))
+  ) {
+    throw new OxitoneError(
+      ErrorCode.ProtocolVersionUnsupported,
+      "Pattern parts, Track mute/solo and Playlist automation require protocol 1.2",
+    );
   }
-  const hasInstances = snapshot.channels.some(channel => channel.instrument.instanceId !== undefined || channel.effectChain.some(ref => ref.instanceId !== undefined)) ||
-    snapshot.mixerChannels.some(bus => bus.inserts.some(ref => ref.instanceId !== undefined));
-  if (Number(snapshot.protocolVersion.split(".")[1]) < 1 && (hasInstances || snapshot.automation.some(lane => lane.target.scope !== undefined))) {
-    throw new OxitoneError(ErrorCode.ProtocolVersionUnsupported, "plugin instances and scoped automation require engine protocol 1.1", { details: { path: "$.protocolVersion" } });
+  const hasInstances =
+    snapshot.channels.some(
+      (channel) =>
+        channel.instrument.instanceId !== undefined || channel.effectChain.some((ref) => ref.instanceId !== undefined),
+    ) || snapshot.mixerChannels.some((bus) => bus.inserts.some((ref) => ref.instanceId !== undefined));
+  if (
+    Number(snapshot.protocolVersion.split(".")[1]) < 1 &&
+    (hasInstances || snapshot.automation.some((lane) => lane.target.scope !== undefined))
+  ) {
+    throw new OxitoneError(
+      ErrorCode.ProtocolVersionUnsupported,
+      "plugin instances and scoped automation require engine protocol 1.1",
+      { details: { path: "$.protocolVersion" } },
+    );
   }
 }
 export const projectSnapshotSchema = snapshotShape.superRefine((snapshot, context) => {
-  try { checkSnapshotVersion(snapshot); }
-  catch (error) { context.addIssue({ code: "custom", path: ["protocolVersion"], message: (error as Error).message }); }
+  try {
+    checkSnapshotVersion(snapshot);
+  } catch (error) {
+    context.addIssue({ code: "custom", path: ["protocolVersion"], message: (error as Error).message });
+  }
 });
 
 /**

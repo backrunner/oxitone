@@ -27,14 +27,14 @@ automation chance 等随机任务。它不是唯一身份，也不要求每个�
 需要独立变奏时用 Make variation 或显式 seed；GUI 写入新的数字 seed 作为可见的音乐设置。
 不通过源码行号、变量名、内存地址、创建顺序或秘密缓存偷偷打散实例随机性。
 
-| source | musicalCoordinate |
-| --- | --- |
-| chord 结果 | 原音级与所选声部来源，voicing 排序保留映射 |
-| arp shuffle | 输入序列坐标与 shuffle 步；输入集合变化是规则改变，会重新洗牌 |
-| arp 结果的 Note chance | cycle branch、octave、原生成 step |
-| literal Note | 创建时的 start/pitch/voice 等规范音乐坐标，不包含后续 edit 的最终值 |
-| automation chance | source 自身 decisionIndex；其位置不由表达式树路径命名 |
-| repeat | source 坐标 + 原 source iteration，不用拆分后的新 Clip 序号 |
+| source                 | musicalCoordinate                                                   |
+| ---------------------- | ------------------------------------------------------------------- |
+| chord 结果             | 原音级与所选声部来源，voicing 排序保留映射                          |
+| arp shuffle            | 输入序列坐标与 shuffle 步；输入集合变化是规则改变，会重新洗牌       |
+| arp 结果的 Note chance | cycle branch、octave、原生成 step                                   |
+| literal Note           | 创建时的 start/pitch/voice 等规范音乐坐标，不包含后续 edit 的最终值 |
+| automation chance      | source 自身 decisionIndex；其位置不由表达式树路径命名               |
+| repeat                 | source 坐标 + 原 source iteration，不用拆分后的新 Clip 序号         |
 
 两个完全相同的 literal 事件且未区分 voice/seed，默认可共享随机样本；系统不伪造永久
 身份来承诺它们独立。用户想独立变化可使用正常的 voice/seed/生成坐标。这个行为要在文档

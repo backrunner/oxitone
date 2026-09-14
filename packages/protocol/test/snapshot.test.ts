@@ -5,11 +5,7 @@ import { describe, expect, it } from "vitest";
 import { chanceOptionsToWire } from "../src/authoring/automation-source.js";
 import { beatToWire } from "../src/base/beat.js";
 import { ErrorCode, ERROR_CODES, OxitoneError } from "../src/base/errors.js";
-import {
-  decodeProjectSnapshot,
-  encodeProjectSnapshot,
-  projectSnapshotSchema,
-} from "../src/engine/snapshot.js";
+import { decodeProjectSnapshot, encodeProjectSnapshot, projectSnapshotSchema } from "../src/engine/snapshot.js";
 import { checkProtocolVersion, PROTOCOL_VERSION } from "../src/base/version.js";
 
 const fixtures = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "schemas", "fixtures");
@@ -34,8 +30,11 @@ describe("protocol version", () => {
 describe("project snapshot codec", () => {
   it("round-trips Track M/S and rejects them below their protocol floor", () => {
     const snapshot = decodeProjectSnapshot(snapshotText);
-    snapshot.tracks[0]!.mute = true; snapshot.tracks[0]!.solo = false;
-    expect(() => encodeProjectSnapshot(snapshot)).toThrowError(expect.objectContaining({ code: ErrorCode.ProtocolVersionUnsupported }));
+    snapshot.tracks[0]!.mute = true;
+    snapshot.tracks[0]!.solo = false;
+    expect(() => encodeProjectSnapshot(snapshot)).toThrowError(
+      expect.objectContaining({ code: ErrorCode.ProtocolVersionUnsupported }),
+    );
     snapshot.protocolVersion = PROTOCOL_VERSION;
     expect(decodeProjectSnapshot(encodeProjectSnapshot(snapshot))).toEqual(snapshot);
   });
@@ -43,7 +42,10 @@ describe("project snapshot codec", () => {
     const snapshot = decodeProjectSnapshot(snapshotText);
     snapshot.channels[0]!.instrument.instanceId = "ins_test";
     expect(projectSnapshotSchema.safeParse(snapshot).success).toBe(false);
-    for (const operation of [() => encodeProjectSnapshot(snapshot), () => decodeProjectSnapshot(JSON.stringify(snapshot))]) {
+    for (const operation of [
+      () => encodeProjectSnapshot(snapshot),
+      () => decodeProjectSnapshot(JSON.stringify(snapshot)),
+    ]) {
       expect(operation).toThrowError(expect.objectContaining({ code: ErrorCode.ProtocolVersionUnsupported }));
     }
     snapshot.protocolVersion = PROTOCOL_VERSION;
@@ -112,17 +114,42 @@ describe("chance options", () => {
 describe("error codes", () => {
   it("covers every stable code named in the docs", () => {
     const expected = [
-      "InvalidProject", "TempoRange", "TempoMapOrder", "TempoMapComplexity",
-      "EditTargetMissing", "EditTargetAmbiguous", "EditScopeConflict", "EditNotRepresentable",
-      "SourceChanged", "DraftInvalid", "BudgetExceeded",
-      "AutomationNonFinite", "AutomationRange", "AutomationPeriod",
-      "AutomationChanceFrequency", "AutomationPoints", "AutomationExponentialZero",
-      "AutomationDepthLimit", "AutomationNodeLimit", "AutomationRateBudget",
-      "AutomationTempoRestriction", "TempoAutomationConflict",
-      "AutomationTargetInvalid", "MidiChannelLimit", "SampleStretchRange",
+      "InvalidProject",
+      "TempoRange",
+      "TempoMapOrder",
+      "TempoMapComplexity",
+      "EditTargetMissing",
+      "EditTargetAmbiguous",
+      "EditScopeConflict",
+      "EditNotRepresentable",
+      "SourceChanged",
+      "DraftInvalid",
+      "BudgetExceeded",
+      "AutomationNonFinite",
+      "AutomationRange",
+      "AutomationPeriod",
+      "AutomationChanceFrequency",
+      "AutomationPoints",
+      "AutomationExponentialZero",
+      "AutomationDepthLimit",
+      "AutomationNodeLimit",
+      "AutomationRateBudget",
+      "AutomationTempoRestriction",
+      "TempoAutomationConflict",
+      "AutomationTargetInvalid",
+      "MidiChannelLimit",
+      "SampleStretchRange",
       "SampleFormatUnsupported",
-      "AssetUnavailable", "DeviceUnavailable", "RealtimeFault", "WavTooLarge",
-      "PluginAbiMismatch", "PluginInstallFailed", "PluginManifestMismatch", "PluginMigrationFailed", "PluginTaskConflict", "PerformanceWarning",
+      "AssetUnavailable",
+      "DeviceUnavailable",
+      "RealtimeFault",
+      "WavTooLarge",
+      "PluginAbiMismatch",
+      "PluginInstallFailed",
+      "PluginManifestMismatch",
+      "PluginMigrationFailed",
+      "PluginTaskConflict",
+      "PerformanceWarning",
     ];
     expect([...ERROR_CODES].sort()).toEqual([...expected, "ProtocolVersionUnsupported"].sort());
   });

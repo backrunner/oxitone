@@ -6,10 +6,20 @@ import { sourceSpan } from "../eval/source-timing.js";
 export function validateProjectFrame(frame: PreviewSnapshotFrame): void {
   const done = sourceSpan("native-validation");
   try {
-    const engine = createEngine(engineOptionsSchema.parse({ sampleRate: frame.snapshot.sampleRate, blockSize: frame.snapshot.blockSize, allowPlugins: frame.allowPlugins }));
+    const engine = createEngine(
+      engineOptionsSchema.parse({
+        sampleRate: frame.snapshot.sampleRate,
+        blockSize: frame.snapshot.blockSize,
+        allowPlugins: frame.allowPlugins,
+      }),
+    );
     try {
       for (const plugin of frame.plugins) registerPlugin(engine, plugin);
       compile(engine, frame.snapshot, { assetBaseDir: frame.assetBaseDir });
-    } finally { dispose(engine); }
-  } finally { done(); }
+    } finally {
+      dispose(engine);
+    }
+  } finally {
+    done();
+  }
 }

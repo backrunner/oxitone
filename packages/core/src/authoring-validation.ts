@@ -1,7 +1,9 @@
 import { ErrorCode, OxitoneError } from "@oxitone/protocol";
 
 interface AuthoringSchema<T> {
-  safeParse(input: unknown):
+  safeParse(
+    input: unknown,
+  ):
     | { success: true; data: T }
     | { success: false; error: { issues: readonly { path: PropertyKey[]; message: string }[] } };
 }

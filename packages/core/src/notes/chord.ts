@@ -21,6 +21,7 @@ export interface ChordOptions {
 export function chord(root: Pitch, quality: ChordQuality, options: ChordOptions = {}): Pattern {
   const { id, name, ...music } = options;
   return patternFromSource(createSource({ kind: "chord", root, quality, options: music }), {
-    ...(id === undefined ? {} : { id }), ...(name === undefined ? {} : { name }),
+    ...(id === undefined ? {} : { id }),
+    ...(name === undefined ? {} : { name }),
   });
 }

@@ -12,12 +12,23 @@ const execute = promisify(execFile);
 /** Explicit, local-only development libraries; no downloads or directory scanning. */
 export async function buildPlugins(output: string): Promise<RegisterPluginOptions[]> {
   mkdirSync(output, { recursive: true });
-  await execute("cargo", ["build", "--locked", "--release", "-p", "oxitone-example-drums"],
-    { cwd: root });
+  await execute("cargo", ["build", "--locked", "--release", "-p", "oxitone-example-drums"], { cwd: root });
   const suffix = process.platform === "darwin" ? ".dylib" : ".so";
   const effect = join(output, `reference-gain${suffix}`);
-  await execute("cc", ["-std=c11", "-shared", "-fPIC", "-O2", "-Wall", "-Wextra", "-Werror",
-    "-I", join(root, "include"), join(root, "crates/render/tests/fixtures/gain.c"), "-o", effect]);
+  await execute("cc", [
+    "-std=c11",
+    "-shared",
+    "-fPIC",
+    "-O2",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-I",
+    join(root, "include"),
+    join(root, "crates/render/tests/fixtures/gain.c"),
+    "-o",
+    effect,
+  ]);
   return [
     [join(root, `target/release/liboxitone_example_drums${suffix}`), join(root, "crates/example-drums/manifest.json")],
     [effect, join(root, "crates/render/tests/fixtures/gain.json")],

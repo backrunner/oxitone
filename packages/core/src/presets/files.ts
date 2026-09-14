@@ -7,11 +7,15 @@ import { parsePreset, validatePreset, type PresetRuntimeOptions } from "./preset
 const hash = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex");
 function fileError(error: unknown, path: string): never {
   if (OxitoneError.isOxitoneError(error)) throw error;
-  throw new OxitoneError(error instanceof SyntaxError ? ErrorCode.InvalidProject : ErrorCode.AssetUnavailable,
-    error instanceof Error ? error.message : "preset file operation failed", { details: { path } });
+  throw new OxitoneError(
+    error instanceof SyntaxError ? ErrorCode.InvalidProject : ErrorCode.AssetUnavailable,
+    error instanceof Error ? error.message : "preset file operation failed",
+    { details: { path } },
+  );
 }
 function localPath(path: string): string {
-  if (!path || path.includes("\0")) throw new OxitoneError(ErrorCode.InvalidProject, "preset path must be nonempty without NUL");
+  if (!path || path.includes("\0"))
+    throw new OxitoneError(ErrorCode.InvalidProject, "preset path must be nonempty without NUL");
   return resolve(path);
 }
 function inside(base: string, path: string): string {
@@ -32,18 +36,34 @@ export async function savePreset(value: Preset, path: string, options: PresetRun
     for (const sample of preset.samples) {
       const source = await realpath(resolve(options.assetBaseDir ?? process.cwd(), sample.assetUri));
       sample.assetUri = inside(base, source);
-      if (hash(await readFile(source)) !== sample.sha256) throw new OxitoneError(ErrorCode.AssetUnavailable, "preset sample hash mismatch");
+      if (hash(await readFile(source)) !== sample.sha256)
+        throw new OxitoneError(ErrorCode.AssetUnavailable, "preset sample hash mismatch");
     }
     const file = await open(temp, "wx");
-    try { await file.writeFile(canonicalEncode(preset)); await file.sync(); } finally { await file.close(); }
+    try {
+      await file.writeFile(canonicalEncode(preset));
+      await file.sync();
+    } finally {
+      await file.close();
+    }
     await rename(temp, destination);
     const directory = await open(base, "r");
-    try { await directory.sync(); } finally { await directory.close(); }
-  } catch (error) { fileError(error, destination); }
-  finally { await unlink(temp).catch(() => {}); }
+    try {
+      await directory.sync();
+    } finally {
+      await directory.close();
+    }
+  } catch (error) {
+    fileError(error, destination);
+  } finally {
+    await unlink(temp).catch(() => {});
+  }
 }
 
-export interface LoadedPreset { preset: Preset; assetBaseDir: string; }
+export interface LoadedPreset {
+  preset: Preset;
+  assetBaseDir: string;
+}
 /** Load portable metadata and validate all plugins/resources before returning. */
 export async function loadPreset(path: string, options: PresetRuntimeOptions = {}): Promise<LoadedPreset> {
   const source = localPath(path);
@@ -56,8 +76,11 @@ export async function loadPreset(path: string, options: PresetRuntimeOptions = {
       }
       const asset = await realpath(resolve(assetBaseDir, sample.assetUri));
       inside(assetBaseDir, asset);
-      if (hash(await readFile(asset)) !== sample.sha256) throw new OxitoneError(ErrorCode.AssetUnavailable, "preset sample hash mismatch");
+      if (hash(await readFile(asset)) !== sample.sha256)
+        throw new OxitoneError(ErrorCode.AssetUnavailable, "preset sample hash mismatch");
     }
     return { preset: validatePreset(preset, { ...options, assetBaseDir }), assetBaseDir };
-  } catch (error) { fileError(error, source); }
+  } catch (error) {
+    fileError(error, source);
+  }
 }

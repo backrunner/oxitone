@@ -18,5 +18,7 @@
     "@oxitone/protocol": "workspace:*",
     "oxitone": "workspace:*"
   },
-  "devDependencies": { "vitest": "^3.2.0" }
+  "devDependencies": {
+    "vitest": "^3.2.0"
+  }
 }

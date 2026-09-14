@@ -10,24 +10,28 @@ it("watches imported UI metadata independently of the musical snapshot and recov
   const cache = fileURLToPath(new URL("../node_modules/.cache/", import.meta.url));
   await mkdir(cache, { recursive: true });
   const dir = await mkdtemp(join(cache, "preview-ui-"));
-  const entry = join(dir, "song.ts"), panel = join(dir, "panel.ts");
+  const entry = join(dir, "song.ts"),
+    panel = join(dir, "panel.ts");
   const frames: PreviewFrame[] = [];
   const runner = new PreviewRunner(entry, (frame) => frames.push(frame), { debounceMs: 20 });
-  const snapshots = () => frames.filter(f => f.type === "snapshot");
+  const snapshots = () => frames.filter((f) => f.type === "snapshot");
   const layout = (title: string, parameter = "filter.cutoff") => `export default {
     uiVersion:"1.0",pluginId:"oxitone.wavetable",pluginVersion:"1.0.0",title:"${title}",size:{width:500,height:320},
     pages:[{id:"main",title:"Main",groups:[{id:"tone",title:"Tone",columns:1,controls:[{kind:"knob",parameter:"${parameter}"}]}]}]
   };`;
   try {
     await writeFile(join(dir, "package.json"), '{"type":"module"}');
-    await writeFile(entry, `import { Project } from '@oxitone/core'; import panel from './panel.js';
-      export default () => new Project({seed:42}).registerPluginUi(panel);`);
+    await writeFile(
+      entry,
+      `import { Project } from '@oxitone/core'; import panel from './panel.js';
+      export default () => new Project({seed:42}).registerPluginUi(panel);`,
+    );
     await writeFile(panel, layout("First"));
     await runner.start();
     await until(() => snapshots().length === 1);
-    expect(frames.some(f => f.type === "status" && f.state === "watching")).toBe(false);
+    expect(frames.some((f) => f.type === "status" && f.state === "watching")).toBe(false);
     await writeFile(panel, "export default {");
-    await until(() => frames.some(f => f.type === "diagnostic"));
+    await until(() => frames.some((f) => f.type === "diagnostic"));
     expect(snapshots()).toHaveLength(1);
     await writeFile(panel, layout("Second"));
     await until(() => snapshots().length === 2);
@@ -38,5 +42,8 @@ it("watches imported UI metadata independently of the musical snapshot and recov
     await writeFile(panel, layout("Local fallback", "unknown"));
     await until(() => snapshots().length === 3);
     expect(snapshots()[2]!.snapshot.revision).toBe("3");
-  } finally { await runner.close(); await rm(dir, { recursive: true, force: true }); }
+  } finally {
+    await runner.close();
+    await rm(dir, { recursive: true, force: true });
+  }
 }, 30_000);

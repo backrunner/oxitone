@@ -128,6 +128,7 @@ channel sharing; independent patches/CCs and same-pitch overlaps cannot be faith
 reproduced on shared MIDI channels.
 
 Public technique references, used for principles rather than copied patches:
+
 - Au5, [Supersaw Killer](https://www.youtube.com/watch?v=IhvO8grER5s): stereo,
   additional oscillators, filtering and chord voicings.
 - Au5, [Cracked Bass Drops Technique](https://www.youtube.com/watch?v=t3__vw0vaV8):
@@ -158,6 +159,7 @@ available tutorial material are explicit in `examples/drum-machine/src/full/PROD
 Current evidence: `benchmarks/results/2026-09-08-horizon-drum-energy.json`.
 
 Capability references:
+
 - [Serum 2](https://xferrecords.com/products/serum-2): continuous frame positions,
   FM/phase distortion/ring modulation and oscillator warps.
 - [Vital](https://vital.audio/): wavetable warping, modulation remapping, envelopes,

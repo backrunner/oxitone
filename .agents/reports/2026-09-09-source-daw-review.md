@@ -62,16 +62,16 @@ SourceChanged，未把该轮计为性能样本。待打包和锁文件恢复完�
 
 ## 已修复缺陷，按影响排序
 
-| 优先级 | 触发与修复前影响 | 修复与回归证据 |
-| --- | --- | --- |
-| P1 | 服务已接受编辑器 B，但磁盘仍为 A；服务重启加载 A，客户端把 B 当作共同 baseline，静默提出覆盖为 A，丢失未保存输入 | `editor/buffers.ts` 给 baseline/apply 保留 session 身份；不同新服务文本形成显式冲突。VS Code 持久化 baseline 的身份。`editor-races.test.ts` 与真实 Extension Host 验证保留 B、重连后 Save 明确因冲突拒绝、显式同文本收敛后可保存 |
-| P1 | 256 个结果和 4096 个 retired request IDs 耗尽后，后续所有请求包括 Save 都返回 BudgetExceeded，长时间工作不可继续 | `document-request-history.ts` 用最多 64 个客户端的单调序号保护过期重放，缓存 256 个结果；legacy 限额与生产 stream 隔离。GPUI/editor 均迁移请求 ID；5000 次连续请求后 Save 成功，旧 Save 不重放，重复 Save 幂等；另测 legacy 耗尽、身份冲突、非法序号和客户端限额 |
-| P2 | 宿主正在异步应用远端 B 时收到 C，旧代码把 proposal 换成 C，实际 B 的 change/ack 被当成用户竞争或无效确认 | `EditorBuffers.reconcile` 保留已发给宿主的准确 proposal，确认 B 后再提出 C；测试模拟被延迟的宿主应用 |
-| P2 | 一个 socket batch 含 B event、B accepted response、C event，客户端只看最新 C，丢掉 B 被接受的事实，错误产生冲突 | `EditorDocumentSession.pump` 根据相关成功 response 单独推进 B baseline，不能依赖最新 event 恰好等于 B；真实 Unix socket 分帧/批处理回归 |
-| P2 | directive 与 import/声明写在同一行，新增 import 的位置越过实际编辑表达式，拆散报错或产生非法候选 | `imports.ts` 在完整 directive 后扫描 trivia，保留同行注释/CRLF/shebang，不越过下一条可执行语句。同行源码新用例和既有格式保留用例均通过 |
-| P2 | 合法作者源码声明 `globalThis`，临时插桩在作者作用域调用同名局部值，工程无法求值 | `project-capture-module.ts` 在独立虚拟模块词法作用域读取 hook，选择不冲突的 import alias。完整 Project 与选定 Pattern 两条求值路径共同使用；真实执行、编辑、Save 验证，临时 hook/import 不进入源码 |
-| P2 | 本地模块只导入 npm 编曲 helper，工程只安装 `@oxitone/core`，拆散却新增未安装的 `oxitone` import，候选 build 失败 | import planner 从选中源文件解析可用 SDK 包；`source-review.test.ts` 覆盖该布局的 npm 拆散、保留 entry/export、保存重开和 dependency 字节不变 |
-| P2 | 工程发现与磁盘 watcher 使用无界 `readFile`；超大文件/多文件工程会在上层预算拒绝前先分配超限内存，甚至 `Promise.all` 并行放大峰值 | `project-files.ts` 新增分块 `readSourceText`，先 stat、再按 8 MiB cap 读取；项目发现串行累计 32 MiB，`project-disk.ts` 共用读取器；ProjectDocument 删除二次无界读取。5 个 source ownership/budget tests 覆盖单文件与聚合上限 |
+| 优先级 | 触发与修复前影响                                                                                                                 | 修复与回归证据                                                                                                                                                                                                                                                   |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P1     | 服务已接受编辑器 B，但磁盘仍为 A；服务重启加载 A，客户端把 B 当作共同 baseline，静默提出覆盖为 A，丢失未保存输入                 | `editor/buffers.ts` 给 baseline/apply 保留 session 身份；不同新服务文本形成显式冲突。VS Code 持久化 baseline 的身份。`editor-races.test.ts` 与真实 Extension Host 验证保留 B、重连后 Save 明确因冲突拒绝、显式同文本收敛后可保存                                 |
+| P1     | 256 个结果和 4096 个 retired request IDs 耗尽后，后续所有请求包括 Save 都返回 BudgetExceeded，长时间工作不可继续                 | `document-request-history.ts` 用最多 64 个客户端的单调序号保护过期重放，缓存 256 个结果；legacy 限额与生产 stream 隔离。GPUI/editor 均迁移请求 ID；5000 次连续请求后 Save 成功，旧 Save 不重放，重复 Save 幂等；另测 legacy 耗尽、身份冲突、非法序号和客户端限额 |
+| P2     | 宿主正在异步应用远端 B 时收到 C，旧代码把 proposal 换成 C，实际 B 的 change/ack 被当成用户竞争或无效确认                         | `EditorBuffers.reconcile` 保留已发给宿主的准确 proposal，确认 B 后再提出 C；测试模拟被延迟的宿主应用                                                                                                                                                             |
+| P2     | 一个 socket batch 含 B event、B accepted response、C event，客户端只看最新 C，丢掉 B 被接受的事实，错误产生冲突                  | `EditorDocumentSession.pump` 根据相关成功 response 单独推进 B baseline，不能依赖最新 event 恰好等于 B；真实 Unix socket 分帧/批处理回归                                                                                                                          |
+| P2     | directive 与 import/声明写在同一行，新增 import 的位置越过实际编辑表达式，拆散报错或产生非法候选                                 | `imports.ts` 在完整 directive 后扫描 trivia，保留同行注释/CRLF/shebang，不越过下一条可执行语句。同行源码新用例和既有格式保留用例均通过                                                                                                                           |
+| P2     | 合法作者源码声明 `globalThis`，临时插桩在作者作用域调用同名局部值，工程无法求值                                                  | `project-capture-module.ts` 在独立虚拟模块词法作用域读取 hook，选择不冲突的 import alias。完整 Project 与选定 Pattern 两条求值路径共同使用；真实执行、编辑、Save 验证，临时 hook/import 不进入源码                                                               |
+| P2     | 本地模块只导入 npm 编曲 helper，工程只安装 `@oxitone/core`，拆散却新增未安装的 `oxitone` import，候选 build 失败                 | import planner 从选中源文件解析可用 SDK 包；`source-review.test.ts` 覆盖该布局的 npm 拆散、保留 entry/export、保存重开和 dependency 字节不变                                                                                                                     |
+| P2     | 工程发现与磁盘 watcher 使用无界 `readFile`；超大文件/多文件工程会在上层预算拒绝前先分配超限内存，甚至 `Promise.all` 并行放大峰值 | `project-files.ts` 新增分块 `readSourceText`，先 stat、再按 8 MiB cap 读取；项目发现串行累计 32 MiB，`project-disk.ts` 共用读取器；ProjectDocument 删除二次无界读取。5 个 source ownership/budget tests 覆盖单文件与聚合上限                                     |
 
 相关实现位置（相对仓库根目录）：
 
@@ -93,28 +93,28 @@ SourceChanged，未把该轮计为性能样本。待打包和锁文件恢复完�
 “部分”表示已有真实实现，但该领域的完整验收尚不能关闭。每项均按当前目标判断，
 不把最初的只读 Preview 或 ABI 1 基线等同于本次完整双向编辑目标。
 
-| 领域 | 当前已实现/证据 | 尚缺的验收或实现 |
-| --- | --- | --- |
-| chord | 来源 degree/voice、截顶同音区分、单音字段/增删；core source 与 writer 测试 | 全六 quality/options × GPUI 手势组合矩阵、生成器规则面板 |
-| arp | 四 order 的既有语义；输出 step 编辑、删除留空拍、插音不重算旧力度、seed 输出重开 | 完整 octave/重复输入/规则面板交互矩阵 |
-| 组合 | chord → arp → concat/repeat/transpose source DAG，definition/单 placement 隔离和跨文件共享 | 全部四种层次；source iteration 不等于播放 Clip loop 的单轮例外 |
-| 源码 | literal/变量/alias、sync/async factory、本地/外部 helper 捕获、最小表达式 patch | 任意循环/重复执行引用无法唯一隔离时明确拒绝；完整依赖/definition resolver 尚缺 |
-| MVVM/import/export | linked dirty buffer 实时同步、版本条件、防回环、冲突；运行时 import 别名/type-only/遮蔽/格式、出口文本保留 | 条件导出/循环/全部模块布局的 resolver；普通 `file:` tabs 仍仅 disk watch |
-| npm 本地化 | Pattern 与串联效果器 rack 具体候选 review/确认、调用侧展开、其他引用与依赖源码不变 | 资源/state、并行 rack、宏/绑定迁移；保留原工厂副作用的拆散仍会执行原依赖 |
-| edit 归约 | 重复绝对拖动归约、literal 直接回写、insert/remove 抵消、expect/歧义拒绝 | 所有结构/时间域 edit 的归约和长期复杂表达式预算 |
-| Arrangement | 既有显示、播放、Pattern source 派生 | Clip 移动/替换/跨 Track、相位保持 split/window、Playlist 编辑、单轮编辑 |
-| automation | 全 24 builder 可 `replaceRange`，source/单 lane 引用范围、唯一 Playlist clip 的 clip-local range、hard/fade golden、loop/chance seed-path 保留、GPUI 实测 | 多 clip winner/覆盖编辑、统一共享 automation DAG、完整规则编辑面板 |
-| 随机 | 固定 seed arp 与 source 规则稳定；当前不安全的概率 note/placement 图形编辑明确拒绝 | 新 musical origin/random-v2、移动/复制/重排/窗口的全部随机不变性 |
-| Sample | 既有 SDK/Rust 播放、sample edits/fit/tempoSync | DAW trim/fit/split、相位窗口、grid/onset 单片编辑与 trigger 迁移 |
-| regions | 既有 grand/soft/multisampler 声音生成 | 图形单区/多层拆散、资源/defaults/键力度边界的本地回写 |
-| 插件实例 | engine 1.1 instanceId、plugin/effectHost 分域参数、共享 config 的两个实例独立、native 校验/离线测试 | 最终 AuthoringDocument/EngineProject 2.0；纯 Definition/Config/Instance resolver |
-| 插件 ABI | 真实外部 C 插件 ABI 1 参数/验证与 npm fixture 闭环 | ABI 2 resources/state/events、迁移与真实 conformance fixtures；core 仍依赖 native |
-| 面板 | 通用参数、mix/bypass、声明式布局回退、已有详情窗口 | native UI companion gesture/config 事务与 generation、连续参数试听 |
-| 重排替换 | 以实例身份绑定 automation；GPUI reorder 回写 `orderEffects`，不在 TS 写 ID | GPUI 添加/替换、升级参数/state 迁移失败的整工程回滚 |
-| 管理器 | 20 builtin + 已安装 npm 静态目录、搜索、版本/平台/hash/签名策略、独立 helper Verify、使用位置；Document install/upgrade/uninstall/repair task 与 GPUI manager 操作；GPUI/VS Code 可添加未安装包；失败恢复 package.json/lockfile 快照 | 多平台包解析、node_modules/state 的完整迁移回滚与 1k 条目性能 |
-| 保存/恢复 | 现有登记文件、多文件 fsync journal/锁、SIGKILL 恢复/第三方 hash 冲突、VS Code Save/autoSave；新增 TS 文件受根目录/扩展名约束并纳入 journal 创建恢复，VS Code 可创建并打开 linked buffer | 新资产、更多磁盘满/权限/故障点；server-only 未保存修改未 crash-journal；完整 hot-exit/window reload 未实测 |
-| 并发/进程 | 外部 atomic save、防过期候选、编辑器版本竞争、同文本收敛、断线重连、队列/过期请求/幂等；新增保守逐行三方合并 | 语义级三方合并、rename/动态新增依赖、所有故障及多窗口组合 |
-| 重开/音频/性能 | CLI/GPUI 保存后全新求值；Rust offline/native simulated/Web Wasm parity；本次 source benchmark | 全量缓存删除 release fixture、全部 block/tempo/窗口新模型对拍、active graph ack/实例移交、大工程及 callback/xrun 证据 |
+| 领域               | 当前已实现/证据                                                                                                                                                                                                                      | 尚缺的验收或实现                                                                                                      |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| chord              | 来源 degree/voice、截顶同音区分、单音字段/增删；core source 与 writer 测试                                                                                                                                                           | 全六 quality/options × GPUI 手势组合矩阵、生成器规则面板                                                              |
+| arp                | 四 order 的既有语义；输出 step 编辑、删除留空拍、插音不重算旧力度、seed 输出重开                                                                                                                                                     | 完整 octave/重复输入/规则面板交互矩阵                                                                                 |
+| 组合               | chord → arp → concat/repeat/transpose source DAG，definition/单 placement 隔离和跨文件共享                                                                                                                                           | 全部四种层次；source iteration 不等于播放 Clip loop 的单轮例外                                                        |
+| 源码               | literal/变量/alias、sync/async factory、本地/外部 helper 捕获、最小表达式 patch                                                                                                                                                      | 任意循环/重复执行引用无法唯一隔离时明确拒绝；完整依赖/definition resolver 尚缺                                        |
+| MVVM/import/export | linked dirty buffer 实时同步、版本条件、防回环、冲突；运行时 import 别名/type-only/遮蔽/格式、出口文本保留                                                                                                                           | 条件导出/循环/全部模块布局的 resolver；普通 `file:` tabs 仍仅 disk watch                                              |
+| npm 本地化         | Pattern 与串联效果器 rack 具体候选 review/确认、调用侧展开、其他引用与依赖源码不变                                                                                                                                                   | 资源/state、并行 rack、宏/绑定迁移；保留原工厂副作用的拆散仍会执行原依赖                                              |
+| edit 归约          | 重复绝对拖动归约、literal 直接回写、insert/remove 抵消、expect/歧义拒绝                                                                                                                                                              | 所有结构/时间域 edit 的归约和长期复杂表达式预算                                                                       |
+| Arrangement        | 既有显示、播放、Pattern source 派生                                                                                                                                                                                                  | Clip 移动/替换/跨 Track、相位保持 split/window、Playlist 编辑、单轮编辑                                               |
+| automation         | 全 24 builder 可 `replaceRange`，source/单 lane 引用范围、唯一 Playlist clip 的 clip-local range、hard/fade golden、loop/chance seed-path 保留、GPUI 实测                                                                            | 多 clip winner/覆盖编辑、统一共享 automation DAG、完整规则编辑面板                                                    |
+| 随机               | 固定 seed arp 与 source 规则稳定；当前不安全的概率 note/placement 图形编辑明确拒绝                                                                                                                                                   | 新 musical origin/random-v2、移动/复制/重排/窗口的全部随机不变性                                                      |
+| Sample             | 既有 SDK/Rust 播放、sample edits/fit/tempoSync                                                                                                                                                                                       | DAW trim/fit/split、相位窗口、grid/onset 单片编辑与 trigger 迁移                                                      |
+| regions            | 既有 grand/soft/multisampler 声音生成                                                                                                                                                                                                | 图形单区/多层拆散、资源/defaults/键力度边界的本地回写                                                                 |
+| 插件实例           | engine 1.1 instanceId、plugin/effectHost 分域参数、共享 config 的两个实例独立、native 校验/离线测试                                                                                                                                  | 最终 AuthoringDocument/EngineProject 2.0；纯 Definition/Config/Instance resolver                                      |
+| 插件 ABI           | 真实外部 C 插件 ABI 1 参数/验证与 npm fixture 闭环                                                                                                                                                                                   | ABI 2 resources/state/events、迁移与真实 conformance fixtures；core 仍依赖 native                                     |
+| 面板               | 通用参数、mix/bypass、声明式布局回退、已有详情窗口                                                                                                                                                                                   | native UI companion gesture/config 事务与 generation、连续参数试听                                                    |
+| 重排替换           | 以实例身份绑定 automation；GPUI reorder 回写 `orderEffects`，不在 TS 写 ID                                                                                                                                                           | GPUI 添加/替换、升级参数/state 迁移失败的整工程回滚                                                                   |
+| 管理器             | 20 builtin + 已安装 npm 静态目录、搜索、版本/平台/hash/签名策略、独立 helper Verify、使用位置；Document install/upgrade/uninstall/repair task 与 GPUI manager 操作；GPUI/VS Code 可添加未安装包；失败恢复 package.json/lockfile 快照 | 多平台包解析、node_modules/state 的完整迁移回滚与 1k 条目性能                                                         |
+| 保存/恢复          | 现有登记文件、多文件 fsync journal/锁、SIGKILL 恢复/第三方 hash 冲突、VS Code Save/autoSave；新增 TS 文件受根目录/扩展名约束并纳入 journal 创建恢复，VS Code 可创建并打开 linked buffer                                              | 新资产、更多磁盘满/权限/故障点；server-only 未保存修改未 crash-journal；完整 hot-exit/window reload 未实测            |
+| 并发/进程          | 外部 atomic save、防过期候选、编辑器版本竞争、同文本收敛、断线重连、队列/过期请求/幂等；新增保守逐行三方合并                                                                                                                         | 语义级三方合并、rename/动态新增依赖、所有故障及多窗口组合                                                             |
+| 重开/音频/性能     | CLI/GPUI 保存后全新求值；Rust offline/native simulated/Web Wasm parity；本次 source benchmark                                                                                                                                        | 全量缓存删除 release fixture、全部 block/tempo/窗口新模型对拍、active graph ack/实例移交、大工程及 callback/xrun 证据 |
 
 高阶 API 盘点覆盖类别沿用 [入口审计](../proposals/2026-09-08-higher-order-edit-audit.md)，
 该历史文档中“还没有 repeat/concat/slice 或 replaceRange”的描述属于原始基线，当前已增加。
@@ -158,15 +158,15 @@ hunk，成功后重新求值；重叠替换和同位置不同插入会返回 `Ed
 100 notes、2 placements、20 plugins，1 warmup + 10 实测；此样本量的 p95/p99 均为最大值。
 本次等待自己的测试/build 完成后只运行一次，系统仍有其他任务，不声称隔离性能实验。
 
-| 操作 | p50 ms | p95/p99 ms |
-| --- | ---: | ---: |
-| 音符提交、完整候选校验/接受 | 211.01 | 231.92 |
-| 配置提交、校验/接受 | 197.46 | 224.40 |
-| rack 拆散候选/校验 | 200.23 | 251.86 |
-| dirty journal Save | 60.26 | 84.93 |
-| 效果器重排/校验 | 276.25 | 500.27 |
-| source/plugin 投影序列化 | 1.66 | 2.24 |
-| 新进程重开 | 232.40 | 240.33 |
+| 操作                        | p50 ms | p95/p99 ms |
+| --------------------------- | -----: | ---------: |
+| 音符提交、完整候选校验/接受 | 211.01 |     231.92 |
+| 配置提交、校验/接受         | 197.46 |     224.40 |
+| rack 拆散候选/校验          | 200.23 |     251.86 |
+| dirty journal Save          |  60.26 |      84.93 |
+| 效果器重排/校验             | 276.25 |     500.27 |
+| source/plugin 投影序列化    |   1.66 |       2.24 |
+| 新进程重开                  | 232.40 |     240.33 |
 
 效果器重排 p95 超过小工程局部 edit 的 300 ms 预算，性能门禁**未通过**。保留此前
 `daw-instances-source-bench-serial.json` 更慢样本和 `daw-vscode-source-bench.json`，

@@ -7,17 +7,16 @@ evaluator 和其私有 worker 已删除。完整 GPUI 事务协议见 [18](18-pr
 ## 打开与求值
 
 ```ts
-import { ProjectDocument } from '@oxitone/cli/source';
+import { ProjectDocument } from "@oxitone/cli/source";
 
 const document = await ProjectDocument.open({
-  entry: '/music/song.ts',
-  projectRoot: '/music',
-  readPaths: ['/music/assets/voice.wav'],
+  entry: "/music/song.ts",
+  projectRoot: "/music",
+  readPaths: ["/music/assets/voice.wav"],
 });
-const site = document.view.sites.find(site => site.label === 'verse' && site.scope === 'definition');
+const site = document.view.sites.find((site) => site.label === "verse" && site.scope === "definition");
 if (site) {
-  await document.edit(document.view.revision, site.handle,
-    [{ select: { degree: 2 }, set: { pitch: 65 } }]);
+  await document.edit(document.view.revision, site.handle, [{ select: { degree: 2 }, set: { pitch: 65 } }]);
   await document.save(document.view.revision);
 }
 document.close();

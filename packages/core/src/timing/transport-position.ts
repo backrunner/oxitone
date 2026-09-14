@@ -1,13 +1,27 @@
-import { beatToWire, ErrorCode, frameToWire, OxitoneError, type ProjectSnapshot, type TransportCommand } from "@oxitone/protocol";
+import {
+  beatToWire,
+  ErrorCode,
+  frameToWire,
+  OxitoneError,
+  type ProjectSnapshot,
+  type TransportCommand,
+} from "@oxitone/protocol";
 import { TimeSignatureMap, type BarBeatPosition } from "./time-signature.js";
 
 /** Musical position, absolute seconds, or project-rate sample frames. Markers use stable IDs. */
-export type TransportPosition = BarBeatPosition | { beat: number } | { frame: bigint | number } |
-  { frames: bigint | number } | { seconds: number } | { marker: string };
+export type TransportPosition =
+  | BarBeatPosition
+  | { beat: number }
+  | { frame: bigint | number }
+  | { frames: bigint | number }
+  | { seconds: number }
+  | { marker: string };
 
 /** @internal Authoring positions use the last successfully compiled snapshot. */
-export function positionFields(position: TransportPosition | undefined, snapshot: ProjectSnapshot):
-  Pick<TransportCommand, "frame" | "beat" | "seconds"> {
+export function positionFields(
+  position: TransportPosition | undefined,
+  snapshot: ProjectSnapshot,
+): Pick<TransportCommand, "frame" | "beat" | "seconds"> {
   if (position === undefined) return {};
   try {
     const keys = Object.keys(position);
@@ -28,7 +42,8 @@ export function positionFields(position: TransportPosition | undefined, snapshot
     }
     if ("beat" in position) return { beat: beatToWire(position.beat) };
     if ("seconds" in position) {
-      if (!Number.isFinite(position.seconds) || position.seconds < 0) throw new Error("seconds must be finite and non-negative");
+      if (!Number.isFinite(position.seconds) || position.seconds < 0)
+        throw new Error("seconds must be finite and non-negative");
       return { seconds: position.seconds };
     }
     const frame = "frame" in position ? position.frame : "frames" in position ? position.frames : undefined;
@@ -38,8 +53,12 @@ export function positionFields(position: TransportPosition | undefined, snapshot
     return { frame: frameToWire(frame) };
   } catch (error) {
     if (error instanceof OxitoneError) throw error;
-    throw new OxitoneError(ErrorCode.InvalidProject, error instanceof Error ? error.message : "invalid transport position", {
-      details: { path: "transport.position" },
-    });
+    throw new OxitoneError(
+      ErrorCode.InvalidProject,
+      error instanceof Error ? error.message : "invalid transport position",
+      {
+        details: { path: "transport.position" },
+      },
+    );
   }
 }

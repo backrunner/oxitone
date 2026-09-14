@@ -40,61 +40,115 @@ export type Pitch = number; // integer 0..127 in Phase 1
 export type Timecode = { seconds: number } | { frames: bigint };
 
 export interface ParameterSpec {
-  id: string; label: string; unit: 'normalized'|'db'|'hz'|'semitones'|'seconds'|'beats'|'enum';
-  min: number; max: number; default: number; smoothing: 'none'|'linear'|'one-pole';
-  rate: 'control'|'audio'; automation?: boolean;
-  mapping?: 'linear'|'log'|'bipolar'|'enum'; // 0..1 → 物理值的映射律；tempo 使用 'log'
+  id: string;
+  label: string;
+  unit: "normalized" | "db" | "hz" | "semitones" | "seconds" | "beats" | "enum";
+  min: number;
+  max: number;
+  default: number;
+  smoothing: "none" | "linear" | "one-pole";
+  rate: "control" | "audio";
+  automation?: boolean;
+  mapping?: "linear" | "log" | "bipolar" | "enum"; // 0..1 → 物理值的映射律；tempo 使用 'log'
 }
 // unit 'beats': 以 beat 为单位的时间参数（如 Delay.time），引擎随 tempo map 换算，变速自动跟随
-export interface AutomationPoint { beat: Beat; value: number; curve?: Curve; }
-export type Curve = { kind: 'step'|'linear'|'smooth'|'exponential' } |
-  { kind: 'bezier'; out: [number, number]; in: [number, number] };
+export interface AutomationPoint {
+  beat: Beat;
+  value: number;
+  curve?: Curve;
+}
+export type Curve =
+  | { kind: "step" | "linear" | "smooth" | "exponential" }
+  | { kind: "bezier"; out: [number, number]; in: [number, number] };
 
-export type WaveKind = 'sine'|'cos'|'triangle'|'saw'|'ramp'|'square';
+export type WaveKind = "sine" | "cos" | "triangle" | "saw" | "ramp" | "square";
 export interface WaveSourceSpec {
-  kind: 'wave'; wave: WaveKind; periodBeats: Beat; phase?: Beat;
-  min?: number; max?: number; pulseWidth?: number;
+  kind: "wave";
+  wave: WaveKind;
+  periodBeats: Beat;
+  phase?: Beat;
+  min?: number;
+  max?: number;
+  pulseWidth?: number;
 }
 export interface GateSourceSpec {
-  kind: 'gate'; periodBeats: Beat; duty: number; phase?: Beat;
-  on?: number; off?: number;
+  kind: "gate";
+  periodBeats: Beat;
+  duty: number;
+  phase?: Beat;
+  on?: number;
+  off?: number;
 }
 export interface ChanceCommonSpec {
-  kind: 'chance'; probability: number; seed: number;
-  smoothBeats?: Beat; randomPhase?: 'absolute'|'restart';
+  kind: "chance";
+  probability: number;
+  seed: number;
+  smoothBeats?: Beat;
+  randomPhase?: "absolute" | "restart";
 }
 export type ChanceSourceSpec = ChanceCommonSpec &
   ({ rate: number; intervalBeats?: never } | { rate?: never; intervalBeats: Beat });
 export interface PolylineSourceSpec {
-  kind: 'curve'; interpolation: Curve['kind']; points: AutomationPoint[];
+  kind: "curve";
+  interpolation: Curve["kind"];
+  points: AutomationPoint[];
 }
 export type AutomationSourceSpec =
-  | { kind: 'constant'; value: number }
+  | { kind: "constant"; value: number }
   | PolylineSourceSpec
   | GateSourceSpec
   | ChanceSourceSpec
   | WaveSourceSpec
-  | { kind: 'map'; input: AutomationSourceSpec; min: number; max: number }
-  | { kind: 'unary'; op: 'clamp'|'invert'|'quantize'|'scale'|'offset'; input: AutomationSourceSpec; steps?: number; amount?: number; min?: number; max?: number }
-  | { kind: 'binary'; op: 'mix'|'add'|'multiply'|'min'|'max'; left: AutomationSourceSpec; right: AutomationSourceSpec; amount?: number };
+  | { kind: "map"; input: AutomationSourceSpec; min: number; max: number }
+  | {
+      kind: "unary";
+      op: "clamp" | "invert" | "quantize" | "scale" | "offset";
+      input: AutomationSourceSpec;
+      steps?: number;
+      amount?: number;
+      min?: number;
+      max?: number;
+    }
+  | {
+      kind: "binary";
+      op: "mix" | "add" | "multiply" | "min" | "max";
+      left: AutomationSourceSpec;
+      right: AutomationSourceSpec;
+      amount?: number;
+    };
 
 /** Opaque authoring value; serializes to AutomationSourceSpec during compile. */
-export interface AutomationSource { readonly __automationSource: unique symbol; }
+export interface AutomationSource {
+  readonly __automationSource: unique symbol;
+}
 export interface GateOptions {
-  periodBeats: Beat; duty: number; phase?: Beat; on?: number; off?: number;
+  periodBeats: Beat;
+  duty: number;
+  phase?: Beat;
+  on?: number;
+  off?: number;
 }
 /** Authoring-only options; frequency is normalized to rate in the wire source. */
 export type ChanceOptions = {
-  probability: number; seed: number; smoothBeats?: Beat; randomPhase?: 'absolute'|'restart';
-} & ({ rate: number; frequency?: never; intervalBeats?: never } |
-     { rate?: never; frequency: number; intervalBeats?: never } |
-     { rate?: never; frequency?: never; intervalBeats: Beat });
+  probability: number;
+  seed: number;
+  smoothBeats?: Beat;
+  randomPhase?: "absolute" | "restart";
+} & (
+  | { rate: number; frequency?: never; intervalBeats?: never }
+  | { rate?: never; frequency: number; intervalBeats?: never }
+  | { rate?: never; frequency?: never; intervalBeats: Beat }
+);
 export interface WaveOptions {
-  periodBeats: Beat; phase?: Beat; min?: number; max?: number; pulseWidth?: number;
+  periodBeats: Beat;
+  phase?: Beat;
+  min?: number;
+  max?: number;
+  pulseWidth?: number;
 }
 export interface AutomationNamespace {
   constant(value: number): AutomationSource;
-  curve(points: AutomationPoint[], interpolation?: Curve['kind']): AutomationSource;
+  curve(points: AutomationPoint[], interpolation?: Curve["kind"]): AutomationSource;
   polyline(points: AutomationPoint[]): AutomationSource;
   line(from: number, to: number, durationBeats: Beat): AutomationSource;
   gate(options: GateOptions): AutomationSource;
@@ -120,31 +174,65 @@ export interface AutomationNamespace {
 }
 
 export interface TempoSegment {
-  startBeat: Beat; bpm: number; // 20..999, finite
-  curve?: 'step'|'linear'|'exponential'; // 到下一 segment 的过渡方式，default 'step'
+  startBeat: Beat;
+  bpm: number; // 20..999, finite
+  curve?: "step" | "linear" | "exponential"; // 到下一 segment 的过渡方式，default 'step'
 }
-export interface TimeSignatureSegment { startBar: number; numerator: number; denominator: number; }
+export interface TimeSignatureSegment {
+  startBar: number;
+  numerator: number;
+  denominator: number;
+}
 export interface TrackSpec {
-  id: EntityId; name?: string; channelIds: EntityId[]; tempo?: number;
-  patternClipIds: EntityId[]; sampleClipIds: EntityId[]; enabled?: boolean;
+  id: EntityId;
+  name?: string;
+  channelIds: EntityId[];
+  tempo?: number;
+  patternClipIds: EntityId[];
+  sampleClipIds: EntityId[];
+  enabled?: boolean;
   midiChannel?: number; // 1..16; required for MIDI export when note tracks exceed 16, may be shared explicitly
 }
-export interface LoopSpec { startBeat?: Beat; lengthBeats: Beat; count?: number; lastBeat?: Beat; }
-export interface MarkerSpec { id: EntityId; name?: string; startBeat: Beat; }
-export interface FadeSpec { lengthFrames: bigint; curve?: 'linear'|'equalPower'|'exponential'; }
+export interface LoopSpec {
+  startBeat?: Beat;
+  lengthBeats: Beat;
+  count?: number;
+  lastBeat?: Beat;
+}
+export interface MarkerSpec {
+  id: EntityId;
+  name?: string;
+  startBeat: Beat;
+}
+export interface FadeSpec {
+  lengthFrames: bigint;
+  curve?: "linear" | "equalPower" | "exponential";
+}
 export interface SampleRef {
-  id: EntityId; assetUri: string; sha256: string; format: 'wav'|'aiff'|'flac'|'mp3'|'mp4'|'m4a';
-  sampleRate: number; channels: 1|2; frames: bigint; edits?: SampleEditSpec;
+  id: EntityId;
+  assetUri: string;
+  sha256: string;
+  format: "wav" | "aiff" | "flac" | "mp3" | "mp4" | "m4a";
+  sampleRate: number;
+  channels: 1 | 2;
+  frames: bigint;
+  edits?: SampleEditSpec;
   musicalLengthBeats?: Beat; // 素材原始音乐长度，fit/stretch 计算基准
 }
 export interface InstrumentRef {
-  pluginId: string; pluginVersion: string; parameters: Record<string, number>;
+  pluginId: string;
+  pluginVersion: string;
+  parameters: Record<string, number>;
   resources?: Record<string, string>;
   state?: unknown; // 插件声明 schema 的结构化状态（如 Slicer 的 slice 表），compile 期定稿，播放中不可变
 }
 export interface EffectRef {
-  pluginId: string; pluginVersion: string; parameters: Record<string, number>;
-  resources?: Record<string, string>; bypass?: boolean; mix?: number; // dry/wet 0..1, default 1
+  pluginId: string;
+  pluginVersion: string;
+  parameters: Record<string, number>;
+  resources?: Record<string, string>;
+  bypass?: boolean;
+  mix?: number; // dry/wet 0..1, default 1
 }
 ```
 
@@ -162,9 +250,16 @@ values/resource graphs return `InvalidProject`; unavailable decoded assets retur
 Sample authoring 同样只产生 wire descriptors：
 
 ```ts
-const sample = project.addSample({ assetUri: 'assets/loop.wav', sha256, format: 'wav',
-  sampleRate: 48000, channels: 2, frames: 96000, musicalLengthBeats: 8 });
-const clip = track.sample(sample).at({ bar: 1 }, { tempoSync: 'stretch' });
+const sample = project.addSample({
+  assetUri: "assets/loop.wav",
+  sha256,
+  format: "wav",
+  sampleRate: 48000,
+  channels: 2,
+  frames: 96000,
+  musicalLengthBeats: 8,
+});
+const clip = track.sample(sample).at({ bar: 1 }, { tempoSync: "stretch" });
 clip.fitBars(2);
 ```
 
@@ -196,16 +291,16 @@ Track `tempo?: number` 支持读写、revision 和序列化；有效范围 20..9
 ### 文件采样导入（已实现）
 
 ```ts
-import { Project } from '@oxitone/core';
-import { importSample } from '@oxitone/samples';
+import { Project } from "@oxitone/core";
+import { importSample } from "@oxitone/samples";
 
 const project = new Project();
-const assetBaseDir = '/music/song';
-const imported = importSample('assets/loop.wav', { assetBaseDir });
+const assetBaseDir = "/music/song";
+const imported = importSample("assets/loop.wav", { assetBaseDir });
 const sample = project.addSample({ ...imported, musicalLengthBeats: 8 });
-const track = project.addTrack('audio').use(project.addChannel());
+const track = project.addTrack("audio").use(project.addChannel());
 track.sample(sample).at({ bar: 1 }).fitBeats(8);
-await project.renderWav({ path: '/music/out.wav', assetBaseDir, tailSeconds: 0 });
+await project.renderWav({ path: "/music/out.wav", assetBaseDir, tailSeconds: 0 });
 ```
 
 `importSample(path, options?: { assetBaseDir?: string }): ImportedSample` 同步执行。
@@ -225,18 +320,21 @@ Session.update 和 Session.renderWav 默认沿用它，render options 可显式�
 底层 N-API 为 `inspectSample(requestJson): responseJson`：
 
 ```ts
-interface InspectSampleRequest { protocolVersion: string; path: string; }
+interface InspectSampleRequest {
+  protocolVersion: string;
+  path: string;
+}
 interface SampleInfo {
   protocolVersion: string;
   sha256: string;
-  format: 'wav'|'aiff'|'flac'|'mp3'|'mp4'|'m4a';
+  format: "wav" | "aiff" | "flac" | "mp3" | "mp4" | "m4a";
   sampleRate: number;
-  channels: 1|2;             // 解码后维度，>2 个源声道会降混
-  frames: string;           // wire u64 十进制字符串；importSample 转为 bigint
+  channels: 1 | 2; // 解码后维度，>2 个源声道会降混
+  frames: string; // wire u64 十进制字符串；importSample 转为 bigint
   sourceChannels: number;
-  sourceBitDepth?: number;  // compressed decoder 不一定提供
+  sourceBitDepth?: number; // compressed decoder 不一定提供
   decoder: string;
-  channelLayoutAction: 'kept'|'downmixed-to-stereo';
+  channelLayoutAction: "kept" | "downmixed-to-stereo";
 }
 ```
 
@@ -261,8 +359,8 @@ cacheEncoding?（当前唯一值 wav-f32-v1）。Sample.provenance 返回防御�
 
 ```ts
 const project = new Project();
-const keys = project.addMixerChannel({ name: 'Keys', level: 0.8 });
-const fx = project.addMixerChannel({ name: 'Reverb', inserts: [reverbRef] });
+const keys = project.addMixerChannel({ name: "Keys", level: 0.8 });
+const fx = project.addMixerChannel({ name: "Reverb", inserts: [reverbRef] });
 const channel = project.addChannel({ mixerChannelId: keys.id, effectChain: [eqRef] });
 keys.send(fx, { ratio: 0.25, preFader: false });
 keys.automate(`send.${fx.id}.ratio`, automation.sine({ periodBeats: 8 }));
@@ -292,49 +390,117 @@ channel.swing = 0.2;
 
 ```ts
 export interface NoteSpec {
-  id?: EntityId; pitch: Pitch; start: Beat; duration: Beat;
-  velocity: number; offVelocity?: number; chance?: number; voice?: number; tags?: string[];
+  id?: EntityId;
+  pitch: Pitch;
+  start: Beat;
+  duration: Beat;
+  velocity: number;
+  offVelocity?: number;
+  chance?: number;
+  voice?: number;
+  tags?: string[];
 }
-export interface PatternSpec { id: EntityId; name?: string; lengthBeats: Beat; notes: NoteSpec[]; }
+export interface PatternSpec {
+  id: EntityId;
+  name?: string;
+  lengthBeats: Beat;
+  notes: NoteSpec[];
+}
 export interface PatternClipSpec {
-  id: EntityId; patternId: EntityId; trackId: EntityId; startBeat: Beat;
-  durationBeats?: Beat; loopCount?: number; lastBeat?: Beat;
-  transpose?: number; velocityScale?: number; probability?: number; enabled?: boolean;
+  id: EntityId;
+  patternId: EntityId;
+  trackId: EntityId;
+  startBeat: Beat;
+  durationBeats?: Beat;
+  loopCount?: number;
+  lastBeat?: Beat;
+  transpose?: number;
+  velocityScale?: number;
+  probability?: number;
+  enabled?: boolean;
 }
 export interface SampleEditSpec {
-  startFrame?: bigint; endFrame?: bigint; level?: number; tone?: number;
-  normalize?: { peakDb: number }; fadeIn?: FadeSpec; fadeOut?: FadeSpec; crossfade?: FadeSpec;
+  startFrame?: bigint;
+  endFrame?: bigint;
+  level?: number;
+  tone?: number;
+  normalize?: { peakDb: number };
+  fadeIn?: FadeSpec;
+  fadeOut?: FadeSpec;
+  crossfade?: FadeSpec;
 }
 export interface SampleClipSpec {
-  id: EntityId; sampleId: EntityId; trackId: EntityId; startBeat: Beat;
-  durationBeats?: Beat; gain?: number; pan?: number; rate?: number; loop?: LoopSpec;
-  tempoSync?: 'off'|'stretch'|'repitch'; // default 'off'
-  stretchAlgorithm?: string;             // default 'wsola-v1'
-  enabled?: boolean;                     // default true; false 时不调度但保留数据
+  id: EntityId;
+  sampleId: EntityId;
+  trackId: EntityId;
+  startBeat: Beat;
+  durationBeats?: Beat;
+  gain?: number;
+  pan?: number;
+  rate?: number;
+  loop?: LoopSpec;
+  tempoSync?: "off" | "stretch" | "repitch"; // default 'off'
+  stretchAlgorithm?: string; // default 'wsola-v1'
+  enabled?: boolean; // default true; false 时不调度但保留数据
 }
 export interface ChannelSpec {
-  id: EntityId; name?: string; instrument: InstrumentRef; effectChain: EffectRef[];
-  level: number; pan: number; swing?: number; mixerChannelId: EntityId; mute?: boolean; solo?: boolean;
+  id: EntityId;
+  name?: string;
+  instrument: InstrumentRef;
+  effectChain: EffectRef[];
+  level: number;
+  pan: number;
+  swing?: number;
+  mixerChannelId: EntityId;
+  mute?: boolean;
+  solo?: boolean;
 }
 export interface MixerChannelSpec {
-  id: EntityId; name?: string; level: number; balance: number;
+  id: EntityId;
+  name?: string;
+  level: number;
+  balance: number;
   masterSendRatio?: number; // default 1, post-fader; controls the dedicated route to Master
-  inserts: EffectRef[]; sends: SendSpec[]; mute?: boolean; solo?: boolean;
+  inserts: EffectRef[];
+  sends: SendSpec[];
+  mute?: boolean;
+  solo?: boolean;
 }
 // destinationId must be another MixerChannel, never Master; sidechain: true routes to the
 // destination's sidechain detector inputs only and does not enter the bus audio sum.
-export interface SendSpec { destinationId: EntityId; ratio: number; preFader?: boolean; sidechain?: boolean; }
+export interface SendSpec {
+  destinationId: EntityId;
+  ratio: number;
+  preFader?: boolean;
+  sidechain?: boolean;
+}
 export interface AutomationLaneSpec {
-  id: EntityId; target: { entityId: EntityId; parameterId: string };
-  source: AutomationSourceSpec; combine?: 'replace'|'add'|'multiply'|'max'; loop?: LoopSpec; lastBeat?: Beat;
+  id: EntityId;
+  target: { entityId: EntityId; parameterId: string };
+  source: AutomationSourceSpec;
+  combine?: "replace" | "add" | "multiply" | "max";
+  loop?: LoopSpec;
+  lastBeat?: Beat;
 }
 export interface ProjectSnapshot {
-  protocolVersion: string; revision: bigint; id: EntityId; name?: string;
-  sampleRate: number; blockSize: number; seed: number;
-  tempoMap: TempoSegment[]; timeSignatureMap: TimeSignatureSegment[]; markers: MarkerSpec[];
-  tracks: TrackSpec[]; patterns: PatternSpec[]; patternClips: PatternClipSpec[];
-  sampleClips: SampleClipSpec[]; samples: SampleRef[]; channels: ChannelSpec[];
-  mixerChannels: MixerChannelSpec[]; automation: AutomationLaneSpec[];
+  protocolVersion: string;
+  revision: bigint;
+  id: EntityId;
+  name?: string;
+  sampleRate: number;
+  blockSize: number;
+  seed: number;
+  tempoMap: TempoSegment[];
+  timeSignatureMap: TimeSignatureSegment[];
+  markers: MarkerSpec[];
+  tracks: TrackSpec[];
+  patterns: PatternSpec[];
+  patternClips: PatternClipSpec[];
+  sampleClips: SampleClipSpec[];
+  samples: SampleRef[];
+  channels: ChannelSpec[];
+  mixerChannels: MixerChannelSpec[];
+  automation: AutomationLaneSpec[];
 }
 ```
 
@@ -346,28 +512,42 @@ export interface ProjectSnapshot {
 // Slicer 的 state 形状（pluginId: 'oxitone.slicer'）
 interface SlicerState {
   sampleId: EntityId;
-  slices: { start: { frames: bigint } | { beat: Beat }; end?: { frames: bigint } | { beat: Beat };
-            level?: number; pan?: number; rate?: number; reverse?: boolean }[]
-          | { grid: number }                 // 等分编辑范围
-          | { onset: { algorithm: string; sensitivity?: number } }; // 版本化瞬态检测
-  triggerNote?: Pitch;                      // default 60
-  playMode: 'oneshot'|'gate';
-  tempoSync?: 'off'|'repitch';               // default off; host-owned tempoFactor
+  slices:
+    | {
+        start: { frames: bigint } | { beat: Beat };
+        end?: { frames: bigint } | { beat: Beat };
+        level?: number;
+        pan?: number;
+        rate?: number;
+        reverse?: boolean;
+      }[]
+    | { grid: number } // 等分编辑范围
+    | { onset: { algorithm: string; sensitivity?: number } }; // 版本化瞬态检测
+  triggerNote?: Pitch; // default 60
+  playMode: "oneshot" | "gate";
+  tempoSync?: "off" | "repitch"; // default off; host-owned tempoFactor
 }
 ```
 
 内置音源便捷入口（从 `@oxitone/core` 导出）：
 
 ```ts
-const lead = wavetable({ oscA: { wave: 'saw', unison: 4, detune: 12 },
-  mix: 0.2, filter: { type: 'lowpass', cutoff: 4000, resonance: 0.3 },
-  amp: { attack: 0.01, release: 0.2 }, voiceMode: 'poly' });
-const keys = sampler(sample, { rootKey: 60, loop: 'forward', startSeconds: 0.1 });
-const piano = multisampler([
-  { sample: softC4, rootKey: 60, keyRange: [58, 62], velocityRange: [1, 79] },
-  { sample: loudC4, rootKey: 60, keyRange: [58, 62], velocityRange: [80, 127] },
-], { amp: { attack: 0.001, sustain: 1, release: 0.25 } });
-const chops = slicer(sample, { slices: { grid: 8 }, tempoSync: 'repitch' });
+const lead = wavetable({
+  oscA: { wave: "saw", unison: 4, detune: 12 },
+  mix: 0.2,
+  filter: { type: "lowpass", cutoff: 4000, resonance: 0.3 },
+  amp: { attack: 0.01, release: 0.2 },
+  voiceMode: "poly",
+});
+const keys = sampler(sample, { rootKey: 60, loop: "forward", startSeconds: 0.1 });
+const piano = multisampler(
+  [
+    { sample: softC4, rootKey: 60, keyRange: [58, 62], velocityRange: [1, 79] },
+    { sample: loudC4, rootKey: 60, keyRange: [58, 62], velocityRange: [80, 127] },
+  ],
+  { amp: { attack: 0.001, sustain: 1, release: 0.25 } },
+);
+const chops = slicer(sample, { slices: { grid: 8 }, tempoSync: "repitch" });
 channel.instrument = chops;
 ```
 
@@ -383,18 +563,18 @@ schema/类型从 protocol 导出；返回值独立且不修改 Sample。Channel 
 Wavetable 新增参数追加在原 descriptor 索引之后，保留 `oxitone.wavetable@1.0.0`
 与原参数默认输出，保留前 46 个参数索引。以下 options 由 helper 映射到相同 dotted parameter ID：
 
-| Options | 范围、默认值与语义 |
-| --- | --- |
-| `oscA/oscB.wave`、`morphTo` | sine/saw/square/triangle/organ/glass → enum 0…5；wave 仍映射 `.wavetable`，morphTo 默认 triangle |
-| `.position` | 0…1，默认 0；source 到 morphTo 的同相位线性渐变 |
-| `.phase`、`.phaseSpread` | 0…1 cycles，默认 0；非复用声部起音的相位与 unison 相位铺开 |
-| `oscA/oscB.octave`、`.level` | octave 整数 −4…4 默认 0；叠加 pitch 半音；level 0…1 默认 1 |
+| Options                               | 范围、默认值与语义                                                                                                |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `oscA/oscB.wave`、`morphTo`           | sine/saw/square/triangle/organ/glass → enum 0…5；wave 仍映射 `.wavetable`，morphTo 默认 triangle                  |
+| `.position`                           | 0…1，默认 0；source 到 morphTo 的同相位线性渐变                                                                   |
+| `.phase`、`.phaseSpread`              | 0…1 cycles，默认 0；非复用声部起音的相位与 unison 相位铺开                                                        |
+| `oscA/oscB.octave`、`.level`          | octave 整数 −4…4 默认 0；叠加 pitch 半音；level 0…1 默认 1                                                        |
 | `sub.level`、`sub.octave`、`sub.wave` | level 0…1 默认 0；octave 整数 −4…4 默认 −1；sine/triangle/saw/square/pulse/rounded → 0…5，默认 sine，滤波后独立层 |
-| `noise.level` | 0…1 默认 0，滤波前确定性白噪声层 |
-| `lfo.shape`、`.rateHz`、`.phase` | sine/triangle/ramp/square → 0…3，默认 sine；0.01…30 Hz 默认 1；phase 0…1 默认 0 |
-| `lfo.pitch`、`.cutoff` | 分别 ±12 / ±48 semitones，默认 0；双极调制深度 |
-| `lfo.positionA`、`.positionB` | ±1，默认 0；调制后 position 夹紧到 0…1 |
-| `lfo.level` | 0…1 默认 0；单极 tremolo，满深度增益 0…1 |
+| `noise.level`                         | 0…1 默认 0，滤波前确定性白噪声层                                                                                  |
+| `lfo.shape`、`.rateHz`、`.phase`      | sine/triangle/ramp/square → 0…3，默认 sine；0.01…30 Hz 默认 1；phase 0…1 默认 0                                   |
+| `lfo.pitch`、`.cutoff`                | 分别 ±12 / ±48 semitones，默认 0；双极调制深度                                                                    |
+| `lfo.positionA`、`.positionB`         | ±1，默认 0；调制后 position 夹紧到 0…1                                                                            |
+| `lfo.level`                           | 0…1 默认 0；单极 tremolo，满深度增益 0…1                                                                          |
 
 LFO 随音符触发，legato 保留 phase；是合成器内部固定路由，不新增工程 automation AST。
 可用 `rateHz: bpm / 60 / beatsPerCycle` 在代码声明节奏；当前不自动跟随 tempo map，
@@ -406,10 +586,10 @@ LFO 随音符触发，legato 保留 phase；是合成器内部固定路由，不
 
 ```ts
 const motionLead = wavetable({
-  oscA: { wave: 'saw', morphTo: 'glass', position: 0.25, unison: 5,
-    detune: 8, spread: 0.75, phaseSpread: 0.62 },
-  sub: { level: 0.07, octave: -1 }, noise: { level: 0.01 },
-  lfo: { shape: 'sine', rateHz: 4.7, pitch: 0.045, positionA: 0.07 },
+  oscA: { wave: "saw", morphTo: "glass", position: 0.25, unison: 5, detune: 8, spread: 0.75, phaseSpread: 0.62 },
+  sub: { level: 0.07, octave: -1 },
+  noise: { level: 0.01 },
+  lfo: { shape: "sine", rateHz: 4.7, pitch: 0.045, positionA: 0.07 },
 });
 ```
 
@@ -458,59 +638,79 @@ stderr 为 `{code?, message, details?}` JSON，exit 1；用法错误 exit 2。do
 
 ```ts
 export interface EngineOptions {
-  sampleRate?: number;        // default 48000
-  blockSize?: number;         // default 128; 允许 64/256
+  sampleRate?: number; // default 48000
+  blockSize?: number; // default 128; 允许 64/256
   renderAheadBlocks?: number; // default 4, 范围 2..16; 决定 ring 深度与控制延迟
-  latencyMode?: 'buffered'|'direct'; // default 'buffered'
-  allowPlugins?: 'signed-only'|'any';
-  outputDeviceId?: string;    // 缺省跟随系统默认输出
-  audioBackend?: 'device'|'simulated'; // default device; simulated 不打开任何系统输出
-  deviceRatePolicy?: 'adapt-device'|'resample';     // default 'adapt-device'
-  deviceChangePolicy?: 'follow-default'|'pause';    // default 'follow-default'
+  latencyMode?: "buffered" | "direct"; // default 'buffered'
+  allowPlugins?: "signed-only" | "any";
+  outputDeviceId?: string; // 缺省跟随系统默认输出
+  audioBackend?: "device" | "simulated"; // default device; simulated 不打开任何系统输出
+  deviceRatePolicy?: "adapt-device" | "resample"; // default 'adapt-device'
+  deviceChangePolicy?: "follow-default" | "pause"; // default 'follow-default'
   metronome?: { enabled: boolean; level?: number }; // accent 规则来自 time signature map
 }
 // 注意: adapt-device 会把设备 nominal rate 设为项目采样率,该修改对全系统生效;
 // 不支持或设置失败时自动回落 resample 并产生诊断。
 export interface OutputDeviceInfo {
-  id: string; name: string; nominalSampleRates: number[];
-  bufferFrameSizeRange: [number, number]; isDefault: boolean;
+  id: string;
+  name: string;
+  nominalSampleRates: number[];
+  bufferFrameSizeRange: [number, number];
+  isDefault: boolean;
 }
 export interface OutputLatency {
-  frames: bigint; seconds: number;
+  frames: bigint;
+  seconds: number;
   breakdown: { ring: bigint; resampler: bigint; deviceBuffer: bigint; safetyOffset: bigint; deviceLatency: bigint };
 }
 export interface RenderOptions {
   path: string;
   start?: { bar: number } | { beat: Beat } | Timecode | { marker: EntityId }; // 四选一
-  end?:   { bar: number } | { beat: Beat } | Timecode | { marker: EntityId };
-  sampleRate?: number; blockSize?: number;
-  tailSeconds?: number; respectSolo?: boolean; seed?: number;
-  bitDepth?: 16|24|'float32';               // default 'float32'
-  dither?: 'tpdf'|'none';                   // 仅 16/24-bit 有效，default 'tpdf'
-  stems?: 'none'|'mixer-channels'|'tracks'; // default 'none'; 非 none 时 path 是输出目录
-  includeMetronome?: boolean;               // default false
-  assetBaseDir?: string;                    // 相对 assetUri 的解析基准目录
+  end?: { bar: number } | { beat: Beat } | Timecode | { marker: EntityId };
+  sampleRate?: number;
+  blockSize?: number;
+  tailSeconds?: number;
+  respectSolo?: boolean;
+  seed?: number;
+  bitDepth?: 16 | 24 | "float32"; // default 'float32'
+  dither?: "tpdf" | "none"; // 仅 16/24-bit 有效，default 'tpdf'
+  stems?: "none" | "mixer-channels" | "tracks"; // default 'none'; 非 none 时 path 是输出目录
+  includeMetronome?: boolean; // default false
+  assetBaseDir?: string; // 相对 assetUri 的解析基准目录
 }
 export interface RenderReport {
-  files: { path: string; stem?: EntityId; durationSeconds: number;
-           peakDbfs: number; truePeakDbfs: number; integratedLufs: number }[];
-  graphLatencyFrames: bigint;               // PDC 引入的图内部总延迟
+  files: {
+    path: string;
+    stem?: EntityId;
+    durationSeconds: number;
+    peakDbfs: number;
+    truePeakDbfs: number;
+    integratedLufs: number;
+  }[];
+  graphLatencyFrames: bigint; // PDC 引入的图内部总延迟
 }
 export interface MidiExportOptions {
-  path?: string;                            // 设置时 native 落盘（temp+fsync+rename），report 返回 path/bytes
-  ppq?: number;                             // default 960, 1..32767；记入 diagnostics
-  tempoEventResolutionTicks?: number;       // default max(1, ppq/8)；连续 tempo 段的重采样步长，记入 diagnostics
+  path?: string; // 设置时 native 落盘（temp+fsync+rename），report 返回 path/bytes
+  ppq?: number; // default 960, 1..32767；记入 diagnostics
+  tempoEventResolutionTicks?: number; // default max(1, ppq/8)；连续 tempo 段的重采样步长，记入 diagnostics
 }
-export interface MidiChannelAssignment { trackId: EntityId; channel: number; source: 'explicit'|'auto'; }
+export interface MidiChannelAssignment {
+  trackId: EntityId;
+  channel: number;
+  source: "explicit" | "auto";
+}
 export interface MidiDiagnostics {
-  ppq: number; tempoEventResolutionTicks: number; tempoEventCount: number; noteTrackCount: number;
-  channelAssignments: MidiChannelAssignment[];              // 按 track ID 排序
-  skippedAutomation: { laneId: EntityId; targetEntityId: EntityId;
-                       targetParameterId: string; reason: string }[]; // 按 lane ID 排序
+  ppq: number;
+  tempoEventResolutionTicks: number;
+  tempoEventCount: number;
+  noteTrackCount: number;
+  channelAssignments: MidiChannelAssignment[]; // 按 track ID 排序
+  skippedAutomation: { laneId: EntityId; targetEntityId: EntityId; targetParameterId: string; reason: string }[]; // 按 lane ID 排序
 }
 export interface MidiExportReport {
-  path?: string; bytes?: number;            // options.path 模式
-  bytesBase64?: string;                     // 无 path 时返回
+  path?: string;
+  bytes?: number; // options.path 模式
+  bytesBase64?: string; // 无 path 时返回
   diagnostics: MidiDiagnostics;
 }
 ```
@@ -519,7 +719,7 @@ export interface MidiExportReport {
 
 ```ts
 const project = new Project({ id, sampleRate: 48_000 });
-const track = project.addTrack('drums').use(channel);
+const track = project.addTrack("drums").use(channel);
 track.add(pattern).at({ bar: 1 }).loop(8);
 await project.compile();
 const session = await project.play({ bar: 1 });
@@ -592,13 +792,14 @@ native `compile(engine, snapshot, options?: {assetBaseDir?: string})` 在控制�
 
 ```ts
 type NativeCommand =
-  | { type: 'compile'; revision: bigint; snapshot: ProjectSnapshot }
-  | { type: 'transport'; command: 'play'|'pause'|'stop'|'seek'; frame?: bigint; beat?: Beat }
-  | { type: 'setParameter'; entityId: EntityId; parameterId: string; value: number; atFrame?: bigint };
+  | { type: "compile"; revision: bigint; snapshot: ProjectSnapshot }
+  | { type: "transport"; command: "play" | "pause" | "stop" | "seek"; frame?: bigint; beat?: Beat }
+  | { type: "setParameter"; entityId: EntityId; parameterId: string; value: number; atFrame?: bigint };
 
 interface NativeEvent {
-  protocolVersion: string; revision: bigint;
-  type: 'compiled'|'transport'|'meter'|'diagnostic'|'fault';
+  protocolVersion: string;
+  revision: bigint;
+  type: "compiled" | "transport" | "meter" | "diagnostic" | "fault";
   payload: unknown;
 }
 ```

@@ -12,7 +12,13 @@ const scenarios = [
   ["controls-light-small", "1060x720", "light", { CONTROLS: "1" }, "Controls smoke passed:"],
   ["library-dark", "1440x920", "dark", { MANAGER: "1", LIBRARY: "1" }, "Plugin library smoke passed:"],
   ["library-light-small", "1060x720", "light", { MANAGER: "1", LIBRARY: "1" }, "Plugin library smoke passed:"],
-  ["library-details-small", "1060x720", "light", { MANAGER: "1", LIBRARY: "details", CONFIGURATION: "1" }, "Plugin library smoke passed:"],
+  [
+    "library-details-small",
+    "1060x720",
+    "light",
+    { MANAGER: "1", LIBRARY: "details", CONFIGURATION: "1" },
+    "Plugin library smoke passed:",
+  ],
   ["windows-dark", "1440x920", "dark", { PATTERNS: "1", WINDOWS: "1" }, "Internal windows smoke passed:"],
   ["windows-light-small", "1060x720", "light", { PATTERNS: "1", WINDOWS: "1" }, "Internal windows smoke passed:"],
   ["piano-dark", "1440x920", "dark", { EDITING: "1", WORKSPACE: "piano" }, "Workspace smoke passed:"],
@@ -23,21 +29,41 @@ const scenarios = [
   ["close-light", "1440x920", "light", { UI_REVIEW: "1" }, "UI review smoke passed:"],
 ];
 const results = [];
-const record = status => writeFile(`${output}/results.json`, JSON.stringify({
-  status, startedAt, cpu: cpus()[0]?.model, os: `darwin ${release()}`, node: process.version,
-  audioSink: "simulated", physicalDevice: null,
-  input: "GPUI keyboard dispatch and targeted NSEvents; not physical-device acceptance", results,
-}, null, 2) + "\n");
+const record = (status) =>
+  writeFile(
+    `${output}/results.json`,
+    JSON.stringify(
+      {
+        status,
+        startedAt,
+        cpu: cpus()[0]?.model,
+        os: `darwin ${release()}`,
+        node: process.version,
+        audioSink: "simulated",
+        physicalDevice: null,
+        input: "GPUI keyboard dispatch and targeted NSEvents; not physical-device acceptance",
+        results,
+      },
+      null,
+      2,
+    ) + "\n",
+  );
 const startedAt = new Date().toISOString();
 await record("running");
 for (const [name, size, appearance, flags, expected] of scenarios) {
-  const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("OXITONE_PREVIEW_CAPTURE")));
+  const env = Object.fromEntries(
+    Object.entries(process.env).filter(([key]) => !key.startsWith("OXITONE_PREVIEW_CAPTURE")),
+  );
   for (const [key, value] of Object.entries(flags)) env[`OXITONE_PREVIEW_CAPTURE_${key}`] = value;
   env.OXITONE_PREVIEW_CAPTURE_SIZE = size;
   env.OXITONE_PREVIEW_APPEARANCE = appearance;
   env.OXITONE_PREVIEW_CAPTURE_OUTPUT = `${output}/${name}.png`;
   try {
-    await promisify(execFile)(process.execPath, ["scripts/smoke-daw.mjs"], { env, timeout: 170_000, maxBuffer: 2 * 1024 * 1024 });
+    await promisify(execFile)(process.execPath, ["scripts/smoke-daw.mjs"], {
+      env,
+      timeout: 170_000,
+      maxBuffer: 2 * 1024 * 1024,
+    });
     const log = await readFile(`${env.OXITONE_PREVIEW_CAPTURE_OUTPUT}.log`, "utf8");
     if (!log.includes(expected)) throw new Error(`Missing completion marker: ${expected}`);
     const png = await readFile(env.OXITONE_PREVIEW_CAPTURE_OUTPUT);
@@ -54,4 +80,4 @@ for (const [name, size, appearance, flags, expected] of scenarios) {
     break;
   }
 }
-await record(results.length === scenarios.length && results.every(result => result.passed) ? "passed" : "failed");
+await record(results.length === scenarios.length && results.every((result) => result.passed) ? "passed" : "failed");

@@ -1,5 +1,11 @@
 import { isAbsolute, relative, resolve, sep } from "node:path";
-import { ErrorCode, inspectSampleRequestSchema, OxitoneError, type SampleInfo, type SampleProvenance } from "@oxitone/protocol";
+import {
+  ErrorCode,
+  inspectSampleRequestSchema,
+  OxitoneError,
+  type SampleInfo,
+  type SampleProvenance,
+} from "@oxitone/protocol";
 import { cacheSample, inspectSample } from "@oxitone/native";
 
 export { inspectSample, cacheSample } from "@oxitone/native";
@@ -36,18 +42,31 @@ export function importSample(path: string, options: ImportSampleOptions = {}): I
     const directory = resolve(base ?? process.cwd(), options.cacheDir);
     relativeAsset(directory, base); // Reject an escaping destination before writing anything.
     const cached = cacheSample(absolute, directory);
-    return { assetUri: relativeAsset(cached.path, base), sha256: cached.sha256,
-      format: cached.format, sampleRate: cached.sampleRate, channels: cached.channels,
-      frames: BigInt(cached.frames), provenance: cached.provenance };
+    return {
+      assetUri: relativeAsset(cached.path, base),
+      sha256: cached.sha256,
+      format: cached.format,
+      sampleRate: cached.sampleRate,
+      channels: cached.channels,
+      frames: BigInt(cached.frames),
+      provenance: cached.provenance,
+    };
   }
   const assetUri = relativeAsset(absolute, base);
   const info = inspectSample(absolute);
   return {
-    assetUri, sha256: info.sha256, format: info.format, sampleRate: info.sampleRate,
-    channels: info.channels, frames: BigInt(info.frames),
+    assetUri,
+    sha256: info.sha256,
+    format: info.format,
+    sampleRate: info.sampleRate,
+    channels: info.channels,
+    frames: BigInt(info.frames),
     provenance: {
-      sourceSha256: info.sha256, sourceFormat: info.format, sourceSampleRate: info.sampleRate,
-      sourceChannels: info.sourceChannels, decoder: info.decoder,
+      sourceSha256: info.sha256,
+      sourceFormat: info.format,
+      sourceSampleRate: info.sampleRate,
+      sourceChannels: info.sourceChannels,
+      decoder: info.decoder,
       channelLayoutAction: info.channelLayoutAction,
       ...(info.sourceBitDepth === undefined ? {} : { sourceBitDepth: info.sourceBitDepth }),
     },

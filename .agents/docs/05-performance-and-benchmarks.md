@@ -4,12 +4,12 @@
 
 基线为 macOS Apple Silicon、48 kHz、128 frames、stereo、release build：
 
-| 场景 | callback p99 | CPU 总占用 | xruns |
-| --- | ---: | ---: | ---: |
-| 空图 + Master | < 0.5 ms | < 1% | 0 |
-| 32 voice synth + 4 inserts | < 1.5 ms | < 10% | 0 |
-| 64 voice + 8 mixer buses + reverb | < 2.0 ms | < 20% | 0 |
-| 10 min offline render | n/a | >= 20x realtime | n/a |
+| 场景                              | callback p99 |      CPU 总占用 | xruns |
+| --------------------------------- | -----------: | --------------: | ----: |
+| 空图 + Master                     |     < 0.5 ms |            < 1% |     0 |
+| 32 voice synth + 4 inserts        |     < 1.5 ms |           < 10% |     0 |
+| 64 voice + 8 mixer buses + reverb |     < 2.0 ms |           < 20% |     0 |
+| 10 min offline render             |          n/a | >= 20x realtime |   n/a |
 
 预算不是跨硬件的绝对承诺；每次 benchmark 必须记录 CPU 型号、OS、Rust/LLVM 版本、sample rate、block size、channel/voice 数、插件参数、warmup 和测量时长。
 
@@ -44,8 +44,8 @@
 
 - `song-profile`：离线处理实际导出的 demo snapshot 与 hash-pinned 本地鼓机注册，
   不创建音频设备。命令 `cargo run --release -p oxitone-bench --bin song-profile --
-  target/examples/full-songs/after-the-horizon.snapshot.json
-  target/examples/full-songs/drums.json 24 80`。每个零基 bar seek 后预热 128 blocks，
+target/examples/full-songs/after-the-horizon.snapshot.json
+target/examples/full-songs/drums.json 24 80`。每个零基 bar seek 后预热 128 blocks，
   测 4000 blocks 的整图 process p95/p99/max、deadline exceedances 和插件 faults。
   使用工程自身 sample rate/block size，包含 DSP/automation/PDC，排除文件写入与
   compile；callback、CPU utilization、xrun 未测，不代替设备或 render-ahead 验收。
@@ -78,7 +78,7 @@
 - `napi/command`: compile/transport command 往返延迟，不能用于 callback。
 - `preview/plugin_layout`: release viewer 测试 harness，8 / 256 controls；100 次预热、1000 次
   控制线程解析/校验，记录 median/p95/p99。命令：`cargo test --release -p oxitone-preview
-  benchmark_layout_validation -- --ignored --nocapture`；包括 JSON 克隆/预算检查/descriptor
+benchmark_layout_validation -- --ignored --nocapture`；包括 JSON 克隆/预算检查/descriptor
   绑定，不包含 GPUI 排版/绘制、设备、callback 或 DSP，未测指标记 null。
 - `samples/inspect`: 控制线程的文件读取、SHA-256、解码、降混和 PCM 释放耗时；使用
   48 kHz stereo 的 1 秒 PCM16 / 10 秒 float32 WAV，固定 440 Hz 正弦。Criterion

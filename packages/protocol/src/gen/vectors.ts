@@ -53,10 +53,7 @@ const automationFixtures: Record<string, AutomationSourceSpec> = {
 
 export function generateAutomationFixtures(): void {
   for (const [name, source] of Object.entries(automationFixtures)) {
-    write(
-      `schemas/fixtures/automation/${name}.canonical.json`,
-      canonicalEncode(automationSourceSchema.parse(source)),
-    );
+    write(`schemas/fixtures/automation/${name}.canonical.json`, canonicalEncode(automationSourceSchema.parse(source)));
   }
 }
 
@@ -94,8 +91,7 @@ export function generateHash64Vectors(): void {
     "schemas/fixtures/hash64.json",
     canonicalEncode({
       algorithm: "hash64-v1",
-      encoding:
-        "parts as n:<u64 decimal> or s:<utf8>, joined by |; SHA-256; first 8 bytes big-endian",
+      encoding: "parts as n:<u64 decimal> or s:<utf8>, joined by |; SHA-256; first 8 bytes big-endian",
       vectors: partSets.map((parts) => ({
         input: hash64Input(...parts),
         hash: hash64(...parts).toString(10),

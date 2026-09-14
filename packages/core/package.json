@@ -5,9 +5,18 @@
   "license": "MPL-2.0",
   "type": "module",
   "imports": {
-    "#platform-path": { "browser": "./dist/browser/path.js", "default": "./dist/platform-path.js" },
-    "#project-files": { "browser": "./dist/browser/project-files.js", "default": "./dist/project/files.js" },
-    "#preset-files": { "browser": "./dist/browser/preset-files.js", "default": "./dist/presets/files.js" }
+    "#platform-path": {
+      "browser": "./dist/browser/path.js",
+      "default": "./dist/platform-path.js"
+    },
+    "#project-files": {
+      "browser": "./dist/browser/project-files.js",
+      "default": "./dist/project/files.js"
+    },
+    "#preset-files": {
+      "browser": "./dist/browser/preset-files.js",
+      "default": "./dist/presets/files.js"
+    }
   },
   "exports": {
     ".": {

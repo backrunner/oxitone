@@ -68,6 +68,7 @@ jobs:
           pnpm schemas
           git diff --exit-code -- schemas
           test -z "$(git ls-files --others --exclude-standard schemas)"
+      - run: pnpm format:check
       - run: pnpm lint
       - run: pnpm typecheck
       - run: cargo fmt --all --check

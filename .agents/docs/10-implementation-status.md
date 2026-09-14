@@ -48,16 +48,16 @@ GPUI 插件添加/替换仍待完成。VS Code linked buffers、未保存同步�
 切换系统输出设备。历史记录中的 BlackHole/有声设备测试方案已由此规则替代；硬件
 相关验收仍缺少证据，不能用静音模拟测试宣称完成。
 
-| 里程碑 | 已有实现与依据 | 尚未完成或缺少验收证据 |
-| --- | --- | --- |
-| M0 工程与协议 | pnpm/Cargo workspace、版本协议、canonical fixtures、N-API smoke tests、macOS arm64/x64 CI（locked install/build/schema/tests/examples/bench） | 远端 CI 首跑尚无记录；最低 macOS 13 runtime 验收仍待完成 |
-| M1 时间轴/MIDI | Project/Track/Pattern/Clip、Chord/Arp、tempo/time-signature、Track tempo/enabled/midiChannel、确定性 SMF writer 与边界测试 | 当前已识别的 authoring 缺口已关闭；持续维护确定性/边界回归 |
-| M2 音源/采样 | Rust synth/Sampler/Multisampler/Slicer、解码/编辑/SRC、SampleClip stretch/repitch、C ABI、TS Sample/Clip/fit 和四种内置音源入口、缓存/provenance；多 bank/warp/FM、双 LFO/矩阵、独立 Sub/八度与电子鼓机 | 当前已识别的功能缺口已关闭；全规格 golden 和发布环境验证继续追踪 |
-| M3 Mixer/Automation/导出 | TS mixer/insert authoring，Rust mixer/PDC/26 effects（含非线性滤波、多段动态、卷积、母带 limiter）、完整 insert 自动化/host 参数路径、tempo bake、WAV/stem/loudness 与回归测试 | 全规格 golden/PDC/export 的自动化发布门禁仍需建立和复核 |
-| M4 实时与设备 | CoreAudio HAL、render-ahead/direct、transport/loop、设备适配/诊断、Session 换图及 bar/beat/marker/timecode 入口、换图回收与模拟设备测试 | 修正循环负载后的 10/60 分钟 soak、真实设备切换/拔插和 callback 指标仍需验收 |
-| M5 npm/DX/插件 | 统一 `oxitone` authoring/native/sample 入口，Project/Session 动态插件注册，descriptor 查询，instrument/effect/Channel preset；CLI、便携工程与有声示例 | npm 平台包/发布/签名公证、干净安装验收和逐节点 deadline watchdog |
-| M6 Preview | runner/watch、带版本 IPC、GPUI arrangement/piano/channel rack/mixer/scopes/transport、原生换图与错误恢复、插件多窗口与声明式原生布局/固定 Mix、CLI preview、unsigned 开发 app bundle | 完整物理交互验收、独立 NSView companion/effective 参数遥测、正式 npm 平台包、签名分发及大工程虚拟列表继续追踪 |
-| M7 稳定性/发布 | 定向回归、插件 conformance、基准 harness | fuzz/sanitizer、持续负载 endurance、故障注入/资源上限、SBOM/签名公证和自动发布门禁 |
+| 里程碑                   | 已有实现与依据                                                                                                                                                                                          | 尚未完成或缺少验收证据                                                                                        |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| M0 工程与协议            | pnpm/Cargo workspace、版本协议、canonical fixtures、N-API smoke tests、macOS arm64/x64 CI（locked install/build/schema/tests/examples/bench）                                                           | 远端 CI 首跑尚无记录；最低 macOS 13 runtime 验收仍待完成                                                      |
+| M1 时间轴/MIDI           | Project/Track/Pattern/Clip、Chord/Arp、tempo/time-signature、Track tempo/enabled/midiChannel、确定性 SMF writer 与边界测试                                                                              | 当前已识别的 authoring 缺口已关闭；持续维护确定性/边界回归                                                    |
+| M2 音源/采样             | Rust synth/Sampler/Multisampler/Slicer、解码/编辑/SRC、SampleClip stretch/repitch、C ABI、TS Sample/Clip/fit 和四种内置音源入口、缓存/provenance；多 bank/warp/FM、双 LFO/矩阵、独立 Sub/八度与电子鼓机 | 当前已识别的功能缺口已关闭；全规格 golden 和发布环境验证继续追踪                                              |
+| M3 Mixer/Automation/导出 | TS mixer/insert authoring，Rust mixer/PDC/26 effects（含非线性滤波、多段动态、卷积、母带 limiter）、完整 insert 自动化/host 参数路径、tempo bake、WAV/stem/loudness 与回归测试                          | 全规格 golden/PDC/export 的自动化发布门禁仍需建立和复核                                                       |
+| M4 实时与设备            | CoreAudio HAL、render-ahead/direct、transport/loop、设备适配/诊断、Session 换图及 bar/beat/marker/timecode 入口、换图回收与模拟设备测试                                                                 | 修正循环负载后的 10/60 分钟 soak、真实设备切换/拔插和 callback 指标仍需验收                                   |
+| M5 npm/DX/插件           | 统一 `oxitone` authoring/native/sample 入口，Project/Session 动态插件注册，descriptor 查询，instrument/effect/Channel preset；CLI、便携工程与有声示例                                                   | npm 平台包/发布/签名公证、干净安装验收和逐节点 deadline watchdog                                              |
+| M6 Preview               | runner/watch、带版本 IPC、GPUI arrangement/piano/channel rack/mixer/scopes/transport、原生换图与错误恢复、插件多窗口与声明式原生布局/固定 Mix、CLI preview、unsigned 开发 app bundle                    | 完整物理交互验收、独立 NSView companion/effective 参数遥测、正式 npm 平台包、签名分发及大工程虚拟列表继续追踪 |
+| M7 稳定性/发布           | 定向回归、插件 conformance、基准 harness                                                                                                                                                                | fuzz/sanitizer、持续负载 endurance、故障注入/资源上限、SBOM/签名公证和自动发布门禁                            |
 
 规格中的项目目录保存/读取（formatVersion、资产相对路径、原子写入）已在后续阶段提供，
 详见下文；preset 已在 2026-09-07 后续阶段提供。canonical snapshot 编解码本身不能替代这些功能。

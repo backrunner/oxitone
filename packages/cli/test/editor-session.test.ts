@@ -10,18 +10,30 @@ import { until } from "./preview-helpers.js";
 
 it("keeps newer typing after acknowledgements, guards remote edits by editor version and reconnects dirty text to a fresh session", async () => {
   const root = await mkdtemp("/tmp/oxitone-editor-");
-  let document: ProjectDocument | undefined, dispatcher: DocumentDispatcher | undefined, stop: (() => Promise<void>) | undefined, editor: EditorDocumentSession | undefined;
+  let document: ProjectDocument | undefined,
+    dispatcher: DocumentDispatcher | undefined,
+    stop: (() => Promise<void>) | undefined,
+    editor: EditorDocumentSession | undefined;
   try {
     await mkdir(join(root, "node_modules/@oxitone"), { recursive: true });
-    await symlink(fileURLToPath(new URL("../../core", import.meta.url)), join(root, "node_modules/@oxitone/core"), "dir");
-    const entry = join(root, "song.ts"), socket = join(root, "socket");
-    const source = "import { Project, chord } from '@oxitone/core'; const phrase = chord(60, 'major'); const project = new Project(); project.addTrack('Lead').add(phrase).at({ bar: 1 }); export default project;";
-    await writeFile(entry, source); document = await ProjectDocument.open({ entry });
-    dispatcher = new DocumentDispatcher(document); stop = await openDocumentBridge(socket, document, dispatcher);
+    await symlink(
+      fileURLToPath(new URL("../../core", import.meta.url)),
+      join(root, "node_modules/@oxitone/core"),
+      "dir",
+    );
+    const entry = join(root, "song.ts"),
+      socket = join(root, "socket");
+    const source =
+      "import { Project, chord } from '@oxitone/core'; const phrase = chord(60, 'major'); const project = new Project(); project.addTrack('Lead').add(phrase).at({ bar: 1 }); export default project;";
+    await writeFile(entry, source);
+    document = await ProjectDocument.open({ entry });
+    dispatcher = new DocumentDispatcher(document);
+    stop = await openDocumentBridge(socket, document, dispatcher);
     editor = new EditorDocumentSession(socket);
     editor.openBuffer({ fileName: entry, text: source, baselineText: source, version: 1 });
     await until(() => editor!.view.state === "connected" && editor!.view.buffers[0]?.remoteText === source);
-    const first = source.replace("chord(60", "chord(62"), latest = source.replace("chord(60", "chord(64");
+    const first = source.replace("chord(60", "chord(62"),
+      latest = source.replace("chord(60", "chord(64");
     editor.changeBuffer(entry, first, 2);
     await until(() => editor!.view.submitting);
     editor.changeBuffer(entry, latest, 3);
@@ -29,21 +41,35 @@ it("keeps newer typing after acknowledgements, guards remote edits by editor ver
     expect(document.frame!.snapshot.patterns[0]!.notes[0]!.pitch).toBe(64);
     expect(editor.view.buffers[0]).toMatchObject({ text: latest, baselineText: latest, version: 3 });
     expect(await readFile(entry, "utf8")).toBe(source);
-    const view = document.view, site = view.sites.find(site => site.label === "phrase")!;
-    expect(await dispatcher.submit({ documentProtocolVersion: "2.0", sessionId: view.sessionId, requestId: "stream/gpui/1", baseRevision: view.revision,
-      operation: { kind: "notes", site: site.handle, edits: [{ select: { degree: 2 }, set: { pitch: 71 } }] } })).toMatchObject({ accepted: true });
+    const view = document.view,
+      site = view.sites.find((site) => site.label === "phrase")!;
+    expect(
+      await dispatcher.submit({
+        documentProtocolVersion: "2.0",
+        sessionId: view.sessionId,
+        requestId: "stream/gpui/1",
+        baseRevision: view.revision,
+        operation: { kind: "notes", site: site.handle, edits: [{ select: { degree: 2 }, set: { pitch: 71 } }] },
+      }),
+    ).toMatchObject({ accepted: true });
     await until(() => !!editor!.view.buffers[0]?.apply);
     const proposed = editor.view.buffers[0]!.apply!;
     expect(editor.view.buffers[0]!.text).toBe(latest); // Host has not applied the proposal yet.
     editor.changeBuffer(entry, `${latest}\n// typed while the DAW edit arrived`, 4);
     await until(() => !!editor!.view.buffers[0]?.conflict);
-    expect(() => editor!.appliedRemote(entry, 3, 4, proposed.text)).toThrowError(expect.objectContaining({ code: "SourceChanged" }));
+    expect(() => editor!.appliedRemote(entry, 3, 4, proposed.text)).toThrowError(
+      expect.objectContaining({ code: "SourceChanged" }),
+    );
     await expect(editor.flush()).rejects.toMatchObject({ code: "EditScopeConflict" });
     const conflict = editor.view.buffers[0]!.conflict!;
-    expect(() => editor!.resolveConflict(entry, 4, conflict.revision, "invalid" as "local")).toThrowError(expect.objectContaining({ code: "EditScopeConflict" }));
+    expect(() => editor!.resolveConflict(entry, 4, conflict.revision, "invalid" as "local")).toThrowError(
+      expect.objectContaining({ code: "EditScopeConflict" }),
+    );
     editor.changeBuffer(entry, `${latest}\n// newer local comment`, 5);
     await until(() => editor!.view.buffers[0]?.conflict?.version === 5);
-    expect(() => editor!.resolveConflict(entry, 4, conflict.revision, "remote")).toThrowError(expect.objectContaining({ code: "SourceChanged" }));
+    expect(() => editor!.resolveConflict(entry, 4, conflict.revision, "remote")).toThrowError(
+      expect.objectContaining({ code: "SourceChanged" }),
+    );
     editor.resolveConflict(entry, 5, editor.view.buffers[0]!.conflict!.revision, "remote");
     await until(() => !!editor!.view.buffers[0]?.apply);
     const apply = editor.view.buffers[0]!.apply!;
@@ -53,23 +79,36 @@ it("keeps newer typing after acknowledgements, guards remote edits by editor ver
     await editor.command("save");
     expect(await readFile(entry, "utf8")).toBe(apply.text);
     const oldSession = editor.view.document!.sessionId;
-    await stop(); stop = undefined; dispatcher.close(); document.close();
+    await stop();
+    stop = undefined;
+    dispatcher.close();
+    document.close();
     await until(() => editor!.view.state !== "connected");
     const offline = `${apply.text}\n// retained across reconnect`;
     editor.changeBuffer(entry, offline, 7);
     await expect(editor.flush()).rejects.toMatchObject({ code: "SourceChanged" });
-    document = await ProjectDocument.open({ entry }); dispatcher = new DocumentDispatcher(document);
+    document = await ProjectDocument.open({ entry });
+    dispatcher = new DocumentDispatcher(document);
     stop = await openDocumentBridge(socket, document, dispatcher);
     await until(() => editor!.view.state === "connected" && editor!.view.document?.sessionId !== oldSession);
     await editor.flush();
     expect(document.view.files[0]!.text).toBe(offline);
     expect(editor.view.buffers[0]).toMatchObject({ text: offline, baselineText: offline, version: 7 });
     expect(await readFile(entry, "utf8")).toBe(apply.text);
-    await editor.command("save"); expect(await readFile(entry, "utf8")).toBe(offline);
+    await editor.command("save");
+    expect(await readFile(entry, "utf8")).toBe(offline);
     editor.changeBuffer(entry, `${offline}\n// close during a pending synchronization`, 8);
     const pending = expect(editor.flush()).rejects.toMatchObject({ code: "SourceChanged" });
     await until(() => editor!.view.submitting);
-    const closedAt = performance.now(); editor.close(); await pending;
+    const closedAt = performance.now();
+    editor.close();
+    await pending;
     expect(performance.now() - closedAt).toBeLessThan(1000);
-  } finally { editor?.close(); await stop?.(); dispatcher?.close(); document?.close(); await rm(root, { recursive: true, force: true }); }
+  } finally {
+    editor?.close();
+    await stop?.();
+    dispatcher?.close();
+    document?.close();
+    await rm(root, { recursive: true, force: true });
+  }
 }, 30_000);

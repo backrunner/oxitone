@@ -10,20 +10,33 @@ import { prepareImages, writeJournal } from "../src/source/save/save-journal.js"
 import { sourceHash } from "../src/source/syntax/program.js";
 
 const roots: string[] = [];
-afterEach(async () => { for (const root of roots.splice(0)) await rm(root, { recursive: true, force: true }); });
+afterEach(async () => {
+  for (const root of roots.splice(0)) await rm(root, { recursive: true, force: true });
+});
 async function fixture() {
-  const root = await mkdtemp(join(tmpdir(), "oxitone-save-test-")); roots.push(root);
-  const a = join(root, "a.ts"), b = join(root, "b.ts");
-  await writeFile(a, "export const a = 1;\n"); await writeFile(b, "export const b = 1;\n");
+  const root = await mkdtemp(join(tmpdir(), "oxitone-save-test-"));
+  roots.push(root);
+  const a = join(root, "a.ts"),
+    b = join(root, "b.ts");
+  await writeFile(a, "export const a = 1;\n");
+  await writeFile(b, "export const b = 1;\n");
   const ownership = await SourceOwnership.open([root], [a, b]);
   const store = await SourceSaveStore.open(root, ownership);
-  const files = await Promise.all([a, b].map(async path => ({ path, baselineHash: sourceHash(await readFile(path, "utf8")), text: "export default 2;\n" })));
+  const files = await Promise.all(
+    [a, b].map(async (path) => ({
+      path,
+      baselineHash: sourceHash(await readFile(path, "utf8")),
+      text: "export default 2;\n",
+    })),
+  );
   return { root, a, b, ownership, store, files, directory: join(root, ".oxitone-source-save") };
 }
 
 it("publishes multiple enrolled TS files, preserves modes and detects stale dependencies before publication", async () => {
-  const { a, b, store, files, root } = await fixture(); await chmod(a, 0o640);
-  const dependency = join(root, "lock.json"); await writeFile(dependency, "1");
+  const { a, b, store, files, root } = await fixture();
+  await chmod(a, 0o640);
+  const dependency = join(root, "lock.json");
+  await writeFile(dependency, "1");
   const reads = await captureSourceReads([a, b, dependency]);
   await writeFile(dependency, "2");
   await expect(store.save({ files, reads })).rejects.toMatchObject({ code: "SourceChanged" });
@@ -63,10 +76,19 @@ it("finishes a committed journal and preserves third-party edits as a recovery c
 it("rolls back a rejected revision during a multi-file save and excludes a second writer", async () => {
   const { a, b, directory, store, files } = await fixture();
   let calls = 0;
-  await expect(store.save({ files, reads: [], assertCurrent() { if (++calls === 4) throw new Error("superseded"); } })).rejects.toThrow("superseded");
+  await expect(
+    store.save({
+      files,
+      reads: [],
+      assertCurrent() {
+        if (++calls === 4) throw new Error("superseded");
+      },
+    }),
+  ).rejects.toThrow("superseded");
   expect(await readFile(a, "utf8")).toContain("a = 1");
   expect(await readFile(b, "utf8")).toContain("b = 1");
-  const lock = join(directory, "lock"); await mkdir(lock);
+  const lock = join(directory, "lock");
+  await mkdir(lock);
   await writeFile(join(lock, "owner.json"), JSON.stringify({ pid: process.pid }));
   await expect(store.save({ files, reads: [] })).rejects.toMatchObject({ code: "SourceChanged" });
 });
@@ -75,16 +97,21 @@ it("recovers a real SIGKILL between two renames and reclaims the dead process lo
   const { root, a, b, ownership, files } = await fixture();
   const worker = join(root, "crash.mjs");
   const sourceModule = new URL("../src/source/index.ts", import.meta.url).href;
-  await writeFile(worker, `import { SourceOwnership, SourceSaveStore } from ${JSON.stringify(sourceModule)};
+  await writeFile(
+    worker,
+    `import { SourceOwnership, SourceSaveStore } from ${JSON.stringify(sourceModule)};
 const root = ${JSON.stringify(root)};
 const files = ${JSON.stringify(files)};
 const ownership = await SourceOwnership.open([root], files.map(file => file.path));
 const store = await SourceSaveStore.open(root, ownership);
 let calls = 0;
 await store.save({ files, reads: [], assertCurrent() { if (++calls === 4) process.kill(process.pid, 'SIGKILL'); } });
-`);
+`,
+  );
   const require = createRequire(import.meta.url);
-  await expect(promisify(execFile)(process.execPath, ["--import", require.resolve("tsx"), worker])).rejects.toMatchObject({ signal: "SIGKILL" });
+  await expect(
+    promisify(execFile)(process.execPath, ["--import", require.resolve("tsx"), worker]),
+  ).rejects.toMatchObject({ signal: "SIGKILL" });
   expect(await readFile(a, "utf8")).toBe(files[0]!.text);
   expect(await readFile(b, "utf8")).toContain("b = 1");
   await SourceSaveStore.open(root, ownership);
@@ -94,10 +121,12 @@ await store.save({ files, reads: [], assertCurrent() { if (++calls === 4) proces
 
 it("refuses a save journal in dependencies and preserves non-UTF8 source bytes", async () => {
   const { root, a, ownership, store, files } = await fixture();
-  const dependency = join(root, "node_modules/pkg"); await mkdir(dependency, { recursive: true });
+  const dependency = join(root, "node_modules/pkg");
+  await mkdir(dependency, { recursive: true });
   await expect(SourceSaveStore.open(dependency, ownership)).rejects.toMatchObject({ code: "EditNotRepresentable" });
   await expect(stat(join(dependency, ".oxitone-source-save"))).rejects.toMatchObject({ code: "ENOENT" });
-  const bytes = Buffer.from([0xff, 0xfe]); await writeFile(a, bytes);
+  const bytes = Buffer.from([0xff, 0xfe]);
+  await writeFile(a, bytes);
   await expect(store.save({ files, reads: [] })).rejects.toMatchObject({ code: "DraftInvalid" });
   expect(await readFile(a)).toEqual(bytes);
 });

@@ -1,9 +1,14 @@
 import type { ProjectSnapshot, SampleRef } from "@oxitone/protocol";
 export type SampleFormat = SampleRef["format"];
 
-export interface SnapshotSource { snapshot(): ProjectSnapshot; }
+export interface SnapshotSource {
+  snapshot(): ProjectSnapshot;
+}
 export type ProjectInput = ProjectSnapshot | SnapshotSource;
-export interface AssetBytes { sample: SampleRef; bytes: Uint8Array; }
+export interface AssetBytes {
+  sample: SampleRef;
+  bytes: Uint8Array;
+}
 export interface WasmState {
   protocolVersion: "1.0";
   sampleRate: number;
@@ -26,7 +31,11 @@ export interface WasmRenderOptions {
   dither?: boolean;
 }
 export interface WasmSampleInfo {
-  sha256: string; format: SampleFormat; sampleRate: number; channels: 1 | 2; frames: string;
+  sha256: string;
+  format: SampleFormat;
+  sampleRate: number;
+  channels: 1 | 2;
+  frames: string;
 }
 export interface WebAudioOptions {
   wasmUrl: string | URL;

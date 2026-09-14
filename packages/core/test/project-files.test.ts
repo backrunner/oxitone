@@ -12,9 +12,11 @@ describe("portable project files", () => {
     const engine = createEngine();
     try {
       const source = new Project();
-      source.addTrack().use(source.addChannel()).add(new Pattern({ lengthBeats: 1,
-        notes: [{ pitch: 60, start: 0, duration: 1, velocity: 1 }],
-      })).at({ bar: 1 });
+      source
+        .addTrack()
+        .use(source.addChannel())
+        .add(new Pattern({ lengthBeats: 1, notes: [{ pitch: 60, start: 0, duration: 1, velocity: 1 }] }))
+        .at({ bar: 1 });
       const asset = join(root, "source.wav");
       await source.renderWav({ path: asset, end: { seconds: 0.25 }, tailSeconds: 0 });
       const info = inspectSample(asset);
@@ -37,7 +39,11 @@ describe("portable project files", () => {
       compile(engine, loaded.snapshot, { assetBaseDir: loaded.assetBaseDir });
       expect(enqueueTransport(engine, { command: "seek", seconds: 0.1 }).cursor).toBe("4800");
       const out = join(root, "render.wav");
-      const report = renderWav(engine, loaded.snapshot, { path: out, assetBaseDir: loaded.assetBaseDir, tailSeconds: 0 });
+      const report = renderWav(engine, loaded.snapshot, {
+        path: out,
+        assetBaseDir: loaded.assetBaseDir,
+        tailSeconds: 0,
+      });
       expect(report.files[0]?.peakDbfs).toBeGreaterThan(-60);
       const audio = await readFile(out);
       await saveProject(loaded.snapshot, moved, { assetBaseDir: moved });
@@ -58,13 +64,18 @@ describe("portable project files", () => {
         relativeProject.tracks[0]!.sampleClips[0]!.gain = 0.5;
         await session.update();
         expect((await session.renderWav({ path: out, tailSeconds: 0 })).files[0]?.peakDbfs).toBeGreaterThan(-60);
-      } finally { await session.dispose(); }
+      } finally {
+        await session.dispose();
+      }
       const copy = join(root, "edited copy");
       await relativeProject.save(copy);
       expect((await Project.load(copy)).snapshot().sampleClips[0]?.gain).toBe(0.5);
       await writeFile(join(moved, loaded.snapshot.samples[0]!.assetUri), "changed");
       await expect(loadProject(moved)).rejects.toMatchObject({ code: ErrorCode.AssetUnavailable });
-    } finally { dispose(engine); await rm(root, { recursive: true, force: true }); }
+    } finally {
+      dispose(engine);
+      await rm(root, { recursive: true, force: true });
+    }
   });
 
   it("keeps the previous manifest and cleans temporary files when a save fails", async () => {
@@ -76,12 +87,21 @@ describe("portable project files", () => {
       const original = await readFile(path, "utf8");
       const source = join(root, "changed.wav");
       await writeFile(source, "unexpected content");
-      project.addSample({ assetUri: source, sha256: "00".repeat(32), format: "wav", sampleRate: 48000, channels: 1, frames: 1 });
+      project.addSample({
+        assetUri: source,
+        sha256: "00".repeat(32),
+        format: "wav",
+        sampleRate: 48000,
+        channels: 1,
+        frames: 1,
+      });
       await expect(project.save(root)).rejects.toMatchObject({ code: ErrorCode.AssetUnavailable });
       expect(await readFile(path, "utf8")).toBe(original);
       expect(await readdir(join(root, "assets"))).toEqual([]);
       expect((await readdir(root)).some((name) => name.endsWith(".tmp"))).toBe(false);
-    } finally { await rm(root, { recursive: true, force: true }); }
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 
   it("rejects incompatible versions, malformed JSON, traversal and escaping symlinks", async () => {
@@ -101,10 +121,27 @@ describe("portable project files", () => {
       await writeFile(outside, "test");
       await symlink(outside, join(song, "assets", "link.wav"));
       for (const assetUri of ["../outside.wav", outside, "assets/link.wav"]) {
-        await writeFile(path, JSON.stringify({ ...original, samples: [{ id: "smp_x", assetUri,
-          sha256: "00".repeat(32), format: "wav", sampleRate: 48000, channels: 1, frames: "1" }] }));
+        await writeFile(
+          path,
+          JSON.stringify({
+            ...original,
+            samples: [
+              {
+                id: "smp_x",
+                assetUri,
+                sha256: "00".repeat(32),
+                format: "wav",
+                sampleRate: 48000,
+                channels: 1,
+                frames: "1",
+              },
+            ],
+          }),
+        );
         await expect(loadProject(song)).rejects.toMatchObject({ code: ErrorCode.InvalidProject });
       }
-    } finally { await rm(root, { recursive: true, force: true }); }
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 });

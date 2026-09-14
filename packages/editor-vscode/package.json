@@ -6,36 +6,122 @@
   "private": true,
   "description": "Live TypeScript editing for the Oxitone DAW",
   "license": "MPL-2.0",
-  "engines": { "vscode": "^1.96.0" },
-  "categories": ["Other"],
+  "engines": {
+    "vscode": "^1.96.0"
+  },
+  "categories": [
+    "Other"
+  ],
   "main": "./dist/extension.cjs",
-  "extensionKind": ["workspace"],
-  "activationEvents": ["onFileSystem:oxitone", "onUri", "onStartupFinished"],
-  "capabilities": { "untrustedWorkspaces": { "supported": false }, "virtualWorkspaces": false },
+  "extensionKind": [
+    "workspace"
+  ],
+  "activationEvents": [
+    "onFileSystem:oxitone",
+    "onUri",
+    "onStartupFinished"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false
+    },
+    "virtualWorkspaces": false
+  },
   "contributes": {
     "commands": [
-      { "command": "oxitone.start", "title": "Oxitone: Open Project in DAW" },
-      { "command": "oxitone.connect", "title": "Oxitone: Connect to DAW Session" },
-      { "command": "oxitone.openSource", "title": "Oxitone: Open Linked TypeScript Source" },
-      { "command": "oxitone.createSourceFile", "title": "Oxitone: Create TypeScript Source File" },
-      { "command": "oxitone.installPlugin", "title": "Oxitone: Install Plugin Package" },
-      { "command": "oxitone.save", "title": "Oxitone: Save Project" },
-      { "command": "oxitone.undo", "title": "Oxitone: Undo Project Transaction" },
-      { "command": "oxitone.redo", "title": "Oxitone: Redo Project Transaction" },
-      { "command": "oxitone.resolveConflict", "title": "Oxitone: Review Editor Conflict" },
-      { "command": "oxitone.disconnect", "title": "Oxitone: Disconnect" }
+      {
+        "command": "oxitone.start",
+        "title": "Oxitone: Open Project in DAW"
+      },
+      {
+        "command": "oxitone.connect",
+        "title": "Oxitone: Connect to DAW Session"
+      },
+      {
+        "command": "oxitone.openSource",
+        "title": "Oxitone: Open Linked TypeScript Source"
+      },
+      {
+        "command": "oxitone.createSourceFile",
+        "title": "Oxitone: Create TypeScript Source File"
+      },
+      {
+        "command": "oxitone.installPlugin",
+        "title": "Oxitone: Install Plugin Package"
+      },
+      {
+        "command": "oxitone.save",
+        "title": "Oxitone: Save Project"
+      },
+      {
+        "command": "oxitone.undo",
+        "title": "Oxitone: Undo Project Transaction"
+      },
+      {
+        "command": "oxitone.redo",
+        "title": "Oxitone: Redo Project Transaction"
+      },
+      {
+        "command": "oxitone.resolveConflict",
+        "title": "Oxitone: Review Editor Conflict"
+      },
+      {
+        "command": "oxitone.disconnect",
+        "title": "Oxitone: Disconnect"
+      }
     ],
-    "views": { "explorer": [{ "id": "oxitone.sources", "name": "Oxitone Project" }] },
+    "views": {
+      "explorer": [
+        {
+          "id": "oxitone.sources",
+          "name": "Oxitone Project"
+        }
+      ]
+    },
     "keybindings": [
-      { "command": "oxitone.undo", "key": "ctrl+alt+z", "mac": "cmd+alt+z", "when": "resourceScheme == oxitone && editorTextFocus" },
-      { "command": "oxitone.redo", "key": "ctrl+alt+shift+z", "mac": "cmd+alt+shift+z", "when": "resourceScheme == oxitone && editorTextFocus" }
+      {
+        "command": "oxitone.undo",
+        "key": "ctrl+alt+z",
+        "mac": "cmd+alt+z",
+        "when": "resourceScheme == oxitone && editorTextFocus"
+      },
+      {
+        "command": "oxitone.redo",
+        "key": "ctrl+alt+shift+z",
+        "mac": "cmd+alt+shift+z",
+        "when": "resourceScheme == oxitone && editorTextFocus"
+      }
     ],
     "configuration": {
       "title": "Oxitone",
       "properties": {
-        "oxitone.executable": { "type": "string", "default": "pnpm", "scope": "machine", "description": "Executable used to launch the project's CLI. Runs with arguments below, without a shell." },
-        "oxitone.arguments": { "type": "array", "items": { "type": "string" }, "default": ["exec", "oxitone"], "scope": "machine", "description": "Arguments before daw <entry.ts>. For a standalone oxitone executable use []." },
-        "oxitone.previewArguments": { "type": "array", "items": { "type": "string" }, "default": [], "scope": "machine", "description": "Additional DAW options, such as --viewer followed by the local GPUI binary path." }
+        "oxitone.executable": {
+          "type": "string",
+          "default": "pnpm",
+          "scope": "machine",
+          "description": "Executable used to launch the project's CLI. Runs with arguments below, without a shell."
+        },
+        "oxitone.arguments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "exec",
+            "oxitone"
+          ],
+          "scope": "machine",
+          "description": "Arguments before daw <entry.ts>. For a standalone oxitone executable use []."
+        },
+        "oxitone.previewArguments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "scope": "machine",
+          "description": "Additional DAW options, such as --viewer followed by the local GPUI binary path."
+        }
       }
     }
   },
@@ -48,6 +134,14 @@
     "test": "vitest run",
     "test:host": "node scripts/test-host.mjs"
   },
-  "dependencies": { "@oxitone/cli": "workspace:*" },
-  "devDependencies": { "@types/vscode": "^1.96.0", "@vscode/test-electron": "^2.5.2", "@vscode/vsce": "^3.6.0", "esbuild": "^0.25.0", "vitest": "^3.2.0" }
+  "dependencies": {
+    "@oxitone/cli": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.96.0",
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^3.6.0",
+    "esbuild": "^0.25.0",
+    "vitest": "^3.2.0"
+  }
 }

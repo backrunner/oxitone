@@ -18,8 +18,9 @@ export class PresentationCursor {
     this.frame += BigInt(consumed);
     this.lastRead = read;
     if (this.loop && this.frame >= BigInt(this.loop.endFrame)) {
-      const start = BigInt(this.loop.startFrame), end = BigInt(this.loop.endFrame);
-      this.frame = start + (this.frame - end) % (end - start);
+      const start = BigInt(this.loop.startFrame),
+        end = BigInt(this.loop.endFrame);
+      this.frame = start + ((this.frame - end) % (end - start));
     }
     return this.frame;
   }

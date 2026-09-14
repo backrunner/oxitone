@@ -14,15 +14,21 @@ export async function recoverStaging(image: SaveImage, ownership: SourceOwnershi
   if (owned.realPath !== image.realPath) saveConflict("source staging parent was relocated");
   const path = stagingPath(image.realPath, image.stagingId);
   let staged;
-  try { staged = await lstat(path); }
-  catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return; throw error; }
+  try {
+    staged = await lstat(path);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
+    throw error;
+  }
   if (!staged.isFile() || staged.nlink > 2) saveConflict("source staging file has unknown links");
   if (staged.nlink === 2) {
     const target = await lstat(image.realPath);
-    if (!target.isFile() || target.dev !== staged.dev || target.ino !== staged.ino) saveConflict("source staging alias was changed");
+    if (!target.isFile() || target.dev !== staged.dev || target.ino !== staged.ino)
+      saveConflict("source staging alias was changed");
     const text = await readSourceText(path);
     if (text !== image.before && text !== image.after) saveConflict("source staging content was changed");
   }
   // With one link this is an unpublished temporary, possibly killed during write.
-  await rm(path); await syncDirectory(dirname(path));
+  await rm(path);
+  await syncDirectory(dirname(path));
 }

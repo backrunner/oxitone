@@ -1,0 +1,27 @@
+# dependencies & build output
+node_modules/
+dist/
+target/
+coverage/
+tmp/
+.tmp/
+
+# Rust workspace — cargo fmt owns it (fixtures are machine- or test-owned)
+crates/
+apps/
+include/
+
+# generated & machine-owned output must stay byte-identical with its producer
+schemas/
+packages/native-generated/
+benchmarks/results/
+benches/
+.agents/reviews/
+
+# lockfiles & binary assets
+pnpm-lock.yaml
+Cargo.lock
+*.node
+*.wasm
+*.wav
+*.mid

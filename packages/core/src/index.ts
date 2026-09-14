@@ -3,8 +3,22 @@ export { PluginConfig, pluginConfig } from "./plugins/plugin-config.js";
 export { PluginInstance, InstanceParameter } from "./plugins/plugin-instance.js";
 export { orderEffects } from "./channels/effect-order.js";
 export type { PluginUiManifest, PluginUiControl } from "@oxitone/protocol";
-export { createPluginPreset, createChannelPreset, validatePreset, applyPreset, presetInstrument, presetEffect } from "./presets/preset.js";
-export type { Preset, ChannelPreset, InstrumentPreset, EffectPreset, PresetMetadata, PresetRuntimeOptions } from "./presets/preset.js";
+export {
+  createPluginPreset,
+  createChannelPreset,
+  validatePreset,
+  applyPreset,
+  presetInstrument,
+  presetEffect,
+} from "./presets/preset.js";
+export type {
+  Preset,
+  ChannelPreset,
+  InstrumentPreset,
+  EffectPreset,
+  PresetMetadata,
+  PresetRuntimeOptions,
+} from "./presets/preset.js";
 export { savePreset, loadPreset } from "#preset-files";
 export type { LoadedPreset } from "./presets/files.js";
 export type { Marker, ProjectOptions } from "./project/project.js";
@@ -29,7 +43,15 @@ export { multisampler } from "./instruments/multisampler.js";
 export type { SampleRegion, MultisamplerOptions } from "./instruments/multisampler.js";
 export { softPiano, grandPiano } from "./instruments/piano.js";
 export type { PianoBank, PianoSample } from "./instruments/piano.js";
-export type { EnvelopeOptions, OscillatorOptions, WavetableOptions, SamplerOptions, SlicePosition, SliceOptions, SlicerOptions } from "./instruments/builders.js";
+export type {
+  EnvelopeOptions,
+  OscillatorOptions,
+  WavetableOptions,
+  SamplerOptions,
+  SlicePosition,
+  SliceOptions,
+  SlicerOptions,
+} from "./instruments/builders.js";
 export { chord } from "./notes/chord.js";
 export type { ChordOptions, ChordQuality, ChordVoicing } from "./notes/chord.js";
 export { arp } from "./notes/arp.js";
@@ -48,12 +70,7 @@ export {
   validateAutomationSpec,
 } from "./automation/source.js";
 export { createAutomationNamespace } from "./automation/namespace.js";
-export type {
-  AutomationNamespace,
-  AutomationPointInput,
-  GateOptions,
-  WaveOptions,
-} from "./automation/namespace.js";
+export type { AutomationNamespace, AutomationPointInput, GateOptions, WaveOptions } from "./automation/namespace.js";
 export { AutomationLane } from "./automation/lane.js";
 export { AutomationClip } from "./automation/clip.js";
 export type {

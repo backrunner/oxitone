@@ -59,8 +59,12 @@ export class Session {
     return this.engine.id;
   }
 
-  get disposed(): boolean { return this.disposedValue; }
-  get revision(): bigint { return BigInt(this.compiledSnapshot.revision); }
+  get disposed(): boolean {
+    return this.disposedValue;
+  }
+  get revision(): bigint {
+    return BigInt(this.compiledSnapshot.revision);
+  }
 
   registerPlugin(options: RegisterPluginOptions): RegisteredPlugin {
     this.assertActive();
@@ -90,10 +94,13 @@ export class Session {
     loop?: LoopRegion,
   ): Promise<TransportState> {
     this.assertActive();
-    const loopRegion = loop === undefined ? undefined : {
-      startFrame: frameToWire(loop.startFrame),
-      endFrame: frameToWire(loop.endFrame),
-    };
+    const loopRegion =
+      loop === undefined
+        ? undefined
+        : {
+            startFrame: frameToWire(loop.startFrame),
+            endFrame: frameToWire(loop.endFrame),
+          };
     return enqueueTransport(this.engine, { command, ...positionFields(position, this.compiledSnapshot), loopRegion });
   }
 
@@ -139,12 +146,7 @@ export class Session {
    * Queue a physical-value parameter event; validated against the compiled
    * graph and applied to subsequent offline renders.
    */
-  async setParameter(
-    entityId: EntityId,
-    parameterId: string,
-    value: number,
-    atFrame?: bigint | number,
-  ): Promise<void> {
+  async setParameter(entityId: EntityId, parameterId: string, value: number, atFrame?: bigint | number): Promise<void> {
     this.assertActive();
     nativeSetParameter(this.engine, entityId, parameterId, value, atFrame);
   }
@@ -152,7 +154,10 @@ export class Session {
   /** Offline WAV export of the last successfully compiled snapshot. */
   async renderWav(options: RenderOptions): Promise<RenderReport> {
     this.assertActive();
-    return nativeRenderWav(this.engine, this.compiledSnapshot, { assetBaseDir: this.compileOptions.assetBaseDir, ...options });
+    return nativeRenderWav(this.engine, this.compiledSnapshot, {
+      assetBaseDir: this.compileOptions.assetBaseDir,
+      ...options,
+    });
   }
 
   /** SMF Type 1 export of the last successfully compiled snapshot. */
@@ -170,8 +175,11 @@ export class Session {
 }
 
 /** @internal Create a throwaway engine around one snapshot call. */
-export async function withTempEngine<T>(run: (engine: EngineHandle) => T,
-  options?: EngineOptions, plugins: readonly RegisterPluginOptions[] = []): Promise<T> {
+export async function withTempEngine<T>(
+  run: (engine: EngineHandle) => T,
+  options?: EngineOptions,
+  plugins: readonly RegisterPluginOptions[] = [],
+): Promise<T> {
   const engine = createEngine(options);
   try {
     for (const plugin of plugins) nativeRegisterPlugin(engine, plugin);

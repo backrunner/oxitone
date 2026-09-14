@@ -4,9 +4,20 @@ import { Project, type PluginUiManifest } from "../src/index.js";
 it("registers isolated version-specific Preview panels without changing musical state", () => {
   const project = new Project({ seed: 42 });
   const snapshot = project.snapshot();
-  const layout: PluginUiManifest = { uiVersion: "1.0", pluginId: "oxitone.delay", pluginVersion: "1.0.0", title: "Echo",
-    size: { width: 500, height: 300 }, pages: [{ id: "main", title: "Main", groups: [{ id: "delay", title: "Delay", columns: 1,
-      controls: [{ kind: "knob", parameter: "feedback" }] }] }] };
+  const layout: PluginUiManifest = {
+    uiVersion: "1.0",
+    pluginId: "oxitone.delay",
+    pluginVersion: "1.0.0",
+    title: "Echo",
+    size: { width: 500, height: 300 },
+    pages: [
+      {
+        id: "main",
+        title: "Main",
+        groups: [{ id: "delay", title: "Delay", columns: 1, controls: [{ kind: "knob", parameter: "feedback" }] }],
+      },
+    ],
+  };
   expect(project.registerPluginUi(layout)).toBe(project);
   layout.title = "Changed";
   expect(project.registeredPluginUis[0]!.title).toBe("Echo");

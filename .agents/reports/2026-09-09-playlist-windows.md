@@ -47,9 +47,9 @@
 Apple M4、48 kHz、128 帧、离线 DSP：
 
 | Placements | Criterion mean | sampled p95 | sampled p99 |
-| --- | --- | --- | --- |
-| 32 | 116.58 µs | 128.292 µs | 191.542 µs |
-| 1024 | 114.85 µs | 140.917 µs | 215.916 µs |
+| ---------- | -------------- | ----------- | ----------- |
+| 32         | 116.58 µs      | 128.292 µs  | 191.542 µs  |
+| 1024       | 114.85 µs      | 140.917 µs  | 215.916 µs  |
 
 这是 DSP 块处理分布，不是物理设备 callback 测量；设备与 xrun 不适用。
 日志：`target/playlist-bench.log`、`target/playlist-workspace-tests.log`、

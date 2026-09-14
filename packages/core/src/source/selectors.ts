@@ -22,12 +22,20 @@ export function selectorShape(select: NoteSelector): string {
 
 function outputKeys(select: NoteSelector, origin: NoteOrigin): string[] {
   if ("segment" in select) return outputKeys(select.note, origin).map((key) => `segment:${select.segment}/${key}`);
-  if ("iteration" in select) return outputKeys(select.note, origin.kind === "repeat" ? origin.input : origin)
-    .map((key) => `iteration:${select.iteration}/${key}`);
+  if ("iteration" in select)
+    return outputKeys(select.note, origin.kind === "repeat" ? origin.input : origin).map(
+      (key) => `iteration:${select.iteration}/${key}`,
+    );
   if ("at" in select) {
     const prefix = `at:${select.at.start}:${select.at.pitch}:`;
-    return [...new Set([selectorKey(select), `${prefix}*:${select.occurrence ?? "*"}`,
-      `${prefix}${select.at.voice ?? "*"}:*`, `${prefix}*:*`])];
+    return [
+      ...new Set([
+        selectorKey(select),
+        `${prefix}*:${select.occurrence ?? "*"}`,
+        `${prefix}${select.at.voice ?? "*"}:*`,
+        `${prefix}*:*`,
+      ]),
+    ];
   }
   const keys = [selectorKey(select)];
   if ("degree" in select && origin.kind === "chord") keys.push(`voice:${origin.voice}`);

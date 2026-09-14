@@ -22,12 +22,21 @@ export default function () {
 writeFileSync(entry, source(0.85));
 const screenshot = join(output, "plugin-details-watch.png");
 const viewer = resolve(root, process.argv[2] ?? "target/release/Oxitone Preview.app");
-const child = spawn(process.execPath, [join(root, "packages/cli/dist/index.js"), "preview", entry, "--viewer", viewer], {
-  cwd: root,
-  env: { ...process.env, OXITONE_PREVIEW_CAPTURE: screenshot, OXITONE_PREVIEW_APPEARANCE: "dark",
-    OXITONE_PREVIEW_CAPTURE_PLUGIN: "instrument", OXITONE_PREVIEW_CAPTURE_REVISION: "2" },
-  stdio: ["ignore", "pipe", "pipe"],
-});
+const child = spawn(
+  process.execPath,
+  [join(root, "packages/cli/dist/index.js"), "preview", entry, "--viewer", viewer],
+  {
+    cwd: root,
+    env: {
+      ...process.env,
+      OXITONE_PREVIEW_CAPTURE: screenshot,
+      OXITONE_PREVIEW_APPEARANCE: "dark",
+      OXITONE_PREVIEW_CAPTURE_PLUGIN: "instrument",
+      OXITONE_PREVIEW_CAPTURE_REVISION: "2",
+    },
+    stdio: ["ignore", "pipe", "pipe"],
+  },
+);
 let log = "";
 let changed = false;
 const receive = (chunk) => {

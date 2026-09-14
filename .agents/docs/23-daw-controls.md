@@ -12,8 +12,10 @@ Document `project` operation 先校验 baseRevision，再使用捕获的最终 P
 mixerChannels 的顺序。GPUI 使用稳定执行引用查找当前索引，不将执行 ID 写入 TS。
 
 ```ts
-export default (project).configure({
-  kind: "channel", index: 0, values: { level: 0.7, pan: -0.2 }
+export default project.configure({
+  kind: "channel",
+  index: 0,
+  values: { level: 0.7, pan: -0.2 },
 });
 ```
 

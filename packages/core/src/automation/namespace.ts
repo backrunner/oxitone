@@ -10,13 +10,7 @@ import {
   type CurveKind,
   type WaveKind,
 } from "@oxitone/protocol";
-import {
-  AutomationSource,
-  checkBeat,
-  checkFinite,
-  checkPositive,
-  checkUnitInterval,
-} from "./source.js";
+import { AutomationSource, checkBeat, checkFinite, checkPositive, checkUnitInterval } from "./source.js";
 
 /** Authoring control point: beat as a number, value in 0..1. */
 export interface AutomationPointInput {
@@ -81,9 +75,7 @@ function specOf(input: AutomationSource, path: string): AutomationSourceSpec {
 }
 
 function chanceSpec(options: ChanceOptions): AutomationSourceSpec {
-  const selected = [options.rate, options.frequency, options.intervalBeats].filter(
-    (value) => value !== undefined,
-  );
+  const selected = [options.rate, options.frequency, options.intervalBeats].filter((value) => value !== undefined);
   if (selected.length !== 1) {
     throw new OxitoneError(
       ErrorCode.AutomationChanceFrequency,
@@ -103,8 +95,8 @@ function chanceSpec(options: ChanceOptions): AutomationSourceSpec {
   checkUnitInterval(options.probability, "$.chance.probability");
   if (!Number.isInteger(options.seed) || options.seed < 0) {
     throw new OxitoneError(ErrorCode.AutomationRange, `chance seed must be an integer >= 0`, {
-      details: { path: "$.chance.seed" } },
-    );
+      details: { path: "$.chance.seed" },
+    });
   }
   if (options.smoothBeats !== undefined) {
     checkBeat(options.smoothBeats, "$.chance.smoothBeats");
@@ -155,8 +147,7 @@ export function createAutomationNamespace(): AutomationNamespace {
     op: "clamp" | "invert" | "quantize" | "scale" | "offset",
     input: AutomationSource,
     extras: { steps?: number; amount?: number; min?: number; max?: number },
-  ): AutomationSource =>
-    wrap({ kind: "unary", op, input: specOf(input, `$.unary.input`), ...extras });
+  ): AutomationSource => wrap({ kind: "unary", op, input: specOf(input, `$.unary.input`), ...extras });
   const binary = (
     op: "mix" | "add" | "multiply" | "min" | "max",
     left: AutomationSource,
@@ -176,10 +167,8 @@ export function createAutomationNamespace(): AutomationNamespace {
       checkFinite(value, "$.constant.value");
       return wrap({ kind: "constant", value });
     },
-    curve: (points, interpolation = "linear") =>
-      wrap({ kind: "curve", interpolation, points: curvePoints(points) }),
-    polyline: (points) =>
-      wrap({ kind: "curve", interpolation: "linear", points: curvePoints(points) }),
+    curve: (points, interpolation = "linear") => wrap({ kind: "curve", interpolation, points: curvePoints(points) }),
+    polyline: (points) => wrap({ kind: "curve", interpolation: "linear", points: curvePoints(points) }),
     line: (from, to, durationBeats) => {
       checkPositive(durationBeats, "$.line.durationBeats");
       return wrap({
@@ -211,8 +200,7 @@ export function createAutomationNamespace(): AutomationNamespace {
     saw: (options) => wrap(waveSpec("saw", options)),
     ramp: (options) => wrap(waveSpec("ramp", options)),
     square: (options) => wrap(waveSpec("square", options)),
-    map: (input, range) =>
-      wrap({ kind: "map", input: specOf(input, "$.map.input"), min: range.min, max: range.max }),
+    map: (input, range) => wrap({ kind: "map", input: specOf(input, "$.map.input"), min: range.min, max: range.max }),
     clamp: (input, range = {}) =>
       unary("clamp", input, {
         ...(range.min !== undefined ? { min: range.min } : {}),

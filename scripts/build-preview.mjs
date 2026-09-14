@@ -5,7 +5,10 @@ import { join } from "node:path";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const profile = process.argv.includes("--debug") ? "debug" : "release";
-execFileSync("cargo", ["build", "--locked", "-p", "oxitone-preview", ...(profile === "release" ? ["--release"] : [])], { cwd: root, stdio: "inherit" });
+execFileSync("cargo", ["build", "--locked", "-p", "oxitone-preview", ...(profile === "release" ? ["--release"] : [])], {
+  cwd: root,
+  stdio: "inherit",
+});
 const contents = join(root, "target", profile, "Oxitone Preview.app", "Contents");
 mkdirSync(join(contents, "MacOS"), { recursive: true });
 const executable = join(contents, "MacOS", "oxitone-preview");

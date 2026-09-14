@@ -13,11 +13,7 @@ export const BEAT_MAX_NUMERATOR = BigInt(Number.MAX_SAFE_INTEGER);
  */
 export const beatWireSchema = z
   .object({
-    numerator: z
-      .number()
-      .int()
-      .nonnegative()
-      .max(Number.MAX_SAFE_INTEGER),
+    numerator: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
     denominator: z.number().int().min(1).max(BEAT_MAX_DENOMINATOR),
   })
   .refine((b) => gcd(BigInt(b.numerator), BigInt(b.denominator)) === 1n, {

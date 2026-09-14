@@ -18,9 +18,7 @@ export type MidiExportSource = ProjectSnapshot | string | SnapshotSource;
 
 function isSnapshotSource(source: MidiExportSource): source is SnapshotSource {
   return (
-    typeof source === "object" &&
-    "snapshot" in source &&
-    typeof (source as SnapshotSource).snapshot === "function"
+    typeof source === "object" && "snapshot" in source && typeof (source as SnapshotSource).snapshot === "function"
   );
 }
 
@@ -36,11 +34,12 @@ function isSnapshotSource(source: MidiExportSource): source is SnapshotSource {
  */
 export function exportMidi(source: MidiExportSource, options: MidiExportOptions): MidiExportReport {
   const validated = midiExportOptionsSchema.parse(options);
-  const snapshot = typeof source === "string"
-    ? source
-    : isSnapshotSource(source)
-      ? encodeProjectSnapshot(source.snapshot())
-      : encodeProjectSnapshot(source);
+  const snapshot =
+    typeof source === "string"
+      ? source
+      : isSnapshotSource(source)
+        ? encodeProjectSnapshot(source.snapshot())
+        : encodeProjectSnapshot(source);
   const engine = createEngine();
   try {
     return nativeExportMidi(engine, snapshot, validated);

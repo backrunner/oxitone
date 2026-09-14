@@ -29,7 +29,10 @@ export interface PatternOptions {
   parts?: readonly PatternPart[];
 }
 
-export interface PatternPart { readonly channelId: EntityId; readonly pattern: Pattern }
+export interface PatternPart {
+  readonly channelId: EntityId;
+  readonly pattern: Pattern;
+}
 
 /**
  * Immutable note fragment. Notes are validated, stably sorted, and frozen at
@@ -54,12 +57,18 @@ export class Pattern {
     this.id = options.id ?? defaultIdGenerator.next(ID_PREFIXES.pattern);
     const parts = options.parts ?? [];
     this.lengthBeats = parts.reduce((length, part) => Math.max(length, part.pattern.lengthBeats), options.lengthBeats);
-    if (parts.length > 256 || new Set(parts.map(part => part.channelId)).size !== parts.length ||
+    if (
+      parts.length > 256 ||
+      new Set(parts.map((part) => part.channelId)).size !== parts.length ||
       (parts.length > 0 && (options.notes?.length ?? 0) > 0) ||
-      parts.some(part => part.pattern.parts.length > 0)) {
-      throw new OxitoneError(ErrorCode.InvalidProject, "Pattern parts require unique Channels and leaf Patterns, without root notes");
+      parts.some((part) => part.pattern.parts.length > 0)
+    ) {
+      throw new OxitoneError(
+        ErrorCode.InvalidProject,
+        "Pattern parts require unique Channels and leaf Patterns, without root notes",
+      );
     }
-    this.parts = Object.freeze(parts.map(part => Object.freeze({ ...part })));
+    this.parts = Object.freeze(parts.map((part) => Object.freeze({ ...part })));
     this.noteList = Object.freeze(sortNotes(options.notes ?? []).map(freezeNote));
     if (options.name !== undefined) {
       this.patternName = options.name;
@@ -71,13 +80,19 @@ export class Pattern {
     return this.patternName;
   }
 
-  get notes(): readonly Readonly<NoteInput>[] { return this.noteList; }
+  get notes(): readonly Readonly<NoteInput>[] {
+    return this.noteList;
+  }
 
   /** Resolved notes with immutable musical selectors and generation origins. */
-  get outputs(): readonly SourceEvent[] { return patternSourceOf(this).events; }
+  get outputs(): readonly SourceEvent[] {
+    return patternSourceOf(this).events;
+  }
 
   /** Preserve generation rules and shared inputs; contains no entity IDs. */
-  toSource(): PatternSourceDocument { return serializeSource(patternSourceOf(this), this.name); }
+  toSource(): PatternSourceDocument {
+    return serializeSource(patternSourceOf(this), this.name);
+  }
 
   /** Rebuild a validated authoring DAG, without a native engine or editor cache. */
   static fromSource(document: unknown): Pattern {
@@ -89,8 +104,12 @@ export class Pattern {
   edit(operations: readonly NoteEdit[], options: { lengthBeats?: number } = {}): Pattern {
     if (operations.length === 0 && options.lengthBeats === undefined) return this;
     const source = patternSourceOf(this);
-    let node = validateSourceNode({ kind: "edit", input: 0, operations: [...operations],
-      ...(options.lengthBeats === undefined ? {} : { lengthBeats: options.lengthBeats }) });
+    let node = validateSourceNode({
+      kind: "edit",
+      input: 0,
+      operations: [...operations],
+      ...(options.lengthBeats === undefined ? {} : { lengthBeats: options.lengthBeats }),
+    });
     if (node.kind !== "edit") throw new OxitoneError(ErrorCode.InvalidProject, "expected edit source");
     let input = source;
     if (source.node.kind === "edit") {
@@ -100,8 +119,14 @@ export class Pattern {
         // Resolve against the current revision before reducing. This also works at maximum depth.
         resolveEdits(source.events, node.operations);
         input = base;
-        node = { kind: "edit", input: 0, operations: merged,
-          ...((node.lengthBeats ?? source.node.lengthBeats) === undefined ? {} : { lengthBeats: node.lengthBeats ?? source.node.lengthBeats }) };
+        node = {
+          kind: "edit",
+          input: 0,
+          operations: merged,
+          ...((node.lengthBeats ?? source.node.lengthBeats) === undefined
+            ? {}
+            : { lengthBeats: node.lengthBeats ?? source.node.lengthBeats }),
+        };
       }
     }
     const edited = createSource(node, [input]);
@@ -134,7 +159,12 @@ export class Pattern {
   static fromSpec(input: PatternSpec, patterns: ReadonlyMap<string, Pattern> = new Map()): Pattern {
     const spec = parseAuthoring(patternSpecSchema, input, "pattern");
     const notes = spec.notes.map((note) => {
-      const value: NoteInput = { pitch: note.pitch, start: beatFromWire(note.start), duration: beatFromWire(note.duration), velocity: note.velocity };
+      const value: NoteInput = {
+        pitch: note.pitch,
+        start: beatFromWire(note.start),
+        duration: beatFromWire(note.duration),
+        velocity: note.velocity,
+      };
       if (note.id !== undefined) value.id = note.id;
       if (note.offVelocity !== undefined) value.offVelocity = note.offVelocity;
       if (note.chance !== undefined) value.chance = note.chance;
@@ -142,13 +172,23 @@ export class Pattern {
       if (note.tags !== undefined) value.tags = [...note.tags];
       return value;
     });
-    const pattern = new Pattern({ id: spec.id, lengthBeats: beatFromWire(spec.lengthBeats), notes,
-      ...(spec.name === undefined ? {} : { name: spec.name }), ...(spec.parts === undefined ? {} : { parts: spec.parts.map(part => {
-        const pattern = patterns.get(part.patternId);
-        if (!pattern) throw new OxitoneError(ErrorCode.InvalidProject, "missing Pattern part");
-        return { channelId: part.channelId, pattern };
-      }) }) });
-    if (pattern.lengthBeats !== beatFromWire(spec.lengthBeats)) throw new OxitoneError(ErrorCode.InvalidProject, "Pattern part exceeds its root length");
+    const pattern = new Pattern({
+      id: spec.id,
+      lengthBeats: beatFromWire(spec.lengthBeats),
+      notes,
+      ...(spec.name === undefined ? {} : { name: spec.name }),
+      ...(spec.parts === undefined
+        ? {}
+        : {
+            parts: spec.parts.map((part) => {
+              const pattern = patterns.get(part.patternId);
+              if (!pattern) throw new OxitoneError(ErrorCode.InvalidProject, "missing Pattern part");
+              return { channelId: part.channelId, pattern };
+            }),
+          }),
+    });
+    if (pattern.lengthBeats !== beatFromWire(spec.lengthBeats))
+      throw new OxitoneError(ErrorCode.InvalidProject, "Pattern part exceeds its root length");
     pattern.noteList = Object.freeze(notes.map(freezeNote));
     pattern.restoredSpec = spec;
     return pattern;
@@ -187,7 +227,8 @@ export class Pattern {
     if (this.patternName !== undefined) {
       spec.name = this.patternName;
     }
-    if (this.parts.length > 0) spec.parts = this.parts.map(part => ({ channelId: part.channelId, patternId: part.pattern.id }));
+    if (this.parts.length > 0)
+      spec.parts = this.parts.map((part) => ({ channelId: part.channelId, patternId: part.pattern.id }));
     return spec;
   }
 }
