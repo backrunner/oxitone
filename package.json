@@ -31,15 +31,15 @@
     "preview": "node packages/cli/dist/index.js preview"
   },
   "devDependencies": {
-    "@eslint/js": "^9.17.0",
-    "@napi-rs/cli": "^3.9.0",
-    "@types/node": "^22.10.0",
-    "eslint": "^9.17.0",
+    "@eslint/js": "^10.0.1",
+    "@napi-rs/cli": "^3.9.1",
+    "@types/node": "^22.20.2",
+    "eslint": "^10.10.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.12.0",
     "prettier": "^3.9.6",
-    "typescript": "^5.7.0",
-    "typescript-eslint": "^8.18.0"
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.70.0"
   },
   "packageManager": "pnpm@12.3.4"
 }

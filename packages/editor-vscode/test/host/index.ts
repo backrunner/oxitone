@@ -3,7 +3,7 @@ import { spawn, type ChildProcess } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import * as vscode from "vscode";
-import { EditorConnection } from "../../../cli/src/editor/connection";
+import { EditorConnection } from "@oxitone/cli/editor";
 import { checkSourceCreation } from "./source-creation";
 
 async function until(check: () => boolean, label: string): Promise<void> {

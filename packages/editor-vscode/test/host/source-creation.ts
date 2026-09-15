@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 import * as vscode from "vscode";
-import type { EditorConnection } from "../../../cli/src/editor/connection";
+import type { EditorConnection } from "@oxitone/cli/editor";
 
 export async function checkSourceCreation(
   peer: EditorConnection,

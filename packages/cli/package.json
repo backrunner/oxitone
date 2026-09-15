@@ -38,12 +38,12 @@
     "@oxitone/native": "workspace:*",
     "@oxitone/protocol": "workspace:*",
     "@prettier/sync": "0.6.1",
-    "esbuild": "^0.25.0",
+    "esbuild": "^0.28.2",
     "prettier": "3.9.6",
-    "tsx": "^4.20.0",
-    "typescript": "^5.7.0"
+    "tsx": "^4.23.13",
+    "typescript": "^6.0.3"
   },
   "devDependencies": {
-    "vitest": "^3.2.0"
+    "vitest": "^4.1.11"
   }
 }
