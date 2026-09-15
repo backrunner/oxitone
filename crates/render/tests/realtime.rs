@@ -71,8 +71,18 @@ fn wait_until(deadline: Duration, mut condition: impl FnMut() -> bool) -> bool {
     false
 }
 
+/// These tests measure realtime scheduling, but `cargo test` runs them on
+/// parallel threads. Six engines each spinning a worker and sink thread
+/// starve one another on small CI runners (3–4 cores), so every session
+/// test takes this lock and owns the machine while it measures.
+fn session_guard() -> std::sync::MutexGuard<'static, ()> {
+    static LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+    LOCK.lock().unwrap_or_else(|e| e.into_inner())
+}
+
 #[test]
 fn session_play_pause_seek_via_simulated_sink() {
+    let _guard = session_guard();
     let session = RealtimeSession::start_simulated(
         playable_graph(),
         RealtimeConfig::default(),
@@ -118,11 +128,16 @@ fn session_play_pause_seek_via_simulated_sink() {
 
 #[test]
 fn jitter_within_horizon_causes_no_underrun() {
-    // Bursts up to 2 periods at 30% probability are well inside the
-    // 4-block render-ahead horizon.
+    let _guard = session_guard();
+    // Bursts up to 2 periods at 30% probability sit well inside the
+    // 8-block render-ahead horizon; the extra depth also absorbs the
+    // occasional worker preemption a shared CI runner cannot avoid.
     let session = RealtimeSession::start_simulated(
         playable_graph(),
-        RealtimeConfig::default(),
+        RealtimeConfig {
+            render_ahead_blocks: 8,
+            ..RealtimeConfig::default()
+        },
         simulated(128),
         Some(JitterConfig {
             max_extra_periods: 2.0,
@@ -164,6 +179,7 @@ fn jitter_within_horizon_causes_no_underrun() {
 
 #[test]
 fn extreme_jitter_underruns_but_transport_continues() {
+    let _guard = session_guard();
     let session = RealtimeSession::start_simulated(
         playable_graph(),
         RealtimeConfig {
@@ -212,6 +228,7 @@ fn extreme_jitter_underruns_but_transport_continues() {
 
 #[test]
 fn output_latency_breakdown_matches_chain() {
+    let _guard = session_guard();
     let session = RealtimeSession::start_simulated(
         playable_graph(),
         RealtimeConfig::default(),
@@ -233,6 +250,7 @@ fn output_latency_breakdown_matches_chain() {
 
 #[test]
 fn direct_mode_reports_zero_ring() {
+    let _guard = session_guard();
     let session = RealtimeSession::start_simulated(
         playable_graph(),
         RealtimeConfig {
@@ -257,6 +275,7 @@ fn direct_mode_reports_zero_ring() {
 
 #[test]
 fn resample_mode_runs_against_lower_device_rate() {
+    let _guard = session_guard();
     let session = RealtimeSession::start_simulated(
         playable_graph(),
         RealtimeConfig {
