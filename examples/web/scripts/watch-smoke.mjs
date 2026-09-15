@@ -18,6 +18,11 @@ const server = spawn(process.execPath, [fileURLToPath(new URL("./dev.mjs", impor
   env: { ...process.env, OXITONE_WEB_PORT: "0", OXITONE_WEB_SONG_ENTRY: fileURLToPath(fixture) },
   stdio: ["ignore", "pipe", "pipe"],
 });
+const edit = (find, replacement) => {
+  const next = source.replace(find, replacement);
+  assert.notEqual(next, source, `watch fixture edit must match: ${find}`);
+  return next;
+};
 let browser;
 try {
   const url = await new Promise((resolve, reject) => {
@@ -57,7 +62,7 @@ try {
     );
     return page.evaluate(async () => (await window.oxitone.session.state()).state === "playing");
   };
-  await writeFile(fixture, source.replace("p.master.level=0.8", "p.master.level=0.42"));
+  await writeFile(fixture, edit("p.master.level = 0.8", "p.master.level = 0.42"));
   await page.waitForFunction(
     () => document.querySelector("#status").textContent === "Code updated · Rust graph accepted",
   );
@@ -67,7 +72,7 @@ try {
   await page.waitForFunction(() => document.querySelector("#status").textContent.startsWith("Build error"));
   assert.equal(await gain(), 0.42);
   assert(await active());
-  await writeFile(fixture, source.replace("return p;", "throw new Error('watch runtime failure');"));
+  await writeFile(fixture, edit("return p;", "throw new Error('watch runtime failure');"));
   await page.waitForFunction(() => document.querySelector("#status").textContent.includes("watch runtime failure"));
   assert.equal(await gain(), 0.42);
   assert(await active());
