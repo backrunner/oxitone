@@ -82,6 +82,11 @@ TypeScript AST 校验完整表达式边界；source hash/原表达式不匹配�
 表达式区间，保留外围字节、原换行和上下文缩进。可识别的 literal edit list 在验证规则
 一致后局部更新；带注释或需要执行的列表保留原文，在外层追加；后续可归约的纯 set
 更新外层列表，不无限包装。无操作保持完整文本字节不变。
+发射片段经 prettier 规范化：优先采用文件可解析到的项目 prettier/editorconfig 配置，
+无配置时沿用文件自身的引号与缩进习惯，其余按 prettier 默认；模板字面量内的换行属于
+字符串数据，逐字保留。Document Service 在评估候选前对改动文件做项目自带
+`eslint --fix`（工作区 eslint 兜底，无 eslint 或无配置则跳过）；原文存在既有可修复
+问题或 eslint 无法解析该文件时跳过修复，保证修复只落在发射区间内。
 显式长度使用普通 `.edit([...], { lengthBeats })`，可验证的 literal options 与 operations
 一起归约，计算值与注释保持。无操作且无长度选项时保持完整文本字节不变。
 

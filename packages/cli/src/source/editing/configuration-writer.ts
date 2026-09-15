@@ -2,6 +2,7 @@ import ts from "typescript";
 import { pluginConfig } from "@oxitone/core";
 import { canonicalEncode, ErrorCode, OxitoneError, type ConfigurationEdit } from "@oxitone/protocol";
 import { sourceHash, sourceProgram, expressionAt } from "../syntax/program.js";
+import { formatSourceExpression, reindentEmitted } from "../syntax/format.js";
 import { authoringImport } from "../syntax/imports.js";
 import { hasComments, literal, readLiteral } from "../syntax/literals.js";
 import type { EvaluatedConfigurationSite } from "../eval/project-evaluation.js";
@@ -23,11 +24,15 @@ export function writeConfigurationEdit(
   ).toSpec();
   const { file, checker } = sourceProgram(fileName, text);
   const expression = expressionAt(file, anchor.start, anchor.end);
+  const indent = text.slice(text.lastIndexOf("\n", anchor.start - 1) + 1, anchor.start).match(/^[\t ]*/)?.[0] ?? "";
+  const newline = text.includes("\r\n") ? "\r\n" : "\n";
+  const emit = (fragment: string) =>
+    reindentEmitted(fileName, formatSourceExpression(fileName, text, fragment), newline, indent);
   if (!hasComments(expression.getText(file)) && ts.isObjectLiteralExpression(expression)) {
     try {
       if (canonicalEncode(readLiteral(expression)) === canonicalEncode(site.config)) {
         const printed = ts.createPrinter().printNode(ts.EmitHint.Expression, literal(config), file);
-        return { text: text.slice(0, anchor.start) + printed + text.slice(anchor.end), config };
+        return { text: text.slice(0, anchor.start) + emit(printed) + text.slice(anchor.end), config };
       }
     } catch {
       /* Computed properties, getters and spreads remain normal expressions. */
@@ -79,10 +84,12 @@ export function writeConfigurationEdit(
       }
     }
   }
-  const replacement = print(
-    ts.factory.createCallExpression(ts.factory.createPropertyAccessExpression(base, method), undefined, [
-      literal(values),
-    ]),
+  const replacement = emit(
+    print(
+      ts.factory.createCallExpression(ts.factory.createPropertyAccessExpression(base, method), undefined, [
+        literal(values),
+      ]),
+    ),
   );
   let result = text.slice(0, anchor.start) + replacement + text.slice(anchor.end);
   if (imported.patch)

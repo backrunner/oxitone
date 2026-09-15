@@ -27,7 +27,7 @@ describe("Pattern source writer", () => {
     );
     expect(result.text.slice(0, result.anchor.start)).toBe(text.slice(0, text.indexOf(expression)));
     expect(result.text.slice(result.anchor.end)).toBe("; // keep this too\r\n");
-    expect(result.anchor.expression).toContain(`(${expression}).edit([`);
+    expect(result.anchor.expression).toContain(`${expression}.edit([`);
     expect(result.text).not.toMatch(/(?<!\r)\n/);
     expect(result.text).not.toMatch(/"id"|UUID|sourceHash/);
   });

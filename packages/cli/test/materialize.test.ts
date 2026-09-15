@@ -87,7 +87,7 @@ describe("Pattern materialization", () => {
       text,
       anchor: anchorPatternExpression("song.ts", text, 15, 15 + expression.length),
     });
-    expect(result.text).toContain("((makePhrase()), new Pattern(");
+    expect(result.text).toMatch(/\(makePhrase\(\),\s*new Pattern\(/);
     expect(result.summary.retainsOriginalEvaluation).toBe(true);
     const edited = writeLiteralPatternEdit({
       ...result,

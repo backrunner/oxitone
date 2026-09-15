@@ -43,7 +43,7 @@ it("captures async local factories with their original this, module URL, exports
   await document.edit(0, site.handle, [{ select: { degree: 1 }, set: { pitch: 61 } }]);
   await document.save(1);
   expect(await readFile(entry, "utf8")).toBe(text);
-  expect(await readFile(path, "utf8")).toContain("factory.make()");
+  expect(await readFile(path, "utf8")).toMatch(/factory\s*\.make\(\)/);
   const reopened = await open(entry);
   expect(reopened.frame!.snapshot.patterns[0]!.notes[0]!.pitch).toBe(61);
 });

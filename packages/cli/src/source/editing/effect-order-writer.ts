@@ -1,6 +1,7 @@
 import ts from "typescript";
 import { ErrorCode, OxitoneError, type ProjectSnapshot } from "@oxitone/protocol";
 import { authoringImport } from "../syntax/imports.js";
+import { formatSourceStatement, reindentEmitted } from "../syntax/format.js";
 import { hasComments, literal, readLiteral } from "../syntax/literals.js";
 import { expressionAt, sourceHash, sourceProgram } from "../syntax/program.js";
 import type { EvaluatedEffectOwnerSite, ProjectEvaluation } from "../eval/project-evaluation.js";
@@ -142,14 +143,19 @@ function effectOrder(
       .match(/^\s*/)?.[0] ?? "";
   const statement = identity
     ? ""
-    : print(
-        ts.factory.createCallExpression(imported.expression, undefined, [
-          ts.factory.createIdentifier(declaration.name.text),
-          literal(indices),
-        ]),
-      ) + ";";
+    : formatSourceStatement(
+        fileName,
+        text,
+        print(
+          ts.factory.createCallExpression(imported.expression, undefined, [
+            ts.factory.createIdentifier(declaration.name.text),
+            literal(indices),
+          ]),
+        ),
+      );
+  const emitted = reindentEmitted(fileName, statement, newline, indent);
   let result =
-    text.slice(0, start) + (start === end ? newline + indent + statement + newline : statement) + text.slice(end);
+    text.slice(0, start) + (start === end ? newline + indent + emitted + newline : emitted) + text.slice(end);
   if (!identity && imported.patch)
     result = result.slice(0, imported.patch.at) + imported.patch.text + result.slice(imported.patch.at);
   return { text: result, expected };

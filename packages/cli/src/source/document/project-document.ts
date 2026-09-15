@@ -40,6 +40,8 @@ import { assertProjectConfigurationEdit, assertProjectEquivalent } from "./proje
 import type { ConfigurationEdit } from "@oxitone/protocol";
 import type { RackMaterializationReview } from "@oxitone/protocol";
 import { materializeRack } from "../editing/rack-writer.js";
+import { lintSourceCandidate, resetSourceLintCache } from "../syntax/eslint-fix.js";
+import { resetSourceFormatCache } from "../syntax/format.js";
 import { writeEffectOrder, projectOrderEdit } from "../editing/effect-order-writer.js";
 import { projectSites } from "./project-sites.js";
 import { PluginLifecycle, type PluginTaskRunner } from "../plugins/plugin-lifecycle.js";
@@ -217,6 +219,9 @@ export class ProjectDocument {
       this.emit();
       return this.view;
     }
+    // Workspace style configs may have changed alongside the source.
+    resetSourceFormatCache();
+    resetSourceLintCache();
     const generation = this.begin();
     this.status = "building";
     this.error = undefined;
@@ -352,6 +357,8 @@ export class ProjectDocument {
     try {
       await checkSourceReads(before.reads);
       this.check(generation);
+      await this.polish(files);
+      this.check(generation);
       const evaluated = await this.evaluate(files, generation);
       assertProjectNoteEdit(
         before.frame.snapshot,
@@ -373,7 +380,7 @@ export class ProjectDocument {
             baseRevision: revision,
             fileName: site.fileName,
             beforeText: request.text,
-            afterText: candidate.text,
+            afterText: files.get(site.fileName)!,
             affectedClips: placement
               ? [placement]
               : before.frame.snapshot.patternClips
@@ -416,6 +423,15 @@ export class ProjectDocument {
     this.status = "ready";
     this.error = undefined;
   }
+  /** Project eslint --fix conforms emitted bytes to workspace rules without touching other spans. */
+  private async polish(files: Map<string, string>): Promise<void> {
+    for (const [fileName, text] of files) {
+      const before = this.files.get(fileName);
+      if (before !== undefined && before !== text) {
+        files.set(fileName, await lintSourceCandidate(this.options.projectRoot!, fileName, before, text));
+      }
+    }
+  }
   private async transact(
     before: ProjectEvaluation,
     files: Map<string, string>,
@@ -428,6 +444,8 @@ export class ProjectDocument {
     this.emit();
     try {
       await checkSourceReads(before.reads);
+      this.check(generation);
+      await this.polish(files);
       this.check(generation);
       const evaluated = await this.evaluate(files, generation);
       validate(evaluated);
@@ -624,7 +642,7 @@ export class ProjectDocument {
             baseRevision: revision,
             fileName: site.fileName,
             beforeText: text,
-            afterText: candidate.text,
+            afterText: files.get(site.fileName)!,
             affectedOwners: site.usages.map((usage) => usage.owner),
             effects: site.effects.length,
             retainsOriginalEvaluation: candidate.retainsOriginalEvaluation,

@@ -1,6 +1,7 @@
 import ts from "typescript";
 import { Pattern } from "@oxitone/core";
 import { canonicalEncode, ErrorCode, OxitoneError, type PatternSourceDocument } from "@oxitone/protocol";
+import { formatSourceExpression, reindentEmitted } from "../syntax/format.js";
 import { literal, hasComments, readLiteral } from "../syntax/literals.js";
 import { patternImport } from "../syntax/imports.js";
 import {
@@ -136,7 +137,12 @@ function replaceExpression(
   source: PatternSourceDocument,
 ): PatternWriteResult {
   const indent = text.slice(text.lastIndexOf("\n", anchor.start - 1) + 1, anchor.start).match(/^[\t ]*/)?.[0] ?? "";
-  const replacement = expression.replace(/\n/g, `${text.includes("\r\n") ? "\r\n" : "\n"}${indent}`);
+  const replacement = reindentEmitted(
+    fileName,
+    formatSourceExpression(fileName, text, expression),
+    text.includes("\r\n") ? "\r\n" : "\n",
+    indent,
+  );
   const candidate = text.slice(0, anchor.start) + replacement + text.slice(anchor.end);
   return {
     text: candidate,

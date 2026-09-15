@@ -195,9 +195,15 @@ importers:
       '@oxitone/protocol':
         specifier: workspace:*
         version: link:../protocol
+      '@prettier/sync':
+        specifier: 0.6.1
+        version: 0.6.1(prettier@3.9.6)
       esbuild:
         specifier: ^0.25.0
         version: 0.25.12
+      prettier:
+        specifier: 3.9.6
+        version: 3.9.6
       tsx:
         specifier: ^4.20.0
         version: 4.23.13
@@ -1381,6 +1387,11 @@ packages:
   '@octokit/types@18.0.0':
     resolution: {integrity: sha512-l6bAF43PNxkJp6g+W4PjoUSSkxHomXw2nOum5CTftJz1NlV3vu93NImgOYtLf6CbBUb5j+fiuzW0PPQ5JTSvZA==, tarball: https://registry.npmjs.org/@octokit/types/-/types-18.0.0.tgz}
 
+  '@prettier/sync@0.6.1':
+    resolution: {integrity: sha512-yF9G8vK/LYUTF3Cijd7VC9La3b20F20/J/fgoR4H0B8JGOWnZVZX6+I6+vODPosjmMcpdlUV+gUqJQZp3kLOcw==, tarball: https://registry.npmjs.org/@prettier/sync/-/sync-0.6.1.tgz}
+    peerDependencies:
+      prettier: '*'
+
   '@rollup/rollup-android-arm-eabi@4.63.1':
     resolution: {integrity: sha512-UZ8sUxPTiHWYX9QNdJedb1kDZSpS1t/VPWBWGSgqHNi9w3Cu6IXvu2mzbhiTiPvtrqgTQJ+zqiAq2iPIPilpaQ==, tarball: https://registry.npmjs.org/@rollup/rollup-android-arm-eabi/-/rollup-android-arm-eabi-4.63.1.tgz}
     cpu: [arm]
@@ -2535,6 +2546,9 @@ packages:
 
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==, tarball: https://registry.npmjs.org/magic-string/-/magic-string-0.30.21.tgz}
+
+  make-synchronized@0.8.0:
+    resolution: {integrity: sha512-DZu4lwc0ffoFz581BSQa/BJl+1ZqIkoRQ+VejMlH0VrP4E86StAODnZujZ4sepumQj8rcP7wUnUBGM8Gu+zKUA==, tarball: https://registry.npmjs.org/make-synchronized/-/make-synchronized-0.8.0.tgz}
 
   markdown-it@14.3.1:
     resolution: {integrity: sha512-4Ej49aYTDFIQ+uBkfX8GBvJGccoARxxPep+7aWTs55ozbjQJpW9M26Fe53vnGgvLeVzva/amzjQQaQu9w0vMhA==, tarball: https://registry.npmjs.org/markdown-it/-/markdown-it-14.3.1.tgz}
@@ -4074,6 +4088,11 @@ snapshots:
     dependencies:
       '@octokit/openapi-types': 29.0.1
 
+  '@prettier/sync@0.6.1(prettier@3.9.6)':
+    dependencies:
+      make-synchronized: 0.8.0
+      prettier: 3.9.6
+
   '@rollup/rollup-android-arm-eabi@4.63.1':
     optional: true
 
@@ -5322,6 +5341,8 @@ snapshots:
   magic-string@0.30.21:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.6.0
+
+  make-synchronized@0.8.0: {}
 
   markdown-it@14.3.1:
     dependencies:

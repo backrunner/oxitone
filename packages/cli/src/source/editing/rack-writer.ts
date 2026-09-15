@@ -1,5 +1,6 @@
 import ts from "typescript";
 import { ErrorCode, OxitoneError } from "@oxitone/protocol";
+import { formatSourceExpression, reindentEmitted } from "../syntax/format.js";
 import { literal } from "../syntax/literals.js";
 import { expressionAt, sourceHash, sourceProgram } from "../syntax/program.js";
 import type { EvaluatedRackSite } from "../eval/project-evaluation.js";
@@ -24,7 +25,13 @@ export function materializeRack(fileName: string, text: string, site: EvaluatedR
   const printed = ts
     .createPrinter({ newLine: ts.NewLineKind.LineFeed })
     .printNode(ts.EmitHint.Expression, effects, file);
-  const replacement = bound ? printed : `((${anchor.expression}), ${printed})`;
+  const indent = text.slice(text.lastIndexOf("\n", anchor.start - 1) + 1, anchor.start).match(/^[\t ]*/)?.[0] ?? "";
+  const replacement = reindentEmitted(
+    fileName,
+    formatSourceExpression(fileName, text, bound ? printed : `((${anchor.expression}), ${printed})`),
+    text.includes("\r\n") ? "\r\n" : "\n",
+    indent,
+  );
   return {
     text: text.slice(0, anchor.start) + replacement + text.slice(anchor.end),
     retainsOriginalEvaluation: !bound,

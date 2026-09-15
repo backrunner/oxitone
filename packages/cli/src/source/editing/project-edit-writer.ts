@@ -13,6 +13,8 @@ import {
   type RegisterPluginOptions,
 } from "@oxitone/protocol";
 import type { ProjectEvaluation } from "../eval/project-evaluation.js";
+import { formatSourceExpression, reindentEmitted } from "../syntax/format.js";
+import { readLiteral } from "../syntax/literals.js";
 import { expressionAt, sourceHash, sourceProgram } from "../syntax/program.js";
 
 /** Restore authoring order, which can differ from the canonical snapshot's ID order. */
@@ -66,12 +68,12 @@ export function appendProjectEdit(
     text.slice(expression.expression.expression.end, expression.end) ===
       `.${method}(${expression.arguments[0]!.getText()})`
   ) {
-    // JSON only: don't remove comments, evaluation or computed values from authored calls.
+    // Literal objects only: don't remove comments, evaluation or computed values from authored calls.
     try {
       const previous =
         method === "configure"
-          ? projectEditSchema.parse(JSON.parse(expression.arguments[0]!.getText()))
-          : arrangementEditSchema.parse(JSON.parse(expression.arguments[0]!.getText()));
+          ? projectEditSchema.parse(readLiteral(expression.arguments[0]!))
+          : arrangementEditSchema.parse(readLiteral(expression.arguments[0]!));
       const next = method === "configure" ? projectEditSchema.parse(edit) : arrangementEditSchema.parse(edit);
       if (scalarTarget(previous) !== undefined && scalarTarget(previous) === scalarTarget(next)) {
         let merged =
@@ -113,7 +115,14 @@ export function appendProjectEdit(
       libraryPath: resolve(realpathSync(dirname(site.fileName)), path),
     };
   }
-  const replacement = `(${base}).${method}(${JSON.stringify(edit, null, 2).replaceAll("\n", newline)})`;
+  const indent =
+    text.slice(text.lastIndexOf("\n", site.anchor.start - 1) + 1, site.anchor.start).match(/^[\t ]*/)?.[0] ?? "";
+  const replacement = reindentEmitted(
+    site.fileName,
+    formatSourceExpression(site.fileName, text, `(${base}).${method}(${JSON.stringify(edit)})`),
+    newline,
+    indent,
+  );
   const candidate = new Map(files);
   candidate.set(site.fileName, text.slice(0, site.anchor.start) + replacement + text.slice(site.anchor.end));
   return { files: candidate, ...(evaluatedRegistration ? { registration: evaluatedRegistration } : {}) };

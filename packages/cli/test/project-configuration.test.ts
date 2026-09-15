@@ -59,7 +59,7 @@ it("edits local or shared npm configurations, distinguishes plugin/host names, r
       expect(document.frame!.snapshot.channels[1]!.instrument.parameters.level).toBe(0.6);
     }
     expect(document.view.files[0]!.text.match(/withParameters\(/g)).toHaveLength(1);
-    expect(document.view.files[0]!.text).toContain('config("instrument", shared)');
+    expect(document.view.files[0]!.text).toContain("config('instrument', shared)");
     const revision = document.view.revision;
     await expect(
       document.editConfiguration(revision, local().handle, { kind: "parameters", values: { nonexistent: 1 } }),

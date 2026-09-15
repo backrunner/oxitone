@@ -1,5 +1,6 @@
 import ts from "typescript";
 import { ErrorCode, OxitoneError } from "@oxitone/protocol";
+import { formatSourceStatement } from "./format.js";
 
 export interface ImportPatch {
   readonly at: number;
@@ -93,16 +94,17 @@ export function authoringImport(
     name = `Local${exportedName[0]!.toUpperCase()}${exportedName.slice(1)}${suffix}`;
   const module = sdkImports[0]?.moduleSpecifier;
   const from = module && ts.isStringLiteral(module) ? module.text : installedAuthoringModule(file.fileName);
-  const quote = imports.some((statement) => statement.moduleSpecifier.getText(file).startsWith("'")) ? "'" : '"';
   const newline = file.text.includes("\r\n") ? "\r\n" : "\n";
   const at = importPosition(file);
   const prefix = at > 0 && !/[\r\n]/.test(file.text[at - 1] ?? "") ? newline : "";
+  const statement = formatSourceStatement(
+    file.fileName,
+    file.text,
+    `import { ${exportedName}${name === exportedName ? "" : ` as ${name}`} } from ${JSON.stringify(from)};`,
+  );
   return {
     expression: f.createIdentifier(name),
-    patch: {
-      at,
-      text: `${prefix}import { ${exportedName}${name === exportedName ? "" : ` as ${name}`} } from ${quote}${from}${quote};${newline}`,
-    },
+    patch: { at, text: `${prefix}${statement}${newline}` },
   };
 }
 

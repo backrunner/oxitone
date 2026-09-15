@@ -9,6 +9,7 @@ import {
   type PatternSourceDocument,
 } from "@oxitone/protocol";
 import { hasComments, printOperations, readLiteral } from "../syntax/literals.js";
+import { formatSourceArguments, formatSourceExpression, reindentEmitted } from "../syntax/format.js";
 import { expressionAt, sourceHash as hash, sourceProgram } from "../syntax/program.js";
 
 /** Revision-local source anchor. Never printed into the user's TypeScript. */
@@ -66,7 +67,11 @@ export function writePatternEdit(request: PatternWriteRequest): PatternWriteResu
   const oldRoot = request.source.nodes[request.source.root];
   let start = anchor.start;
   let end = anchor.end;
-  let replacement = `(${anchor.expression}).edit(${printOperations(request.operations, file)}${request.lengthBeats === undefined ? "" : `, { lengthBeats: ${request.lengthBeats} }`})`;
+  let replacement = formatSourceExpression(
+    fileName,
+    text,
+    `(${anchor.expression}).edit(${printOperations(request.operations, file)}${request.lengthBeats === undefined ? "" : `, { lengthBeats: ${request.lengthBeats} }`})`,
+  );
   // Only replace a literal list whose evaluated rules match the accepted outer edit.
   // Preserve commented/computed lists by wrapping their output instead.
   if (
@@ -105,15 +110,18 @@ export function writePatternEdit(request: PatternWriteRequest): PatternWriteResu
       if (reusable) {
         start = argument.getStart(file);
         end = options?.end ?? argument.end;
-        replacement =
+        replacement = formatSourceArguments(
+          fileName,
+          text,
           printOperations(root.operations, file) +
-          (root.lengthBeats === undefined ? "" : `, { lengthBeats: ${root.lengthBeats} }`);
+            (root.lengthBeats === undefined ? "" : `, { lengthBeats: ${root.lengthBeats} }`),
+        );
       }
     }
   }
   const indent = text.slice(text.lastIndexOf("\n", start - 1) + 1, start).match(/^[\t ]*/)?.[0] ?? "";
   const newline = text.includes("\r\n") ? "\r\n" : "\n";
-  replacement = replacement.replace(/\n/g, `${newline}${indent}`);
+  replacement = reindentEmitted(fileName, replacement, newline, indent);
   const candidate = text.slice(0, start) + replacement + text.slice(end);
   const nextEnd = anchor.end + replacement.length - (end - start);
   return { text: candidate, source, anchor: anchorPatternExpression(fileName, candidate, anchor.start, nextEnd) };

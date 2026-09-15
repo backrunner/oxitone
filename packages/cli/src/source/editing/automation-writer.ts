@@ -2,6 +2,7 @@ import ts from "typescript";
 import { AutomationSource } from "@oxitone/core";
 import { canonicalEncode, ErrorCode, OxitoneError, type AutomationRangeEdit } from "@oxitone/protocol";
 import { sourceHash, sourceProgram, expressionAt } from "../syntax/program.js";
+import { formatSourceExpression, reindentEmitted } from "../syntax/format.js";
 import { readLiteral, literal, hasComments } from "../syntax/literals.js";
 import type { EvaluatedAutomationSite } from "../eval/project-evaluation.js";
 
@@ -50,7 +51,7 @@ export function writeAutomationRange(
       /* Existing non-literal expressions must retain their execution. */
     }
   }
-  const replacement = ts
+  const printed = ts
     .createPrinter({ newLine: ts.NewLineKind.LineFeed })
     .printNode(
       ts.EmitHint.Expression,
@@ -61,5 +62,12 @@ export function writeAutomationRange(
       ),
       file,
     );
+  const indent = text.slice(text.lastIndexOf("\n", anchor.start - 1) + 1, anchor.start).match(/^[\t ]*/)?.[0] ?? "";
+  const replacement = reindentEmitted(
+    fileName,
+    formatSourceExpression(fileName, text, printed),
+    text.includes("\r\n") ? "\r\n" : "\n",
+    indent,
+  );
   return { text: text.slice(0, anchor.start) + replacement + text.slice(anchor.end), source };
 }
