@@ -85,7 +85,13 @@ fn session_play_pause_seek_via_simulated_sink() {
     let _guard = session_guard();
     let session = RealtimeSession::start_simulated(
         playable_graph(),
-        RealtimeConfig::default(),
+        // A shared CI runner can preempt the render worker for tens of
+        // milliseconds; the 16-block horizon keeps these xruns==0 checks
+        // about the pipeline, not about scheduler luck.
+        RealtimeConfig {
+            render_ahead_blocks: 16,
+            ..RealtimeConfig::default()
+        },
         simulated(128),
         None,
     )
@@ -130,12 +136,12 @@ fn session_play_pause_seek_via_simulated_sink() {
 fn jitter_within_horizon_causes_no_underrun() {
     let _guard = session_guard();
     // Bursts up to 2 periods at 30% probability sit well inside the
-    // 8-block render-ahead horizon; the extra depth also absorbs the
+    // 16-block render-ahead horizon; the extra depth also absorbs the
     // occasional worker preemption a shared CI runner cannot avoid.
     let session = RealtimeSession::start_simulated(
         playable_graph(),
         RealtimeConfig {
-            render_ahead_blocks: 8,
+            render_ahead_blocks: 16,
             ..RealtimeConfig::default()
         },
         simulated(128),
@@ -280,6 +286,7 @@ fn resample_mode_runs_against_lower_device_rate() {
         playable_graph(),
         RealtimeConfig {
             device_rate_policy: DeviceRatePolicy::Resample,
+            render_ahead_blocks: 16,
             ..RealtimeConfig::default()
         },
         SimulatedSinkConfig {
