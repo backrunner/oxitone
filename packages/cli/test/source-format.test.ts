@@ -168,8 +168,7 @@ describe("document transactions", () => {
 
   it("runs the project's eslint --fix on emitted code inside a transaction", async () => {
     const root = await workspace({
-      "eslint.config.mjs":
-        'export default [{ files: ["**/*.ts"], rules: { "comma-dangle": ["error", "never"] } }];\n',
+      "eslint.config.mjs": 'export default [{ files: ["**/*.ts"], rules: { "comma-dangle": ["error", "never"] } }];\n',
     });
     await mkdir(join(root, "node_modules/@oxitone"), { recursive: true });
     await symlink(
