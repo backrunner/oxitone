@@ -1,5 +1,6 @@
 import ts from "typescript";
-import { dirname, relative } from "node:path";
+import { realpathSync } from "node:fs";
+import { dirname, relative, resolve } from "node:path";
 import { Project } from "@oxitone/core";
 import {
   arrangementEditSchema,
@@ -42,7 +43,7 @@ export function appendProjectEdit(
   method: "arrange" | "configure",
   edit: unknown,
   registration?: RegisterPluginOptions,
-): Map<string, string> {
+): { files: Map<string, string>; registration?: RegisterPluginOptions } {
   const rank = (label: string) => (label === "default export" ? 0 : label === "return" ? 1 : 2);
   const site = [...before.projectSites].sort((a, b) => rank(a.label) - rank(b.label) || b.anchor.end - a.anchor.end)[0];
   if (!site || rank(site.label) > 1)
@@ -98,15 +99,24 @@ export function appendProjectEdit(
       /* Preserve unrecognized authored expressions. */
     }
   }
+  let evaluatedRegistration: RegisterPluginOptions | undefined;
   if (registration) {
     const { libraryPath, ...metadata } = registration;
     const path = relative(dirname(site.fileName), libraryPath);
     base = `(${base}).withPluginRegistration({ ...${JSON.stringify(metadata, null, 2)}, libraryPath: import.meta.dirname + ${JSON.stringify("/" + path)} })`;
+    // The evaluator imports the site module through its real path, so the
+    // frame's registration resolves libraryPath from the canonicalized
+    // directory — mirror that here or frame comparison sees a symlinked
+    // vs. resolved prefix mismatch (e.g. /var vs. /private/var on macOS).
+    evaluatedRegistration = {
+      ...registration,
+      libraryPath: resolve(realpathSync(dirname(site.fileName)), path),
+    };
   }
   const replacement = `(${base}).${method}(${JSON.stringify(edit, null, 2).replaceAll("\n", newline)})`;
   const candidate = new Map(files);
   candidate.set(site.fileName, text.slice(0, site.anchor.start) + replacement + text.slice(site.anchor.end));
-  return candidate;
+  return { files: candidate, ...(evaluatedRegistration ? { registration: evaluatedRegistration } : {}) };
 }
 function scalarTarget(edit: ProjectEdit | ArrangementEdit): string | undefined {
   if ("action" in edit)
@@ -124,5 +134,5 @@ export function writeProjectEdit(before: ProjectEvaluation, files: ReadonlyMap<s
   project.configure(edit);
   const expected = project.snapshot();
   if (canonicalEncode({ ...original, revision: 0 }) === canonicalEncode({ ...expected, revision: 0 })) return undefined;
-  return { files: appendProjectEdit(before, files, "configure", edit), expected };
+  return { files: appendProjectEdit(before, files, "configure", edit).files, expected };
 }

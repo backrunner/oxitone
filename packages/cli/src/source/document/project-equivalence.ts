@@ -104,7 +104,10 @@ export function assertProjectAutomationEdit(
 export function assertFrameConfiguration(before: PreviewSnapshotFrame, after: PreviewSnapshotFrame): void {
   for (const field of ["assetBaseDir", "plugins", "allowPlugins", "pluginUis"] as const) {
     if (JSON.stringify(before[field]) !== JSON.stringify(after[field]))
-      throw new OxitoneError(ErrorCode.EditScopeConflict, "semantic edit changed project plugin configuration");
+      throw new OxitoneError(
+        ErrorCode.EditScopeConflict,
+        `semantic edit changed project plugin configuration (${field})`,
+      );
   }
 }
 

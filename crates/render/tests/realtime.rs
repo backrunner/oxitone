@@ -138,7 +138,14 @@ fn jitter_within_horizon_causes_no_underrun() {
             loop_region: None,
         })
         .unwrap();
-    std::thread::sleep(Duration::from_secs(3));
+    // Wait on rendered frames instead of wall clock: the simulated sink
+    // paces by real time, so a loaded CI runner falls behind nominal
+    // realtime and a fixed sleep makes the block count flaky. Two
+    // seconds of audio is ~750 jittered blocks at 48 kHz/128.
+    assert!(
+        wait_until(Duration::from_secs(15), || session.cursor() > 96_000),
+        "render worker must keep playing through injected jitter"
+    );
     let diag = session.snapshot_diagnostics();
     assert_eq!(
         diag.xruns,
@@ -152,7 +159,7 @@ fn jitter_within_horizon_causes_no_underrun() {
             .map(|event| (event.code, event.frame))
             .collect::<Vec<_>>()
     );
-    assert!(diag.blocks > 500);
+    assert!(diag.blocks > 96_000 / 128);
 }
 
 #[test]

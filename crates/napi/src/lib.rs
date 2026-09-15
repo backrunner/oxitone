@@ -965,8 +965,15 @@ mod tests {
         encode_project_snapshot(snapshot).unwrap()
     }
 
+    /// Test engines run on the simulated sink: tests must never open a
+    /// system audio output (AGENTS.md). The real HAL path is covered by
+    /// the soak harness. A deeper render-ahead ring keeps the assertions
+    /// stable on heavily loaded CI runners.
     fn engine() -> String {
-        let response = create_engine(None).unwrap();
+        let response = create_engine(Some(
+            r#"{"audioBackend":"simulated","renderAheadBlocks":8}"#.into(),
+        ))
+        .unwrap();
         let parsed: Value = serde_json::from_str(&response).unwrap();
         parsed["engineId"].as_str().unwrap().to_string()
     }
@@ -1242,7 +1249,7 @@ mod tests {
     }
 
     #[test]
-    fn play_starts_realtime_output_and_reports_latency() {
+    fn play_starts_simulated_output_and_reports_latency() {
         let id = engine();
         compile(id.clone(), snapshot_json(&playable_snapshot())).unwrap();
 
@@ -1289,10 +1296,19 @@ mod tests {
                     .unwrap()
         );
 
-        // Let the worker render a few blocks on the real device.
-        std::thread::sleep(std::time::Duration::from_millis(300));
-        let diagnostics: Value =
-            serde_json::from_str(&get_diagnostics(id.clone()).unwrap()).unwrap();
+        // Let the worker render a few blocks on the simulated sink; poll
+        // for progress instead of sleeping a fixed interval (loaded CI
+        // runners pace the sink slower than nominal realtime).
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+        let diagnostics = loop {
+            let diagnostics: Value =
+                serde_json::from_str(&get_diagnostics(id.clone()).unwrap()).unwrap();
+            if diagnostics["blocks"].as_u64().unwrap() > 0 || std::time::Instant::now() >= deadline
+            {
+                break diagnostics;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        };
         assert!(diagnostics["blocks"].as_u64().unwrap() > 0);
         assert_eq!(diagnostics["xruns"].as_u64().unwrap(), 0);
         assert!(diagnostics["engineLoad"].as_f64().unwrap() >= 0.0);

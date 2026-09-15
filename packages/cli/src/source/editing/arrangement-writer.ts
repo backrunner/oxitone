@@ -15,7 +15,7 @@ export function writeArrangement(before: ProjectEvaluation, files: ReadonlyMap<s
   project.arrange(edit);
   const expected = project.snapshot();
   if (canonicalEncode({ ...original, revision: 0 }) === canonicalEncode({ ...expected, revision: 0 })) return undefined;
-  return { files: appendProjectEdit(before, files, "arrange", edit), expected };
+  return { files: appendProjectEdit(before, files, "arrange", edit).files, expected };
 }
 
 /** Newly allocated identities may differ on restore; every existing entity and all music must match. */

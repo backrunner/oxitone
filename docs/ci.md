@@ -6,13 +6,18 @@ macOS 15 / Node 22 environment. The matrix asserts the actual architecture rathe
 than inferring it from a mutable runner label. Both builds target macOS 13+.
 
 Each fresh checkout installs the repository's pinned pnpm version and frozen
-lockfile, then builds the native addon, SDK, GPUI viewer bundle and TypeScript examples. It checks
-generated schema drift, lint, types, rustfmt, all Rust/TS tests, the portable offline
+lockfile. The pnpm store and Cargo registry/target are cached between runs;
+cheap gates (rustfmt, prettier, repo-wide `eslint .` covering packages,
+examples and tooling scripts) run before the builds so common failures stop
+the job within a minute. It then builds the native addon, SDK, GPUI viewer bundle and TypeScript examples, checks
+generated schema drift and types (`tsc --noEmit` resolves workspace packages
+through built `dist` output, so it stays after the build), and runs all Rust/TS tests, the portable offline
 examples (including the dynamic drum/effect chain) and focused Slicer, insert,
 dynamic-effect, drum DSP and preview-telemetry benchmarks. Preview tests use a real
 Unix socket and simulated sink to check watch, transport, rejection and recovery.
 No native build output is reused from
-the developer checkout. Failures stop the job. The existing opt-in GPUI layout
+the developer checkout. Failures stop the job; the 90-minute bound covers a
+cold cache plus the Intel leg. The existing opt-in GPUI layout
 benchmark is ignored by the normal Rust test run; functional tests are not skipped.
 
 Tests never open system audio outputs. Native facade transport/latency tests use

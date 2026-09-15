@@ -59,14 +59,15 @@ export function preparePluginAssignment(
       ErrorCode.PluginManifestMismatch,
       "This plugin version is already registered from a different library",
     );
+  const written = appendProjectEdit(before, files, "configure", edit, registration);
   const expectedFrame = {
     ...before.frame,
-    ...(registration ? { plugins: [...(before.frame.plugins ?? []), registration] } : {}),
+    ...(written.registration ? { plugins: [...(before.frame.plugins ?? []), written.registration] } : {}),
   };
   return {
     before: { ...before, reads: [...before.reads, ...selected.reads] },
     expected: project.snapshot(),
     expectedFrame,
-    files: appendProjectEdit(before, files, "configure", edit, registration),
+    files: written.files,
   };
 }

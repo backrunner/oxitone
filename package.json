@@ -16,7 +16,7 @@
     "test:web": "node examples/web/scripts/smoke.mjs && node examples/web/scripts/watch-smoke.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "pnpm -r --filter './packages/*' --filter './examples/*' run lint",
+    "lint": "eslint .",
     "typecheck": "pnpm -r --filter './packages/*' --filter './examples/*' run typecheck",
     "test": "pnpm -r --workspace-concurrency=1 --filter './packages/*' --filter './examples/*' run test",
     "test:rust": "cargo test --workspace",
@@ -36,6 +36,7 @@
     "@types/node": "^22.10.0",
     "eslint": "^9.17.0",
     "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.12.0",
     "prettier": "^3.9.6",
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.18.0"
