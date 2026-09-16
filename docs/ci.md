@@ -1,7 +1,8 @@
 # macOS development checks
 
-`.github/workflows/macos.yml` runs on pushes to main, pull requests and manual
-dispatch. It checks an Apple Silicon macOS 15 / Node 24 environment and an Intel
+`.github/workflows/macos.yml` runs on pushes to main and manual dispatch.
+Nothing in the repository schedules periodic runs; Dependabot automated
+security fixes are disabled at the repository level so it never spawns CI. It checks an Apple Silicon macOS 15 / Node 24 environment and an Intel
 macOS 15 / Node 22 environment. The matrix asserts the actual architecture rather
 than inferring it from a mutable runner label. Both builds target macOS 13+.
 
