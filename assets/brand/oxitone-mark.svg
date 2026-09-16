@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="currentColor" role="img" aria-labelledby="title desc">
+  <title id="title">Oxitone</title>
+  <desc id="desc">A circular O silhouette opened by one cycle of a sine wave.</desc>
+  <path d="M25.238 112a104 104 0 0 1 205.524 0C190 112 186 66 154 86c-16 10-36 42-52 52-32 20-36-26-76.762-26Z" />
+  <path d="M25.238 112a104 104 0 0 1 205.524 0C190 112 186 66 154 86c-16 10-36 42-52 52-32 20-36-26-76.762-26Z" transform="rotate(180 128 128)" />
+</svg>

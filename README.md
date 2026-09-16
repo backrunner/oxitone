@@ -1,4 +1,9 @@
-# Oxitone
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/brand/oxitone-logo-dark.svg">
+    <img src="assets/brand/oxitone-logo-light.svg" alt="Oxitone" width="360" height="96">
+  </picture>
+</p>
 
 <p align="center"><strong>Code your sound.</strong> A TypeScript authoring SDK backed by a Rust realtime audio engine.</p>
 
