@@ -14,11 +14,11 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "vite build",
     "lint": "eslint src test",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "generate": "tsc -p tsconfig.build.json && node dist/generate.js"
+    "generate": "vite build && node dist/generate.js"
   },
   "dependencies": {
     "@noble/hashes": "^2.4.0",

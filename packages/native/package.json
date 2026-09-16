@@ -18,7 +18,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "pnpm --filter @oxitone/native-generated run build && tsc -p tsconfig.build.json",
+    "build": "pnpm --filter @oxitone/native-generated run build && vite build",
     "lint": "eslint src test",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"

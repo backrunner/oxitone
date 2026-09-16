@@ -126,7 +126,7 @@
     }
   },
   "scripts": {
-    "build": "node scripts/build.mjs",
+    "build": "vite build",
     "vscode:prepublish": "pnpm build",
     "package": "vsce package --no-dependencies --out ../../target/oxitone-vscode.vsix",
     "lint": "eslint src test",

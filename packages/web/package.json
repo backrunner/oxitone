@@ -17,8 +17,8 @@
     "dist"
   ],
   "scripts": {
-    "prepack": "node ../../scripts/build-wasm.mjs && pnpm build",
-    "build": "tsc -p tsconfig.build.json",
+    "prepack": "pnpm build && node ../../scripts/build-wasm.mjs",
+    "build": "vite build",
     "lint": "eslint src test",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --no-file-parallelism --testTimeout=30000"

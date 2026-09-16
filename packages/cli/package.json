@@ -28,7 +28,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "node scripts/build.mjs",
+    "build": "vite build",
     "lint": "eslint src test",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --no-file-parallelism --testTimeout=30000"
