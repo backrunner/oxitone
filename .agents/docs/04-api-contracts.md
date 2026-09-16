@@ -37,7 +37,9 @@ response 回显 audioBackend；TS facade 请求 simulated 时必须收到确认�
 export type EntityId = string;
 export type Beat = number; // finite, >= 0 at authoring edge; canonicalized on wire
 export type Pitch = number; // integer 0..127 in Phase 1
-export type Timecode = { seconds: number } | { frames: bigint };
+export type BeatWire = { numerator: number; denominator: number };
+export type FrameWire = string; // unsigned decimal u64; use bigint at authoring inputs
+export type Timecode = { seconds: number } | { frames: FrameWire };
 
 export interface ParameterSpec {
   id: string;
@@ -246,6 +248,20 @@ values/resource graphs return `InvalidProject`; unavailable decoded assets retur
 `14-effects-production.md`. Existing raw EffectRefs remain supported.
 
 ## Authoring interfaces
+
+公开 authoring 入口 `@oxitone/core`（及其 `oxitone` / `@oxitone/web` 再导出）同时提供
+`ProjectEdit`、`ArrangementEdit`、`InstrumentRef`、`EffectRef`、`ChanceOptions`、`WaveKind`、
+`Curve` 和 `CurveKind`，调用者编写具名参数类型无需导入内部模块。
+`@oxitone/native` / `oxitone` 也导出 `CompileOptions` 与 `RenderPosition`。
+PluginConfig 的 parameters/resources 字典在 TS 类型层标记 readonly，与运行时冻结一致；
+派生配置使用 withParameters / withHost，不通过原地赋值修改。
+`Project.configure` / `arrange` 的输入校验失败统一为 `OxitoneError(InvalidProject)`，在修改
+builder 或 revision 前拒绝；`details.path` 以 `project.configure` / `project.arrange` 开头。
+
+PatternClip 的 `track` / `startBeat` 与 SampleClip 的 `track` / `startBeat` 是只读 getter。
+移动通过 `relocate(track, startBeat)` 或 `Project.arrange`，同时维护 Track membership、
+序列化位置与 revision；恢复后的对象使用同一入口。SampleClip `fitBars` 每次按当前
+startBeat 与当前拍号表计算，移动片段或修改拍号后不使用创建时缓存的小节编号。
 
 Sample authoring 同样只产生 wire descriptors：
 
@@ -630,6 +646,13 @@ EffectInsert: mix, bypass   // 每个 insert 节点内建，叠加在插件自�
 
 ## Facade 与 commands
 
+Native facade 的引擎选项、编译选项、插件注册、MIDI/WAV 导出选项与传输输入校验失败
+使用 `OxitoneError(InvalidProject)`，不泄漏 ZodError。对象 snapshot 的结构错误亦使用
+该错误；JSON string snapshot 仍交给 Rust 做版本优先校验。`setParameter` 的 atFrame
+只接受非负 safe integer number 或 u64 bigint，拒绝已失去精度的 number。
+WAV start/end 每个位置严格只接受 bar、beat、seconds、frames、marker 中一个字段；
+混合字段及未知字段在进入 native 前拒绝，不通过 schema stripping 猜测坐标。
+
 CLI `render <input> <output>` / `export-midi <input> <output>` 接受 snapshot JSON、
 便携工程目录或其中的 `oxitone.project.json`。目录/manifest 使用 loadProject 校验版本、
 相对 URI 和 hash；snapshot 资源相对输入 JSON 的目录解析，输出路径仍相对调用者 cwd。
@@ -639,7 +662,7 @@ stderr 为 `{code?, message, details?}` JSON，exit 1；用法错误 exit 2。do
 ```ts
 export interface EngineOptions {
   sampleRate?: number; // default 48000
-  blockSize?: number; // default 128; 允许 64/256
+  blockSize?: 64 | 128 | 256; // default 128
   renderAheadBlocks?: number; // default 4, 范围 2..16; 决定 ring 深度与控制延迟
   latencyMode?: "buffered" | "direct"; // default 'buffered'
   allowPlugins?: "signed-only" | "any";
@@ -659,14 +682,20 @@ export interface OutputDeviceInfo {
   isDefault: boolean;
 }
 export interface OutputLatency {
-  frames: bigint;
+  frames: FrameWire;
   seconds: number;
-  breakdown: { ring: bigint; resampler: bigint; deviceBuffer: bigint; safetyOffset: bigint; deviceLatency: bigint };
+  breakdown: {
+    ring: FrameWire;
+    resampler: FrameWire;
+    deviceBuffer: FrameWire;
+    safetyOffset: FrameWire;
+    deviceLatency: FrameWire;
+  };
 }
 export interface RenderOptions {
   path: string;
-  start?: { bar: number } | { beat: Beat } | Timecode | { marker: EntityId }; // 四选一
-  end?: { bar: number } | { beat: Beat } | Timecode | { marker: EntityId };
+  start?: { bar: number } | { beat: BeatWire } | Timecode | { marker: EntityId }; // 四选一
+  end?: { bar: number } | { beat: BeatWire } | Timecode | { marker: EntityId };
   sampleRate?: number;
   blockSize?: number;
   tailSeconds?: number;
@@ -687,7 +716,7 @@ export interface RenderReport {
     truePeakDbfs: number;
     integratedLufs: number;
   }[];
-  graphLatencyFrames: bigint; // PDC 引入的图内部总延迟
+  graphLatencyFrames: FrameWire; // PDC 引入的图内部总延迟
 }
 export interface MidiExportOptions {
   path?: string; // 设置时 native 落盘（temp+fsync+rename），report 返回 path/bytes

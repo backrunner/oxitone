@@ -8,7 +8,8 @@ import {
   type CompileOptions,
 } from "@oxitone/protocol";
 import { Channel, type ChannelOptions } from "../channels/channel.js";
-import { Sample, SampleClip, type SampleClipOptions, type SampleOptions } from "../arrangement/sample.js";
+import { Sample, type SampleOptions } from "../arrangement/sample.js";
+import { SampleClip, type SampleClipOptions } from "../arrangement/sample-clip.js";
 import { IdGenerator } from "../ids.js";
 import { MixerChannel, type MixerChannelOptions } from "../channels/mixer-channel.js";
 import { AutomationLane, type AutomationLaneOptions, type AutomationLaneTarget } from "../automation/lane.js";

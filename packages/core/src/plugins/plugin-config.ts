@@ -12,8 +12,8 @@ import { parseAuthoring } from "../authoring-validation.js";
 export class PluginConfig {
   declare readonly pluginId: string;
   declare readonly pluginVersion: string;
-  declare readonly parameters: Record<string, number>;
-  declare readonly resources?: Record<string, string>;
+  declare readonly parameters: Readonly<Record<string, number>>;
+  declare readonly resources?: Readonly<Record<string, string>>;
   declare readonly state?: unknown;
   declare readonly mix?: number;
   declare readonly bypass?: boolean;

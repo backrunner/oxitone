@@ -2,9 +2,10 @@
 import { arrangementEditSchema, ErrorCode, OxitoneError, type ArrangementEdit } from "@oxitone/protocol";
 import type { Project } from "./project.js";
 import { copyClip } from "../arrangement/copy.js";
+import { parseAuthoring } from "../authoring-validation.js";
 
 export function arrange(project: Project, input: ArrangementEdit): void {
-  const edit = arrangementEditSchema.parse(input);
+  const edit = parseAuthoring(arrangementEditSchema, input, "project.arrange");
   const require = <T>(value: T | undefined): T => {
     if (value === undefined)
       throw new OxitoneError(ErrorCode.EditTargetMissing, "Playlist resource or Track no longer exists");

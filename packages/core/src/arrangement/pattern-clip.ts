@@ -20,8 +20,8 @@ import type { Track } from "./track.js";
 export class PatternClip {
   readonly id: string;
   readonly pattern: Pattern;
-  track: Track;
-  startBeat: number;
+  private trackValue: Track;
+  private startBeatValue: number;
   private readonly project: Project;
   private loopCountValue: number | undefined;
   private lastBeatValue: number | undefined;
@@ -35,10 +35,18 @@ export class PatternClip {
   /** @internal Use `track.pattern(pattern).at(...)` instead. */
   constructor(project: Project, track: Track, pattern: Pattern, id: string, startBeat: number) {
     this.project = project;
-    this.track = track;
+    this.trackValue = track;
     this.pattern = pattern;
     this.id = id;
-    this.startBeat = startBeat;
+    this.startBeatValue = startBeat;
+  }
+
+  /** Current owner; use relocate() to update placement and Track membership. */
+  get track(): Track {
+    return this.trackValue;
+  }
+  get startBeat(): number {
+    return this.startBeatValue;
   }
 
   /** @internal Restore exact wire positions and explicit defaults. */
@@ -85,8 +93,8 @@ export class PatternClip {
       this.lastBeatValue += beat - this.startBeat;
       if (this.restoredSpec) this.restoredSpec.lastBeat = beatToWire(this.lastBeatValue);
     }
-    this.track = track;
-    this.startBeat = beat;
+    this.trackValue = track;
+    this.startBeatValue = beat;
     if (this.restoredSpec) {
       this.restoredSpec.trackId = track.id;
       this.restoredSpec.startBeat = beatToWire(beat);

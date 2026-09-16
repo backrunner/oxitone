@@ -1,12 +1,10 @@
 import {
   decodeProjectSnapshot,
-  encodeProjectSnapshot,
   engineDiagnosticsSchema,
   engineOptionsSchema,
   compileOptionsSchema,
   type CompileOptions,
   ErrorCode,
-  frameToWire,
   registerPluginOptionsSchema,
   registeredPluginSchema,
   pluginDiagnosticsSchema,
@@ -49,8 +47,11 @@ import {
   type TransportState,
 } from "@oxitone/protocol";
 import { call, native } from "./call.js";
+import { parseRequest, parameterFrame, encodeRequestSnapshot } from "./request.js";
 
 export type {
+  CompileOptions,
+  RenderPosition,
   SampleInfo,
   CachedSampleInfo,
   RegisterPluginOptions,
@@ -83,7 +84,7 @@ export function resolveBeatDuration(snapshot: ProjectSnapshot, startBeat: number
     throw new OxitoneError(ErrorCode.InvalidProject, "invalid timing query", { details: { path: "durationSeconds" } });
   const result = beatDurationResultSchema.parse(
     JSON.parse(
-      call((binding) => binding.resolveBeatDuration(encodeProjectSnapshot(snapshot), JSON.stringify(query.data))),
+      call((binding) => binding.resolveBeatDuration(encodeRequestSnapshot(snapshot), JSON.stringify(query.data))),
     ),
   );
   checkProtocolVersion(result.protocolVersion);
@@ -117,7 +118,7 @@ export function cacheSample(path: string, cacheDir: string): CachedSampleInfo {
 }
 
 export function createEngine(options?: EngineOptions): EngineHandle {
-  const validated = options === undefined ? undefined : engineOptionsSchema.parse(options);
+  const validated = options === undefined ? undefined : parseRequest(engineOptionsSchema, options, "engine.options");
   const json = call((binding) => binding.createEngine(validated === undefined ? undefined : JSON.stringify(validated)));
   const created: unknown = JSON.parse(json);
   if (typeof created !== "object" || created === null) {
@@ -142,7 +143,7 @@ export function createEngine(options?: EngineOptions): EngineHandle {
  * The supplied manifest must match the library's C descriptor exactly.
  */
 export function registerPlugin(engine: EngineHandle, options: RegisterPluginOptions): RegisteredPlugin {
-  const validated = registerPluginOptionsSchema.parse(options);
+  const validated = parseRequest(registerPluginOptionsSchema, options, "plugin.registration");
   const result = call((binding) => binding.registerPlugin(engine.id, JSON.stringify(validated)));
   return registeredPluginSchema.parse(JSON.parse(result));
 }
@@ -166,8 +167,8 @@ export function compile(
   snapshot: ProjectSnapshot | string,
   options?: CompileOptions,
 ): ProjectSnapshot {
-  const json = typeof snapshot === "string" ? snapshot : encodeProjectSnapshot(snapshot);
-  const compiledOptions = compileOptionsSchema.parse(options ?? {});
+  const json = encodeRequestSnapshot(snapshot);
+  const compiledOptions = parseRequest(compileOptionsSchema, options ?? {}, "compile.options");
   const echo = call((binding) => binding.compile(engine.id, json, JSON.stringify(compiledOptions)));
   return decodeProjectSnapshot(echo);
 }
@@ -187,8 +188,8 @@ export function exportMidi(
   snapshot: ProjectSnapshot | string,
   options: MidiExportOptions,
 ): MidiExportReport {
-  const validated = midiExportOptionsSchema.parse(options);
-  const json = typeof snapshot === "string" ? snapshot : encodeProjectSnapshot(snapshot);
+  const validated = parseRequest(midiExportOptionsSchema, options, "midi.options");
+  const json = encodeRequestSnapshot(snapshot);
   const report = call((binding) => binding.exportMidi(engine.id, json, JSON.stringify(validated)));
   return midiExportReportSchema.parse(JSON.parse(report));
 }
@@ -209,8 +210,8 @@ export function renderWav(
   snapshot: ProjectSnapshot | string,
   options: RenderOptions,
 ): RenderReport {
-  const validated = renderOptionsSchema.parse(options);
-  const json = typeof snapshot === "string" ? snapshot : encodeProjectSnapshot(snapshot);
+  const validated = parseRequest(renderOptionsSchema, options, "render.options");
+  const json = encodeRequestSnapshot(snapshot);
   const report = call((binding) => binding.renderWav(engine.id, json, JSON.stringify(validated)));
   return renderReportSchema.parse(JSON.parse(report));
 }
@@ -223,7 +224,7 @@ export function renderWav(
  * select the target position for play/seek.
  */
 export function enqueueTransport(engine: EngineHandle, command: TransportCommand): TransportState {
-  const validated = transportCommandSchema.parse(command);
+  const validated = parseRequest(transportCommandSchema, command, "transport");
   const state = call((binding) =>
     binding.enqueueTransport(engine.id, JSON.stringify({ type: "transport", ...validated })),
   );
@@ -242,19 +243,12 @@ export function setParameter(
   value: number,
   atFrame?: bigint | number,
 ): void {
-  entityIdSchema.parse(entityId);
+  parseRequest(entityIdSchema, entityId, "entityId");
+  const frame = parameterFrame(atFrame);
   if (!Number.isFinite(value)) {
     throw new OxitoneError(ErrorCode.AutomationRange, `parameter value must be finite, got ${value}`);
   }
-  call((binding) =>
-    binding.setParameter(
-      engine.id,
-      entityId,
-      parameterId,
-      value,
-      atFrame === undefined ? undefined : frameToWire(atFrame),
-    ),
-  );
+  call((binding) => binding.setParameter(engine.id, entityId, parameterId, value, frame));
 }
 
 /** Audio output devices visible to CoreAudio, default device first. */

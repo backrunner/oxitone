@@ -36,8 +36,10 @@ export { Channel, DEFAULT_INSTRUMENT } from "./channels/channel.js";
 export type { ChannelOptions } from "./channels/channel.js";
 export { MixerChannel } from "./channels/mixer-channel.js";
 export type { MixerChannelOptions, SendOptions } from "./channels/mixer-channel.js";
-export { Sample, SampleClip } from "./arrangement/sample.js";
-export type { SampleOptions, SampleClipOptions } from "./arrangement/sample.js";
+export { Sample } from "./arrangement/sample.js";
+export type { SampleOptions } from "./arrangement/sample.js";
+export { SampleClip } from "./arrangement/sample-clip.js";
+export type { SampleClipOptions } from "./arrangement/sample-clip.js";
 export { wavetable, sampler, slicer } from "./instruments/builders.js";
 export { multisampler } from "./instruments/multisampler.js";
 export type { SampleRegion, MultisamplerOptions } from "./instruments/multisampler.js";
@@ -81,4 +83,15 @@ export type {
 } from "./automation/lane.js";
 export { effect, convolver } from "./channels/effects.js";
 export type { EffectOptions } from "./channels/effects.js";
-export type { EffectKind, EffectParameters } from "@oxitone/protocol";
+export type {
+  EffectKind,
+  EffectParameters,
+  InstrumentRef,
+  EffectRef,
+  ProjectEdit,
+  ArrangementEdit,
+  ChanceOptions,
+  WaveKind,
+  Curve,
+  CurveKind,
+} from "@oxitone/protocol";

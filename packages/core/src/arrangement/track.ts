@@ -3,7 +3,8 @@ import { parseAuthoring } from "../authoring-validation.js";
 import type { Channel } from "../channels/channel.js";
 import type { Pattern } from "../patterns/pattern.js";
 import { PatternClipDraft, type PatternClip } from "./pattern-clip.js";
-import { Sample, SampleClip, type SampleClipOptions } from "./sample.js";
+import { Sample } from "./sample.js";
+import { SampleClip, type SampleClipOptions } from "./sample-clip.js";
 import type { BarBeatPosition } from "../timing/time-signature.js";
 import type { Project } from "../project/project.js";
 

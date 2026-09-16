@@ -47,7 +47,7 @@ export function frameFromWire(wire: FrameWire): bigint {
 }
 
 export const timecodeSchema = z.union([
-  z.object({ seconds: z.number().finite().nonnegative() }),
-  z.object({ frames: frameWireSchema }),
+  z.strictObject({ seconds: z.number().finite().nonnegative() }),
+  z.strictObject({ frames: frameWireSchema }),
 ]);
 export type Timecode = z.infer<typeof timecodeSchema>;

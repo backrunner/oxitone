@@ -1,10 +1,11 @@
 import { projectEditSchema, ErrorCode, OxitoneError, type ProjectEdit } from "@oxitone/protocol";
 import type { Project } from "./project.js";
 import { orderEffects } from "../channels/effect-order.js";
+import { parseAuthoring } from "../authoring-validation.js";
 
 /** Apply a validated control-side configuration without writing source or contacting audio devices. */
 export function configure(project: Project, input: ProjectEdit): void {
-  const edit = projectEditSchema.parse(input);
+  const edit = parseAuthoring(projectEditSchema, input, "project.configure");
   project.assertMutable();
   const require = <T>(value: T | undefined): T => {
     if (value === undefined)

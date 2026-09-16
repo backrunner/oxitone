@@ -1,6 +1,6 @@
 import { beatToWire } from "@oxitone/protocol";
 import { PatternClip } from "./pattern-clip.js";
-import { SampleClip } from "./sample.js";
+import { SampleClip } from "./sample-clip.js";
 import type { Project } from "../project/project.js";
 import type { Track } from "./track.js";
 

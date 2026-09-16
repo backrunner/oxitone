@@ -24,6 +24,13 @@ API examples, watch, platform boundaries and verification.
 
 The generated native package is a build artifact interface, not an authoring API.
 
+The authoring entry points also export the named contracts `ProjectEdit`,
+`ArrangementEdit`, `InstrumentRef`, `EffectRef`, `ChanceOptions`, `WaveKind`, `Curve`
+and `CurveKind`. `oxitone` and `@oxitone/native` export `CompileOptions` and
+`RenderPosition`; reusable helpers do not need imports from internal source files.
+`PluginConfig.parameters` and `.resources` are read-only maps in both the type
+contract and runtime; derive new configurations with `withParameters`/`withHost`.
+
 ## Time, notes and clips
 
 `new Project({ name?, seed?, sampleRate?, blockSize? })` creates an editable project.
@@ -37,6 +44,12 @@ arrangement. A Pattern has a positive `lengthBeats` and notes with `pitch` (0..1
 `start`, `duration` and `velocity` (0..1). Place it with
 `track.add(pattern).at({bar: 1, beat: 0})`. Bars start at 1; beat offsets start at 0.
 Note start/duration and clip lengths use beats; envelope times use seconds.
+
+Pattern and sample clips expose read-only `track` and `startBeat` properties.
+Use `clip.relocate(destinationTrack, startBeat)` or `project.arrange(...)` to move
+them, keeping track membership, snapshots and revision in sync. Sample
+`fitBars()` uses the current clip position and current time-signature map.
+Invalid `configure`/`arrange` inputs fail with `InvalidProject` before mutation.
 
 Use `chord` and `arp` for generated note arrangements; their option types are
 exported from core. Track `enabled`, `midiChannel` and `tempo` are editable. Track
@@ -172,6 +185,13 @@ a host change at the same frame. Audio-rate and control-rate behavior comes from
 descriptor; authoring mutations alone do not update an already compiled Session.
 
 ## Sessions, export and CLI
+
+Each WAV export `start`/`end` position must contain exactly one of `bar`, `beat`,
+`seconds`, `frames` or `marker`. Native facade positions use wire representations:
+`beat` is a rational `{ numerator, denominator }`, and `frames` is a decimal string.
+Mixing representations is rejected with `InvalidProject`. Native request
+validation uses `OxitoneError`; sample-frame numbers passed to `setParameter`
+must be safe integers (use bigint for the full u64 range).
 
 For headless processing/tests, use `project.compile({ audioBackend: 'simulated' })`
 or `createEngine({ audioBackend: 'simulated' })`. Transport, parameters and diagnostics

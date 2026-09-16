@@ -5,7 +5,8 @@ import { Channel, type ChannelOptions } from "../channels/channel.js";
 import { Pattern } from "../patterns/pattern.js";
 import { PatternClip } from "../arrangement/pattern-clip.js";
 import type { Project } from "./project.js";
-import { Sample, SampleClip } from "../arrangement/sample.js";
+import { Sample } from "../arrangement/sample.js";
+import { SampleClip } from "../arrangement/sample-clip.js";
 import { Track } from "../arrangement/track.js";
 
 /** Restore after bus identities and clocks; membership has already been checked. */

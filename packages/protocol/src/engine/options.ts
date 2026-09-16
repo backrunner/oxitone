@@ -22,10 +22,10 @@ export type CompileOptions = z.infer<typeof compileOptionsSchema>;
 
 /** Render range boundary: exactly one of bar / beat / timecode / marker. */
 export const renderPositionSchema = z.union([
-  z.object({ bar: z.number().int().min(1) }),
-  z.object({ beat: beatWireSchema }),
+  z.strictObject({ bar: z.number().int().min(1) }),
+  z.strictObject({ beat: beatWireSchema }),
   timecodeSchema,
-  z.object({ marker: entityIdSchema }),
+  z.strictObject({ marker: entityIdSchema }),
 ]);
 export type RenderPosition = z.infer<typeof renderPositionSchema>;
 

@@ -21,6 +21,7 @@ it("derives immutable plugin and host settings without mutating factories, resou
   });
   expect(base.parameters["filter.cutoff"]).toBe(300);
   expect(() => {
+    // @ts-expect-error Frozen configuration maps are also read-only to TypeScript callers.
     variant.parameters.level = 0;
   }).toThrow();
   expect(() => base.withHost({ mix: 0.2 })).toThrow();
