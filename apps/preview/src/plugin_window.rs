@@ -37,6 +37,8 @@ pub struct PluginWindow {
     pub panel: Option<Arc<crate::plugin_layout::Layout>>,
     pub page: String,
     pub stacked_waveforms: bool,
+    pub choice_open: Option<String>,
+    pub expanded_groups: std::collections::HashSet<String>,
     pub plots: Arc<Vec<crate::plugin_plot::Plot>>,
     pub parameter_bounds:
         std::rc::Rc<std::cell::RefCell<std::collections::HashMap<String, Bounds<Pixels>>>>,
@@ -114,6 +116,8 @@ impl PluginWindow {
             projected: false,
             source_ready: false,
             stacked_waveforms: true,
+            choice_open: None,
+            expanded_groups: Default::default(),
             page: panel
                 .as_ref()
                 .and_then(|p| p.pages.first())
@@ -157,6 +161,8 @@ impl PluginWindow {
                 .as_ref()
                 .is_some_and(|p| p.pages.iter().any(|p| p.id == self.page))
         {
+            self.choice_open = None;
+            self.expanded_groups.clear();
             self.page = panel
                 .as_ref()
                 .and_then(|p| p.pages.first())

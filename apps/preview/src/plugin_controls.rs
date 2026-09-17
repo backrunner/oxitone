@@ -4,6 +4,9 @@ use oxitone_core::wire::{ParameterMapping, ParameterUnit};
 
 pub fn control_view(control: &Control, parameter: &ParameterDetail, theme: Theme) -> Div {
     let label = control.label().unwrap_or(&parameter.spec.label);
+    if matches!(control, Control::Fader { .. }) {
+        return fader(label, parameter, theme);
+    }
     let mut root = div().h(px(94.)).px_1().flex().flex_col().items_center();
     root = root.child(
         div()
@@ -22,44 +25,6 @@ pub fn control_view(control: &Control, parameter: &ParameterDetail, theme: Theme
                 parameter.spec.mapping == Some(ParameterMapping::Bipolar),
                 theme,
             ))
-        }
-        Control::Fader { .. } => {
-            root = root.child(
-                div()
-                    .h(px(58.))
-                    .w_full()
-                    .flex()
-                    .items_center()
-                    .px_2()
-                    .child(
-                        div()
-                            .relative()
-                            .h(px(6.))
-                            .w_full()
-                            .rounded_full()
-                            .bg(rgb(theme.border))
-                            .child(
-                                div()
-                                    .h_full()
-                                    .w(relative(parameter.fraction()))
-                                    .rounded_full()
-                                    .bg(rgb(theme.accent)),
-                            )
-                            .child(
-                                div()
-                                    .absolute()
-                                    .left(relative(parameter.fraction()))
-                                    .ml(px(-5.))
-                                    .top(px(-5.))
-                                    .w(px(10.))
-                                    .h(px(16.))
-                                    .rounded_sm()
-                                    .bg(rgb(theme.button_hover))
-                                    .border_1()
-                                    .border_color(rgb(theme.muted)),
-                            ),
-                    ),
-            );
         }
         Control::Toggle { .. } => {
             text = if parameter.value >= 0.5 { "On" } else { "Off" }.into();
@@ -161,4 +126,65 @@ pub fn value(parameter: &ParameterDetail) -> String {
             crate::parameter_format::unit(parameter.spec.unit)
         ),
     }
+}
+
+fn fader(label: &str, parameter: &ParameterDetail, t: Theme) -> Div {
+    let neutral = if parameter.spec.min < 0. && parameter.spec.max > 0. {
+        (-parameter.spec.min / (parameter.spec.max - parameter.spec.min)) as f32
+    } else {
+        0.
+    };
+    let fraction = parameter.fraction();
+    div()
+        .w_full()
+        .h(px(42.))
+        .px_2()
+        .flex()
+        .flex_col()
+        .justify_center()
+        .gap_2()
+        .child(
+            div()
+                .flex()
+                .justify_between()
+                .text_size(px(10.))
+                .child(div().text_color(rgb(t.muted)).child(label.to_owned()))
+                .child(
+                    div()
+                        .text_color(rgb(if parameter.automation.is_empty() {
+                            t.text
+                        } else {
+                            t.gold
+                        }))
+                        .child(value(parameter)),
+                ),
+        )
+        .child(
+            div()
+                .relative()
+                .w_full()
+                .h(px(4.))
+                .rounded_full()
+                .bg(rgb(t.border))
+                .child(
+                    div()
+                        .absolute()
+                        .left(relative(neutral.min(fraction)))
+                        .h_full()
+                        .w(relative((fraction - neutral).abs()))
+                        .rounded_full()
+                        .bg(rgb(t.accent)),
+                )
+                .child(
+                    div()
+                        .absolute()
+                        .left(relative(parameter.fraction()))
+                        .ml(px(-3.))
+                        .top(px(-3.))
+                        .w(px(6.))
+                        .h(px(10.))
+                        .rounded(px(2.))
+                        .bg(rgb(t.text)),
+                ),
+        )
 }

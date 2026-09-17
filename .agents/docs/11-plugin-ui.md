@@ -95,11 +95,18 @@ project.registerPluginUi({
   缺身份/非法注册容器保留兼容旧布局并显示诊断；不同插件身份绝不复用旧布局。
 - 控件消费 source/default；自动化用小标记区分，effective/live 读数尚未提供。Inspect 随时访问全部参数，
   包括自定义页面未展示的参数；Assets/Info 保存资源、state、descriptor 和已验证 dylib path/hash。
-- Wavetable 默认具备 Oscillators / Filter & output / Modulation / Matrix 页面，涵盖双振荡器波形渐变、
+- Wavetable 默认具备 Oscillators / Tone / Modulation / Routing 页面，涵盖双振荡器波形渐变、
   滤波响应、Voice/Output/Sub/Noise、三个 ADSR、两组 LFO source 曲线、固定路由深度和八槽矩阵；
   example.drums、fixture.gain 在鼓机示例通过公开 TS API 注册自己的面板。全部内置处理器使用下述专用面板；其他插件按 descriptor 紧凑分组。
   Amplitude/Filter envelope 位于 Modulation 页顶部；移除与深度旋钮重复的路由读数。
   Glide 归入 Voice & output，A/B、FM、Ring 归入 Oscillator mix，避免跨功能混排。
+- 面板顶部只保留一层固定声音分页；Inspect 入口展开 Parameters / Assets / Info，返回后保留声音页。
+  枚举项默认显示当前值，点击展开可选项，Escape 先收起选项；内置波形/LFO 选择含周期缩略图。
+  放大的振荡器图支持横向拖动 Position，下方同名滑条显示位置；使用同一实例配置事务、
+  Shift 精调、双击默认值与 Escape 取消。图形仍只反映 source/default/拖动投影，不表示实际输出。
+  波表 Bank 非 Pair 时隐藏 Wave / Morph to；Warp Off 隐藏 amount，单声部隐藏 detune/width/phase spread，
+  Poly 隐藏 glide。调音/相位、包络曲率按需展开，隐藏项保留源码值并始终可从 Inspect 访问。
+  Routing 仅显示启用槽位及首个空槽，选定 source 后展开目标与深度，仍保留八槽容量和原有槽位身份。
 
 新增 source visual controls 同样可由第三方 `registerPluginUi` 布局使用，uiVersion 仍为 1.0：
 

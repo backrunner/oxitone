@@ -8,6 +8,16 @@ pub fn group(id: &str, title: &str) -> Group {
         title,
         5,
         vec![
+            choice(
+                &format!("{id}.bank"),
+                "Bank",
+                &["Pair", "Analog", "Digital", "Vowel"],
+            ),
+            choice(
+                &format!("{id}.warpMode"),
+                "Warp",
+                &["Off", "Bend", "Asymmetric", "Sync"],
+            ),
             Control::Oscillator {
                 label: None,
                 wave: format!("{id}.wavetable"),
@@ -22,11 +32,7 @@ pub fn group(id: &str, title: &str) -> Group {
                 warp: Some(format!("{id}.warp")),
                 octave: Some(format!("{id}.octave")),
             },
-            choice(
-                &format!("{id}.bank"),
-                "Bank",
-                &["Pair", "Analog", "Digital", "Vowel"],
-            ),
+            knob(&format!("{id}.position"), "Position"),
             choice(
                 &format!("{id}.wavetable"),
                 "Wave",
@@ -37,12 +43,6 @@ pub fn group(id: &str, title: &str) -> Group {
                 "Morph to",
                 &["Sine", "Saw", "Square", "Triangle", "Organ", "Glass"],
             ),
-            choice(
-                &format!("{id}.warpMode"),
-                "Warp",
-                &["Off", "Bend", "Asymmetric", "Sync"],
-            ),
-            knob(&format!("{id}.position"), "Position"),
             knob(&format!("{id}.level"), "Level"),
             knob(&format!("{id}.octave"), "Octave"),
             knob(&format!("{id}.pitch"), "Pitch"),

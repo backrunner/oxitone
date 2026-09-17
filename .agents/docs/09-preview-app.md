@@ -90,6 +90,9 @@ diagnostic、status、transport、query、shutdown；所有帧含 protocolVersio
   标题只使用真实工程名（未命名为 Untitled）及修改标记，不放 slogan 或重复品牌。
   48 px 传输栏集中播放、位置、BPM 与 Undo/Redo/Save。保留原生 macOS 交通灯按钮。
   非交互标题区可拖动，双击遵循系统标题栏偏好；全屏时收回交通灯预留空间。
+- 标题区将 Arrange / Piano / Mixer 作为独立的图标与文字主视图组；右上角只保留
+  Automation、Plugins、Browser 和快捷键图标入口，使用悬停名称、选中态与分隔线区分层级。
+  插件面板只显示一条固定的声音分页导航，参数检查、资源及插件信息收于 Inspect 入口。
 - 外观始终跟随当前窗口的系统 Light/Dark（含 Vibrant）appearance，启动时读取并
   订阅运行中的变化，无须重启。轨道、钢琴窗、Mixer、Scopes、诊断、按钮 hover/active
   和编辑控件 focus 共用语义配色；主题不进入 ProjectSnapshot，不触发编译或音频命令。
@@ -190,7 +193,8 @@ voice；启动 realtime session 后改变 sampleRate/blockSize 需重启。大�
 `node scripts/smoke-builtin-panels.mjs` 在临时工程逐个打开 30 个内置插件，使用 simulated sink。
 `--light`/`--narrow` 检查主题和窄窗；`--only=wavetable --page=shaping|modulation|matrix` 检查合成器分页；
 `--edit` 通过真实 NSEvent 验证旋钮命中、拖动投影、
-共享 preset 的实例隔离、撤销/重做、Escape、Mix/bypass 与保存重开。截图与日志位于
+共享 preset 的实例隔离、撤销/重做、Escape、Mix/bypass 与保存重开。
+`--edit-synth` 验证波形选项命中、模式条件显示、波形拖动投影、撤销/重做、Escape、实例隔离与保存重开。截图与日志位于
 `target/builtin-panels/`。release `benchmark_builtin_plots` 仅测 UI source 图形模型构建，
 不代表 GPU 绘制、音频 callback 或 effective 遥测。
 
@@ -215,7 +219,7 @@ Mixer、Track/BPM、片段复制/长度/启停/删除和插件实例选择的当
 - 集成冒烟：示例工程启动 preview，断言 transport 命令生效、换图不中断、诊断 overlay 路径可达。
 - viewer 关闭连接时，runner 在 socket end/close 后停止发送队列，并在异步清理前关闭队列；
   不向 writableEnded/readableEnded 的 socket 写最终 shutdown。半关闭回归测试不打开音频设备。
-- `OXITONE_PREVIEW_CAPTURE=<PNG>` 启用开发截图：在 UI 线程额外驱动真实 NSView 重绘，工程就绪后调用系统窗口截图并退出；不启动播放、不改系统偏好。仅此模式允许 `OXITONE_PREVIEW_APPEARANCE=light|dark` 覆盖单个窗口，以及 `OXITONE_PREVIEW_CAPTURE_SIZE=1060x720` 指定逻辑窗口尺寸。
+- `OXITONE_PREVIEW_CAPTURE=<PNG>` 启用开发截图：在 UI 线程额外驱动真实 NSView 重绘，工程就绪后调用系统窗口截图并退出；默认不启动播放、不改系统偏好。所有 capture 分支强制使用 simulated sink，包括内置插件面板，避免测试入口遗漏后打开系统音频设备。`OXITONE_PREVIEW_SIMULATED=1` 可供持续的 GUI 人工验收使用，同样不打开音频设备。仅截图模式允许 `OXITONE_PREVIEW_APPEARANCE=light|dark` 覆盖单个窗口，以及 `OXITONE_PREVIEW_CAPTURE_SIZE=1060x720` 指定逻辑窗口尺寸。
 - `OXITONE_PREVIEW_CAPTURE_NAVIGATION=1` 在截图模式加入 GPUI 键盘分发、基于真实布局边界的滚轮/拖动控制器冒烟，验证钢琴缩放/滚动、Mixer 选择及滚动。它不等于物理鼠标/触控板与系统交通灯、拖动、全屏验收；后者仍需未锁屏桌面。
 - `OXITONE_PREVIEW_CAPTURE_PLUGIN=instrument|synth|effect|info` 在截图模式打开音源和效果器详情，验证重复打开复用、分步关闭重开和键盘滚动；分别截图第一个音源、第一个 Wavetable、第一个 Channel effect 或其插件信息。关闭主窗口走 AppKit 的正常 should-close 路径，验证详情仍打开时 session 可以退出。`OXITONE_PREVIEW_CAPTURE_REVISION` 指定截图前必须接受的最低 revision（默认 1）。
 - `node scripts/smoke-preview-details.mjs [viewer]` 使用真实鼓机/gain dylib，在详情窗口已打开后修改临时入口的 volume，断言所有窗口跟随 revision 2、音源显示新值并成功截图；不修改示例文件，不启动播放。需要先构建 workspace、鼓机示例动态库与 viewer。

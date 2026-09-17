@@ -14,73 +14,7 @@ pub fn view(
         owner.document_ready() && owner.plugin_configuration_target(&this.target).is_some()
     });
     if let Control::Choice { options, .. } = control {
-        let mut choices = div()
-            .flex_1()
-            .min_w_0()
-            .p(px(2.))
-            .rounded(px(4.))
-            .bg(rgb(theme.bg))
-            .flex()
-            .flex_wrap()
-            .gap(px(2.));
-        for option in options {
-            let p = parameter.clone();
-            let target = this.target.clone();
-            let identity = this.identity.clone();
-            let value = option.value;
-            choices = choices.child(
-                theme
-                    .ghost(
-                        format!("choice-{}-{value}", parameter.spec.id),
-                        option.label.clone(),
-                    )
-                    .flex_1()
-                    .min_w(px(48.))
-                    .text_size(px(10.))
-                    .px_1()
-                    .h(px(23.))
-                    .when(value == parameter.value, |d| {
-                        d.bg(rgb(theme.button_hover)).text_color(rgb(theme.text))
-                    })
-                    .when(!enabled, |d| d.cursor_default())
-                    .on_click(cx.listener(move |this, _, window, cx| {
-                        if !enabled {
-                            return;
-                        }
-                        this.focus(window);
-                        let _ = this.owner.update(cx, |owner, cx| {
-                            owner.set_plugin_parameter(&target, &identity, &p, value);
-                            cx.notify();
-                        });
-                    })),
-            );
-        }
-        let root = div()
-            .min_h(px(34.))
-            .px_1()
-            .py_1()
-            .flex()
-            .items_center()
-            .gap_2()
-            .child(
-                div()
-                    .text_size(px(10.))
-                    .w(px(76.))
-                    .flex_shrink_0()
-                    .truncate()
-                    .text_color(rgb(theme.muted))
-                    .child(control.label().unwrap_or(&parameter.spec.label).to_owned()),
-            )
-            .child(choices)
-            .when(!options.iter().any(|o| o.value == parameter.value), |d| {
-                d.child(
-                    div()
-                        .text_center()
-                        .text_size(px(11.))
-                        .child(crate::plugin_controls::value(parameter)),
-                )
-            });
-        return record(root, parameter, this);
+        return crate::plugin_choice::view(control, options, parameter, this, enabled, cx);
     }
     let p = parameter.clone();
     let target = this.target.clone();
@@ -107,6 +41,7 @@ pub fn view(
                     return;
                 }
                 this.focus(window);
+                this.choice_open = None;
                 let _ = this.owner.update(cx, |owner, cx| {
                     if event.click_count == 2 {
                         owner.set_plugin_parameter(&target, &identity, &p, p.spec.default);
@@ -146,4 +81,69 @@ pub fn record(element: impl IntoElement, parameter: &ParameterDetail, this: &Plu
         .inset_0()
         .size_full(),
     )
+}
+
+/// Drag the plotted wavetable to scan its position using the same source transaction as a fader.
+pub fn waveform(
+    element: Div,
+    position: &str,
+    this: &PluginWindow,
+    cx: &mut Context<PluginWindow>,
+) -> Div {
+    let Some(p) = this
+        .details
+        .as_ref()
+        .and_then(|d| {
+            d.parameters
+                .iter()
+                .find(|p| !p.host && p.spec.id == position)
+        })
+        .cloned()
+    else {
+        return element;
+    };
+    let enabled = this.owner.upgrade().is_some_and(|owner| {
+        owner.read(cx).document_ready()
+            && owner
+                .read(cx)
+                .plugin_configuration_target(&this.target)
+                .is_some()
+    });
+    let target = this.target.clone();
+    let identity = this.identity.clone();
+    let bounds = this.parameter_bounds.clone();
+    let key = format!("wave:{position}");
+    element
+        .relative()
+        .when(enabled, |d| d.cursor(CursorStyle::ResizeLeftRight))
+        .child(
+            canvas(
+                move |area, _, _| {
+                    bounds.borrow_mut().insert(key.clone(), area);
+                },
+                |_, _, _, _| {},
+            )
+            .absolute()
+            .inset_0()
+            .size_full(),
+        )
+        .on_mouse_down(
+            MouseButton::Left,
+            cx.listener(move |this, event: &MouseDownEvent, window, cx| {
+                if !enabled {
+                    return;
+                }
+                this.focus(window);
+                this.choice_open = None;
+                let _ = this.owner.update(cx, |owner, cx| {
+                    if event.click_count == 2 {
+                        owner.set_plugin_parameter(&target, &identity, &p, p.spec.default);
+                    } else {
+                        owner.begin_plugin_parameter(&target, &identity, &p, event, true);
+                    }
+                    cx.notify();
+                });
+                cx.stop_propagation();
+            }),
+        )
 }

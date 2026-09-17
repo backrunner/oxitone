@@ -37,6 +37,7 @@ const effects = [
 const instruments = ["wavetable", "sampler", "multisampler", "slicer"];
 const args = process.argv.slice(2);
 const editing = args.includes("--edit");
+const synthEditing = args.includes("--edit-synth");
 const theme = args.includes("--light") ? "light" : "dark";
 const narrow = args.includes("--narrow");
 const only = args
@@ -44,18 +45,19 @@ const only = args
   ?.slice(7)
   .split(",");
 const page = args.find((a) => a.startsWith("--page="))?.slice(7);
-const cases = editing ? ["filter"] : (only ?? [...effects, ...instruments]);
+const cases = synthEditing ? ["wavetable"] : editing ? ["filter"] : (only ?? [...effects, ...instruments]);
 for (const name of cases) if (![...effects, ...instruments].includes(name)) throw new Error("Unknown builtin " + name);
 if (
   page &&
   (editing ||
+    synthEditing ||
     cases.some((name) => name !== "wavetable") ||
     !["sound", "shaping", "modulation", "matrix"].includes(page))
 )
   throw new Error("Select a Wavetable page with --only=wavetable");
 const output = resolve(
   "target/builtin-panels",
-  editing ? "editing" : theme + (narrow ? "-narrow" : "") + (page ? "-" + page : ""),
+  synthEditing ? "synth-editing" : editing ? "editing" : theme + (narrow ? "-narrow" : "") + (page ? "-" + page : ""),
 );
 await mkdir(output, { recursive: true });
 const root = await mkdtemp(join(tmpdir(), "oxitone-builtin-panels-"));
@@ -127,7 +129,13 @@ try {
           OXITONE_PREVIEW_CAPTURE: outputFile,
           OXITONE_PREVIEW_APPEARANCE: theme,
           OXITONE_PREVIEW_CAPTURE_SIZE: "1440x920",
-          OXITONE_PREVIEW_CAPTURE_BUILTIN: editing ? "edit" : instrument ? "instrument" : "effect",
+          OXITONE_PREVIEW_CAPTURE_BUILTIN: synthEditing
+            ? "synth"
+            : editing
+              ? "edit"
+              : instrument
+                ? "instrument"
+                : "effect",
           ...(page ? { OXITONE_PREVIEW_CAPTURE_PAGE: page } : {}),
           ...(narrow ? { OXITONE_PREVIEW_CAPTURE_PLUGIN_SIZE: "440x540" } : {}),
         },
@@ -140,6 +148,24 @@ try {
     });
     await writeFile(outputFile + ".log", result.stderr);
     if (!result.stderr.includes("Preview capture saved")) throw new Error(result.stderr);
+    if (synthEditing) {
+      if (!result.stderr.includes("Synth editing passed:")) throw new Error(result.stderr);
+      const reopened = await ProjectDocument.open({ entry });
+      try {
+        const [first, second] = reopened.frame.snapshot.channels;
+        const parameters = first.instrument.parameters;
+        if (
+          parameters["oscA.wavetable"] !== 4 ||
+          parameters["oscA.bank"] !== 2 ||
+          Math.abs(parameters["oscA.position"] - 0.2) > 0.001 ||
+          (second.instrument.parameters["oscA.bank"] ?? 0) !== 0 ||
+          (second.instrument.parameters["oscA.position"] ?? 0) !== 0
+        )
+          throw new Error("Synth edits did not survive source reopen or changed another instance");
+      } finally {
+        reopened.close();
+      }
+    }
     if (editing) {
       if (!result.stderr.includes("Builtin panel editing passed")) throw new Error(result.stderr);
       const reopened = await ProjectDocument.open({ entry });

@@ -1,20 +1,24 @@
-use crate::{ui::Preview, workspace_layout::EditorMode};
+use crate::{
+    ui::Preview,
+    ui_icons::{icon, Icon},
+    workspace_layout::EditorMode,
+};
 use gpui::{prelude::*, *};
 impl Preview {
     pub fn editor_tabs(&self, cx: &mut Context<Self>) -> Div {
         let t = self.theme;
-        let mut tabs = t.tool_group();
+        let mut tabs = t.tool_group().rounded(px(7.)).p(px(3.));
         let front = self.document.windows.front();
         use crate::window_manager::WindowId;
-        for (id, label, mode) in [
-            ("workspace-tab", "Arrange", EditorMode::Split),
-            ("piano-tab", "Piano roll", EditorMode::Piano),
-            ("mixer-tab", "Mixer", EditorMode::Mixer),
+        for (id, label, glyph, mode) in [
+            ("workspace-tab", "Arrange", Icon::Arrange, EditorMode::Split),
+            ("piano-tab", "Piano", Icon::Piano, EditorMode::Piano),
+            ("mixer-tab", "Mixer", Icon::Effect, EditorMode::Mixer),
         ] {
             tabs = tabs.child(
                 t.tool(
                     id,
-                    label,
+                    "",
                     match mode {
                         EditorMode::Split => front.is_none() && self.workspace.mode == mode,
                         EditorMode::Piano => {
@@ -27,6 +31,12 @@ impl Preview {
                         }
                     },
                 )
+                .h(px(28.))
+                .px_3()
+                .gap_2()
+                .rounded(px(5.))
+                .child(icon(glyph, t.muted))
+                .child(label)
                 .on_click(cx.listener(move |this, _, window, cx| {
                     if mode == EditorMode::Split {
                         this.document.windows.hidden = true;
@@ -39,12 +49,20 @@ impl Preview {
                 })),
             );
         }
+        tabs
+    }
+
+    pub fn header_tools(&self, cx: &mut Context<Self>) -> Div {
+        use crate::window_manager::WindowId;
+        let t = self.theme;
+        let front = self.document.windows.front();
+        let mut tools = div().flex().items_center().gap_1().flex_shrink_0();
         if self.document.view.is_some() {
-            tabs = tabs
-                .child(div().w(px(1.)).h(px(16.)).mx_2().bg(rgb(t.border)))
+            tools = tools
                 .child(
-                    t.tool(
+                    t.icon_tool(
                         "automation-editor",
+                        Icon::Curve,
                         "Automation",
                         front == Some(WindowId::Automation),
                     )
@@ -61,8 +79,9 @@ impl Preview {
                     })),
                 )
                 .child(
-                    t.tool(
+                    t.icon_tool(
                         "plugin-manager",
+                        Icon::Wave,
                         "Plugins",
                         front == Some(WindowId::Plugins),
                     )
@@ -78,8 +97,9 @@ impl Preview {
                     })),
                 )
                 .child(
-                    t.tool(
+                    t.icon_tool(
                         "pattern-manager",
+                        Icon::Library,
                         "Browser",
                         front == Some(WindowId::Patterns),
                     )
@@ -108,6 +128,20 @@ impl Preview {
                     })),
                 );
         }
-        tabs
+        tools
+            .child(div().w(px(1.)).h(px(16.)).mx_2().bg(rgb(t.border)))
+            .child(
+                t.icon_tool(
+                    "shortcut-help",
+                    Icon::Help,
+                    "Keyboard shortcuts · ?",
+                    self.show_shortcuts,
+                )
+                .on_click(cx.listener(|this, _, window, cx| {
+                    this.show_shortcuts = !this.show_shortcuts;
+                    this.workspace_focus.focus(window);
+                    cx.notify();
+                })),
+            )
     }
 }

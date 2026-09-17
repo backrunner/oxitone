@@ -18,76 +18,7 @@ pub fn view(this: &PluginWindow, width: f32, cx: &mut Context<PluginWindow>) -> 
             );
     };
     let descriptor = &details.info.descriptor;
-    let mut tabs = div()
-        .flex()
-        .gap_2()
-        .h(px(36.))
-        .items_center()
-        .px_4()
-        .flex_shrink_0()
-        .border_b_1()
-        .border_color(rgb(theme.border));
-    for (tab, title) in [
-        (DetailTab::Panel, "Source controls"),
-        (DetailTab::Parameters, "Inspect"),
-        (DetailTab::Resources, "Assets"),
-        (DetailTab::Plugin, "Info"),
-    ] {
-        tabs = tabs.child(
-            theme
-                .tab(title, title.into(), this.tab == tab)
-                .on_click(cx.listener(move |this, _, _, cx| {
-                    this.tab = tab;
-                    this.scroll.set_offset(point(px(0.), px(0.)));
-                    cx.notify();
-                })),
-        );
-    }
-    tabs = tabs
-        .child(div().flex_1())
-        .when(this.tab == DetailTab::Plugin, |tabs| {
-            tabs.child(
-                theme
-                    .button(
-                        "copy-plugin-reference",
-                        if this.copied { "Copied" } else { "Copy JSON" },
-                    )
-                    .on_click(cx.listener(|this, _, _, cx| {
-                        if let Some(details) = &this.details {
-                            cx.write_to_clipboard(ClipboardItem::new_string(
-                                serde_json::to_string_pretty(&details.source).unwrap(),
-                            ));
-                            this.copied = true;
-                            cx.notify();
-                        }
-                    })),
-            )
-        });
-    if this.tab != DetailTab::Plugin
-        && this
-            .owner
-            .upgrade()
-            .is_some_and(|owner| owner.read(cx).document.view.is_some())
-    {
-        tabs = tabs.child(
-            theme
-                .button("plugin-edit-source", "Configure")
-                .relative()
-                .child({
-                    let bounds = this.source_button.clone();
-                    canvas(move |area, _, _| bounds.set(area), |_, _, _, _| {})
-                        .absolute()
-                        .inset_0()
-                        .size_full()
-                })
-                .on_click(cx.listener(|this, _, window, cx| {
-                    let target = this.target.clone();
-                    let _ = this.owner.update(cx, |owner, cx| {
-                        owner.edit_plugin_source(&target, window, cx)
-                    });
-                })),
-        );
-    }
+    let tabs = crate::plugin_panel_navigation::view(this, cx);
     let mut content = div().w_full().flex().flex_col();
     match this.tab {
         DetailTab::Panel => content = crate::plugin_panel::view(this, width, cx),

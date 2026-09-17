@@ -34,6 +34,11 @@ impl Render for PluginWindow {
                     cx.stop_propagation();
                     return;
                 }
+                if key == "escape" && this.choice_open.take().is_some() {
+                    cx.stop_propagation();
+                    cx.notify();
+                    return;
+                }
                 if key == "escape" || (key == "w" && event.keystroke.modifiers.platform) {
                     let id = crate::window_manager::WindowId::Plugin(cx.entity_id().as_u64());
                     let _ = this.owner.update(cx, |owner, cx| {

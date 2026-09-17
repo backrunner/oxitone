@@ -52,7 +52,7 @@ pub fn pages() -> Vec<Page> {
 fn shaping() -> Page {
     Page {
         id: "shaping".into(),
-        title: "Filter & output".into(),
+        title: "Tone".into(),
         groups: vec![
             group(
                 "filter",

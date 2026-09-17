@@ -75,7 +75,7 @@ pub fn lfo(values: &[f64], theme: Theme) -> Div {
         .mb_2()
         .overflow_hidden()
         .child(caption(
-            "LFO 1 · NOTE TRIGGER".into(),
+            "NOTE TRIGGER".into(),
             format!("{rate:.2} Hz"),
             theme,
         ))

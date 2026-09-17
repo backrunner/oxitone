@@ -14,7 +14,7 @@ pub fn oscillator(values: &[f64], advanced: [f64; 4], theme: Theme, stacked: boo
     let title = if bank == 0. {
         format!("{} → {}", names[source.min(5)], names[target.min(5)])
     } else {
-        ["PAIR", "ANALOG", "DIGITAL", "VOWEL"][bank as usize].into()
+        ["PAIR", "ANALOG", "DIGITAL", "VOWEL"][(bank as usize).min(3)].into()
     };
     let cycle = |blend| {
         preview_cycle(
@@ -71,8 +71,16 @@ pub fn oscillator(values: &[f64], advanced: [f64; 4], theme: Theme, stacked: boo
                         (0..=256).map(|i| {
                             let x = i as f32 / 256.;
                             (
-                                0.025 + x * 0.95,
-                                0.55 - selected[i] * if stacked { 0.3 } else { 0.4 },
+                                if stacked {
+                                    0.025 + x * 0.82 + position as f32 * 0.125
+                                } else {
+                                    0.025 + x * 0.95
+                                },
+                                if stacked {
+                                    0.55 - selected[i] * 0.24 - position as f32 * 0.275
+                                } else {
+                                    0.5 - selected[i] * 0.4
+                                },
                             )
                         }),
                         rgb(theme.accent).into(),
@@ -82,7 +90,7 @@ pub fn oscillator(values: &[f64], advanced: [f64; 4], theme: Theme, stacked: boo
                 },
             )
             .w_full()
-            .h(px(92.)),
+            .h(px(148.)),
         )
 }
 

@@ -13,6 +13,7 @@ pub struct Smoke {
     revision: u64,
     value: f64,
     settled: u8,
+    synth: crate::capture_synth::Smoke,
 }
 impl Smoke {
     pub fn complete(&self) -> bool {
@@ -31,7 +32,7 @@ impl Smoke {
             self.panel = view.update(cx, |s, cx| {
                 let project = s.project.as_ref().unwrap();
                 let channel = &project.snapshot.channels[0];
-                let target = if mode == "instrument" {
+                let target = if mode == "instrument" || mode == "synth" {
                     DetailTarget::Instrument(channel.id.clone())
                 } else {
                     DetailTarget::ChannelInsert(channel.id.clone(), 0)
@@ -63,10 +64,20 @@ impl Smoke {
                 cx.notify();
                 Some(panel)
             });
-            self.stage = if mode == "edit" { 1 } else { 24 };
+            self.stage = if mode == "edit" || mode == "synth" {
+                1
+            } else {
+                24
+            };
             return;
         }
         let panel = self.panel.as_ref().unwrap().clone();
+        if mode == "synth" {
+            if self.synth.step(view, &panel, window, cx) {
+                self.stage = 24;
+            }
+            return;
+        }
         let get_value = |cx: &App| {
             view.read(cx).project.as_ref().unwrap().snapshot.channels[0].effect_chain[0].parameters
                 ["cutoffHz"]
@@ -204,7 +215,7 @@ impl Smoke {
         self.stage += 1;
     }
 }
-fn pointer(window: &Window, at: Point<Pixels>, kind: u8, cx: &App) {
+pub(crate) fn pointer(window: &Window, at: Point<Pixels>, kind: u8, cx: &App) {
     crate::capture_pointer::dispatch(
         window,
         match kind {

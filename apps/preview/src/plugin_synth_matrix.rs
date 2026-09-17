@@ -3,7 +3,7 @@ use super::{choice, group, knob, Page};
 pub fn page() -> Page {
     Page {
         id: "matrix".into(),
-        title: "Matrix".into(),
+        title: "Routing".into(),
         groups: std::iter::once(group(
             "macros",
             "Macros",

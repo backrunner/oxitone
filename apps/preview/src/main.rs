@@ -25,6 +25,7 @@ mod capture_plugin_install;
 mod capture_pointer;
 #[cfg(target_os = "macos")]
 mod capture_surface;
+mod capture_synth;
 mod capture_track_drag;
 mod capture_transport;
 mod capture_ui_review;
@@ -100,6 +101,7 @@ mod playlist_projection;
 mod plugin_builtin_controls;
 mod plugin_capture;
 mod plugin_catalog;
+mod plugin_choice;
 mod plugin_color_plot;
 mod plugin_control_input;
 mod plugin_controls;
@@ -128,6 +130,8 @@ mod plugin_manager_info;
 mod plugin_manager_model;
 mod plugin_open;
 mod plugin_panel;
+mod plugin_panel_groups;
+mod plugin_panel_navigation;
 mod plugin_parameters;
 mod plugin_picker;
 mod plugin_plot;
@@ -140,6 +144,7 @@ mod plugin_sample_plot;
 mod plugin_scroll;
 mod plugin_source_navigation;
 mod plugin_synth_layout;
+mod plugin_synth_visibility;
 mod plugin_time_plot;
 mod plugin_usage_list;
 mod plugin_visuals;
@@ -200,7 +205,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     let backend = backend::Backend::start(
         socket.ok_or("--socket is required; launch with oxitone preview <entry.ts>")?,
-        headless || capture_transport::enabled() || capture_daw::enabled(),
+        headless
+            || std::env::var_os("OXITONE_PREVIEW_CAPTURE").is_some()
+            || std::env::var("OXITONE_PREVIEW_SIMULATED").is_ok_and(|value| value == "1"),
     )?;
     if headless {
         while !backend.stopped() {

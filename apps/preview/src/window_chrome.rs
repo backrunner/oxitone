@@ -17,8 +17,8 @@ impl Preview {
             .flex()
             .items_center()
             .pr_4()
-            .gap_4()
-            .bg(rgb(theme.raised))
+            .gap_3()
+            .bg(rgb(theme.panel))
             .border_b_1()
             .border_color(rgb(theme.border))
             .child(
@@ -62,16 +62,7 @@ impl Preview {
                     ),
             )
             .child(self.editor_tabs(cx))
-            .child(
-                theme
-                    .ghost("shortcut-help", "?")
-                    .w(px(28.))
-                    .on_click(cx.listener(|this, _, window, cx| {
-                        this.show_shortcuts = !this.show_shortcuts;
-                        this.workspace_focus.focus(window);
-                        cx.notify();
-                    })),
-            );
+            .child(self.header_tools(cx));
         title
     }
 }
