@@ -23,7 +23,7 @@ jobs:
             node: 24
           - runner: macos-15-intel
             arch: x64
-            node: 22
+            node: 24
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 90
     env:

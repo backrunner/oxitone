@@ -18,6 +18,9 @@
     "index.d.ts",
     "*.node"
   ],
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "build": "node scripts/build-native.mjs"
   }

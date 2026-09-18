@@ -68,7 +68,7 @@ export function projectBuildOptions(entry: string, sourceLoader?: ProjectSourceL
             loader,
             sourcefile: args.path,
             format: "esm",
-            target: "node22",
+            target: "node24",
             sourcemap: "inline",
             define: {
               "import.meta.url": JSON.stringify(pathToFileURL(args.path).href),
@@ -89,7 +89,7 @@ export function projectBuildOptions(entry: string, sourceLoader?: ProjectSourceL
     write: false,
     platform: "node",
     format: "esm",
-    target: "node22",
+    target: "node24",
     sourcemap: "inline",
     metafile: true,
     logLevel: "silent",

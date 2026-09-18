@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import type { SourceRead } from "../files/read-set.js";
 
 export function trackModuleReads(bundle: string): { reads: Map<string, SourceRead>; close(): void } {
-  if (typeof moduleHooks.registerHooks !== "function") throw new Error("source evaluation requires Node 22.15+ or 24+");
+  if (typeof moduleHooks.registerHooks !== "function") throw new Error("source evaluation requires Node.js 24+");
   const reads = new Map<string, SourceRead>();
   const directories = new Set<string>();
   function add(read: SourceRead): void {

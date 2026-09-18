@@ -35,7 +35,7 @@ esbuild 对所有已登记模块使用内存 overlay；临时捕获 import 不�
 执行。源码 worker 在启动时预载 tsx，后续 import 使用已加载的模块，不重复注册。
 不复用执行过工程的进程或模块实例，不缓存 factory 返回值；超时和取消仍覆盖 loader 启动。
 
-Node 22.15+ 的同步 module hooks 记录实际模块与祖先 package/lock；每次求值按目录扫描一次，
+Node 24+ 的同步 module hooks 记录实际模块与祖先 package/lock；每次求值按目录扫描一次，
 同时记录 package/lock 不存在的证据（临时 bundle 目录除外）。目录缓存不跨求值共享；
 扫描后出现的新文件使候选失效。父进程记录
 本地 TS/JS/JSON、已有解析配置和 readPaths。未保存模块另记录不存在的负读证据。

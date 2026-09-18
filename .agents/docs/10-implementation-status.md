@@ -407,7 +407,7 @@ GPUI 插件添加/替换仍待完成。VS Code linked buffers、未保存同步�
 
 ## CI、离线示例与便携 CLI（2026-09-07）
 
-- 新增 macOS 15 arm64/Node 24、Intel/Node 22 的 CI；构建原生 addon/SDK/示例，
+- macOS 15 arm64/Intel 的 CI 均使用 Node 24；构建原生 addon/SDK/示例，
   检查 schema 漂移，执行全部 TS/Rust tests、示例及 Slicer/insert benchmark。
   CoreAudio 冒烟使用明确选定的 BlackHole 虚拟输出；不替代真实设备验收。
 - `examples/offline` 已生成 synth/automation/delay 的两小节 WAV/MIDI，再缓存并

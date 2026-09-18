@@ -7,6 +7,11 @@ core/native 耦合与旧协议描述是迁移基线，不再是目标限制。�
 
 ## 分层原则
 
+Node.js 最低支持版本为 24；workspace 与所有发布的 npm 包统一声明 `engines.node: >=24`，
+CLI 工程打包以 Node 24 为目标，开发类型使用 `@types/node` 24，macOS arm64/x64 CI
+均验证 Node 24。浏览器仍通过 `@oxitone/web` 运行；VS Code 扩展由其 Electron extension
+host 执行，构建目标跟随该宿主，外部 CLI/Document Service 则要求 Node 24+。
+
 代码模块化、文件大小和依赖方向遵循 [工程化规范](22-engineering.md)。手写文件聚焦单一职责，
 目标 150–250 行，接近 300 行时按领域边界拆分；不通过压缩格式规避。
 

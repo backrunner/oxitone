@@ -5,7 +5,7 @@
   "description": "Oxitone: TypeScript authoring SDK backed by a Rust realtime audio engine",
   "type": "module",
   "engines": {
-    "node": ">=22.13"
+    "node": ">=24"
   },
   "scripts": {
     "build": "pnpm -r --filter './packages/*' --filter './examples/*' run build",
@@ -33,7 +33,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@napi-rs/cli": "^3.9.1",
-    "@types/node": "^22.20.2",
+    "@types/node": "^24.13.5",
     "eslint": "^10.10.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.12.0",

@@ -6,7 +6,7 @@ project format and plugin ABI should be discussed in an issue before implementat
 ## Development setup
 
 - macOS 13 or newer (Apple Silicon is the primary target; Intel is covered by CI)
-- Node.js 22.13+ and the pnpm version declared in `package.json`
+- Node.js 24+ and the pnpm version declared in `package.json`
 - Rust stable with `rustfmt` and Xcode Command Line Tools
 
 Install dependencies with `pnpm install --frozen-lockfile`. Keep TypeScript authoring code in `packages/*/src` and

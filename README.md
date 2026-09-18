@@ -25,7 +25,7 @@ binaries remains tracked work.
 
 ## Run from a checkout
 
-Install Node.js 22.13+ or 24, Rust with `rustfmt`, Xcode Command Line Tools and the pnpm
+Install Node.js 24+, Rust with `rustfmt`, Xcode Command Line Tools and the pnpm
 version specified by `packageManager` in [package.json](package.json).
 
 ```sh
@@ -70,7 +70,54 @@ For device playback, use `const session = await project.play()` and dispose the
 session when finished. [The API guide](docs/api.md) covers transport, samples,
 automation, persistence and the lower-level native facade.
 
-## Preview the code as a DAW
+## Native preview and DAW
+
+Oxitone includes a native macOS DAW built with GPUI and the same Rust audio engine.
+Explore your TypeScript project as a playlist, piano roll and mixer, with instrument
+and effect panels, source automation, a pattern browser and live audio scopes.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/preview-dark.png">
+  <img src="assets/screenshots/preview-light.png" alt="Oxitone native preview showing the Midnight Circuit arrangement and piano roll" width="1440">
+</picture>
+
+_Midnight Circuit in the native preview. [Screenshot details](assets/screenshots/README.md)._
+
+After the workspace build above:
+
+```sh
+pnpm build:preview
+pnpm preview examples/offline/src/preview.ts
+# The bundled drum-machine arrangement, after pnpm example:drums:
+pnpm preview examples/drum-machine/src/preview.ts
+```
+
+`preview` opens a read-only view with play, pause, seek and loop controls. Watch is
+on by default: imported source changes rebuild the project and swap the native
+graph during playback. Code or compile errors retain the last valid project and
+appear as diagnostics. The app starts stopped; press Space or Play to listen.
+
+Open the same app in editable DAW mode:
+
+```sh
+node packages/cli/dist/index.js daw examples/offline/src/preview.ts
+# Or install the checkout's CLI, then use it from your shell:
+pnpm install:cli
+oxitone daw examples/offline/src/preview.ts
+```
+
+DAW mode edits notes, clip placement, mixer settings, tempo, plugin instances and
+automation through the Node Document Service. Edits update the TypeScript draft;
+Save writes the source files, and Undo/Redo share the same project history. The
+[VS Code extension](packages/editor-vscode/README.md) connects code tabs to that
+same session, including unsaved edits and conflict review.
+
+Export a Project or a sync/async factory from your entry file. `--no-watch` loads
+once; `--watch-path path` adds file dependencies read at runtime. The local build
+creates an unsigned macOS app bundle. See [the preview guide](docs/preview.md) for
+entry examples, editing scopes, transport controls, plugin registration and current limits.
+
+## Browser preview
 
 For Wasm and Web Audio, see [the web guide](docs/web.md):
 
@@ -84,32 +131,13 @@ Open the displayed localhost URL and press Play. The browser demo includes synth
 the same drum machine, effects, seek/pause, a live output scope, WAV download and
 source watch. Edit `examples/web/src/song.ts`; invalid updates retain the last good
 song. After `pnpm example:songs:prepare && pnpm example:songs`, the three-minute
-all-synth melodic dubstep demo is available in the browser; `pnpm example:songs:wasm`
+melodic dubstep demo is available in the browser; `pnpm example:songs:wasm`
 renders and compares its complete Wasm output under `target/examples/wasm`.
-
-The GPUI viewer continues to use the native host:
-
-```sh
-pnpm build:preview
-pnpm preview examples/offline/src/preview.ts
-# The bundled drum-machine arrangement, after pnpm example:drums:
-pnpm preview examples/drum-machine/src/preview.ts
-```
-
-The GPUI app shows tracks, pattern/sample clips, a piano roll, channel rack, mixer
-routes/meters and waveform/spectrum/stereo scopes. Play, pause, seek and loop are
-available; music is edited in TypeScript. Watch is on by default: imported source
-changes rebuild the project and swap the native graph during playback. Code or
-compile errors leave the last valid project playing and appear as diagnostics.
-
-Export a Project or a sync/async factory from your entry file. `--no-watch` loads
-once; `--watch-path path` adds file dependencies read at runtime. The local build
-creates an unsigned macOS app bundle. See [the preview guide](docs/preview.md) for
-entry examples, transport controls, plugin registration and current limits.
 
 ## Development checks
 
 ```sh
+pnpm format:check
 pnpm lint
 pnpm typecheck
 cargo build -p oxitone-preview
