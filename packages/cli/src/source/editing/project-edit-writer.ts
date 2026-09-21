@@ -11,10 +11,11 @@ import {
   type ArrangementEdit,
   type ProjectEdit,
   type RegisterPluginOptions,
+  type RegisterVst3Options,
 } from "@oxitone/protocol";
 import type { ProjectEvaluation } from "../eval/project-evaluation.js";
 import { formatSourceExpression, reindentEmitted } from "../syntax/format.js";
-import { readLiteral } from "../syntax/literals.js";
+import { hasComments, readLiteral } from "../syntax/literals.js";
 import { expressionAt, sourceHash, sourceProgram } from "../syntax/program.js";
 
 /** Restore authoring order, which can differ from the canonical snapshot's ID order. */
@@ -42,10 +43,10 @@ export function restoreProject(before: ProjectEvaluation): Project {
 export function appendProjectEdit(
   before: ProjectEvaluation,
   files: ReadonlyMap<string, string>,
-  method: "arrange" | "configure",
+  method: "arrange" | "configure" | "importAudio",
   edit: unknown,
-  registration?: RegisterPluginOptions,
-): { files: Map<string, string>; registration?: RegisterPluginOptions } {
+  registration?: RegisterPluginOptions | RegisterVst3Options,
+): { files: Map<string, string>; registration?: RegisterPluginOptions; vst3Registration?: RegisterVst3Options } {
   const rank = (label: string) => (label === "default export" ? 0 : label === "return" ? 1 : 2);
   const site = [...before.projectSites].sort((a, b) => rank(a.label) - rank(b.label) || b.anchor.end - a.anchor.end)[0];
   if (!site || rank(site.label) > 1)
@@ -61,12 +62,14 @@ export function appendProjectEdit(
   let base = site.anchor.expression;
   if (
     !registration &&
+    (method === "arrange" || method === "configure") &&
     ts.isCallExpression(expression) &&
     ts.isPropertyAccessExpression(expression.expression) &&
     expression.expression.name.text === method &&
+    !expression.questionDotToken &&
+    !expression.expression.questionDotToken &&
     expression.arguments.length === 1 &&
-    text.slice(expression.expression.expression.end, expression.end) ===
-      `.${method}(${expression.arguments[0]!.getText()})`
+    !hasComments(text.slice(expression.expression.expression.end, expression.end))
   ) {
     // Literal objects only: don't remove comments, evaluation or computed values from authored calls.
     try {
@@ -102,7 +105,11 @@ export function appendProjectEdit(
     }
   }
   let evaluatedRegistration: RegisterPluginOptions | undefined;
-  if (registration) {
+  let vst3Registration: RegisterVst3Options | undefined;
+  if (registration && "registrationVersion" in registration) {
+    vst3Registration = registration;
+    base = `(${base}).withVst3Registration(${JSON.stringify(registration)})`;
+  } else if (registration) {
     const { libraryPath, ...metadata } = registration;
     const path = relative(dirname(site.fileName), libraryPath);
     base = `(${base}).withPluginRegistration({ ...${JSON.stringify(metadata, null, 2)}, libraryPath: import.meta.dirname + ${JSON.stringify("/" + path)} })`;
@@ -125,7 +132,11 @@ export function appendProjectEdit(
   );
   const candidate = new Map(files);
   candidate.set(site.fileName, text.slice(0, site.anchor.start) + replacement + text.slice(site.anchor.end));
-  return { files: candidate, ...(evaluatedRegistration ? { registration: evaluatedRegistration } : {}) };
+  return {
+    files: candidate,
+    ...(evaluatedRegistration ? { registration: evaluatedRegistration } : {}),
+    ...(vst3Registration ? { vst3Registration } : {}),
+  };
 }
 function scalarTarget(edit: ProjectEdit | ArrangementEdit): string | undefined {
   if ("action" in edit)

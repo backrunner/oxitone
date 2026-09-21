@@ -1,10 +1,29 @@
 # 插件配置的源代码派生
 
+VST3 参数录制保持当前配置及原自动化，新增独立 Playlist 层。DAW 回写局部
+AutomationSource 定义和常规 param.automate/createAutomationClip 调用，原 Project
+表达式仅求值一次。每条曲线保留 Source 编辑边界；一次候选验证/接受组成一次 Undo，
+失败不写文件，完整 take 可重试接受。Save 不终止同一 revision 的正在进行的录制。
+捕获/任务/图身份仅在控制协议中传递，不写进用户源码。完整规则见 [24](24-vst3-sdk.md)。
+
+VST3 使用 Engine 1.3 的 instrument/effect state 和独立 registrationVersion 1。
+Assign 会通过既有 configure 源码事务持久化精确 class/hash、helper 路径、归一化参数与
+configuration；必要时附加 withVst3Registration。Undo/Redo 同时恢复注册与配置，Save
+仍只发布源码候选；旧 C ABI 1 不因此获得 state 能力。Preview snapshot 新增 vst3Plugins，
+native viewer 在控制线程重新验证并编译实例，候选失败保留上一个可播放版本。
+
 本增量实现纯值 `pluginConfig(kind, input).withParameters(values)` 与效果器 `.withHost({mix?,bypass?})`。
+`.withState(state)` 返回替换状态的冻结派生值，保留其余配置，拒绝不可序列化输入。
+`.replaceParameters(values)` 替换完整参数表，供配置变更后移除旧 ParamID；withParameters 仍合并。
 `kind` 为 instrument/effect，input 接受现有 builtin helper 或 npm factory 的声明式 ref。
 参数按原样字符串键合并，点号不是嵌套路径。构造/派生不加载库、不创建 DSP；数据冻结，
 资源与 structured builtin state 保留；不可序列化状态、非有限数与不合法 host 值拒绝。
 参数名称/物理范围仍由准确插件的原生 descriptor 在候选 compile 时权威验证。
+
+源代码 capture 只给可能产生对象的值边界分配身份。确定为原始值的字符串、数字、bigint、
+布尔和 null literal 不参与 capture，不消耗 4096 个边界预算；它们不能是配置、实例或音乐
+对象。包含 4096 个参数的 state/参数 literal 仍按整个配置对象编辑和校验，不人为提高预算。
+函数调用、标识符及其他需要运行的表达式继续原样求值与 capture。
 
 Channel/Bus 仅在控制侧保留配置输入对象身份。求值器从受信任 Project 对象关联 capture，
 局部 reference 必须被单次执行的 owner 边界包围；同一 owner 的重复共享使用不能猜选。
@@ -16,7 +35,19 @@ Document `configuration` operation 带 site、可选 usage 和 parameters/host e
 定义范围显式共享；完整工程比较保证只改准确配置，其他实例、宿主同名参数、automation、
 路由/资源/插件注册不变。失败保留原代码和 accepted graph。相同 wrapper 的重复参数编辑
 合并 literal patch；保留函数调用、副作用、非 literal 参数、注释及 import/export。
+归约识别 writer 发射的字符串计算属性（如 `["oscA.level"]`），按完整参数 ID 合并，
+不执行动态 key；重复 key、`__proto__` 与需要求值的计算属性仍拒绝归约。
 writer 复用可见 pluginConfig 别名/namespace，避开 type-only 与遮蔽；普通 Save 仍走统一 journal。
+
+VST3 实例面板的 Open/Close native editor 发出 `vst3.controlInstance(site,usage?,action)`，
+只接受单实例配置边界，经 Node 校验后控制 Preview 正在使用的实例，打开/关闭不产生 revision。
+Use current state 发出 `vst3.captureInstance`，捕获 class/hash 绑定的 state/参数，再验证 source reads、generation 和 revision，
+写成 `pluginConfig(kind, original).replaceParameters(values).withState(state)` 并原生验证候选。
+不替换 Project slot，因此实例 ID、typed automation、mix/bypass、其他相同插件保持不变。
+重复接受相同配置不产生 revision；状态变化时仅归约 writer 发射的 literal wrapper，保留工厂调用、副作用与注释，不堆积旧
+opaque payload。accepted graph、Undo/Redo 和 Save 沿用同一源码事务；厂商窗口修改直接
+影响播放实例，显式采用状态前不会改变源码。没有可隔离边界时按钮不可用，可先走现有
+源码/链拆散流程。独立克隆的 editInstance 已删除，catalog 的独立配置 editor 仍保留。
 
 GPUI Plugins 是名称/类型列表，不显示参数参考表；Used in project 按需展开使用位置，
 Edit 打开独立实例配置窗口。在配置窗口输入物理值（Enter 提交、Escape 取消）、

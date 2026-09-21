@@ -26,7 +26,11 @@ export class DocumentDispatcher {
         : Promise.resolve(this.reject(request, ErrorCode.SourceChanged, "requestId reused for a different command"));
     if (this.closed || request.sessionId !== this.document.sessionId)
       return Promise.resolve(this.reject(request, ErrorCode.SourceChanged, "document session is no longer current"));
-    if (this.queued >= 64)
+    const cancel =
+      request.operation.kind === "vst3" &&
+      (request.operation.command.kind === "cancel" || request.operation.command.kind === "cancelRecording");
+    // Reserve one extra immediate control slot so a full ordered queue is still cancellable.
+    if (this.queued >= (cancel ? 65 : 64))
       return Promise.resolve(this.reject(request, ErrorCode.BudgetExceeded, "document request budget exceeded"));
     try {
       this.requests.reserve(request.requestId);
@@ -36,7 +40,7 @@ export class DocumentDispatcher {
       );
     }
     this.queued++;
-    const result = this.queue.then(async () => {
+    const execute = async () => {
       try {
         if (this.closed) throw new OxitoneError(ErrorCode.SourceChanged, "document connection closed");
         await this.execute(request);
@@ -57,9 +61,14 @@ export class DocumentDispatcher {
       } finally {
         this.queued--;
       }
+    };
+    // Cancellation must reach the active helper while a long render owns the ordered queue.
+    const result = (cancel ? execute() : this.queue.then(execute)).then((response) => {
+      this.requests.settle(request.requestId);
+      return response;
     });
     this.requests.remember(request.requestId, { fingerprint, result });
-    this.queue = result.then(() => this.requests.settle());
+    if (!cancel) this.queue = result;
     return result;
   }
   private reject(request: DocumentRequest, code: string, message: string): Response {
@@ -77,6 +86,9 @@ export class DocumentDispatcher {
     const operation = request.operation,
       revision = request.baseRevision;
     switch (operation.kind) {
+      case "vst3":
+        await this.document.vst3Command(revision, operation.command);
+        break;
       case "project":
         await this.document.configure(revision, operation.edit);
         break;

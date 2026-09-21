@@ -14,6 +14,7 @@ pub struct TimeSignatureMap;
 
 #[derive(Debug, Clone, Copy)]
 struct CompiledSegment {
+    signature: [u32; 2],
     start_bar: u32,
     bar_beats: Beat,
     start_beat: Beat,
@@ -82,6 +83,7 @@ impl TimeSignatureMap {
                 start_beat = start_beat.checked_add(prev.bar_beats.checked_mul(span)?)?;
             }
             compiled.push(CompiledSegment {
+                signature: [seg.numerator, seg.denominator],
                 start_bar: seg.start_bar,
                 bar_beats,
                 start_beat,
@@ -92,6 +94,14 @@ impl TimeSignatureMap {
 }
 
 impl CompiledTimeSignatureMap {
+    /// The exact written meter at this quarter-note position (6/8 stays 6/8).
+    pub fn signature_at(&self, beat: Beat) -> [u32; 2] {
+        let idx = self
+            .segments
+            .partition_point(|s| beat_cmp(s.start_beat, beat).is_le());
+        self.segments[idx.saturating_sub(1)].signature
+    }
+
     /// Map an absolute beat to its 1-based bar and 0-based beat-in-bar.
     pub fn beat_to_bar_beat(&self, beat: Beat) -> (u32, Beat) {
         let idx = self

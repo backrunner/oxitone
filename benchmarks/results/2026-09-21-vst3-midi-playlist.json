@@ -1,0 +1,228 @@
+{
+  "date": "2026-09-21T06:58:25.451Z",
+  "cpu": "Apple M4",
+  "os": "darwin 27.0.0",
+  "arch": "arm64",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01) (Homebrew)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: aarch64-apple-darwin\nrelease: 1.98.1\nLLVM version: 22.1.8",
+  "sampleRate": 48000,
+  "blockSize": 128,
+  "channels": 2,
+  "device": null,
+  "callbackP95Ms": null,
+  "callbackP99Ms": null,
+  "xruns": null,
+  "warmupSeconds": 1,
+  "measurementSeconds": 2,
+  "samples": 20,
+  "note": "Run after the workspace tests and host tests finished. Criterion comparison is against the earlier loaded run, not a verified release baseline.",
+  "log": "   Compiling oxitone-vst3-host v0.1.0 (/Volumes/BRData/projects/oxitone/crates/vst3-host)\n   Compiling oxitone-render v0.1.0 (/Volumes/BRData/projects/oxitone/crates/render)\n   Compiling oxitone-bench v0.1.0 (/Volumes/BRData/projects/oxitone/crates/bench)\n    Finished `bench` profile [optimized + debuginfo] target(s) in 1m 08s\n     Running benches/playlist.rs (target/release/deps/playlist-750e59d48f135db4)\nGnuplot not found, using plotters backend\nPlaylist DSP profile: 32 placements; 48000 Hz; 128 frames; p95=148792 ns; p99=178250 ns; offline sink (no device callback or xruns)\nBenchmarking playlist/32_placements/render_128\nBenchmarking playlist/32_placements/render_128: Warming up for 1.0000 s\nBenchmarking playlist/32_placements/render_128: Collecting 20 samples in estimated 2.0274 s (14k iterations)\nBenchmarking playlist/32_placements/render_128: Analyzing\nplaylist/32_placements/render_128\n                        time:   [112.92 µs 113.78 µs 114.81 µs]\n                        change: [-79.223% -74.568% -68.692%] (p = 0.00 < 0.05)\n                        Performance has improved.\nFound 3 outliers among 20 measurements (15.00%)\n  3 (15.00%) high mild\n\nPlaylist DSP profile: 1024 placements; 48000 Hz; 128 frames; p95=131250 ns; p99=136208 ns; offline sink (no device callback or xruns)\nBenchmarking playlist/1024_placements/render_128\nBenchmarking playlist/1024_placements/render_128: Warming up for 1.0000 s\nBenchmarking playlist/1024_placements/render_128: Collecting 20 samples in estimated 2.0172 s (17k iterations)\nBenchmarking playlist/1024_placements/render_128: Analyzing\nplaylist/1024_placements/render_128\n                        time:   [116.88 µs 117.08 µs 117.28 µs]\n                        change: [-79.838% -74.490% -67.271%] (p = 0.00 < 0.05)\n                        Performance has improved.\nFound 2 outliers among 20 measurements (10.00%)\n  1 (5.00%) low mild\n  1 (5.00%) high severe\n\n",
+  "archivedAt": "2026-09-21T06:59:40.345Z",
+  "profiles": [
+    {
+      "placements": 32,
+      "dspP95Ns": 148792,
+      "dspP99Ns": 178250
+    },
+    {
+      "placements": 1024,
+      "dspP95Ns": 131250,
+      "dspP99Ns": 136208
+    }
+  ],
+  "benchmarks": [
+    {
+      "placements": 32,
+      "estimates": {
+        "mean": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 113747.06444648662,
+            "upper_bound": 116614.85569553815
+          },
+          "point_estimate": 115074.91172448907,
+          "standard_error": 736.5505495837049
+        },
+        "median": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 112804.91513601488,
+            "upper_bound": 115235.93892339544
+          },
+          "point_estimate": 114156.94444444444,
+          "standard_error": 687.7639150302156
+        },
+        "median_abs_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 823.5629165175876,
+            "upper_bound": 3597.8708368496605
+          },
+          "point_estimate": 2269.653703923677,
+          "standard_error": 764.6045542039393
+        },
+        "slope": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 112923.18567357051,
+            "upper_bound": 114808.44457920396
+          },
+          "point_estimate": 113779.50683734787,
+          "standard_error": 486.2619994599028
+        },
+        "std_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 1586.8002616993513,
+            "upper_bound": 4258.0540427852875
+          },
+          "point_estimate": 3381.4991997589773,
+          "standard_error": 639.5570396807639
+        }
+      },
+      "samples": {
+        "sampling_mode": "Linear",
+        "iters": [
+          69,
+          138,
+          207,
+          276,
+          345,
+          414,
+          483,
+          552,
+          621,
+          690,
+          759,
+          828,
+          897,
+          966,
+          1035,
+          1104,
+          1173,
+          1242,
+          1311,
+          1380
+        ],
+        "times": [
+          7946000,
+          15824584,
+          24232958,
+          33856459,
+          42197375,
+          50317375,
+          55695917,
+          63152750,
+          69728917,
+          78065458,
+          85514834,
+          92913166,
+          100988209,
+          109393375,
+          118166375,
+          124170375,
+          132481042,
+          138937959,
+          152906250,
+          157518000
+        ]
+      }
+    },
+    {
+      "placements": 1024,
+      "estimates": {
+        "mean": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 116778.90972670811,
+            "upper_bound": 117700.34047925429
+          },
+          "point_estimate": 117213.40357657727,
+          "standard_error": 233.96530281094005
+        },
+        "median": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 116789.65403050109,
+            "upper_bound": 117384.52191358025
+          },
+          "point_estimate": 117196.44582521118,
+          "standard_error": 148.79751112587104
+        },
+        "median_abs_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 226.11678259055512,
+            "upper_bound": 1045.4953345251442
+          },
+          "point_estimate": 825.1628043270467,
+          "standard_error": 233.60052379240543
+        },
+        "slope": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 116875.3530336326,
+            "upper_bound": 117281.1287643257
+          },
+          "point_estimate": 117084.96966920463,
+          "standard_error": 103.5540564231728
+        },
+        "std_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 499.018847253099,
+            "upper_bound": 1522.2088603560412
+          },
+          "point_estimate": 1069.6024060614232,
+          "standard_error": 272.1858737415182
+        }
+      },
+      "samples": {
+        "sampling_mode": "Linear",
+        "iters": [
+          81,
+          162,
+          243,
+          324,
+          405,
+          486,
+          567,
+          648,
+          729,
+          810,
+          891,
+          972,
+          1053,
+          1134,
+          1215,
+          1296,
+          1377,
+          1458,
+          1539,
+          1620
+        ],
+        "times": [
+          9759167,
+          19101417,
+          27944208,
+          38176291,
+          46935833,
+          57504875,
+          66122834,
+          75979666,
+          85318041,
+          94495416,
+          104629833,
+          113952417,
+          123515334,
+          133591500,
+          141438667,
+          151059542,
+          160996500,
+          170755583,
+          180306000,
+          190089791
+        ]
+      }
+    }
+  ]
+}

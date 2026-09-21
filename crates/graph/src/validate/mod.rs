@@ -23,13 +23,23 @@ use crate::topology::build_mixer_routing;
 /// references → plugin tables → plugin state → automation targets → mixer
 /// topology) so the same snapshot always fails with the same error.
 pub fn validate(snapshot: &ProjectSnapshot, registry: &PluginRegistry) -> Result<(), OxitoneError> {
+    validate_structure(snapshot)?;
+    plugins::validate_plugins(snapshot, registry)?;
+    crate::midi::compile(&snapshot.channels, Some(registry))?;
+    crate::insert_routes::validate_capabilities(&snapshot.mixer_channels, registry)?;
+    state::validate_states(snapshot, registry)?;
+    automation::validate_automation(snapshot, registry)?;
+    build_mixer_routing(&snapshot.mixer_channels)?;
+    Ok(())
+}
+
+/// Structural checks before configuration-dependent native capability discovery.
+pub fn validate_structure(snapshot: &ProjectSnapshot) -> Result<(), OxitoneError> {
     oxitone_core::wire::check_snapshot_version(snapshot)?;
     ids::validate_ids(snapshot)?;
     numeric::validate_numeric(snapshot)?;
     refs::validate_refs(snapshot)?;
-    plugins::validate_plugins(snapshot, registry)?;
-    state::validate_states(snapshot, registry)?;
-    automation::validate_automation(snapshot, registry)?;
-    build_mixer_routing(&snapshot.mixer_channels)?;
+    crate::midi::compile(&snapshot.channels, None)?;
+    crate::insert_routes::validate_references(&snapshot.mixer_channels)?;
     Ok(())
 }

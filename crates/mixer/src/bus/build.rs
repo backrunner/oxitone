@@ -2,7 +2,7 @@
 use super::{Bus, InsertSlot, MixerEngine, SendSlot};
 use crate::meter::{BusMeter, TruePeakMeter};
 use crate::pdc::{plan_pdc, DelayLine};
-use oxitone_core::error::{codes, OxitoneError};
+use oxitone_core::error::OxitoneError;
 use oxitone_core::wire::{EntityId, MixerChannelSpec};
 use oxitone_dsp::gain_pan::OnePoleSmoother;
 use oxitone_graph::abi::HostContext;
@@ -39,75 +39,16 @@ impl MixerEngine {
             max_block_size,
         };
 
+        oxitone_graph::insert_routes::validate_capabilities(channels, registry)?;
         let mut insert_latency: BTreeMap<EntityId, u64> = BTreeMap::new();
         let mut insert_chains: BTreeMap<EntityId, Vec<InsertSlot>> = BTreeMap::new();
         for id in &routing.order {
-            let mut slots = Vec::new();
-            let mut latency = 0u64;
-            if let Some(spec) = specs.get(id.as_str()) {
-                for effect in &spec.inserts {
-                    let plugin = registry
-                        .lookup(&effect.plugin_id, &effect.plugin_version)
-                        .ok_or_else(|| {
-                            OxitoneError::with_path(
-                                codes::INVALID_PROJECT,
-                                format!(
-                                    "unknown plugin {}@{}",
-                                    effect.plugin_id, effect.plugin_version
-                                ),
-                                format!("$.mixerChannels.{id}.inserts"),
-                            )
-                        })?;
-                    let descriptor = plugin.descriptor();
-                    let mut instance =
-                        crate::effects::create_effect(plugin.as_ref(), effect, &host, resources)?;
-                    instance.try_prepare(sample_rate, max_block_size)?;
-                    let param_ids: Vec<String> =
-                        descriptor.parameters.iter().map(|p| p.id.clone()).collect();
-                    let mut pending =
-                        crate::parameter_queue::ParameterQueue::new(&descriptor.parameters);
-                    for (param_id, value) in &effect.parameters {
-                        let index =
-                            param_ids
-                                .iter()
-                                .position(|id| id == param_id)
-                                .ok_or_else(|| {
-                                    OxitoneError::with_path(
-                                        codes::INVALID_PROJECT,
-                                        format!(
-                                            "unknown parameter {param_id:?} on {}",
-                                            effect.plugin_id
-                                        ),
-                                        format!("$.mixerChannels.{id}.inserts"),
-                                    )
-                                })?;
-                        pending.set(index, *value);
-                    }
-                    latency += instance.latency_frames();
-                    let mut mix = OnePoleSmoother::new(sample_rate, 20.0);
-                    mix.snap(effect.mix.unwrap_or(1.0) as f32);
-                    let mut dry_delay =
-                        DelayLine::new(instance.latency_frames() as usize, max_block);
-                    dry_delay.set_delay(instance.latency_frames() as usize);
-                    slots.push(InsertSlot {
-                        mix,
-                        bypass: effect.bypass.unwrap_or(false),
-                        dry_delay,
-                        dry_l: vec![0.0; max_block],
-                        dry_r: vec![0.0; max_block],
-                        instance,
-                        accepts_sidechain: descriptor.capabilities.sidechain_input
-                            && channels.iter().any(|source| {
-                                source.sends.iter().any(|send| {
-                                    send.sidechain.unwrap_or(false) && send.destination_id == *id
-                                })
-                            }),
-                        param_ids,
-                        specs: std::sync::Arc::new(descriptor.parameters.clone()),
-                        pending,
-                    });
-                }
-            }
+            let (slots, latency) = match specs.get(id.as_str()) {
+                Some(spec) => super::insert_build::build(
+                    spec, channels, &routing, registry, &host, resources,
+                )?,
+                None => (Vec::new(), 0),
+            };
             insert_latency.insert(id.clone(), latency);
             insert_chains.insert(id.clone(), slots);
         }
@@ -168,6 +109,8 @@ impl MixerEngine {
                 solo: spec.and_then(|s| s.solo).unwrap_or(false),
                 master_send_ratio: spec.and_then(|s| s.master_send_ratio).unwrap_or(1.0) as f32,
                 sends,
+                input_sends: Vec::new(),
+                input_delay: super::routes::delay(pdc.bus_input_latency[id] as usize, max_block),
                 master_delay,
                 sum_l: vec![0.0; max_block],
                 sum_r: vec![0.0; max_block],
@@ -181,7 +124,7 @@ impl MixerEngine {
             });
         }
 
-        Ok(Self {
+        let mut engine = Self {
             sample_rate,
             max_block,
             buses,
@@ -191,6 +134,8 @@ impl MixerEngine {
             true_peak: TruePeakMeter::new(max_block),
             stem_taps: None,
             stem_block: None,
-        })
+        };
+        super::route_build::prepare(&mut engine, channels);
+        Ok(engine)
     }
 }

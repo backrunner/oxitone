@@ -398,7 +398,9 @@ impl RealtimeSession {
         }
 
         let resample = (info.sample_rate - project_sample_rate).abs() > 0.5;
-        let direct_ok = !resample && info.frames_per_slice as usize == block_size;
+        let direct_ok = !graph.requires_isolation()
+            && !resample
+            && info.frames_per_slice as usize == block_size;
         let mode = match config.latency_mode {
             LatencyMode::Direct if direct_ok => Mode::Direct,
             LatencyMode::Direct => {
@@ -406,7 +408,7 @@ impl RealtimeSession {
                     event_codes::MODE_FALLBACK,
                     Severity::Warning,
                     0,
-                    "latencyMode 'direct' requires the device rate to equal the project rate and frames-per-slice == blockSize; using buffered mode",
+                    "direct mode requires callback-safe plugins, matching sample rates and block sizes; using buffered mode",
                 ));
                 Mode::Buffered
             }
@@ -520,6 +522,14 @@ impl RealtimeSession {
 
     /// Swap the compiled graph at the next block boundary.
     pub fn replace_graph(&self, graph: Box<RenderGraph>) -> Result<(), OxitoneError> {
+        if graph.requires_isolation()
+            && *self.shared.mode.lock().expect("mode mutex") == Mode::Direct
+        {
+            return Err(OxitoneError::new(
+                codes::PLUGIN_CAPABILITY_UNSUPPORTED,
+                "adding isolated plugins to a direct session requires recompiling in buffered mode",
+            ));
+        }
         if graph.sample_rate() != self.project_sample_rate || graph.block_size() != self.block_size
         {
             return Err(OxitoneError::new(

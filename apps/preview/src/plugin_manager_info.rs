@@ -18,6 +18,18 @@ pub fn information(theme: Theme, entry: &CatalogEntry) -> Div {
         ("License", entry.license.clone()),
         ("Library", entry.library_path.clone()),
         ("SHA-256", entry.sha256.clone()),
+        (
+            "VST3 bundle",
+            entry.vst3.as_ref().map(|v| v.bundle_path.clone()),
+        ),
+        (
+            "VST3 class",
+            entry.vst3.as_ref().map(|v| v.class_id.clone()),
+        ),
+        (
+            "Use",
+            entry.vst3.as_ref().map(|_| "Offline WAV rendering".into()),
+        ),
     ] {
         let Some(value) = value.filter(|v| !v.is_empty()) else {
             continue;

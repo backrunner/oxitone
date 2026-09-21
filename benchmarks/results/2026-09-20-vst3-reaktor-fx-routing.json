@@ -1,0 +1,94 @@
+{
+  "date": "2026-09-20T16:24:49.488Z",
+  "name": "Reaktor 6 FX",
+  "version": "6.5.0",
+  "classId": "5653544e52366a7265616b746f722036",
+  "sha256": "f49e16a28a7fa39de6ef494998df159785f0a2fa4f85777367b6eb72aaba7895",
+  "audioBuses": {
+    "inputs": [
+      {
+        "channels": 2,
+        "active": true
+      },
+      {
+        "channels": 2,
+        "active": true
+      },
+      {
+        "channels": 2,
+        "active": true
+      },
+      {
+        "channels": 2,
+        "active": true
+      },
+      {
+        "channels": 2,
+        "active": true
+      },
+      {
+        "channels": 2,
+        "active": true
+      },
+      {
+        "channels": 2,
+        "active": true
+      },
+      {
+        "channels": 2,
+        "active": true
+      }
+    ],
+    "outputs": [
+      {
+        "channels": 2,
+        "active": true
+      },
+      {
+        "channels": 2,
+        "active": true
+      },
+      {
+        "channels": 2,
+        "active": true
+      },
+      {
+        "channels": 2,
+        "active": true
+      },
+      {
+        "channels": 2,
+        "active": true
+      },
+      {
+        "channels": 2,
+        "active": true
+      },
+      {
+        "channels": 2,
+        "active": true
+      },
+      {
+        "channels": 2,
+        "active": true
+      }
+    ]
+  },
+  "registered": true,
+  "allAuxiliaryInputsRouted": true,
+  "allAuxiliaryOutputsRouted": true,
+  "report": {
+    "files": [
+      {
+        "path": "/Volumes/BRData/projects/oxitone/target/vst3-reaktor-fx-routes.wav",
+        "durationSeconds": 0.25,
+        "peakDbfs": -144,
+        "truePeakDbfs": -144,
+        "integratedLufs": -144
+      }
+    ],
+    "graphLatencyFrames": "264"
+  },
+  "ensembleLoaded": false,
+  "commercialSoundAcceptance": false
+}

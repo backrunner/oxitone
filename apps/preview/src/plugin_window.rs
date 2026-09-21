@@ -34,6 +34,8 @@ pub struct PluginWindow {
     pub scroll_drag: Option<(f32, f32, f32)>,
     pub copied: bool,
     pub parameter_specs: bool,
+    pub recording_selection: crate::vst3_recording::Selection,
+    pub recording: Option<crate::vst3_recording::Recording>,
     pub panel: Option<Arc<crate::plugin_layout::Layout>>,
     pub page: String,
     pub stacked_waveforms: bool,
@@ -73,6 +75,13 @@ impl PluginWindow {
                 || this.theme.bg != owner.theme.bg
                 || this.source_ready != owner.document_ready();
             this.source_ready = owner.document_ready();
+            let recording = owner
+                .document
+                .view
+                .as_ref()
+                .and_then(|v| v.vst3_recording.clone());
+            changed |= this.recording != recording;
+            this.recording = recording;
             let mut parameters_changed = false;
             this.theme = owner.theme;
             this.sync_status = status;
@@ -137,6 +146,13 @@ impl PluginWindow {
             scroll_drag: None,
             copied: false,
             parameter_specs: false,
+            recording_selection: Default::default(),
+            recording: owner
+                .read(cx)
+                .document
+                .view
+                .as_ref()
+                .and_then(|v| v.vst3_recording.clone()),
             owner: owner.downgrade(),
             focus,
             _subscriptions: vec![project_changes],
@@ -170,6 +186,15 @@ impl PluginWindow {
             self.scroll.set_offset(point(px(0.), px(0.)));
         }
         self.panel = panel;
+        self.recording_selection.parameters.retain(|id| {
+            self.details.as_ref().is_some_and(|details| {
+                details.parameters.iter().any(|p| {
+                    !p.host
+                        && p.spec.automation == Some(true)
+                        && p.spec.id.parse::<u32>() == Ok(*id)
+                })
+            })
+        });
         self.project = project;
         self.copied = false;
     }

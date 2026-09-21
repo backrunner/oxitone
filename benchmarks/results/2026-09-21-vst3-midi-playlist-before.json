@@ -1,0 +1,20 @@
+{
+  "date": "2026-09-20T17:09:17.809Z",
+  "cpu": "Apple M4",
+  "os": "darwin 27.0.0",
+  "arch": "arm64",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01) (Homebrew)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: aarch64-apple-darwin\nrelease: 1.98.1\nLLVM version: 22.1.8",
+  "sampleRate": 48000,
+  "blockSize": 128,
+  "channels": 2,
+  "device": null,
+  "callbackP95Ms": null,
+  "callbackP99Ms": null,
+  "xruns": null,
+  "warmupSeconds": 1,
+  "measurementSeconds": 2,
+  "samples": 20,
+  "note": "Earlier run overlapped builds and tests. Historical Criterion baseline source was not verified; this does not clear the release performance gate.",
+  "log": "   Compiling oxitone-core v0.1.0 (/Volumes/BRData/projects/oxitone/crates/core)\n   Compiling oxitone-vst3-host v0.1.0 (/Volumes/BRData/projects/oxitone/crates/vst3-host)\n   Compiling oxitone-dsp v0.1.0 (/Volumes/BRData/projects/oxitone/crates/dsp)\n   Compiling oxitone-transport v0.1.0 (/Volumes/BRData/projects/oxitone/crates/transport)\n   Compiling oxitone-samples v0.1.0 (/Volumes/BRData/projects/oxitone/crates/samples)\n   Compiling oxitone-io-macos v0.1.0 (/Volumes/BRData/projects/oxitone/crates/io-macos)\n   Compiling oxitone-graph v0.1.0 (/Volumes/BRData/projects/oxitone/crates/graph)\n   Compiling oxitone-mixer v0.1.0 (/Volumes/BRData/projects/oxitone/crates/mixer)\n   Compiling oxitone-instruments v0.1.0 (/Volumes/BRData/projects/oxitone/crates/instruments)\n   Compiling oxitone-render v0.1.0 (/Volumes/BRData/projects/oxitone/crates/render)\n   Compiling oxitone-bench v0.1.0 (/Volumes/BRData/projects/oxitone/crates/bench)\n    Finished `bench` profile [optimized + debuginfo] target(s) in 4m 04s\n     Running benches/playlist.rs (target/release/deps/playlist-750e59d48f135db4)\nGnuplot not found, using plotters backend\nPlaylist DSP profile: 32 placements; 48000 Hz; 128 frames; p95=1003125 ns; p99=3057750 ns; offline sink (no device callback or xruns)\nBenchmarking playlist/32_placements/render_128\nBenchmarking playlist/32_placements/render_128: Warming up for 1.0000 s\nBenchmarking playlist/32_placements/render_128: Collecting 20 samples in estimated 2.0253 s (5670 iterations)\nBenchmarking playlist/32_placements/render_128: Analyzing\nplaylist/32_placements/render_128\n                        time:   [305.13 µs 438.72 µs 629.14 µs]\n                        change: [+194.27% +264.22% +344.49%] (p = 0.00 < 0.05)\n                        Performance has regressed.\nFound 1 outliers among 20 measurements (5.00%)\n  1 (5.00%) high mild\n\nPlaylist DSP profile: 1024 placements; 48000 Hz; 128 frames; p95=913500 ns; p99=6520750 ns; offline sink (no device callback or xruns)\nBenchmarking playlist/1024_placements/render_128\nBenchmarking playlist/1024_placements/render_128: Warming up for 1.0000 s\nBenchmarking playlist/1024_placements/render_128: Collecting 20 samples in estimated 2.0613 s (3570 iterations)\nBenchmarking playlist/1024_placements/render_128: Analyzing\nplaylist/1024_placements/render_128\n                        time:   [393.94 µs 567.86 µs 725.65 µs]\n                        change: [+186.15% +274.04% +380.00%] (p = 0.00 < 0.05)\n                        Performance has regressed.\nFound 4 outliers among 20 measurements (20.00%)\n  2 (10.00%) high mild\n  2 (10.00%) high severe\n\n",
+  "archivedAt": "2026-09-21T06:57:28.578Z"
+}

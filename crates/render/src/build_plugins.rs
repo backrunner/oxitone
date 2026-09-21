@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use oxitone_core::error::{codes, OxitoneError};
 use oxitone_core::wire::{MixerChannelSpec, ParameterUnit};
-use oxitone_graph::abi::{HostContext, PluginInstance};
+use oxitone_graph::abi::HostContext;
 use oxitone_graph::PluginRegistry;
 
 use crate::assets::SampleStore;
@@ -18,14 +18,6 @@ fn invalid(message: impl Into<String>, path: impl Into<String>) -> OxitoneError 
 
 /// Plain initial events plus beat-unit conversions of one effect.
 type SplitParams = (Vec<(usize, f64)>, Vec<BeatParam>);
-
-/// Instrument instance plus its parameter table, specs and initial events.
-type CreatedInstrument = (
-    Box<dyn PluginInstance>,
-    Arc<Vec<String>>,
-    Arc<Vec<oxitone_core::wire::ParameterSpec>>,
-    Vec<(usize, f64)>,
-);
 
 /// Split an effect's initial parameters into plain initial events and
 /// beat-unit conversions (`<name>Beats` → `<name>Seconds`).
@@ -70,75 +62,9 @@ pub(super) fn split_effect_params(
     Ok((initial, beat_params))
 }
 
-/// Create the instrument instance for one channel plan.
-pub(super) fn create_instrument(
-    channel: &oxitone_graph::compile::ChannelPlan,
-    host: &HostContext,
-    registry: &PluginRegistry,
-    samples: &SampleStore,
-    tempo: &oxitone_transport::CompiledTempoMap,
-    sample_rate: f64,
-    max_block: u32,
-) -> Result<CreatedInstrument, OxitoneError> {
-    let reference = &channel.instrument;
-    let builtin = matches!(
-        reference.plugin_id.as_str(),
-        oxitone_instruments::WAVETABLE_PLUGIN_ID
-            | oxitone_instruments::SAMPLER_PLUGIN_ID
-            | oxitone_graph::multisampler::PLUGIN_ID
-            | oxitone_instruments::SLICER_PLUGIN_ID
-    );
-    let descriptor = registry
-        .lookup_descriptor(&reference.plugin_id, &reference.plugin_version)
-        .ok_or_else(|| {
-            invalid(
-                format!(
-                    "unknown plugin {}@{}",
-                    reference.plugin_id, reference.plugin_version
-                ),
-                format!("$.channels[{}].instrument", channel.id),
-            )
-        })?;
-    let param_ids: Arc<Vec<String>> =
-        Arc::new(descriptor.parameters.iter().map(|p| p.id.clone()).collect());
-    let param_specs: Arc<Vec<oxitone_core::wire::ParameterSpec>> =
-        Arc::new(descriptor.parameters.clone());
-    let mut initial = Vec::new();
-    let mut instance = if builtin {
-        let config = oxitone_instruments::InstrumentConfig {
-            parameters: &reference.parameters,
-            resources: reference.resources.as_ref(),
-            state: reference.state.as_ref(),
-        };
-        let beat_to_frame = move |beat: oxitone_core::Beat| Some(tempo.beat_to_frame(beat));
-        oxitone_instruments::create_builtin_instance(
-            &reference.plugin_id,
-            host,
-            &config,
-            samples,
-            Some(&beat_to_frame),
-        )?
-    } else {
-        let plugin = registry
-            .lookup(&reference.plugin_id, &reference.plugin_version)
-            .expect("descriptor lookup succeeded");
-        for (id, value) in &reference.parameters {
-            let Some(index) = param_ids.iter().position(|p| p == id) else {
-                return Err(invalid(
-                    format!("unknown parameter {id:?} on {}", reference.plugin_id),
-                    format!("$.channels[{}].instrument.parameters", channel.id),
-                ));
-            };
-            initial.push((index, *value));
-        }
-        plugin.try_create(host)?
-    };
-    instance.try_prepare(sample_rate, max_block)?;
-    Ok((instance, param_ids, param_specs, initial))
-}
-
 /// Create one channel insert from an `EffectRef`.
 pub(super) fn create_insert(
+    midi_output: bool,
     channel_id: &str,
     index: usize,
     effect: &oxitone_core::wire::EffectRef,
@@ -150,7 +76,11 @@ pub(super) fn create_insert(
 ) -> Result<InsertNode, OxitoneError> {
     let path = format!("$.channels[{channel_id}].effectChain[{index}]");
     let plugin = registry
-        .lookup(&effect.plugin_id, &effect.plugin_version)
+        .lookup_instance(
+            &effect.plugin_id,
+            &effect.plugin_version,
+            effect.instance_id.as_deref(),
+        )
         .ok_or_else(|| {
             invalid(
                 format!(
@@ -168,10 +98,16 @@ pub(super) fn create_insert(
         .iter()
         .map(|p| (p.id.clone(), p.unit))
         .collect();
-    let (initial, beats) = split_effect_params(&param_ids, &units, &effect.parameters, &path)?;
+    let (mut initial, beats) = split_effect_params(&param_ids, &units, &effect.parameters, &path)?;
     let mut instance =
         oxitone_mixer::effects::create_effect(plugin.as_ref(), effect, host, Some(samples))?;
+    instance.configure_input_buses(&[])?;
+    instance.configure_output_buses(&[])?;
+    instance.configure_midi_output(midi_output)?;
     instance.try_prepare(sample_rate, max_block)?;
+    if instance.initial_parameters_applied() {
+        initial.clear();
+    }
     let mut mix = oxitone_dsp::gain_pan::OnePoleSmoother::new(sample_rate, 20.0);
     mix.snap(effect.mix.unwrap_or(1.0) as f32);
     let latency = instance.latency_frames() as usize;
@@ -204,9 +140,11 @@ pub(super) fn preprocess_mixer_channel(
 ) -> Result<MixerChannelSpec, OxitoneError> {
     let mut out = spec.clone();
     for (index, effect) in out.inserts.iter_mut().enumerate() {
-        let Some(descriptor) =
-            registry.lookup_descriptor(&effect.plugin_id, &effect.plugin_version)
-        else {
+        let Some(descriptor) = registry.instance_descriptor(
+            &effect.plugin_id,
+            &effect.plugin_version,
+            effect.instance_id.as_deref(),
+        ) else {
             continue;
         };
         let param_ids: Vec<&str> = descriptor

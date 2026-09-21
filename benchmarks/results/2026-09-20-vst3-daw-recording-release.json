@@ -1,0 +1,30 @@
+{
+  "date": "2026-09-19T23:28:00.586Z",
+  "cpu": "Apple M4",
+  "os": "27.0.0",
+  "engineProtocol": "1.5",
+  "device": "simulated",
+  "guiVisualAcceptance": false,
+  "nativeSamples": 131,
+  "clips": 1,
+  "wavBytes": 768044,
+  "checks": [
+    "actualPreviewRecording",
+    "loopAndSeek",
+    "preservesExistingPlaylistAndCombine",
+    "sourceTransaction",
+    "retainsCompleteTakeOnAcceptanceFailure",
+    "retryAcceptance",
+    "independentNativePacketPcmExact",
+    "editRecordedCurve",
+    "undoCurvePcmExact",
+    "undoPcmExact",
+    "redoPcmExact",
+    "saveReopenPcmExact",
+    "emptyTouchNoop",
+    "cancelPendingStop",
+    "cancelPendingStart",
+    "lateStartCaptureCleanup",
+    "sourceChangeInvalidatesRecording"
+  ]
+}

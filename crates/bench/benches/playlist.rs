@@ -11,6 +11,7 @@ fn bench(c: &mut Criterion) {
         let mut s = common::typical_snapshot(4, 4, 0);
         s.automation.clear();
         s.automation.push(AutomationLaneSpec {
+            priority: None,
             id: "auto_playlist".into(),
             target: AutomationTarget {
                 entity_id: s.channels[0].id.clone(),

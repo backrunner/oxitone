@@ -303,7 +303,7 @@ pub fn render_wav(
     let mut written = 0_u64;
     while written < total {
         let n = ((total - written) as usize).min(block);
-        graph.process_block(&mut out_l, &mut out_r);
+        graph.process_offline_block(&mut out_l[..n], &mut out_r[..n])?;
         let (metro_l, metro_r) = graph.metronome_output();
         for output in &mut outputs {
             if output.buses.is_empty() {

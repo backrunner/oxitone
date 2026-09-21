@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { vst3WorkbenchCommandSchema } from "./vst3-workbench.js";
+import { vst3DocumentRecordingSchema } from "./vst3-recording.js";
 import { arrangementEditSchema } from "./arrangement.js";
 import { projectEditSchema } from "./project-edit.js";
 import { noteEditSchema, noteSelectorSchema, sourceNoteSchema } from "../authoring/pattern-source.js";
@@ -112,6 +114,8 @@ export const documentViewSchema = z.object({
     .max(4096),
   materialization: materializationReviewSchema.optional(),
   plugins: z.array(pluginCatalogEntrySchema).max(4096),
+  vst3Bundles: z.array(z.string().min(1).max(4096)).max(4096).optional(),
+  vst3Recording: vst3DocumentRecordingSchema.optional(),
   diagnostic: z.object({ code: z.string(), message: z.string() }).optional(),
 });
 export type DocumentView = z.infer<typeof documentViewSchema>;
@@ -124,6 +128,7 @@ const metadata = {
 export const documentRequestSchema = z.object({
   ...metadata,
   operation: z.discriminatedUnion("kind", [
+    z.object({ kind: z.literal("vst3"), command: vst3WorkbenchCommandSchema }),
     z.object({ kind: z.literal("project"), edit: projectEditSchema }),
     z.object({
       kind: z.literal("assignPlugin"),

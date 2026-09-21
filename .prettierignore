@@ -1,5 +1,8 @@
 # dependencies & build output
 node_modules/
+vendor/
+packages/vst3-host-darwin-*/bin/
+packages/vst3-host-darwin-*/LICENSES/
 dist/
 target/
 coverage/

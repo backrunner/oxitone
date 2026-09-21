@@ -1,6 +1,7 @@
-import ts from "typescript";
 import type { Options } from "prettier";
 import synchronizedPrettier from "@prettier/sync";
+import { dedentEmitted } from "./fragment-layout.js";
+export { reindentEmitted } from "./fragment-layout.js";
 
 /**
  * Emitted edits conform to the project's own formatting: the prettier
@@ -26,6 +27,7 @@ function projectConfig(fileName: string): Options | null {
 /** Drop resolved styles when the workspace may have changed (new roots, tests). */
 export function resetSourceFormatCache(): void {
   configCache.clear();
+  synchronizedPrettier.clearConfigCache();
 }
 
 const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
@@ -63,7 +65,13 @@ function inferStyle(text: string): Options {
 }
 
 export function sourceFormatOptions(fileName: string, text: string): Options {
-  return { ...inferStyle(text), ...(projectConfig(fileName) ?? {}), filepath: fileName };
+  return {
+    ...inferStyle(text),
+    ...(projectConfig(fileName) ?? {}),
+    filepath: fileName,
+    // Tags such as html/css may be arbitrary user functions consuming raw text.
+    embeddedLanguageFormatting: "off",
+  };
 }
 
 function print(fileName: string, text: string, program: string): string | undefined {
@@ -90,12 +98,9 @@ export function formatSourceExpression(fileName: string, text: string, expressio
   const at = out.indexOf("=");
   if (at < 0) return expression;
   let body = out.slice(at + 1);
-  if (body.startsWith("\n")) {
+  if (/^\r?\n/.test(body)) {
     const unit = options.useTabs ? "\t" : " ".repeat(options.tabWidth ?? 2);
-    body = body
-      .split("\n")
-      .map((line) => (line.startsWith(unit) ? line.slice(unit.length) : line))
-      .join("\n");
+    body = dedentEmitted(fileName, body, unit);
   }
   body = body.trim().replace(/;+$/, "");
   return body || expression;
@@ -113,42 +118,4 @@ export function formatSourceArguments(fileName: string, text: string, args: stri
 /** Format a complete statement such as an import or an expression statement. */
 export function formatSourceStatement(fileName: string, text: string, statement: string): string {
   return print(fileName, text, statement)?.trim() ?? statement;
-}
-
-/**
- * Anchor an emitted fragment at its splice indentation. Newlines inside
- * template literals are string data and keep their original bytes.
- */
-export function reindentEmitted(fileName: string, fragment: string, newline: string, indent: string): string {
-  if (!fragment.includes("\n")) return fragment;
-  const spans: Array<[number, number]> = [];
-  const base = "const __oxitone = ".length;
-  try {
-    const file = ts.createSourceFile(fileName, `const __oxitone = ${fragment};`, ts.ScriptTarget.Latest, true);
-    const visit = (node: ts.Node): void => {
-      if (ts.isNoSubstitutionTemplateLiteral(node)) {
-        spans.push([node.getStart(file) - base, node.end - base]);
-      } else if (ts.isTemplateExpression(node)) {
-        spans.push([node.head.getStart(file) - base, node.head.end - base]);
-        for (const span of node.templateSpans) {
-          spans.push([span.literal.getStart(file) - base, span.literal.end - base]);
-        }
-      }
-      ts.forEachChild(node, visit);
-    };
-    visit(file);
-  } catch {
-    /* An unparseable fragment is spliced as-is; validation rejects it later. */
-  }
-  spans.sort((a, b) => a[0] - b[0]);
-  let out = "",
-    span = 0;
-  for (let i = 0; i < fragment.length; i++) {
-    while (span < spans.length && i >= spans[span]![1]) span++;
-    const inside = span < spans.length && i >= spans[span]![0] && i < spans[span]![1];
-    if (fragment[i] === "\n" && !inside) {
-      out += (fragment[i - 1] === "\r" ? "\n" : newline) + indent;
-    } else out += fragment[i];
-  }
-  return out;
 }

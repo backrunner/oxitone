@@ -18,9 +18,10 @@ pub fn resolve(
                 return Err(invalid("instrument has no insert host parameters"));
             }
             let descriptor = registry
-                .lookup_descriptor(
+                .instance_descriptor(
                     &channel.instrument.plugin_id,
                     &channel.instrument.plugin_version,
+                    channel.instrument.instance_id.as_deref(),
                 )
                 .ok_or_else(|| invalid("missing instrument definition"))?;
             let spec = descriptor

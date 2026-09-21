@@ -1,0 +1,325 @@
+{
+  "date": "2026-09-19T21:55:50.042Z",
+  "cpu": "Apple M4",
+  "os": "darwin 27.0.0",
+  "profile": "release",
+  "sampleRate": 48000,
+  "blockSize": 128,
+  "device": "simulated stereo sink (SDK); no device (native)",
+  "callbackP95": null,
+  "callbackP99": null,
+  "native": {
+    "checks": [
+      "actualComponentHandlerGestures",
+      "nextAudioQuantumPositions",
+      "orderedBrackets",
+      "retryCursor",
+      "seekAndResetCoordinates",
+      "stoppedClockDoesNotFinishCapture",
+      "stopBoundary",
+      "staleCursorDoesNotKillAudio",
+      "vendorOverflowFailsCapture",
+      "invalidVendorFeedbackFailsCapture",
+      "paged1024EventsWithoutLoss"
+    ],
+    "processedFrames": 640,
+    "firstPage": {
+      "captureId": "1",
+      "status": "recording",
+      "firstSequence": 0,
+      "nextSequence": 4,
+      "pendingEvents": 0,
+      "events": [
+        {
+          "sequence": 0,
+          "parameterId": 0,
+          "kind": "begin",
+          "position": {
+            "audioSequence": 0,
+            "transport": {
+              "projectFrame": 12000,
+              "continuousFrame": 0,
+              "projectBeat": 0.5,
+              "barBeat": 0,
+              "tempo": 120,
+              "timeSignature": [
+                4,
+                4
+              ],
+              "playing": true,
+              "cycle": [
+                0,
+                4
+              ]
+            },
+            "reset": false
+          }
+        },
+        {
+          "sequence": 1,
+          "parameterId": 0,
+          "kind": "value",
+          "value": 0.25,
+          "position": {
+            "audioSequence": 0,
+            "transport": {
+              "projectFrame": 12000,
+              "continuousFrame": 0,
+              "projectBeat": 0.5,
+              "barBeat": 0,
+              "tempo": 120,
+              "timeSignature": [
+                4,
+                4
+              ],
+              "playing": true,
+              "cycle": [
+                0,
+                4
+              ]
+            },
+            "reset": false
+          }
+        },
+        {
+          "sequence": 2,
+          "parameterId": 0,
+          "kind": "value",
+          "value": 0.75,
+          "position": {
+            "audioSequence": 0,
+            "transport": {
+              "projectFrame": 12000,
+              "continuousFrame": 0,
+              "projectBeat": 0.5,
+              "barBeat": 0,
+              "tempo": 120,
+              "timeSignature": [
+                4,
+                4
+              ],
+              "playing": true,
+              "cycle": [
+                0,
+                4
+              ]
+            },
+            "reset": false
+          }
+        },
+        {
+          "sequence": 3,
+          "parameterId": 0,
+          "kind": "end",
+          "position": {
+            "audioSequence": 0,
+            "transport": {
+              "projectFrame": 12000,
+              "continuousFrame": 0,
+              "projectBeat": 0.5,
+              "barBeat": 0,
+              "tempo": 120,
+              "timeSignature": [
+                4,
+                4
+              ],
+              "playing": true,
+              "cycle": [
+                0,
+                4
+              ]
+            },
+            "reset": false
+          }
+        }
+      ]
+    },
+    "stopped": {
+      "captureId": "1",
+      "status": "stopped",
+      "firstSequence": 6,
+      "nextSequence": 6,
+      "pendingEvents": 0,
+      "events": [],
+      "endPosition": {
+        "audioSequence": 3,
+        "transport": {
+          "projectFrame": 300,
+          "continuousFrame": 384,
+          "projectBeat": 0.0125,
+          "barBeat": 0,
+          "tempo": 120,
+          "timeSignature": [
+            4,
+            4
+          ],
+          "playing": true,
+          "cycle": [
+            0,
+            4
+          ]
+        },
+        "reset": false
+      }
+    }
+  },
+  "sdk": {
+    "checks": [
+      "nativeFacadeEdits",
+      "singleActiveCapture",
+      "preplayPending",
+      "simulatedClock",
+      "retryPage",
+      "stopBoundary",
+      "sourceUnchanged",
+      "acknowledgedCursorRejected",
+      "discard",
+      "retiredGraphRejected"
+    ],
+    "page": {
+      "captureId": "1",
+      "status": "recording",
+      "firstSequence": 0,
+      "nextSequence": 4,
+      "pendingEvents": 0,
+      "events": [
+        {
+          "sequence": 0,
+          "parameterId": 0,
+          "position": {
+            "audioSequence": 0,
+            "transport": {
+              "projectFrame": 0,
+              "continuousFrame": 0,
+              "projectBeat": 0,
+              "barBeat": 0,
+              "tempo": 120,
+              "timeSignature": [
+                4,
+                4
+              ],
+              "playing": true
+            },
+            "reset": false
+          },
+          "kind": "begin"
+        },
+        {
+          "sequence": 1,
+          "parameterId": 0,
+          "position": {
+            "audioSequence": 0,
+            "transport": {
+              "projectFrame": 0,
+              "continuousFrame": 0,
+              "projectBeat": 0,
+              "barBeat": 0,
+              "tempo": 120,
+              "timeSignature": [
+                4,
+                4
+              ],
+              "playing": true
+            },
+            "reset": false
+          },
+          "kind": "value",
+          "value": 0.25
+        },
+        {
+          "sequence": 2,
+          "parameterId": 0,
+          "position": {
+            "audioSequence": 0,
+            "transport": {
+              "projectFrame": 0,
+              "continuousFrame": 0,
+              "projectBeat": 0,
+              "barBeat": 0,
+              "tempo": 120,
+              "timeSignature": [
+                4,
+                4
+              ],
+              "playing": true
+            },
+            "reset": false
+          },
+          "kind": "value",
+          "value": 0.75
+        },
+        {
+          "sequence": 3,
+          "parameterId": 0,
+          "position": {
+            "audioSequence": 0,
+            "transport": {
+              "projectFrame": 0,
+              "continuousFrame": 0,
+              "projectBeat": 0,
+              "barBeat": 0,
+              "tempo": 120,
+              "timeSignature": [
+                4,
+                4
+              ],
+              "playing": true
+            },
+            "reset": false
+          },
+          "kind": "end"
+        }
+      ]
+    },
+    "stopped": {
+      "captureId": "1",
+      "status": "stopped",
+      "firstSequence": 4,
+      "nextSequence": 4,
+      "pendingEvents": 0,
+      "events": [],
+      "endPosition": {
+        "audioSequence": 3,
+        "transport": {
+          "projectFrame": 384,
+          "continuousFrame": 384,
+          "projectBeat": 0.016,
+          "barBeat": 0,
+          "tempo": 120,
+          "timeSignature": [
+            4,
+            4
+          ],
+          "playing": true
+        },
+        "reset": false
+      }
+    },
+    "diagnostics": {
+      "state": "paused",
+      "cursor": "768",
+      "blocks": 28,
+      "deadlineMisses": 0,
+      "xruns": 0,
+      "nanBlocks": 0,
+      "queueDrops": 0,
+      "performanceWarnings": 0,
+      "engineLoad": 0.017909924122108224,
+      "ringOccupancyFrames": 2048,
+      "blockTimeNs": {
+        "p50": 512,
+        "p95": 262144,
+        "p99": 262144,
+        "max": 262144
+      },
+      "events": []
+    },
+    "faults": [
+      {
+        "pluginId": "vst3.6e33225254224a00aa69301af318797d",
+        "pluginVersion": "0.0.0+2cac5f3447f08c6ae54ebd89ab7a01acc154695130b8c5514b8ebd78a791ffb8",
+        "faults": 0
+      }
+    ]
+  }
+}

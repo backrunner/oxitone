@@ -14,6 +14,7 @@ import type { Project } from "../project/project.js";
 import { ConfigurationSources } from "./configuration-sources.js";
 import { PluginInstances } from "../plugins/plugin-instances.js";
 import type { PluginInstance } from "../plugins/plugin-instance.js";
+import { retainMidiRoutes, validateMidiRouting } from "./midi-routing.js";
 
 /** Built-in wavetable instrument used when no explicit instrument is supplied. */
 export const DEFAULT_INSTRUMENT: InstrumentRef = {
@@ -33,6 +34,7 @@ export interface ChannelOptions {
   mute?: boolean;
   solo?: boolean;
   mixerChannelId?: EntityId;
+  outputRoutes?: Readonly<Record<string, EntityId>>;
 }
 
 /** Instrument and ordered insert effects routed to a project mixer bus. */
@@ -54,6 +56,7 @@ export class Channel {
       channelSpecSchema,
       {
         ...options,
+        ...(restored?.midiRoutes === undefined ? {} : { midiRoutes: restored.midiRoutes }),
         id,
         instrument: options.instrument ?? DEFAULT_INSTRUMENT,
         effectChain: options.effectChain ?? [],
@@ -64,6 +67,10 @@ export class Channel {
       "channel",
     );
     this.project?.requireMixerChannel(this.spec.mixerChannelId);
+    if (!restored && this.spec.midiRoutes !== undefined)
+      throw new OxitoneError(ErrorCode.InvalidProject, "connect MIDI after creating the Channel instances");
+    for (const destination of Object.values(this.spec.outputRoutes ?? {}))
+      this.project?.requireMixerChannel(destination);
     this.instances = new PluginInstances(this, project);
     const refs = restored
       ? this.instances.restore([this.spec.instrument, ...this.spec.effectChain])
@@ -132,9 +139,31 @@ export class Channel {
   get mixerChannelId(): EntityId {
     return this.spec.mixerChannelId;
   }
+
+  /** Main MIDI output connections, independent of the audio fader and audio output buses. */
+  get midiRoutes(): Record<string, EntityId[]> {
+    return structuredClone(this.spec.midiRoutes ?? {});
+  }
+  routeMidi(instance: PluginInstance, destinations: readonly Channel[]): void {
+    this.instances.require(instance, instance.kind);
+    if (!this.project || destinations.some((channel) => !this.project!.channels.includes(channel)))
+      throw new OxitoneError(ErrorCode.EditScopeConflict, "MIDI destinations must belong to this project");
+    const routes = this.midiRoutes;
+    if (destinations.length) routes[instance.id] = destinations.map((channel) => channel.id);
+    else delete routes[instance.id];
+    this.update({ midiRoutes: routes });
+  }
   set mixerChannelId(value: EntityId) {
     this.project?.requireMixerChannel(value);
     this.update({ mixerChannelId: value });
+  }
+
+  /** Instrument auxiliary outputs, before channel inserts; shares this channel's fader and gating. */
+  get outputRoutes(): Record<string, EntityId> {
+    return structuredClone(this.spec.outputRoutes ?? {});
+  }
+  set outputRoutes(value: Readonly<Record<string, EntityId>>) {
+    this.update({ outputRoutes: { ...value } });
   }
 
   /** Linear gain in 0..2. */
@@ -212,12 +241,16 @@ export class Channel {
   private update(patch: Partial<ChannelSpec>): void {
     this.project?.assertMutable();
     const next = parseAuthoring(channelSpecSchema, { ...this.spec, ...patch }, "channel");
+    if (patch.midiRoutes !== undefined && this.project)
+      validateMidiRouting(this.project.channels.map((channel) => (channel === this ? next : channel.toSpec())));
+    for (const destination of Object.values(next.outputRoutes ?? {})) this.project?.requireMixerChannel(destination);
     const refs = this.instances.adopt(
       [next.instrument, ...next.effectChain],
       [this.spec.instrument, ...this.spec.effectChain],
     );
     next.instrument = refs[0]!;
     next.effectChain = refs.slice(1);
+    if (next.midiRoutes !== undefined) next.midiRoutes = retainMidiRoutes(next)!;
     this.spec = next;
     this.configurationSources.update(patch);
     this.project?.touch();

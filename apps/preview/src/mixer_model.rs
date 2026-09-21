@@ -54,7 +54,11 @@ fn build(project: &ViewProject) -> Vec<Strip> {
             .iter()
             .map(|e| EffectSlot {
                 instance: e.instance_id.clone(),
-                name: plugin_name(&e.plugin_id),
+                name: crate::plugin_catalog::display_name(
+                    &project.plugins,
+                    &e.plugin_id,
+                    &e.plugin_version,
+                ),
                 bypass: e.bypass.unwrap_or(false),
             })
             .collect()
@@ -69,7 +73,11 @@ fn build(project: &ViewProject) -> Vec<Strip> {
                 .name
                 .clone()
                 .unwrap_or_else(|| format!("Channel {}", i + 1)),
-            kind: plugin_name(&c.instrument.plugin_id),
+            kind: crate::plugin_catalog::display_name(
+                &project.plugins,
+                &c.instrument.plugin_id,
+                &c.instrument.plugin_version,
+            ),
             instrument: true,
             index: i + 1,
             color_index: s

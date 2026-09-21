@@ -4,7 +4,7 @@ use crate::{document_wire::DocumentOperation, ui::Preview, ui_icons::Icon};
 use gpui::{prelude::*, *};
 
 impl Preview {
-    pub fn plugin_manager(&self, cx: &mut Context<Self>) -> impl IntoElement {
+    pub fn plugin_manager(&self, cx: &mut Context<Self>) -> AnyElement {
         let t = self.theme;
         let state = &self.document.manager;
         let entries = self.library_entries();
@@ -12,6 +12,14 @@ impl Preview {
             .iter()
             .copied()
             .find(|entry| state.selected.as_deref() == Some(&entry.handle));
+        if state.vst3.adding {
+            return crate::vst3_panel::add(self, cx);
+        }
+        if state.section == Some(LibrarySection::Vst3) {
+            if let Some(entry) = selected.filter(|entry| entry.vst3.is_some()) {
+                return crate::vst3_panel::workbench(self, entry, cx);
+            }
+        }
         div()
             .flex_1()
             .min_h_0()
@@ -28,6 +36,15 @@ impl Preview {
                     .items_center()
                     .gap_2()
                     .child(crate::plugin_library::search(self, cx))
+                    .child(t.ghost("plugin-add-vst3", "Add VST3").on_click(cx.listener(
+                        |this, _, _, cx| {
+                            this.document.manager.vst3.adding = true;
+                            this.document.manager.adding = false;
+                            this.document.manager.searching = false;
+                            this.document.manager.vst3.error = None;
+                            cx.notify();
+                        },
+                    )))
                     .child(t.ghost("plugin-add", "Add package").on_click(cx.listener(
                         |this, _, window, cx| {
                             this.document.manager.adding = !this.document.manager.adding;
@@ -92,6 +109,15 @@ impl Preview {
                         },
                     )
                     .child(div().flex_1())
+                    .when(selected.is_some_and(|entry| entry.vst3.is_some()), |d| {
+                        d.child(t.ghost("plugin-vst3-workbench", "Offline tools").on_click(
+                            cx.listener(|this, _, _, cx| {
+                                this.document.manager.vst3.page = 0;
+                                this.toggle_library_section(LibrarySection::Vst3);
+                                cx.notify();
+                            }),
+                        ))
+                    })
                     .when(selected.is_some(), |d| {
                         d.child(
                             t.tool(
@@ -109,6 +135,7 @@ impl Preview {
             .when_some(selected.filter(|_| state.section.is_some()), |d, entry| {
                 d.child(self.plugin_catalog_detail(entry, cx))
             })
+            .into_any_element()
     }
 
     pub(super) fn library_entries(&self) -> Vec<&CatalogEntry> {

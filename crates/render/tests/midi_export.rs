@@ -638,6 +638,7 @@ fn skipped_automation_and_markers_are_reported() {
         start_beat: beat(4, 1),
     }];
     snapshot.automation = vec![AutomationLaneSpec {
+        priority: None,
         playback: None,
         id: "lane_a".into(),
         target: AutomationTarget {

@@ -61,6 +61,7 @@ export const effectRefSchema = z.object({
   pluginVersion: z.string().min(1),
   parameters: z.record(z.string(), z.number().finite()),
   resources: z.record(z.string(), z.string()).optional(),
+  state: z.unknown().optional(),
   bypass: z.boolean().optional(),
   mix: z.number().finite().min(0).max(1).optional(),
 });

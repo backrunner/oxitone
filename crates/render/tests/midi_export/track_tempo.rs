@@ -56,6 +56,7 @@ fn independent_track_audio_and_midi_match_across_effective_clocks() {
             });
             if mode == 3 {
                 s.automation.push(AutomationLaneSpec {
+                    priority: None,
                     playback: None,
                     id: "auto_tempo".into(),
                     target: AutomationTarget {

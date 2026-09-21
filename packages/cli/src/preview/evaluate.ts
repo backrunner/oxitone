@@ -20,6 +20,7 @@ try {
       value?.assetBaseDir ?? project.assetBaseDir ?? module.__oxitoneSourceDirectory ?? dirname(source),
     ),
     plugins: project.registeredPlugins ?? [],
+    vst3Plugins: project.registeredVst3Plugins ?? [],
     allowPlugins: project.pluginPolicy,
     pluginUis: project.registeredPluginUis ?? [],
   });

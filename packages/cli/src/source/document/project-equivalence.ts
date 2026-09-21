@@ -102,7 +102,7 @@ export function assertProjectAutomationEdit(
   }
 }
 export function assertFrameConfiguration(before: PreviewSnapshotFrame, after: PreviewSnapshotFrame): void {
-  for (const field of ["assetBaseDir", "plugins", "allowPlugins", "pluginUis"] as const) {
+  for (const field of ["assetBaseDir", "plugins", "vst3Plugins", "allowPlugins", "pluginUis"] as const) {
     if (JSON.stringify(before[field]) !== JSON.stringify(after[field]))
       throw new OxitoneError(
         ErrorCode.EditScopeConflict,

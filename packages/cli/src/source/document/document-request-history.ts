@@ -14,6 +14,7 @@ type Entry = { fingerprint: string; result: Promise<Response> };
 export class DocumentRequestHistory {
   private readonly results = new Map<string, Entry>();
   private readonly streams = new Map<string, number>();
+  private readonly completed: string[] = [];
   fingerprint(request: DocumentRequest): string {
     return createHash("sha256").update(canonicalEncode(request)).digest("hex");
   }
@@ -41,10 +42,9 @@ export class DocumentRequestHistory {
   remember(id: string, entry: Entry): void {
     this.results.set(id, entry);
   }
-  settle(): void {
-    while (this.results.size > 256) {
-      const id = this.results.keys().next().value!;
-      this.results.delete(id);
-    }
+  settle(id: string): void {
+    this.completed.push(id);
+    // Out-of-order cancellation replies must never evict an unresolved render.
+    while (this.completed.length > 256) this.results.delete(this.completed.shift()!);
   }
 }

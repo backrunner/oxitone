@@ -38,12 +38,72 @@ fn project_snapshot_ignores_unknown_fields() {
 }
 
 #[test]
+fn vst3_and_effect_state_require_13_without_losing_persisted_state() {
+    let original: serde_json::Value =
+        serde_json::from_str(&fixture("project-snapshot.canonical.json")).unwrap();
+    for target in ["instrument", "channel", "bus", "state"] {
+        let mut value = original.clone();
+        let effect = serde_json::json!({
+            "pluginId": if target == "state" { "fixture.effect" } else { "vst3.56455354494741494e30303030303031" },
+            "pluginVersion": "1.0.0", "parameters": {}, "state": {"opaque": "fixture"}
+        });
+        match target {
+            "instrument" => {
+                value["channels"][0]["instrument"]["pluginId"] = effect["pluginId"].clone()
+            }
+            "bus" => value["mixerChannels"][0]["inserts"] = serde_json::json!([effect]),
+            _ => value["channels"][0]["effectChain"] = serde_json::json!([effect]),
+        }
+        for version in ["1.0", "1.1", "1.2"] {
+            value["protocolVersion"] = serde_json::json!(version);
+            let error = decode_project_snapshot(&value.to_string()).unwrap_err();
+            assert_eq!(
+                error.code,
+                codes::PROTOCOL_VERSION_UNSUPPORTED,
+                "{target} {version}"
+            );
+        }
+        value["protocolVersion"] = serde_json::json!("1.3");
+        let snapshot = decode_project_snapshot(&value.to_string()).unwrap();
+        let roundtrip =
+            decode_project_snapshot(&encode_project_snapshot(&snapshot).unwrap()).unwrap();
+        assert_eq!(roundtrip, snapshot);
+    }
+}
+
+#[test]
 fn project_snapshot_rejects_unknown_major_version() {
     let text = fixture("project-snapshot.canonical.json");
     let mut value: serde_json::Value = serde_json::from_str(&text).unwrap();
     value["protocolVersion"] = serde_json::json!("2.0");
     let err = decode_project_snapshot(&serde_json::to_string(&value).unwrap()).unwrap_err();
     assert_eq!(err.code, codes::PROTOCOL_VERSION_UNSUPPORTED);
+}
+
+#[test]
+fn insert_routes_require_16_even_when_empty() {
+    let original: serde_json::Value =
+        serde_json::from_str(&fixture("project-snapshot.canonical.json")).unwrap();
+    for routes in [
+        serde_json::json!({}),
+        serde_json::json!({"fx_fixture":{"inputs":{"1":"mix_source"},"outputs":{"2":"mix_master"}}}),
+    ] {
+        let mut value = original.clone();
+        value["mixerChannels"][0]["insertRoutes"] = routes;
+        value["protocolVersion"] = serde_json::json!("1.5");
+        assert_eq!(
+            decode_project_snapshot(&value.to_string())
+                .unwrap_err()
+                .code,
+            codes::PROTOCOL_VERSION_UNSUPPORTED
+        );
+        value["protocolVersion"] = serde_json::json!("1.6");
+        let snapshot = decode_project_snapshot(&value.to_string()).unwrap();
+        assert_eq!(
+            decode_project_snapshot(&encode_project_snapshot(&snapshot).unwrap()).unwrap(),
+            snapshot
+        );
+    }
 }
 
 #[test]

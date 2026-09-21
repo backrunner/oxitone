@@ -13,8 +13,7 @@ impl Preview {
         cx: &mut Context<Self>,
     ) -> impl IntoElement {
         let t = self.theme;
-        let mut panel = div()
-            .id("plugin-catalog-detail")
+        let frame = div()
             .h(px((self
                 .document
                 .windows
@@ -23,31 +22,51 @@ impl Preview {
                 * 0.35)
                 .clamp(90., 190.)))
             .flex_shrink_0()
+            .flex()
+            .border_t_1()
+            .border_color(rgb(t.border));
+        let mut panel = div()
+            .id("plugin-catalog-detail")
+            .flex_1()
+            .min_w_0()
+            .h_full()
             .overflow_y_scroll()
             .track_scroll(&self.document.manager.details_scroll)
-            .border_t_1()
-            .border_color(rgb(t.border))
             .px_3()
             .py_2()
             .flex()
             .flex_col()
             .gap_2();
+        let scrollbar = crate::scrollbar::view(
+            "plugin-catalog-detail-scrollbar",
+            crate::workspace::Axis::Vertical,
+            &self.document.manager.details_scroll,
+            self,
+            cx,
+        );
         if self.document.manager.section == Some(LibrarySection::Uses) {
-            return panel.child(crate::plugin_usage_list::view(self, entry, cx));
+            return frame
+                .child(panel.child(crate::plugin_usage_list::view(self, entry, cx).flex_shrink_0()))
+                .child(scrollbar);
         }
         if let Some(error) = &entry.diagnostic {
             panel = panel.child(
                 div()
+                    .flex_shrink_0()
                     .text_size(px(11.))
                     .text_color(rgb(t.danger))
                     .child(error.clone()),
             );
         }
-        let mut actions = div().flex().flex_wrap().gap_1();
+        let mut actions = div().flex_shrink_0().flex().flex_wrap().gap_1();
         let mut operations = Vec::new();
         if entry.source != "builtin" && entry.availability == "available" {
             operations.push((
-                "Verify",
+                if entry.source == "vst3" {
+                    "Inspect"
+                } else {
+                    "Verify"
+                },
                 DocumentOperation::VerifyPlugin {
                     plugin: entry.handle.clone(),
                 },
@@ -94,8 +113,12 @@ impl Preview {
                     })),
             );
         }
-        panel
-            .child(actions)
-            .child(crate::plugin_manager_info::information(t, entry))
+        frame
+            .child(
+                panel
+                    .child(actions)
+                    .child(crate::plugin_manager_info::information(t, entry).flex_shrink_0()),
+            )
+            .child(scrollbar)
     }
 }

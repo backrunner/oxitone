@@ -15,6 +15,7 @@ fn err(
 
 fn effect_ref(plugin_id: &str) -> EffectRef {
     EffectRef {
+        state: None,
         instance_id: None,
         plugin_id: plugin_id.to_string(),
         plugin_version: PLUGIN_VERSION.to_string(),
@@ -147,6 +148,24 @@ fn state_requires_a_declared_schema() {
     assert_eq!(e.code, codes::INVALID_PROJECT);
     assert!(e.message.contains("no state schema"), "{}", e.message);
     assert_eq!(e.path.as_deref(), Some("$.channels[0].instrument.state"));
+}
+
+#[test]
+fn effect_state_requires_a_declared_schema_on_channels_and_buses() {
+    for bus in [false, true] {
+        let mut s = base_snapshot();
+        s.protocol_version = "1.3".into();
+        let mut effect = effect_ref(EFFECT_ID);
+        effect.state = Some(json!({"opaque": "must not be discarded"}));
+        if bus {
+            s.mixer_channels[0].inserts.push(effect);
+        } else {
+            s.channels[0].effect_chain.push(effect);
+        }
+        let error = err(&s, &base_registry());
+        assert_eq!(error.code, codes::INVALID_PROJECT);
+        assert!(error.path.unwrap().ends_with(".state"));
+    }
 }
 
 #[test]

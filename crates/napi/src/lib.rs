@@ -29,11 +29,20 @@ mod playback;
 mod plugins;
 mod samples;
 mod timing;
+mod vst3;
+mod vst3_control;
 pub use plugins::{get_plugin_diagnostics, get_plugin_info, register_plugin};
 pub use samples::inspect_sample;
 pub use timing::resolve_beat_duration;
+pub use vst3::register_vst3;
+pub use vst3_control::{control_vst3_instance, get_vst3_instances};
 
 struct EngineState {
+    #[cfg(target_os = "macos")]
+    vst3_plugins: std::collections::BTreeMap<
+        (String, String),
+        std::sync::Arc<oxitone_render::vst3::Vst3Plugin>,
+    >,
     plugins: oxitone_graph::PluginRegistry,
     dynamic_plugins: std::collections::BTreeMap<
         (String, String),
@@ -47,6 +56,7 @@ struct EngineState {
     /// `oxitone-render`). While a realtime session is running the graph is
     /// owned by the session's render worker and this is `None`.
     graph: Option<RenderGraph>,
+    controls: Option<oxitone_render::plugin_controls::ControlRegistry>,
     /// Live realtime playback session (created by the first `play`).
     session: Option<RealtimeSession>,
     /// Immutable parameter-target snapshot matching the session's graph;
@@ -124,11 +134,14 @@ pub fn create_engine(options_json: Option<String>) -> napi::Result<String> {
         lock_registry().insert(
             id.clone(),
             EngineState {
+                #[cfg(target_os = "macos")]
+                vst3_plugins: Default::default(),
                 plugins: builtin_registry()?,
                 dynamic_plugins: Default::default(),
                 options,
                 last_revision: None,
                 graph: None,
+                controls: None,
                 session: None,
                 param_index: None,
                 parameter_events: Vec::new(),
@@ -234,6 +247,7 @@ pub fn compile_with_options(
             .get_mut(&engine_id)
             .ok_or_else(|| unknown_engine(&engine_id))?;
         let param_index = ParamTargetIndex::from_graph(&graph);
+        let controls = graph.plugin_controls();
         if let Some(session) = engine.session.as_ref() {
             session.replace_graph(Box::new(graph))?;
             engine.graph = None;
@@ -243,8 +257,10 @@ pub fn compile_with_options(
                 graph.transport_mut().state = previous.transport().state;
                 graph.transport_mut().loop_region = previous.transport().loop_region;
             }
+            graph.activate_plugin_controls();
             engine.graph = Some(graph);
         }
+        engine.controls = Some(controls);
         engine.last_revision = Some(snapshot.revision);
         engine.param_index = Some(param_index);
         engine.parameter_events.clear();
@@ -940,6 +956,8 @@ mod tests {
             enabled: None,
         });
         snapshot.channels.push(ChannelSpec {
+            output_routes: None,
+            midi_routes: None,
             id: "chn_a".into(),
             name: None,
             instrument: InstrumentRef {

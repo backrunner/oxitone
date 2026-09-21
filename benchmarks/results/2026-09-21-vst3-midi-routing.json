@@ -1,0 +1,80 @@
+{
+  "streamProtocolVersion": 9,
+  "packets": 400,
+  "sampleRate": 48000,
+  "blockSize": 128,
+  "device": null,
+  "channelAndOffsets": true,
+  "resetNoStaleEvents": true,
+  "disabledCapture": true,
+  "overflowFault": true,
+  "invalidOutputFault": true,
+  "roundtripP95Micros": 325.45799999999997,
+  "roundtripP99Micros": 539.917,
+  "callbackP95Ms": null,
+  "callbackP99Ms": null,
+  "diagnostics": {
+    "completedBlocks": 402,
+    "maximumIdleWaitMs": 0.21875,
+    "maximumSendMs": 0.016541,
+    "maximumReplyWaitMs": 0.063416,
+    "maximumHelperProcessingMs": 0.017,
+    "workerTimeConstraint": true,
+    "helperTimeConstraint": true
+  },
+  "simulated": {
+    "state": "stopped",
+    "cursor": "0",
+    "blocks": 377,
+    "deadlineMisses": 0,
+    "xruns": 0,
+    "nanBlocks": 0,
+    "queueDrops": 0,
+    "performanceWarnings": 0,
+    "engineLoad": 0.21170248412199005,
+    "ringOccupancyFrames": 2048,
+    "blockTimeNs": {
+      "p50": 1048576,
+      "p95": 1048576,
+      "p99": 2097152,
+      "max": 2097152
+    },
+    "events": [
+      {
+        "code": "ModeFallback",
+        "severity": "warning",
+        "frame": "0",
+        "message": "direct mode requires callback-safe plugins, matching sample rates and block sizes; using buffered mode"
+      }
+    ]
+  },
+  "checks": [
+    {
+      "peakError": 0,
+      "samples": 48000
+    },
+    {
+      "peakError": 1.401298464324817e-45,
+      "samples": 48000
+    },
+    {
+      "peakError": 0,
+      "samples": 48000
+    },
+    {
+      "peakError": 0,
+      "samples": 48000
+    }
+  ],
+  "insertMidi": true,
+  "rejectedMissingCapability": true,
+  "date": "2026-09-21T06:52:26.017Z",
+  "cpu": "Apple M4",
+  "os": "darwin 27.0.0",
+  "sourceTransactions": {
+    "configurationEdit": true,
+    "undoRedo": true,
+    "saveReopen": true,
+    "stableRoutes": true
+  }
+}

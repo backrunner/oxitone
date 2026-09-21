@@ -1,0 +1,29 @@
+{
+  "name": "@oxitone/vst3-host-darwin-arm64",
+  "version": "0.1.0",
+  "description": "Isolated Oxitone VST3 helper for macOS Apple Silicon",
+  "license": "MPL-2.0",
+  "bin": {
+    "oxitone-vst3-host-darwin-arm64": "bin/oxitone-vst3-host"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "exports": {
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "bin",
+    "LICENSES"
+  ],
+  "scripts": {
+    "build": "node ../../scripts/build-vst3-host.mjs arm64",
+    "prepack": "node ../../scripts/build-vst3-host.mjs arm64 --check"
+  }
+}

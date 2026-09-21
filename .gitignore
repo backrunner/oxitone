@@ -2,6 +2,8 @@ node_modules/
 dist/
 target/
 *.node
+packages/vst3-host-darwin-*/bin/
+packages/vst3-host-darwin-*/LICENSES/
 crates/napi/index.js
 crates/napi/index.d.ts
 packages/native-generated/index.js

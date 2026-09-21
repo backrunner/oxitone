@@ -14,6 +14,7 @@ use oxitone_render::{builtin_registry, SampleStore};
 
 fn tempo_lane(id: &str, project: &str, source: AutomationSourceSpec) -> AutomationLaneSpec {
     AutomationLaneSpec {
+        priority: None,
         playback: None,
         id: id.into(),
         target: AutomationTarget {

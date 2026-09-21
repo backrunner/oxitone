@@ -74,6 +74,10 @@ export {
 export { createAutomationNamespace } from "./automation/namespace.js";
 export type { AutomationNamespace, AutomationPointInput, GateOptions, WaveOptions } from "./automation/namespace.js";
 export { AutomationLane } from "./automation/lane.js";
+export { Vst3AutomationRecorder } from "./engine/vst3-recording.js";
+export type { Vst3RecordingOptions, Vst3RecordingHost } from "./engine/vst3-recording.js";
+export type { Vst3AutomationTake } from "./automation/recording-take.js";
+export type { Vst3RecordedSpan } from "./automation/recording-source.js";
 export { AutomationClip } from "./automation/clip.js";
 export type {
   AutomationCombine,
@@ -88,7 +92,16 @@ export type {
   EffectParameters,
   InstrumentRef,
   EffectRef,
+  InsertRouting,
+  Vst3InstanceTarget,
+  Vst3InstanceInventory,
+  Vst3InstanceResult,
+  Vst3ControlCommand,
+  Vst3EditPage,
+  Vst3EditPosition,
+  Vst3ParameterEdit,
   ProjectEdit,
+  ProjectAudioImport,
   ArrangementEdit,
   ChanceOptions,
   WaveKind,

@@ -1,13 +1,15 @@
 import { createRequire } from "node:module";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
+import { applyEmittedFixes } from "./emitted-fixes.js";
 
 /**
  * Best-effort `eslint --fix` over an emitted candidate. The project's own
  * eslint installation (and therefore its flat config and plugins) wins; the
  * workspace's eslint is only a fallback for projects that share it. A file
  * eslint cannot parse, ignores, or would already fix before the edit is left
- * untouched, so fixes stay confined to the emitted span.
+ * untouched. Each fix is additionally restricted to newly emitted text;
+ * edits can make previously clean imports or other source newly fixable.
  */
 
 type ESLint = import("eslint").ESLint;
@@ -19,13 +21,13 @@ async function create(projectRoot: string): Promise<ESLint | null> {
   try {
     const entry = createRequire(join(projectRoot, "package.json")).resolve("eslint");
     const module = (await import(pathToFileURL(entry).href)) as { ESLint?: new (o: object) => ESLint };
-    if (module.ESLint) return new module.ESLint({ cwd: projectRoot, fix: true });
+    if (module.ESLint) return new module.ESLint({ cwd: projectRoot, fix: false });
   } catch {
     /* The project does not install eslint. */
   }
   try {
     const module = await import("eslint");
-    return new module.ESLint({ cwd: projectRoot, fix: true });
+    return new module.ESLint({ cwd: projectRoot, fix: false });
   } catch {
     return null;
   }
@@ -67,6 +69,15 @@ export async function lintSourceCandidate(
     instances.set(projectRoot, Promise.resolve(null));
     return candidate;
   }
-  if (original.output !== undefined || original.messages.some((message) => message.fatal)) return candidate;
-  return (await lint(eslint, fileName, candidate))?.output ?? candidate;
+  if (original.messages.some((message) => message.fix || message.fatal)) return candidate;
+  let result = candidate;
+  for (let pass = 0; pass < 10; pass++) {
+    const checked = await lint(eslint, fileName, result);
+    if (!checked || checked.messages.some((message) => message.fatal)) return candidate;
+    if (!checked.messages.some((message) => message.fix)) break;
+    const next = applyEmittedFixes(before, result, checked.messages);
+    if (next === result) break;
+    result = next;
+  }
+  return result;
 }

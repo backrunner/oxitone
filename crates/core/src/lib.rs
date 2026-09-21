@@ -7,6 +7,7 @@ pub mod beat;
 pub mod canonical;
 pub mod error;
 pub mod id;
+pub mod midi_bytes;
 pub mod pcg32;
 pub mod version;
 pub mod wire;

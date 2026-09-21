@@ -1,4 +1,4 @@
-import { compile, createEngine, dispose, registerPlugin } from "@oxitone/native";
+import { compile, createEngine, dispose, registerPlugin, registerVst3 } from "@oxitone/native";
 import { engineOptionsSchema, type PreviewSnapshotFrame } from "@oxitone/protocol";
 import { sourceSpan } from "../eval/source-timing.js";
 
@@ -15,6 +15,7 @@ export function validateProjectFrame(frame: PreviewSnapshotFrame): void {
     );
     try {
       for (const plugin of frame.plugins) registerPlugin(engine, plugin);
+      for (const plugin of frame.vst3Plugins) registerVst3(engine, plugin);
       compile(engine, frame.snapshot, { assetBaseDir: frame.assetBaseDir });
     } finally {
       dispose(engine);

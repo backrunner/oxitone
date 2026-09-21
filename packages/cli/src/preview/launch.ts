@@ -10,6 +10,7 @@ import { previewResponseSchema, type PreviewFrame, type DocumentRequest } from "
 import { FrameDecoder, encodeFrame } from "./framing.js";
 import { PreviewRunner, type RunnerOptions } from "./runner.js";
 import { DawRunner } from "./daw-runner.js";
+import { PreviewVst3Client } from "./vst3-client.js";
 
 export interface PreviewOptions extends RunnerOptions {
   viewer?: string;
@@ -112,7 +113,8 @@ export class PreviewConnection {
           if (this.requireDocumentProtocol && response.type === "state" && response.documentProtocolVersion !== "2.0") {
             throw new Error("DAW requires a viewer supporting document protocol 2.0; rebuild oxitone-preview");
           }
-          if (response.documentRequests?.length) this.documentRequests(response.documentRequests);
+          if ("documentRequests" in response && response.documentRequests?.length)
+            this.documentRequests(response.documentRequests);
           if (response.type === "rejected") {
             console.error(`[${response.code}] ${response.message}`);
             if (this.inFlight?.type === "snapshot") this.rejected(this.inFlight.snapshot.revision);
@@ -227,6 +229,7 @@ export async function launchPreview(entry: string, options: PreviewOptions = {})
       daw = new DawRunner(entry, send, {
         ...options,
         documentSocket: options.documentSocket ?? join(directory, "document"),
+        vst3Runtime: new PreviewVst3Client(path),
       });
       await daw.start();
     } else {

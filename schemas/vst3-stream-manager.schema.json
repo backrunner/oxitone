@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "managerVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "sampleRate": {
+      "type": "integer",
+      "minimum": 8000,
+      "maximum": 192000
+    },
+    "blockSize": {
+      "type": "integer",
+      "minimum": 16,
+      "maximum": 4096
+    },
+    "capacity": {
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 16
+    }
+  },
+  "required": [
+    "managerVersion",
+    "sampleRate",
+    "blockSize",
+    "capacity"
+  ],
+  "additionalProperties": false
+}

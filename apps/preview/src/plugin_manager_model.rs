@@ -49,15 +49,18 @@ pub struct CatalogEntry {
     pub(super) library_path: Option<String>,
     pub(super) sha256: Option<String>,
     pub(super) parameters: Vec<oxitone_core::wire::ParameterSpec>,
+    pub(super) vst3: Option<crate::vst3_model::Catalog>,
     pub(super) usages: Vec<Usage>,
 }
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum LibrarySection {
     Uses,
     Details,
+    Vst3,
 }
 #[derive(Default)]
 pub struct ManagerUi {
+    pub vst3: crate::vst3_model::WorkbenchUi,
     pub assignment: Option<crate::plugin_picker::Slot>,
     pub assignment_pending: bool,
     pub details_scroll: ScrollHandle,

@@ -89,8 +89,8 @@ pub fn view(
                         .mt_1()
                         .text_size(px(9.))
                         .text_color(rgb(theme.muted))
-                        .child(if r.kind == RouteKind::Output {
-                            "Direct output".into()
+                        .child(if r.is_output() {
+                            r.label()
                         } else {
                             format!("{} · {:.0}%", r.tap(), r.ratio * 100.)
                         }),

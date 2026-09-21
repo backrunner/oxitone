@@ -50,6 +50,7 @@ fn placement(id: &str, start: i64, duration: i64) -> AutomationClipSpec {
 }
 fn automate(s: &mut ProjectSnapshot, parameter: &str, source: AutomationSourceSpec) {
     s.automation.push(AutomationLaneSpec {
+        priority: None,
         id: "auto_a".into(),
         target: AutomationTarget {
             entity_id: "chn_a".into(),
@@ -186,6 +187,14 @@ fn automation_changes_pcm_only_in_placed_range_across_block_sizes() {
     s.patterns[0].notes[0].duration = beat(4, 1);
     s.channels[1].mute = Some(true);
     automate(&mut s, "mute", AutomationSourceSpec::Constant { value: 1. });
+    // Higher-priority recording overrides a default-combine global lane only inside its clip.
+    s.automation[0].priority = Some(1);
+    let mut base = s.automation[0].clone();
+    base.id = "auto_z_base".into();
+    base.priority = None;
+    base.playback = None;
+    base.source = AutomationSourceSpec::Constant { value: 0. };
+    s.automation.push(base);
     let mut clip = placement("acl_a", 1, 1);
     // Deliberately not aligned to a block.
     clip.start_beat = beat(101, 100);

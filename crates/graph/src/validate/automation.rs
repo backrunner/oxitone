@@ -46,9 +46,10 @@ fn resolve_target(
                 });
         }
         let descriptor = registry
-            .lookup_descriptor(
+            .instance_descriptor(
                 &channel.instrument.plugin_id,
                 &channel.instrument.plugin_version,
+                channel.instrument.instance_id.as_deref(),
             )
             .expect("instrument references are validated before automation");
         debug_assert_eq!(descriptor.kind, PluginKind::Instrument);
@@ -227,7 +228,10 @@ pub(super) fn validate_automation(
             .map(|(target, _)| target)
         };
         if let Some(target) = target {
-            lanes_per_target.entry(target).or_default().push(i);
+            lanes_per_target
+                .entry((target, lane.priority.unwrap_or(0)))
+                .or_default()
+                .push(i);
         }
     }
 
@@ -262,7 +266,7 @@ pub(super) fn validate_automation(
         {
             return Err(OxitoneError::with_path(
                 codes::AUTOMATION_TARGET_INVALID,
-                format!("multiple lanes target {target:?}; every lane must declare combine"),
+                format!("multiple lanes share target and priority {target:?}; every lane must declare combine"),
                 format!("$.automation[{}].combine", lanes[0]),
             ));
         }

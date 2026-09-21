@@ -1,0 +1,86 @@
+[package]
+name = "oxitone-vst3-host"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[features]
+default = []
+host = ["dep:vst3-host", "dep:hound", "dep:objc2", "dep:objc2-app-kit", "dep:objc2-foundation"]
+stream = ["dep:crossbeam-queue", "dep:libc"]
+
+[[bin]]
+name = "oxitone-vst3-host"
+path = "src/main.rs"
+required-features = ["host"]
+
+[[example]]
+name = "vst3-stream-probe"
+path = "examples/stream_probe.rs"
+required-features = ["stream"]
+
+[[example]]
+name = "vst3-schedule-probe"
+path = "examples/schedule_probe.rs"
+required-features = ["stream"]
+
+[[example]]
+name = "vst3-managed-probe"
+path = "examples/managed_probe.rs"
+required-features = ["stream"]
+
+[dependencies]
+oxitone-core = { path = "../core" }
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+base64 = "0.22"
+vst3-host = { path = "../../vendor/vst3-host", version = "=0.9.0", default-features = false, optional = true }
+hound = { version = "3.5", optional = true }
+crossbeam-queue = { version = "0.3", optional = true }
+libc = { version = "0.2", optional = true }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = { version = "0.6", optional = true }
+objc2-app-kit = { version = "0.3.2", optional = true, features = ["NSApplication", "NSWindow", "NSView", "NSResponder", "NSGraphics", "NSEvent", "NSButton", "NSControl"] }
+objc2-foundation = { version = "0.3", optional = true, features = ["NSString", "NSGeometry", "NSDate", "NSRunLoop"] }
+
+[[example]]
+name = "vst3-transport-probe"
+path = "examples/transport_probe.rs"
+required-features = ["stream"]
+[[example]]
+name = "vst3-bus-probe"
+path = "examples/bus_probe.rs"
+required-features = ["stream"]
+
+[[example]]
+name = "vst3-midi-probe"
+path = "examples/midi_probe.rs"
+required-features = ["stream"]
+
+[[example]]
+name = "vst3-control-probe"
+path = "examples/control_probe.rs"
+required-features = ["stream"]
+
+[[example]]
+name = "vst3-control-state-probe"
+path = "examples/control_state_probe.rs"
+required-features = ["stream"]
+
+[[example]]
+name = "vst3-edit-probe"
+path = "examples/edit_probe.rs"
+required-features = ["stream"]
+
+[[example]]
+name = "vst3-recording-probe"
+path = "examples/recording_probe.rs"
+required-features = ["stream"]
+
+[[example]]
+name = "vst3-restart-probe"
+path = "examples/restart_probe.rs"
+required-features = ["stream"]

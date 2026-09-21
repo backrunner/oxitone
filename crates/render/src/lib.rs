@@ -15,9 +15,11 @@
 pub mod assets;
 pub mod bindings;
 pub mod build;
+mod build_instrument;
 pub mod build_plugins;
 pub mod channel;
 pub mod clip;
+mod configured_registry;
 pub mod dispatch;
 pub mod effect_targets;
 pub mod graph;
@@ -25,9 +27,11 @@ mod insert;
 pub mod loudness;
 pub mod metronome;
 pub mod midi;
+mod output_route;
 mod param_index;
 pub mod params;
 pub mod player;
+pub mod plugin_controls;
 pub mod plugins;
 pub mod preview;
 #[cfg(not(target_family = "wasm"))]
@@ -37,6 +41,8 @@ pub mod render_wav;
 pub mod ring;
 mod slicer_tempo;
 pub mod transport;
+#[cfg(target_os = "macos")]
+pub mod vst3;
 pub mod wav;
 
 use std::sync::Arc;

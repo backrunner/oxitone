@@ -238,6 +238,7 @@ impl WorkerCore {
         channels: usize,
         dev_block_frames: usize,
     ) -> Self {
+        graph.controls.activate();
         let block_size = graph.block_size();
         let deadline = Duration::from_secs_f64(block_size as f64 / graph.sample_rate());
         Self {
@@ -284,12 +285,14 @@ impl WorkerCore {
             }
             WorkerMsg::ReplaceGraph(mut graph) => {
                 if let Some(old) = self.graph.as_ref() {
+                    old.controls.retire();
                     graph.transport.state = old.transport.state;
                     graph.seek(old.transport.cursor);
                     graph.eval_ctx = old.eval_ctx;
                     graph.transport.loop_region = old.transport.loop_region;
                 }
                 self.fault_latched = false;
+                graph.controls.activate();
                 let state = graph.state();
                 let cursor = graph.transport().cursor;
                 if let Some(old) = self.graph.replace(graph) {
@@ -324,7 +327,16 @@ impl WorkerCore {
             return;
         };
         let started = Instant::now();
-        graph.process_block(&mut self.block_left, &mut self.block_right);
+        if let Err(error) =
+            graph.process_isolated_block(&mut self.block_left, &mut self.block_right)
+        {
+            push_event(DiagnosticEvent::new(
+                event_codes::REALTIME_FAULT,
+                Severity::Error,
+                graph.transport().cursor,
+                &error.message,
+            ));
+        }
         counters.blocks.fetch_add(1, Ordering::Relaxed);
 
         if graph.faulted() && !self.fault_latched {

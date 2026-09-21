@@ -1,0 +1,86 @@
+{
+  "date": "2026-09-19T20:43:38.476Z",
+  "cpu": "Apple M4",
+  "os": "darwin 27.0.0",
+  "profile": "release",
+  "sampleRate": 48000,
+  "blockSize": 128,
+  "device": "simulated stereo sink",
+  "callbackP95": null,
+  "callbackP99": null,
+  "results": {
+    "playing": {
+      "state": "playing",
+      "cursor": "1600",
+      "blocks": 216,
+      "deadlineMisses": 0,
+      "xruns": 0,
+      "nanBlocks": 0,
+      "queueDrops": 0,
+      "performanceWarnings": 0,
+      "engineLoad": 0.16231492407882997,
+      "ringOccupancyFrames": 2048,
+      "blockTimeNs": {
+        "p50": 524288,
+        "p95": 1048576,
+        "p99": 1048576,
+        "max": 1048576
+      },
+      "events": []
+    },
+    "acceptedPcm": {
+      "peakError": 1.473524918402247e-9,
+      "samples": 48000
+    },
+    "control": {
+      "operation": "SDK setParameter plus capture during simulated playback",
+      "warmup": 3,
+      "samplesMs": [
+        0.34762499999999363,
+        0.43895900000006804,
+        0.46612499999991996,
+        0.44708300000002055,
+        0.4051249999999982,
+        0.4400420000001759,
+        0.3494579999999132,
+        0.35637500000007094,
+        0.343375000000151,
+        0.37779199999999946,
+        0.4372080000000551,
+        0.3267920000000686,
+        0.2908749999999145,
+        0.4267090000000735,
+        0.4405420000000504,
+        0.44116600000006656,
+        0.42066600000021026,
+        0.3047079999998914,
+        0.3305000000000291,
+        0.3637499999999818,
+        0.2999590000001717,
+        0.2910420000000613,
+        0.26633300000003146,
+        0.22491600000012113,
+        0.25308300000006057,
+        0.22208299999988412,
+        0.2983750000000782,
+        0.2891669999999067,
+        0.26079200000003766,
+        0.2776659999999538
+      ],
+      "p95Ms": 0.44708300000002055,
+      "p99Ms": 0.46612499999991996
+    },
+    "checks": [
+      "threeIndependentInstances",
+      "preplayEditSurvivesFirstBlock",
+      "liveCapture",
+      "sourceUnchangedByAudition",
+      "offlineUsesSource",
+      "capturedStateAccepted",
+      "reorderByStableId",
+      "stalePromiseRejected",
+      "failedCompilePreservesTarget",
+      "deletedInstanceRejected"
+    ]
+  }
+}

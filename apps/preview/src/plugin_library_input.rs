@@ -13,6 +13,7 @@ impl Preview {
             .position(|entry| entry.handle == handle);
         let state = &mut self.document.manager;
         if state.selected.as_ref() != Some(&handle) {
+            state.vst3.input = None;
             state.section = None;
             state.details_scroll.set_offset(point(px(0.), px(0.)));
         }
@@ -53,8 +54,26 @@ impl Preview {
         if !self.document.manager.open || self.document.windows.front() != Some(WindowId::Plugins) {
             return false;
         }
+        if self.vst3_key(event, cx) {
+            return true;
+        }
         let key = &event.keystroke;
         let command = key.modifiers.platform || key.modifiers.control;
+        if self.document.manager.vst3.adding
+            || self.document.manager.section == Some(LibrarySection::Vst3)
+        {
+            if command && matches!(key.key.as_str(), "s" | "z" | "w") {
+                return false;
+            }
+            if key.key == "escape" {
+                self.document.manager.vst3.adding = false;
+                self.document.manager.section = None;
+            }
+            // The library list is hidden; arrows and Return must not change its selection.
+            cx.stop_propagation();
+            cx.notify();
+            return true;
+        }
         if command && key.key == "f" {
             self.document.manager.searching = true;
             self.document.manager.adding = false;

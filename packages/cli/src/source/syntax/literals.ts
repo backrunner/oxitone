@@ -17,9 +17,11 @@ export function readLiteral(node: ts.Expression): unknown {
   if (ts.isObjectLiteralExpression(node)) {
     const result: Record<string, unknown> = Object.create(null) as Record<string, unknown>;
     for (const property of node.properties) {
-      if (!ts.isPropertyAssignment(property) || !(ts.isIdentifier(property.name) || ts.isStringLiteral(property.name)))
+      if (!ts.isPropertyAssignment(property)) throw new Error("non-literal property");
+      const name = ts.isComputedPropertyName(property.name) ? property.name.expression : property.name;
+      if (!(ts.isStringLiteral(name) || (!ts.isComputedPropertyName(property.name) && ts.isIdentifier(name))))
         throw new Error("non-literal property");
-      const key = property.name.text;
+      const key = name.text;
       if (key === "__proto__" || Object.hasOwn(result, key)) throw new Error("ambiguous literal property");
       result[key] = readLiteral(property.initializer);
     }

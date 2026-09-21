@@ -51,6 +51,7 @@ impl ViewProject {
                     parameter: self.plugin_parameter_label(
                         &instrument.plugin_id,
                         &instrument.plugin_version,
+                        instrument.instance_id.as_deref(),
                         parameter,
                     ),
                 };
@@ -160,16 +161,27 @@ impl ViewProject {
                     _ => parameter.into(),
                 }
             } else {
-                self.plugin_parameter_label(&effect.plugin_id, &effect.plugin_version, parameter)
+                self.plugin_parameter_label(
+                    &effect.plugin_id,
+                    &effect.plugin_version,
+                    effect.instance_id.as_deref(),
+                    parameter,
+                )
             },
         })
     }
 
-    fn plugin_parameter_label(&self, id: &str, version: &str, parameter: &str) -> String {
+    fn plugin_parameter_label(
+        &self,
+        id: &str,
+        version: &str,
+        instance: Option<&str>,
+        parameter: &str,
+    ) -> String {
         self.plugins
             .get(&(id.into(), version.into()))
             .and_then(|info| {
-                info.descriptor
+                info.descriptor_for(instance)
                     .parameters
                     .iter()
                     .find(|spec| spec.id == parameter)

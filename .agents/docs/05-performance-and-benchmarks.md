@@ -15,6 +15,101 @@
 
 ## 必备 benchmark
 
+- `vst3-midi`：`node scripts/smoke-vst3-midi.mjs` 使用真实 VST3 fixture 和 400 次原生
+  port 往返，覆盖通道消息、sample offset、reset、溢出和非法输出；工程离线 PCM 对拍
+  验证依赖排序、扇出、静音、insert 输出与保存恢复，源码事务验证 Undo/Redo/Save/reopen。
+  另包含 400 次 MIDI-only 往返和 400 次满载 SysEx 往返：每包 4 × 4096 bytes，保留
+  0/13/63/127 帧位置；验证输出指针失效后的字节所有权、reset 和格式/预算故障。
+  SysEx 图覆盖透传到音源、扇出、mute、保存恢复与独立 WAV 输入。
+  模拟 sink 验证 loop/seek/stop 与故障计数；记录 IPC p95/p99，设备 callback 指标为 null。
+  `OXITONE_VST3_MIDI_REPORT` 指定报告。macOS arm64/x64 CI 均运行，不打开系统音频输出。
+
+- `vst3-installed-instrument`：`node scripts/smoke-vst3-instrument.mjs` 用显式安装的
+  Vesti MIDI Synth + VestiGain，验证音符释放、复音、效果器增益、独立参数、运行中捕获、
+  显式接受状态与保存恢复的 PCM。48 kHz/128 frames/stereo、16 块 render-ahead，
+  模拟 loop/seek/pause/resume/stop 的诊断与插件故障均检查；设备 callback 指标为 null。
+  `OXITONE_VST3_INSTRUMENT_REPORT` 指定报告，不替代任意商业音源资源和长负载验收。
+
+- `vst3-daw-recording`：`node scripts/smoke-vst3-recording-daw.mjs` 使用已经构建的
+  Recording Gain fixture/helper 与真实 headless Preview，验证可编辑曲线、原生包时钟的
+  独立 PCM、Undo/Redo/Save、完整 take 重试、取消及源码失效；不测 callback 时延。
+  `OXITONE_VST3_RECORDING_DAW_REPORT` 指定结果，`OXITONE_VST3_VIEWER` 可选 release
+  Preview。该脚本必须在 workspace/Preview/fixture 构建之后运行。
+
+- `vst3-recording`：`node scripts/smoke-vst3-edits.mjs --benchmark` 使用源构建 Recording Gain
+  实际 helper，48 kHz/128 frames/stereo，Write 覆盖一个参数，入站自动化每包交替变化。
+  100 包预热、1000 包测量、每 32 包确认一次日志，复核每个 PCM 样本与 1100 个 sample
+  事件。记录 submit→receive IPC 往返原始样本和 p95/p99，poll 使用 yield_now，收页在
+  计时区外。还包含 SDK 模拟 sink 的录制/seek/Source/WAV/save-reopen conformance。
+  OXITONE_VST3_EDITS_REPORT 指定报告；不是设备 callback、高参数密度或厂商 GUI 负载验收。
+
+- `vst3-live-instance`：`node scripts/smoke-vst3-instance.mjs` 使用本地 VestiGain 与真实
+  Project/N-API 图实例，48 kHz/128 帧、3 个 insert、模拟 sink、16 块 render-ahead。
+  3 次预热、30 次 setParameter + capture，记录 SDK Promise 往返 p95/p99 与同段模拟
+  render worker diagnostics，测试首块值保持、独立实例、捕获写入工程后的 PCM、旧图
+  Promise 拒绝及失败编译保留目标。OXITONE_VST3_INSTANCE_REPORT 指定报告；无厂商
+  GUI 交互、设备 callback 或 CPU utilization 验证，不代替长负载与性能基线回归。
+
+- `vst3-multibus`：`node scripts/smoke-vst3-buses.mjs` 编译真实 VST3 fixture，验证
+  1600 块、48 kHz、最大 128 帧，主输入/mono 侧链、多输出、中间 inactive slot、显式激活、
+  短段和 reset。报告各场景 IPC p95/p99；设备/callback/xrun 为 null，不代表设备期限保证。
+  同时通过 native Project 验证侧链发送量、静音 detector、旁路和保存恢复的 PCM；
+  三输出乐器覆盖独立路由、共用 fader/mute、关闭/切换路由、mixer/Track stems、逐样本
+  保存恢复及模拟 sink 的 loop/换图/seek。IPC 数据与模拟 sink diagnostics 分开记录。
+  `OXITONE_VST3_BUS_REPORT` 指定报告；两个 macOS 架构 CI 均运行无设备测试。
+
+- `vst3-project-integration`：`node scripts/smoke-vst3-project.mjs` 用实际 VestiGain 验证
+  stereo 工程 PCM、两级 insert、Master、干湿/bypass、非块对齐自动化、配置保存恢复，以及
+  模拟 sink 的 direct→buffered 回退、pause/seek/短循环/stop。48 kHz、128 帧，明确记录
+  background render block 直方图、xruns/deadlineMisses 和插件 faults；这不是设备 callback
+  或听音。2026-09-20 的 stream 5 轻量 reset 后记录与原始数据见
+  [集成记录](../reports/2026-09-20-vst3-engine-editor-integration.md)。
+
+- `vst3-managed-lifecycle`：release 构建 `oxitone-vst3-host --features host,stream` 与
+  `vst3-managed-probe`，显式 fixture 下执行 `node scripts/smoke-vst3.mjs --managed`。
+  48 kHz/128 帧/stereo，manager capacity=2、queueDepth=4、latencyBlocks=2；32 次实例
+  激活，每 epoch 40 块、每周期 17+111 帧，前 2 个 epoch 预热。记录 prepare、activate、
+  process、reclaim、shutdown 和实际 caller interval，逐帧验证旧 epoch PCM 隔离并复核
+  32 个 helper 全部退出。`OXITONE_VST3_MANAGED_REPORT` 指定 JSON。控制准备在每个新
+  epoch 之前完成；可用 `OXITONE_VST3_MANAGED_LATENCY_BLOCKS` 显式改变延迟 2…16 块，
+  queueDepth 随之取 max(4,latencyBlocks)，保留各配置的通过与失败数据。
+  每 epoch 记录 IO 空闲等待/发送/响应等待与 helper 处理的最大墙钟耗时、完成块数和两条
+  线程的 time-constraint 申请结果。`OXITONE_VST3_LOAD_THREADS=0…64` 可附加普通 CPU
+  忙线程（默认 0）；记录实际线程数，结束或异常时 join，最长 45 秒自停。压力前后使用
+  相同延迟，不能靠扩大缓冲隐藏迟到。普通调用线程可能也被延迟，须一起检查 caller interval。
+  无设备，不能将结果当作并发工程编译/设备 callback/PDC 验收。
+
+- `vst3-fixed-schedule`：release 构建 `oxitone-vst3-host --features host,stream` 和
+  `vst3-schedule-probe` example，显式 fixture 下执行 `node scripts/smoke-vst3.mjs --schedule`。
+  48 kHz/128 帧、每周期拆成 17+111 帧，显式 latencyBlocks=2（256 帧）、queueDepth=4。
+  100 周期预热、1000 周期测量，记录每段 process p95/p99、原始耗时、caller interval 和
+  deadlineMisses；逐帧校验 stereo 信号与两次全新 epoch 的启动静音。失败也先写报告。
+  `OXITONE_VST3_SCHEDULE_REPORT` 指定 JSON 路径。调用方用普通线程尽力按周期唤醒，不
+  补拉错过的周期；测量的是调度方法成本和 PCM 对齐，不是 HAL callback、全图 PDC 或
+  音频设备 deadline 验收。CPU 占用、device、callback 耗时和 xruns 未测填 null。
+
+- `vst3-transport-context`：`node scripts/smoke-vst3-transport.mjs` 构建仓库内 VST3 fixture，
+  48 kHz、最大 128 帧，400 块交错 1/7/17/111/128 帧；PCM 编码插件实际处理计数及
+  ProcessContext，验证初始位置、逐块跳转、暂停续块、tempo/meter、cycle 标志和短块时钟。
+  stream 5 另覆盖 79 次段首 DSP reset，processor 内部计数清零而 sequence/连续帧保持。
+  `OXITONE_VST3_TRANSPORT_REPORT` 指定 JSON。仅测无设备 IPC 往返；callback p95/p99、
+  CPU 占用率与 xruns 不适用，不能替代 Engine/设备验收。
+- `vst3-native-stream`：release 构建 `oxitone-vst3-host --features host,stream` 和
+  `vst3-stream-probe` example，然后在显式 `OXITONE_VST3_FIXTURE` 下运行
+  `node scripts/smoke-vst3.mjs --stream`。100 次预热、1000 次计时，48 kHz/128 帧、
+  stereo 0.25 输入、bypass=1，分别记录实时端 submit/receive 和队列/helper 整体往返。
+  probe 另验证短块、4 块并发排队、两次进程重建和 close/reap。调用方忙轮询，不创建设备；
+  这些数字不是 callback、deadline 保证、PDC 或真实工程负载验收。
+  `OXITONE_VST3_STREAM_REPORT` 指定包含原始样本与环境元数据的 JSON 路径。
+
+- `vst3-offline-helper`：release 编译 `oxitone-vst3-host --features host` 并 build `@oxitone/vst3`，
+  设置 `OXITONE_VST3_FIXTURE=/path/VestiGain.vst3`，执行 `node scripts/smoke-vst3.mjs --benchmark`。
+  3 次预热、20 次完整 helper inspection 和一秒 WAV 渲染，48 kHz、128 帧、mono 0.25 输入、
+  stereo 输出、bypass=1。包含两次 bundle hash、加载、状态恢复、DSP、WAV 发布与销毁；warm
+  filesystem cache。另记录同次数预设 create-only 保存（含 fsync）与加载校验耗时；不启动
+  helper，测试实际 opaque state 和归一化参数。`OXITONE_VST3_BENCH_OUTPUT` 指定 JSON 归档。设备、callback、CPU 占用、
+  xrun 未测记 null；不能推导实时适配成本或 GUI 帧率。
+
 - `preview/editing`：`cargo test --release -p oxitone-preview benchmark_editing_gestures -- --ignored --nocapture`。
   UI/control 线程测 128/10000 音符组变换与内容投影、128/4096 片段跨轨拖拽投影、
   128/4096 点原生曲线编译及 1024 点预览求值，
@@ -126,6 +221,10 @@ inserts 和 4 条 polarity gate lanes（period 0.01 beat、duty 0.5、seed 7）�
 的内存 block render（含 Master limiter）。首个归档使用 1 s 预热、每场景 3 s
 测量、30 个 Criterion samples。设备、CPU 使用率、callback p95/p99 和 xrun
 未测，记 null；此 microbench 不代替 worker/callback soak。
+
+`insert/recording_layers` 在 typed 场景的每个 target 增加 priority=1、constant=0.75
+的 Playlist lane，clip 为 [0.01,0.81) beat。原 4 条 gate lanes 保留；另外测 compile
+和 render_128。它与原场景负载不同，单独归档，不能拿两者差值当作同代码性能回退。
 
 `node benchmarks/project-files.mjs` 测项目文件保存/加载：native 先生成 48 kHz stereo
 一秒 float32 音源素材，测量外完成准备；预热 5 次，测量 30 次已有内容寻址资产的

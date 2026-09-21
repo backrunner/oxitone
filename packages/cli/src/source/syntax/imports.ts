@@ -48,7 +48,7 @@ export function authoringImport(
   file: ts.SourceFile,
   checker: ts.TypeChecker,
   location: ts.Node,
-  exportedName: "Pattern" | "pluginConfig" | "orderEffects",
+  exportedName: "Pattern" | "Project" | "AutomationSource" | "pluginConfig" | "orderEffects",
 ): PatternImport {
   const f = ts.factory;
   const imports = file.statements.filter(ts.isImportDeclaration);

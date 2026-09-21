@@ -3,9 +3,9 @@
 use crate::error::{codes, OxitoneError};
 
 /// Current protocol version (`major.minor`).
-pub const PROTOCOL_VERSION: &str = "1.2";
+pub const PROTOCOL_VERSION: &str = "1.7";
 pub const PROTOCOL_MAJOR: u64 = 1;
-pub const PROTOCOL_MINOR: u64 = 2;
+pub const PROTOCOL_MINOR: u64 = 7;
 
 /// Validate a `protocolVersion` string from a wire message. Unknown major
 /// versions and minors newer than this build are rejected.
@@ -45,7 +45,7 @@ mod tests {
 
     #[test]
     fn rejects_unknown_major_and_newer_minor() {
-        for version in ["2.0", "0.9", "1.3", "banana", "1", "1.0.0"] {
+        for version in ["2.0", "0.9", "1.8", "banana", "1", "1.0.0"] {
             let err = check_protocol_version(version).unwrap_err();
             assert_eq!(err.code, codes::PROTOCOL_VERSION_UNSUPPORTED, "{version}");
         }

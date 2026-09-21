@@ -105,6 +105,8 @@ fn playable_snapshot() -> ProjectSnapshot {
             pan: 0.0,
             swing: None,
             mixer_channel_id: "mix_master".into(),
+            output_routes: None,
+            midi_routes: None,
             mute: None,
             solo: None,
         }],

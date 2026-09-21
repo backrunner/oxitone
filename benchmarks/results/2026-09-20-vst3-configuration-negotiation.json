@@ -1,0 +1,80 @@
+{
+  "date": "2026-09-19T19:27:16.066Z",
+  "cpu": "Apple M4",
+  "os": "darwin 27.0.0",
+  "sampleRate": 48000,
+  "blockSize": 128,
+  "processedFrames": 0,
+  "device": null,
+  "callbackP95": null,
+  "callbackP99": null,
+  "xruns": null,
+  "configurationElapsedMs": 717.737333,
+  "layouts": [
+    {
+      "inputs": 2,
+      "outputs": 1
+    },
+    {
+      "inputs": 3,
+      "outputs": 3
+    },
+    {
+      "inputs": 0,
+      "outputs": 3
+    }
+  ],
+  "checks": [
+    "dynamicBusLayout",
+    "inactiveMiddle",
+    "latencyRestart",
+    "parameterTableRestore",
+    "processorFlush",
+    "stateRoundTrip",
+    "bulkControllerValues",
+    "dense4096Overrides",
+    "unknownParameter",
+    "readOnlyParameter",
+    "reloadRejected",
+    "restartStormBounded",
+    "zeroInputInstrument"
+  ],
+  "controlBenchmark": {
+    "kind": "configurationIncludingHelperStartup",
+    "warmup": 3,
+    "samplesMs": [
+      8.97050000000013,
+      8.751334000000043,
+      8.698916999999938,
+      8.315875000000005,
+      8.396792000000005,
+      8.228958999999804,
+      8.704625000000078,
+      8.372834000000012,
+      8.576917000000094,
+      9.189750000000004,
+      7.889582999999902,
+      8.061584000000039,
+      8.042167000000063,
+      8.272249999999985,
+      8.46529200000009,
+      8.857541999999967,
+      8.459916000000021,
+      9.003333999999995,
+      8.453750000000127,
+      8.973459000000048,
+      8.382749999999987,
+      9.098165999999992,
+      9.030250000000024,
+      8.961333000000195,
+      8.96570799999995,
+      9.1271670000001,
+      10.042832999999973,
+      9.198374999999942,
+      9.478417000000036,
+      8.376457999999957
+    ],
+    "p95Ms": 9.478417000000036,
+    "p99Ms": 10.042832999999973
+  }
+}

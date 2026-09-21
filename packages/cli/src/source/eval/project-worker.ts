@@ -94,6 +94,7 @@ try {
         value?.assetBaseDir ?? project.assetBaseDir ?? loaded.__oxitoneSourceDirectory ?? dirname(bundle),
       ),
       plugins: project.registeredPlugins ?? [],
+      vst3Plugins: project.registeredVst3Plugins ?? [],
       allowPlugins: project.pluginPolicy,
       pluginUis: project.registeredPluginUis ?? [],
     });

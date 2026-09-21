@@ -41,6 +41,7 @@ fn fixture() -> (ProjectSnapshot, PluginRegistry) {
     snapshot.channels[0].instrument.instance_id = Some("ins_voice".into());
     snapshot.channels[0].effect_chain = ["ins_first", "ins_second"]
         .map(|id| EffectRef {
+            state: None,
             instance_id: Some(id.into()),
             plugin_id: EFFECT_ID.into(),
             plugin_version: PLUGIN_VERSION.into(),
@@ -119,6 +120,40 @@ fn typed_and_legacy_aliases_combine_once_and_require_explicit_rules() {
     assert_eq!(
         oxitone_graph::compile::map_normalized(&plan.bindings[0].spec, 0.25),
         0.5
+    );
+}
+
+#[test]
+fn priorities_order_resolved_aliases_before_lane_ids_and_require_the_version_floor() {
+    let (mut s, registry) = fixture();
+    s.protocol_version = "1.5".into();
+    s.automation = vec![
+        lane("auto_z_base", "chn_0001", None, "insert.0.parameter.mix"),
+        lane("auto_a_record", "ins_first", Some("plugin"), "mix"),
+    ];
+    s.automation[0].source = oxitone_core::wire::AutomationSourceSpec::Constant { value: 0.2 };
+    s.automation[1].priority = Some(1);
+    let plan = compile_plan(&s, &registry, &NoSamples, &CompileOptions::default()).unwrap();
+    assert_eq!(plan.bindings.len(), 1);
+    assert_eq!(
+        oxitone_graph::compile::binding_value_at(&plan.bindings[0], 0., &Default::default()),
+        0.5
+    );
+    s.automation[1].priority = Some(0);
+    assert_eq!(
+        validate(&s, &registry).unwrap_err().code,
+        codes::AUTOMATION_TARGET_INVALID
+    );
+    s.protocol_version = "1.4".into();
+    assert_eq!(
+        validate(&s, &registry).unwrap_err().code,
+        codes::PROTOCOL_VERSION_UNSUPPORTED
+    );
+    assert_eq!(
+        oxitone_core::wire::decode_project_snapshot(&serde_json::to_string(&s).unwrap())
+            .unwrap_err()
+            .code,
+        codes::PROTOCOL_VERSION_UNSUPPORTED
     );
 }
 

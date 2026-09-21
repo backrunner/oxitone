@@ -1,5 +1,23 @@
 # Oxitone 音频运行时规格
 
+Engine 1.7 MIDI 图在隔离后台按 Channel 依赖拓扑执行 instrument → clip → inserts → MIDI 分发，
+同段交付，无额外 block 延迟。每个 clip 只推进一次；临时 PCM 与 MIDI 队列控制期预分配。
+音频求和仍按 Channel ID，不因拓扑排序改变浮点求和顺序。无路由工程保持原来的批量处理路径。
+输入事件上限 256（含去重后的参数、乐谱音符与路由 MIDI），输出每实例上限 256；溢出失败，
+不丢最早事件。seek/loop/reset 清空输入输出暂存；失败时整块静音并停止 transport，
+同时重置 MIDI 图的处理状态，防止未执行目标保留已排入的事件并在恢复后重放。
+
+Engine 1.6 的 Mixer 辅助输入先做 bus 入口 PDC，再补偿目标 insert 前面的串行延迟；
+广播侧链也遵守该规则。辅助输出先补偿其后的串行延迟，再按所属 bus 总延迟参与
+下游路由 PDC。直接 Channel 输入补偿目标 Mixer 的入口延迟，不能绕过上游最大路径。
+所有缓冲和 delay line 在 compile/prepare 预分配；辅助路径只用于隔离执行图。
+Mixer stem 包含所属实例直接送往 Master 的辅助输出，tap 位于 Master inserts/fader 前。
+
+Engine 1.4 的辅助输出在同一乐器处理后复制到预分配的 route buffers；主输出保持插入链，
+辅助输出共用轨道增益/门控后各自执行 PDC。Mixer 输入按 Channel ID 再按物理输出索引
+稳定求和。辅助输出能力只允许显式 isolated executor；hard realtime graph 在 compile
+阶段拒绝，设备 callback 仍仅消费完成的 PCM。协议与验证见 [24](24-vst3-sdk.md)。
+
 共享运行时另有 import-free Wasm host，使用相同 RenderGraph/process 和内存 WAV sink。
 Web Audio 的 Rust Worker 产出 PCM，AudioWorklet 只搬运共享 ring 数据；此宿主的边界、
 flush/underrun、内存上限和普通编译失败保留旧图语义见 `12-wasm-web-audio.md`。
@@ -51,6 +69,28 @@ loop/last 先在局部拍域裁剪；图的 content end 转换到 Project beat�
 Rust 可用 `#[deny(unsafe_op_in_unsafe_fn)]` 和 clippy lint 约束；任何 `unsafe` 必须局部、注释不变量并有测试。
 
 ## RenderGraph 生命周期
+
+VST3 的常驻宿主通过独立 helper 与有界原生队列接入乐器、轨道 insert 和 bus insert，
+见 `24-vst3-sdk.md`。执行入口明确区分：`process_block` 保持上述 hard-realtime 不变量；
+`process_isolated_block` 仅供 buffered render worker 使用；`process_offline_block` 仅供
+离线导出使用。后两者通过 sealed execution dispatch 复用事件、DSP、路由和 PDC 顺序，
+允许后台等待 helper 的有界结果。HAL callback 始终只拷贝 ring PCM；任何执行域都不调用 JS。
+
+图中有隔离插件时初次 direct 请求回落 buffered，并报告 ModeFallback；已经在 direct
+session 中更新为隔离图时拒绝候选，调用方须以 buffered 模式重新 compile。直接对隔离图
+调用 `process_block` 会静音并锁存 fault，不启动进程、不阻塞。离线处理失败返回稳定错误；
+后台处理失败清空整个当前输出块、停止 transport 并发出诊断，避免重放旧 PCM。
+
+每段以真实 project frame/beat、连续帧、当前 tempo 和原始拍号（如 6/8）设置 ProcessContext。
+seek/loop 的 `reset` 只设置标志；下次隔离执行把 reset 与目标位置、事件和 PCM 放入同一
+请求，helper 先执行 VST3 标准 setProcessing(false/true)，再处理该段。保留参数、component
+激活状态与资源，不重新加载模块或启动进程。合规插件应清空 voices/delay；非合规插件的
+内部重置行为不由宿主保证。只有显式故障恢复或执行模式变化才重建 helper，恢复最初
+configuration 与最新参数。latency 改变要求重新编译图，不能沿用错误的 PDC。
+
+图内 PDC 只使用插件固有 latency；IPC 等待的墙钟时间计入后台 block 耗时，ring 延迟通过
+OutputLatency 单独报告。独立 SDK 的 ScheduledPort/Controller/AudioSlot 保留原来的显式
+固定帧缓冲语义；它们不是此后台图执行器使用的调度器，不额外叠加两块音频延迟。
 
 1. TS 提交 snapshot/revision。
 2. Rust validator 检查 IDs、类型、路由 DAG、参数、资源引用和能力。

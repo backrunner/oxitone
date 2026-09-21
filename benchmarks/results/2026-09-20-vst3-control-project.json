@@ -1,0 +1,117 @@
+{
+  "date": "2026-09-19T20:11:32.957Z",
+  "cpu": "Apple M4",
+  "os": "darwin 27.0.0",
+  "profile": "release",
+  "sampleRate": 48000,
+  "blockSize": 128,
+  "device": "simulated stereo sink",
+  "results": {
+    "pluginBypass": {
+      "peakError": 0,
+      "samples": 48000
+    },
+    "gain": {
+      "peakError": 1.0760323805591998e-8,
+      "samples": 48000
+    },
+    "mix": {
+      "peakError": 1.2963769377427603e-8,
+      "samples": 48000
+    },
+    "hostBypass": {
+      "peakError": 0,
+      "samples": 48000
+    },
+    "serial": {
+      "peakError": 5.82478882488191e-9,
+      "samples": 48000
+    },
+    "master": {
+      "peakError": 8.020360951765948e-9,
+      "samples": 48000
+    },
+    "saved": {
+      "peakError": 0,
+      "samples": 48000
+    },
+    "automation": {
+      "frame": 73,
+      "graphLatencyFrames": 264,
+      "limiterTransitionMarginFrames": 32
+    },
+    "simulated": {
+      "playing": {
+        "state": "playing",
+        "cursor": "19328",
+        "blocks": 167,
+        "deadlineMisses": 0,
+        "xruns": 0,
+        "nanBlocks": 0,
+        "queueDrops": 0,
+        "performanceWarnings": 0,
+        "engineLoad": 0.06351744620578793,
+        "ringOccupancyFrames": 2048,
+        "blockTimeNs": {
+          "p50": 131072,
+          "p95": 262144,
+          "p99": 524288,
+          "max": 524288
+        },
+        "events": [
+          {
+            "code": "ModeFallback",
+            "severity": "warning",
+            "frame": "0",
+            "message": "direct mode requires callback-safe plugins, matching sample rates and block sizes; using buffered mode"
+          }
+        ]
+      },
+      "looping": {
+        "state": "playing",
+        "cursor": "4864",
+        "blocks": 1058,
+        "deadlineMisses": 0,
+        "xruns": 0,
+        "nanBlocks": 0,
+        "queueDrops": 0,
+        "performanceWarnings": 0,
+        "engineLoad": 0.056882577526518346,
+        "ringOccupancyFrames": 2048,
+        "blockTimeNs": {
+          "p50": 131072,
+          "p95": 262144,
+          "p99": 262144,
+          "max": 524288
+        },
+        "events": []
+      },
+      "final": {
+        "state": "stopped",
+        "cursor": "0",
+        "blocks": 1058,
+        "deadlineMisses": 0,
+        "xruns": 0,
+        "nanBlocks": 0,
+        "queueDrops": 0,
+        "performanceWarnings": 0,
+        "engineLoad": 0.056882577526518346,
+        "ringOccupancyFrames": 2048,
+        "blockTimeNs": {
+          "p50": 131072,
+          "p95": 262144,
+          "p99": 262144,
+          "max": 524288
+        },
+        "events": []
+      },
+      "faults": [
+        {
+          "pluginId": "vst3.56455354494741494e30303030303031",
+          "pluginVersion": "0.0.0+a2ec83f9537b03c694f98ee6440bf66d28d722e1d74ba33a30fd7410115246aa",
+          "faults": 0
+        }
+      ]
+    }
+  }
+}

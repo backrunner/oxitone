@@ -99,6 +99,7 @@ pub fn wavetable_ref(parameters: &[(&str, f64)]) -> InstrumentRef {
 
 pub fn effect_ref(plugin_id: &str, parameters: &[(&str, f64)]) -> EffectRef {
     EffectRef {
+        state: None,
         instance_id: None,
         plugin_id: plugin_id.into(),
         plugin_version: "1.0.0".into(),
@@ -127,6 +128,8 @@ pub fn channel(
         pan: 0.0,
         swing: None,
         mixer_channel_id: bus.into(),
+        output_routes: None,
+        midi_routes: None,
         mute: None,
         solo: None,
     }
@@ -134,6 +137,7 @@ pub fn channel(
 
 pub fn mixer_channel(id: &str, inserts: Vec<EffectRef>, sends: Vec<SendSpec>) -> MixerChannelSpec {
     MixerChannelSpec {
+        insert_routes: None,
         id: id.into(),
         name: None,
         level: 1.0,

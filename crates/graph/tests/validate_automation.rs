@@ -11,6 +11,7 @@ use oxitone_graph::validate;
 
 fn lane_to(entity: &str, parameter: &str) -> AutomationLaneSpec {
     AutomationLaneSpec {
+        priority: None,
         playback: None,
         id: "auto_0001".to_string(),
         target: AutomationTarget {
@@ -63,6 +64,7 @@ fn builtin_targets_resolve_for_every_entity_kind() {
     let mut s = base_snapshot();
     add_sample(&mut s);
     s.mixer_channels.push(MixerChannelSpec {
+        insert_routes: None,
         id: "mix_0002".to_string(),
         ..s.mixer_channels[0].clone()
     });

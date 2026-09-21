@@ -21,7 +21,15 @@ export function writeArrangement(before: ProjectEvaluation, files: ReadonlyMap<s
 /** Newly allocated identities may differ on restore; every existing entity and all music must match. */
 export function assertArrangement(before: ProjectSnapshot, expected: ProjectSnapshot, actual: ProjectSnapshot): void {
   const aliases = new Map<string, string>();
-  for (const key of ["channels", "patternClips", "sampleClips", "automationClips"] as const) {
+  for (const key of [
+    "tracks",
+    "samples",
+    "channels",
+    "automation",
+    "patternClips",
+    "sampleClips",
+    "automationClips",
+  ] as const) {
     const old = new Set((before[key] ?? []).map((item) => item.id));
     const a = (expected[key] ?? []).filter((item) => !old.has(item.id));
     const b = (actual[key] ?? []).filter((item) => !old.has(item.id));
@@ -60,7 +68,15 @@ export function assertArrangement(before: ProjectSnapshot, expected: ProjectSnap
     typeof value === "string" ? (aliases.get(value) ?? value) : value,
   ) as ProjectSnapshot;
   translated.revision = actual.revision;
-  for (const key of ["channels", "patternClips", "sampleClips", "automationClips"] as const)
+  for (const key of [
+    "tracks",
+    "samples",
+    "channels",
+    "automation",
+    "patternClips",
+    "sampleClips",
+    "automationClips",
+  ] as const)
     translated[key]?.sort((a, b) => a.id.localeCompare(b.id));
   if (canonicalEncode(translated) !== canonicalEncode(actual)) fail();
 }

@@ -1,5 +1,15 @@
 # Oxitone 领域规格
 
+Engine 1.7 的 Channel.midiRoutes 按稳定实例 ID 连接其他 Channel 的原生 MIDI 乐器；乐器与
+Channel insert 均可作为源，音频 mix/bypass/fader/mute/solo 不改变事件输出。目标可扇出，
+同一源不得重复目标，Channel MIDI 图必须无环。删除源实例清理其连接，重排保留连接。
+MIDI 消息保留插件发出的 segment offset；不叠加音频 PDC，静态 MIDI 导出不运行插件。
+
+Engine 1.6 的 Mixer insertRoutes 按稳定效果实例选择辅助音频输入与输出；输入来源为
+其他 Mixer 的 post-fader 信号，输出绕过后续 inserts、经过所属 bus fader/gating。
+所有连接共同参与 DAG；Master 只接收、不回送。实例重排保留路由，删除清理路由。
+具体 API、激活与 PDC 规则见 [24-vst3-sdk.md](24-vst3-sdk.md)。
+
 生成式 Pattern 的新实现契约见 [15-source-authoring.md](15-source-authoring.md)：保留 chord/
 arp 规则、输出坐标与不可变局部 edit，并新增 concat/repeat/slice/transpose/velocity。
 完整编排、typed plugin instance 与 automation range 目标见 [统一设计](../designs/source-daw/01-authoring.md)。
@@ -77,6 +87,11 @@ Channel、MixerChannel 和 Master 的有序 insert 均暴露 `insert.<index>.mix
 索引与参数描述在 compile 期解析，实时端只使用整数索引和预分配事件缓冲。
 
 `Channel` 是声音生成和效果链的宿主。每个 Channel 绑定一个 `Instrument`，可绑定多个 insert effects；它有 `level`（线性 gain，0..2）、`pan`（-1..1）、`swing`（0..1，默认 0）、`mute`、`solo`、`mixerChannelId`。
+
+Engine 1.4 的 `outputRoutes` 可将隔离式乐器的辅助输出索引 1…15 送到独立 mixer bus。
+输出 0 保持原插入链；辅助输出绕过 Channel inserts，共用 Channel level/pan/mute/solo，
+每路独立补偿到最长 Channel 链的延迟。同一插件每段只处理一次，未路由的辅助输出停用；
+保存/恢复、bus 与 Track stems 保留该路由。详情和原生总线边界见 [24](24-vst3-sdk.md)。
 
 标准音源必须声明：`id`、`version`、单/多声道布局、最大 polyphony、参数 specs（stable parameter ID、unit、range、default、smoothing）、是否接受 MIDI note/automation，以及 tail 行为。处理链按声明顺序执行，instrument 输出先经过 inserts 再发送到 mixer bus。
 

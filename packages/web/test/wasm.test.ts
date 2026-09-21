@@ -97,6 +97,11 @@ describe("actual import-free Wasm engine", () => {
       const channel = p.channels[0]!,
         motion = createAutomationNamespace();
       channel.instrumentInstance.param("level").automate(motion.constant(0.2));
+      const recording = channel.instrumentInstance.param("level").automate(motion.constant(0.6), {
+        playback: "playlist",
+        priority: 1,
+      });
+      p.createAutomationClip(recording, p.addTrack("Recording"), 1.01, 0.4);
       const original = channel.effectInstances[0]!;
       const added = channel.addEffect(channel.effectChain[0]!);
       original.host.param("mix").automate(motion.constant(0.3));

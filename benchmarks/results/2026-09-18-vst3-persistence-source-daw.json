@@ -1,0 +1,73 @@
+{
+  "benchmark": "source-daw",
+  "cpu": "Apple M4",
+  "os": "darwin 27.0.0",
+  "node": "v26.5.0",
+  "notes": 100,
+  "placements": 2,
+  "plugins": 20,
+  "iterations": 10,
+  "warmup": 1,
+  "sampleRate": 48000,
+  "blockSize": 128,
+  "device": null,
+  "callbackP95": null,
+  "callbackP99": null,
+  "xruns": null,
+  "measurements": [
+    {
+      "name": "whole-project-edit-validate-accept",
+      "p50Ms": 154.22120900000027,
+      "p95Ms": 165.41116699999986,
+      "p99Ms": 165.41116699999986
+    },
+    {
+      "name": "configuration-edit-validate-accept",
+      "p50Ms": 150.64583399999992,
+      "p95Ms": 168.30991600000016,
+      "p99Ms": 168.30991600000016
+    },
+    {
+      "name": "rack-review-validate",
+      "p50Ms": 151.45183400000042,
+      "p95Ms": 159.89829099999952,
+      "p99Ms": 159.89829099999952
+    },
+    {
+      "name": "dirty-journal-save",
+      "p50Ms": 52.10270800000035,
+      "p95Ms": 59.67345800000021,
+      "p99Ms": 59.67345800000021
+    },
+    {
+      "name": "effect-order-validate-accept",
+      "p50Ms": 153.31362499999886,
+      "p95Ms": 157.27095800000097,
+      "p99Ms": 157.27095800000097
+    },
+    {
+      "name": "source-and-plugin-projection",
+      "p50Ms": 1.3217080000013084,
+      "p95Ms": 1.3648339999999735,
+      "p99Ms": 1.3648339999999735
+    },
+    {
+      "name": "mixer-configure-validate-accept",
+      "p50Ms": 150.4940829999996,
+      "p95Ms": 155.35433299999931,
+      "p99Ms": 155.35433299999931
+    },
+    {
+      "name": "playlist-resize-validate-accept",
+      "p50Ms": 152.97133399999984,
+      "p95Ms": 160.67154200000004,
+      "p99Ms": 160.67154200000004
+    },
+    {
+      "name": "fresh-project-reopen",
+      "p50Ms": 162.12324999999873,
+      "p95Ms": 189.29191700000047,
+      "p99Ms": 189.29191700000047
+    }
+  ]
+}

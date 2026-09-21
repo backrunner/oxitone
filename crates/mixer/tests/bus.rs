@@ -42,6 +42,7 @@ fn compressor_uses_self_detector_unless_an_external_route_exists() {
 
 fn effect(plugin_id: &str, parameters: &[(&str, f64)]) -> EffectRef {
     EffectRef {
+        state: None,
         instance_id: None,
         plugin_id: plugin_id.to_string(),
         plugin_version: "1.0.0".to_string(),
@@ -67,6 +68,7 @@ struct BusSpec {
 
 fn bus(spec: BusSpec) -> MixerChannelSpec {
     MixerChannelSpec {
+        insert_routes: None,
         id: spec.id.to_string(),
         name: None,
         level: spec.level.unwrap_or(1.0),

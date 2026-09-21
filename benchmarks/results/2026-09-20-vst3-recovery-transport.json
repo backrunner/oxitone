@@ -1,0 +1,38 @@
+{
+  "scenario": "vst3-transport-context",
+  "streamProtocolVersion": 8,
+  "device": null,
+  "sampleRate": 48000,
+  "maxBlockSize": 128,
+  "blocks": 400,
+  "verifiedFrames": 26129,
+  "resets": 79,
+  "callbackP95Ms": null,
+  "callbackP99Ms": null,
+  "xruns": null,
+  "roundtripP95Ms": 0.163542,
+  "roundtripP99Ms": 0.347792,
+  "diagnostics": {
+    "completedBlocks": 400,
+    "maximumIdleWaitMs": 0.110541,
+    "maximumSendMs": 0.020833,
+    "maximumReplyWaitMs": 0.068083,
+    "maximumHelperProcessingMs": 0.013,
+    "workerTimeConstraint": true,
+    "helperTimeConstraint": true
+  },
+  "checks": [
+    "short-block processor clock",
+    "project and continuous frames",
+    "tempo and meter",
+    "musical position and bar",
+    "playing and cycle flags",
+    "short output padding",
+    "DSP reset at packet boundary with continuous transport and sequence",
+    "live state capture preserves processor clock and musical time"
+  ],
+  "date": "2026-09-20T15:26:50.919Z",
+  "cpu": "Apple M4",
+  "os": "darwin 27.0.0",
+  "profile": "release"
+}

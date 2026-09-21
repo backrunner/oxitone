@@ -83,6 +83,10 @@ try {
     throw new Error(result.stderr);
   if (automation && !result.stderr.includes("Automation smoke passed:")) throw new Error(result.stderr);
   if (configuration && !result.stderr.includes("Configuration smoke passed:")) throw new Error(result.stderr);
+  if (process.env.OXITONE_PREVIEW_CAPTURE_VST3 && !result.stderr.includes("VST3 GUI smoke passed:"))
+    throw new Error(result.stderr);
+  if (process.env.OXITONE_VST3_PRESET && !result.stderr.includes("VST3 files smoke passed:"))
+    throw new Error(result.stderr);
   if (patterns && !result.stderr.includes("Pattern browser smoke passed:")) throw new Error(result.stderr);
   if (process.env.OXITONE_PREVIEW_CAPTURE_EDITING && !result.stderr.includes("Editing smoke passed:"))
     throw new Error(result.stderr);
@@ -99,6 +103,14 @@ try {
   const reopened = await ProjectDocument.open({ entry });
   try {
     const snapshot = reopened.frame?.snapshot;
+    if (
+      process.env.OXITONE_VST3_PRESET &&
+      (snapshot?.samples.length !== 1 ||
+        snapshot?.sampleClips.length !== 1 ||
+        !snapshot?.tracks.some((track) => track.name === "VST3 print") ||
+        !saved.includes(".importAudio("))
+    )
+      throw new Error("Frozen VST3 audio did not survive source reopen");
     if (
       process.env.OXITONE_PREVIEW_CAPTURE_CONTROLS &&
       (snapshot?.channels[0]?.level <= 1 ||

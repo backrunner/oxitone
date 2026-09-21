@@ -52,10 +52,11 @@ it("edits local or shared npm configurations, distinguishes plugin/host names, r
       await document.editConfiguration(
         document.view.revision,
         site.handle,
-        { kind: "parameters", values: { level } },
+        { kind: "parameters", values: { level, "oscA.level": level } },
         site.usages[0]!.handle,
       );
       expect(document.frame!.snapshot.channels[0]!.level).toBe(0.8);
+      expect(document.frame!.snapshot.channels[0]!.instrument.parameters["oscA.level"]).toBe(level);
       expect(document.frame!.snapshot.channels[1]!.instrument.parameters.level).toBe(0.6);
     }
     expect(document.view.files[0]!.text.match(/withParameters\(/g)).toHaveLength(1);

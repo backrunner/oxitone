@@ -1,12 +1,48 @@
 # Oxitone TypeScript / Rust API 契约
 
+Engine 1.7 新增 ChannelSpec.midiRoutes?: Record<instanceId, EntityId[]>。
+`channel.routeMidi(instance, [targetChannel, ...])` 连接该 owner 的乐器或 insert；空数组移除连接。
+`channel.midiRoutes` 返回防御性副本；目标必须属于同工程，循环/重复/失效引用在修改前拒绝。
+原生编译核对 MIDI 输入/输出能力，内置与 C ABI 1 不声明此能力。低于 1.7 的快照携带该字段
+即拒绝并保留 recovery 数据。协议、执行边界和例子见 [24](24-vst3-sdk.md)。
+
+Engine 1.6 新增 MixerChannelSpec.insertRoutes，按 effect instanceId 描述辅助 inputs/outputs
+（物理索引 1…15 → mixer ID）。`bus.routeInsert(instance, routing?)` 替换/移除路由，
+`bus.insertRoutes` 只读复制；重排保留，删除清理。图循环、实例能力和全路径 PDC 见 24。
+低于 1.6 的快照携带该字段即拒绝，不改写原 source/recovery。
+
+Engine 1.5 新增 AutomationLaneSpec.priority（可选 u32，缺省 0），按优先级和既有 lane ID
+顺序组合；同一目标同一优先级有多条 lane 时仍须显式 combine。携带该字段的旧 minor
+拒绝读取。Project.recordAutomation(edit) 接受守卫目标、最多 32 个参数和 32768 个
+Project-beat 区间，先验证全量再追加最多 1024 个 Playlist 片段；完整规范见 07、24。
+
+VST3 instance control 1 提供 Session.vst3Instances 和异步 Session.controlVst3Instance，
+用独立 graphGeneration 与 instanceId 寻址已接受的播放图。控制只修改当前实例，捕获后需
+显式 authoring 事务持久化；超时、过期图和销毁后的结果不得成功。完整契约与生成 schemas
+见 [24-vst3-sdk.md](24-vst3-sdk.md)。
+
+Engine 1.4 新增 ChannelSpec.outputRoutes，映射乐器辅助输出物理索引 1…15 到 MixerChannel ID。
+TS 在 addChannel options 与 channel.outputRoutes setter 暴露；默认空，bus 0 使用原 mixerChannelId。
+辅助输出使用同一 Channel fader/pan/gating，跳过该 Channel inserts，各路独立 PDC；见 24。
+低于 1.4 的快照出现该字段即拒绝。原 source/recovery 数据不会被自动升级或覆盖。
+
 `ProjectDocument`、Document control 2.0、完整工程 GPUI 音符编辑和静态插件目录的增量
-契约见 [18-project-daw.md](18-project-daw.md)，该 control 版本独立于 Engine snapshot 1.2。
+契约见 [18-project-daw.md](18-project-daw.md)，该 control 版本独立于 Engine snapshot 1.6。
 实例参数与效果器排序 API 见 [20-plugin-instances.md](20-plugin-instances.md)，插件 ABI 保持 1。
 `Project.configure`、扩展的 `Project.arrange`、`withPluginRegistration` 与 Document
 `assignPlugin` 的行为、范围、错误和回写约束见 [23-daw-controls.md](23-daw-controls.md)。
 Engine 1.2 的 TrackSpec 新增可选 mute/solo boolean；Track configure 接受 enabled/mute/solo
 中至少一个字段，未提供字段保持原值。低于 1.2 的快照携带这些字段时拒绝，不静默忽略。
+
+Engine 1.3 新增 EffectRef.state 与 `vst3.<class>` 工程实例；低于 1.3 的快照携带这些
+字段/实例时拒绝，保留原恢复数据。Project.registerVst3 / withVst3Registration 注册精确
+class/hash/helper，registeredVst3Plugins 用于新 session 与 Preview 重建；registrationVersion
+独立为 1。参数使用十进制 VST3 ParamID、0..1 归一化值；configuration 保存在实例 state。
+`getPluginInfo` 新增 format: builtin|oxi|vst3，VST3 的 abiMajor 为 null。详见 24。
+VST3 stream 11 的 audioBuses 保留物理总线索引、通道数和激活状态，busActivation 在 prepare
+显式选择各 bus。原生 submit_buses/receive_buses 传递所有总线；工程侧链沿用 bus.send
+契约进入 VST3 输入 bus 1。乐器多输出通过 Channel.outputRoutes 路由；Mixer 效果的多路
+输入输出通过 insertRoutes 路由，未连接辅助 bus 显式停用。配置/preset 仍为 1。
 
 发布前已移除单 Pattern 文档/evaluator，源码编辑只使用 ProjectDocument；DocumentView 必须
 提供 projectRoot，请求身份只接受单调 stream。ParameterSmoothing 的 one-pole 拼写在 TS/Rust
@@ -254,7 +290,9 @@ values/resource graphs return `InvalidProject`; unavailable decoded assets retur
 `Curve` 和 `CurveKind`，调用者编写具名参数类型无需导入内部模块。
 `@oxitone/native` / `oxitone` 也导出 `CompileOptions` 与 `RenderPosition`。
 PluginConfig 的 parameters/resources 字典在 TS 类型层标记 readonly，与运行时冻结一致；
-派生配置使用 withParameters / withHost，不通过原地赋值修改。
+派生配置使用 withParameters / withHost / withState，不通过原地赋值修改。
+`withState(state)` 替换不透明或结构化状态并复核可序列化性，保留参数、资源与宿主设置；
+不加载插件。VST3 厂商编辑器的 Apply 使用此契约保存捕获的 configuration。
 `Project.configure` / `arrange` 的输入校验失败统一为 `OxitoneError(InvalidProject)`，在修改
 builder 或 revision 前拒绝；`details.path` 以 `project.configure` / `project.arrange` 开头。
 
@@ -468,6 +506,7 @@ export interface ChannelSpec {
   pan: number;
   swing?: number;
   mixerChannelId: EntityId;
+  outputRoutes?: Record<string, EntityId>; // Engine 1.4: physical instrument outputs 1..15
   mute?: boolean;
   solo?: boolean;
 }
@@ -854,5 +893,12 @@ EngineOptions 的 signed-only/adapt-device/follow-default 与 ParameterSpec.one-
 revision 应用一组 authoring 设置。`Project.importSampleRef(ref, id?)` 导入 detached
 SampleRef（默认生成新 ID），保留精确 rational 音乐长度；不在 TS 中读取/解码 PCM。
 预设格式、资源迁移、候选图验证与显式 Session.update 语义见 `06-format-and-export.md`。
+
+`Project.importAudio({name,startBeat,sample}): this` 原子预检后导入不带 ID 的 SampleRef、
+新建命名 Track，并在非负 `startBeat` 放置 tempoSync=off 的完整 sample clip。由 Project
+分配资源 ID，不读取/复制 PCM，不设置裁尾 durationBeats；调用方提供已持有的资源 URI/hash。
+一次成功调用增加 3 个 authoring revision；DAW 将整个候选作为一个 Document revision。
+格式、位置或 revision 预算失败不得留下部分资源。VST3 冻结音轨和独立预设 API 见
+`24-vst3-sdk.md`；`oxitone/vst3` 可选入口不进入主包的 realtime 依赖。
 
 Protocol major changes require a new npm major and native ABI tag. Minor additions are optional and must have defaults. Rust rejects snapshots with a newer minor version unless the field is explicitly marked ignorable. Generated declarations include protocol version constants and are checked in CI against schemas.

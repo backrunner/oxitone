@@ -221,7 +221,9 @@ pub fn list(this: &Preview, entries: &[&CatalogEntry], cx: &mut Context<Preview>
                         .flex_shrink_0()
                         .text_size(px(11.))
                         .text_color(rgb(t.muted))
-                        .child(if entry.kind == "instrument" {
+                        .child(if entry.source == "vst3" {
+                            "VST3 offline"
+                        } else if entry.kind == "instrument" {
                             "Instrument"
                         } else {
                             "Effect"

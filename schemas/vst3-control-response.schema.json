@@ -1,0 +1,1132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "controlProtocolVersion": {
+          "type": "number",
+          "const": 1
+        },
+        "ok": {
+          "type": "boolean",
+          "const": true
+        },
+        "state": {
+          "type": "object",
+          "properties": {
+            "editorOpen": {
+              "type": "boolean"
+            },
+            "nextSequence": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "info": {
+              "type": "object",
+              "properties": {
+                "protocolVersion": {
+                  "type": "number",
+                  "const": 1
+                },
+                "classId": {
+                  "type": "string",
+                  "pattern": "^[a-fA-F0-9]{32}$"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "vendor": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "string"
+                },
+                "category": {
+                  "type": "string"
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "inputChannels": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 2
+                },
+                "outputChannels": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 2
+                },
+                "audioBuses": {
+                  "type": "object",
+                  "properties": {
+                    "inputs": {
+                      "maxItems": 16,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "channels": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 2
+                          },
+                          "active": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "channels",
+                          "active"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "outputs": {
+                      "maxItems": 16,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "channels": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 2
+                          },
+                          "active": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "channels",
+                          "active"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "inputs",
+                    "outputs"
+                  ],
+                  "additionalProperties": false
+                },
+                "noteInput": {
+                  "type": "boolean"
+                },
+                "noteOutput": {
+                  "type": "boolean"
+                },
+                "parameters": {
+                  "maxItems": 4096,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 4294967295
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "unit": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      "default": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      "stepCount": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "canAutomate": {
+                        "type": "boolean"
+                      },
+                      "readOnly": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name",
+                      "unit",
+                      "value",
+                      "default",
+                      "stepCount",
+                      "canAutomate",
+                      "readOnly"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "configuration": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "formatVersion": {
+                          "type": "number",
+                          "const": 1
+                        },
+                        "classId": {
+                          "type": "string",
+                          "pattern": "^[a-fA-F0-9]{32}$"
+                        },
+                        "sha256": {
+                          "type": "string",
+                          "pattern": "^[a-f0-9]{64}$"
+                        },
+                        "stateBase64": {
+                          "type": "string",
+                          "maxLength": 5592408,
+                          "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
+                        },
+                        "parameters": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string",
+                            "pattern": "^(0|[1-9][0-9]{0,9})$"
+                          },
+                          "additionalProperties": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1
+                          }
+                        }
+                      },
+                      "required": [
+                        "formatVersion",
+                        "classId",
+                        "sha256",
+                        "stateBase64",
+                        "parameters"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "protocolVersion",
+                "classId",
+                "name",
+                "vendor",
+                "version",
+                "category",
+                "sha256",
+                "inputChannels",
+                "outputChannels",
+                "audioBuses",
+                "noteInput",
+                "noteOutput",
+                "parameters",
+                "configuration"
+              ],
+              "additionalProperties": false
+            },
+            "edits": {
+              "type": "object",
+              "properties": {
+                "captureId": {
+                  "type": "string",
+                  "pattern": "^[1-9][0-9]{0,19}$"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "recording",
+                    "stopping",
+                    "stopped",
+                    "failed"
+                  ]
+                },
+                "firstSequence": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "nextSequence": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "pendingEvents": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 4096
+                },
+                "events": {
+                  "maxItems": 256,
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "sequence": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "parameterId": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4294967295
+                          },
+                          "position": {
+                            "type": "object",
+                            "properties": {
+                              "audioSequence": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "transport": {
+                                "type": "object",
+                                "properties": {
+                                  "projectFrame": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9007199254736895
+                                  },
+                                  "continuousFrame": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9007199254736895
+                                  },
+                                  "projectBeat": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "barBeat": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "tempo": {
+                                    "type": "number",
+                                    "minimum": 20,
+                                    "maximum": 999
+                                  },
+                                  "timeSignature": {
+                                    "type": "array",
+                                    "prefixItems": [
+                                      {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 32
+                                      },
+                                      {
+                                        "anyOf": [
+                                          {
+                                            "type": "number",
+                                            "const": 1
+                                          },
+                                          {
+                                            "type": "number",
+                                            "const": 2
+                                          },
+                                          {
+                                            "type": "number",
+                                            "const": 4
+                                          },
+                                          {
+                                            "type": "number",
+                                            "const": 8
+                                          },
+                                          {
+                                            "type": "number",
+                                            "const": 16
+                                          }
+                                        ]
+                                      }
+                                    ],
+                                    "items": false,
+                                    "minItems": 2,
+                                    "maxItems": 2
+                                  },
+                                  "playing": {
+                                    "type": "boolean"
+                                  },
+                                  "cycle": {
+                                    "type": "array",
+                                    "prefixItems": [
+                                      {
+                                        "type": "number",
+                                        "minimum": 0
+                                      },
+                                      {
+                                        "type": "number",
+                                        "minimum": 0
+                                      }
+                                    ],
+                                    "items": false,
+                                    "minItems": 2,
+                                    "maxItems": 2
+                                  }
+                                },
+                                "required": [
+                                  "projectFrame",
+                                  "continuousFrame",
+                                  "projectBeat",
+                                  "barBeat",
+                                  "tempo",
+                                  "timeSignature",
+                                  "playing"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "reset": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "audioSequence",
+                              "transport",
+                              "reset"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "kind": {
+                            "type": "string",
+                            "const": "begin"
+                          }
+                        },
+                        "required": [
+                          "sequence",
+                          "parameterId",
+                          "position",
+                          "kind"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "sequence": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "parameterId": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4294967295
+                          },
+                          "position": {
+                            "type": "object",
+                            "properties": {
+                              "audioSequence": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "transport": {
+                                "type": "object",
+                                "properties": {
+                                  "projectFrame": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9007199254736895
+                                  },
+                                  "continuousFrame": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9007199254736895
+                                  },
+                                  "projectBeat": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "barBeat": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "tempo": {
+                                    "type": "number",
+                                    "minimum": 20,
+                                    "maximum": 999
+                                  },
+                                  "timeSignature": {
+                                    "type": "array",
+                                    "prefixItems": [
+                                      {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 32
+                                      },
+                                      {
+                                        "anyOf": [
+                                          {
+                                            "type": "number",
+                                            "const": 1
+                                          },
+                                          {
+                                            "type": "number",
+                                            "const": 2
+                                          },
+                                          {
+                                            "type": "number",
+                                            "const": 4
+                                          },
+                                          {
+                                            "type": "number",
+                                            "const": 8
+                                          },
+                                          {
+                                            "type": "number",
+                                            "const": 16
+                                          }
+                                        ]
+                                      }
+                                    ],
+                                    "items": false,
+                                    "minItems": 2,
+                                    "maxItems": 2
+                                  },
+                                  "playing": {
+                                    "type": "boolean"
+                                  },
+                                  "cycle": {
+                                    "type": "array",
+                                    "prefixItems": [
+                                      {
+                                        "type": "number",
+                                        "minimum": 0
+                                      },
+                                      {
+                                        "type": "number",
+                                        "minimum": 0
+                                      }
+                                    ],
+                                    "items": false,
+                                    "minItems": 2,
+                                    "maxItems": 2
+                                  }
+                                },
+                                "required": [
+                                  "projectFrame",
+                                  "continuousFrame",
+                                  "projectBeat",
+                                  "barBeat",
+                                  "tempo",
+                                  "timeSignature",
+                                  "playing"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "reset": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "audioSequence",
+                              "transport",
+                              "reset"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "kind": {
+                            "type": "string",
+                            "const": "value"
+                          },
+                          "value": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1
+                          }
+                        },
+                        "required": [
+                          "sequence",
+                          "parameterId",
+                          "position",
+                          "kind",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "sequence": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "parameterId": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4294967295
+                          },
+                          "position": {
+                            "type": "object",
+                            "properties": {
+                              "audioSequence": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "transport": {
+                                "type": "object",
+                                "properties": {
+                                  "projectFrame": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9007199254736895
+                                  },
+                                  "continuousFrame": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9007199254736895
+                                  },
+                                  "projectBeat": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "barBeat": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "tempo": {
+                                    "type": "number",
+                                    "minimum": 20,
+                                    "maximum": 999
+                                  },
+                                  "timeSignature": {
+                                    "type": "array",
+                                    "prefixItems": [
+                                      {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 32
+                                      },
+                                      {
+                                        "anyOf": [
+                                          {
+                                            "type": "number",
+                                            "const": 1
+                                          },
+                                          {
+                                            "type": "number",
+                                            "const": 2
+                                          },
+                                          {
+                                            "type": "number",
+                                            "const": 4
+                                          },
+                                          {
+                                            "type": "number",
+                                            "const": 8
+                                          },
+                                          {
+                                            "type": "number",
+                                            "const": 16
+                                          }
+                                        ]
+                                      }
+                                    ],
+                                    "items": false,
+                                    "minItems": 2,
+                                    "maxItems": 2
+                                  },
+                                  "playing": {
+                                    "type": "boolean"
+                                  },
+                                  "cycle": {
+                                    "type": "array",
+                                    "prefixItems": [
+                                      {
+                                        "type": "number",
+                                        "minimum": 0
+                                      },
+                                      {
+                                        "type": "number",
+                                        "minimum": 0
+                                      }
+                                    ],
+                                    "items": false,
+                                    "minItems": 2,
+                                    "maxItems": 2
+                                  }
+                                },
+                                "required": [
+                                  "projectFrame",
+                                  "continuousFrame",
+                                  "projectBeat",
+                                  "barBeat",
+                                  "tempo",
+                                  "timeSignature",
+                                  "playing"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "reset": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "audioSequence",
+                              "transport",
+                              "reset"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "kind": {
+                            "type": "string",
+                            "const": "end"
+                          }
+                        },
+                        "required": [
+                          "sequence",
+                          "parameterId",
+                          "position",
+                          "kind"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "sequence": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "parameterId": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4294967295
+                          },
+                          "position": {
+                            "type": "object",
+                            "properties": {
+                              "audioSequence": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "transport": {
+                                "type": "object",
+                                "properties": {
+                                  "projectFrame": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9007199254736895
+                                  },
+                                  "continuousFrame": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9007199254736895
+                                  },
+                                  "projectBeat": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "barBeat": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "tempo": {
+                                    "type": "number",
+                                    "minimum": 20,
+                                    "maximum": 999
+                                  },
+                                  "timeSignature": {
+                                    "type": "array",
+                                    "prefixItems": [
+                                      {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 32
+                                      },
+                                      {
+                                        "anyOf": [
+                                          {
+                                            "type": "number",
+                                            "const": 1
+                                          },
+                                          {
+                                            "type": "number",
+                                            "const": 2
+                                          },
+                                          {
+                                            "type": "number",
+                                            "const": 4
+                                          },
+                                          {
+                                            "type": "number",
+                                            "const": 8
+                                          },
+                                          {
+                                            "type": "number",
+                                            "const": 16
+                                          }
+                                        ]
+                                      }
+                                    ],
+                                    "items": false,
+                                    "minItems": 2,
+                                    "maxItems": 2
+                                  },
+                                  "playing": {
+                                    "type": "boolean"
+                                  },
+                                  "cycle": {
+                                    "type": "array",
+                                    "prefixItems": [
+                                      {
+                                        "type": "number",
+                                        "minimum": 0
+                                      },
+                                      {
+                                        "type": "number",
+                                        "minimum": 0
+                                      }
+                                    ],
+                                    "items": false,
+                                    "minItems": 2,
+                                    "maxItems": 2
+                                  }
+                                },
+                                "required": [
+                                  "projectFrame",
+                                  "continuousFrame",
+                                  "projectBeat",
+                                  "barBeat",
+                                  "tempo",
+                                  "timeSignature",
+                                  "playing"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "reset": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "audioSequence",
+                              "transport",
+                              "reset"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "kind": {
+                            "type": "string",
+                            "const": "sample"
+                          },
+                          "value": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1
+                          },
+                          "frames": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 4096
+                          }
+                        },
+                        "required": [
+                          "sequence",
+                          "parameterId",
+                          "position",
+                          "kind",
+                          "value",
+                          "frames"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                },
+                "recording": {
+                  "type": "object",
+                  "properties": {
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "touch",
+                        "write"
+                      ]
+                    },
+                    "parameterIds": {
+                      "minItems": 1,
+                      "maxItems": 32,
+                      "type": "array",
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 4294967295
+                      }
+                    },
+                    "sampleRate": {
+                      "type": "integer",
+                      "minimum": 8000,
+                      "maximum": 192000
+                    }
+                  },
+                  "required": [
+                    "mode",
+                    "parameterIds",
+                    "sampleRate"
+                  ],
+                  "additionalProperties": false
+                },
+                "endPosition": {
+                  "type": "object",
+                  "properties": {
+                    "audioSequence": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "transport": {
+                      "type": "object",
+                      "properties": {
+                        "projectFrame": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254736895
+                        },
+                        "continuousFrame": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254736895
+                        },
+                        "projectBeat": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "barBeat": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "tempo": {
+                          "type": "number",
+                          "minimum": 20,
+                          "maximum": 999
+                        },
+                        "timeSignature": {
+                          "type": "array",
+                          "prefixItems": [
+                            {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 32
+                            },
+                            {
+                              "anyOf": [
+                                {
+                                  "type": "number",
+                                  "const": 1
+                                },
+                                {
+                                  "type": "number",
+                                  "const": 2
+                                },
+                                {
+                                  "type": "number",
+                                  "const": 4
+                                },
+                                {
+                                  "type": "number",
+                                  "const": 8
+                                },
+                                {
+                                  "type": "number",
+                                  "const": 16
+                                }
+                              ]
+                            }
+                          ],
+                          "items": false,
+                          "minItems": 2,
+                          "maxItems": 2
+                        },
+                        "playing": {
+                          "type": "boolean"
+                        },
+                        "cycle": {
+                          "type": "array",
+                          "prefixItems": [
+                            {
+                              "type": "number",
+                              "minimum": 0
+                            },
+                            {
+                              "type": "number",
+                              "minimum": 0
+                            }
+                          ],
+                          "items": false,
+                          "minItems": 2,
+                          "maxItems": 2
+                        }
+                      },
+                      "required": [
+                        "projectFrame",
+                        "continuousFrame",
+                        "projectBeat",
+                        "barBeat",
+                        "tempo",
+                        "timeSignature",
+                        "playing"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "reset": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "audioSequence",
+                    "transport",
+                    "reset"
+                  ],
+                  "additionalProperties": false
+                },
+                "error": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "BudgetExceeded",
+                        "PluginConfigInvalid",
+                        "PluginRestartRequired"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "captureId",
+                "status",
+                "firstSequence",
+                "nextSequence",
+                "pendingEvents",
+                "events"
+              ],
+              "additionalProperties": false
+            },
+            "restart": {
+              "type": "object",
+              "properties": {
+                "reasons": {
+                  "minItems": 1,
+                  "maxItems": 4,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "io",
+                      "latency",
+                      "parameters",
+                      "reload"
+                    ]
+                  }
+                },
+                "latencyFrames": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 4294967295
+                },
+                "tailFrames": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 4294967295
+                }
+              },
+              "required": [
+                "reasons",
+                "latencyFrames",
+                "tailFrames"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "editorOpen",
+            "nextSequence"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "controlProtocolVersion",
+        "ok",
+        "state"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "controlProtocolVersion": {
+          "type": "number",
+          "const": 1
+        },
+        "ok": {
+          "type": "boolean",
+          "const": false
+        },
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1
+            },
+            "message": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "controlProtocolVersion",
+        "ok",
+        "error"
+      ],
+      "additionalProperties": false
+    }
+  ]
+}

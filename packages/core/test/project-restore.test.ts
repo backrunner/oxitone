@@ -53,7 +53,7 @@ describe("editable project restoration", () => {
     refs.forEach((ref) => {
       delete ref.instanceId;
     });
-    expect(legacy.protocolVersion).toBe("1.2");
+    expect(legacy.protocolVersion).toBe("1.7");
     legacy.protocolVersion = original.protocolVersion;
     expect(canonicalEncode(legacy)).toBe(canonicalEncode(original));
     expect(project.revisionBigInt).toBe(9007199254740993n);

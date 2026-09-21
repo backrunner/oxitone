@@ -34,6 +34,7 @@ fn duplicate_ids_are_rejected_globally() {
 
     let mut snapshot = base_snapshot();
     snapshot.mixer_channels.push(MixerChannelSpec {
+        insert_routes: None,
         id: "mix_0001".to_string(),
         ..snapshot.mixer_channels[0].clone()
     });
@@ -63,6 +64,7 @@ fn malformed_ids_are_rejected() {
     snapshot
         .automation
         .push(oxitone_core::wire::AutomationLaneSpec {
+            priority: None,
             playback: None,
             id: "".to_string(),
             target: oxitone_core::wire::AutomationTarget {
@@ -229,6 +231,7 @@ fn send_reference_rules() {
     // duplicate destination on the same bus
     let mut snapshot = base_snapshot();
     snapshot.mixer_channels.push(MixerChannelSpec {
+        insert_routes: None,
         id: "mix_0002".to_string(),
         ..snapshot.mixer_channels[0].clone()
     });
@@ -239,6 +242,7 @@ fn send_reference_rules() {
     // valid send passes
     let mut snapshot = base_snapshot();
     snapshot.mixer_channels.push(MixerChannelSpec {
+        insert_routes: None,
         id: "mix_0002".to_string(),
         ..snapshot.mixer_channels[0].clone()
     });
@@ -249,6 +253,7 @@ fn send_reference_rules() {
 #[test]
 fn master_cannot_be_re_routed() {
     let master = || MixerChannelSpec {
+        insert_routes: None,
         id: MASTER_MIXER_CHANNEL_ID.to_string(),
         name: None,
         level: 1.0,
@@ -262,6 +267,7 @@ fn master_cannot_be_re_routed() {
 
     let mut snapshot = base_snapshot();
     snapshot.mixer_channels.push(MixerChannelSpec {
+        insert_routes: None,
         sends: vec![send("mix_0001", 0.5, false)],
         ..master()
     });
@@ -270,6 +276,7 @@ fn master_cannot_be_re_routed() {
 
     let mut snapshot = base_snapshot();
     snapshot.mixer_channels.push(MixerChannelSpec {
+        insert_routes: None,
         master_send_ratio: Some(1.0),
         ..master()
     });

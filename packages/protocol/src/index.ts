@@ -83,6 +83,7 @@ export {
   channelSpecSchema,
   sendSpecSchema,
   mixerChannelSpecSchema,
+  insertRoutingSchema,
   automationLaneSpecSchema,
   automationClipSpecSchema,
 } from "./authoring/specs.js";
@@ -94,6 +95,7 @@ export type {
   ChannelSpec,
   SendSpec,
   MixerChannelSpec,
+  InsertRouting,
   AutomationLaneSpec,
   AutomationClipSpec,
 } from "./authoring/specs.js";
@@ -168,6 +170,18 @@ export type { PreviewFrame, PreviewSnapshotFrame, PreviewResponse } from "./engi
 export type { Preset, ChannelPreset, InstrumentPreset, EffectPreset } from "./authoring/preset.js";
 export { pluginUiManifestSchema, pluginUiControlSchema } from "./plugins/plugin-ui.js";
 export type { PluginUiManifest, PluginUiControl } from "./plugins/plugin-ui.js";
+export * from "./plugins/vst3.js";
+export * from "./plugins/vst3-discovery.js";
+export * from "./plugins/vst3-editor.js";
+export * from "./plugins/vst3-configuration.js";
+export * from "./plugins/vst3-registration.js";
+export * from "./plugins/vst3-stream.js";
+export * from "./plugins/vst3-control.js";
+export * from "./plugins/vst3-edits.js";
+export * from "./plugins/vst3-instance-control.js";
+export * from "./document/vst3-workbench.js";
+export * from "./document/audio-import.js";
+export * from "./plugins/vst3-preset.js";
 export { multisamplerStateSchema, multisamplerOptionsSchema } from "./authoring/multisampler.js";
 export type { MultisamplerState, MultisamplerOptions } from "./authoring/multisampler.js";
 export { effectParameterSchemas, effectPluginIds } from "./authoring/effects.js";
@@ -193,3 +207,7 @@ export * from "./document/arrangement.js";
 export * from "./document/project-edit.js";
 export * from "./plugins/plugin-catalog.js";
 export * from "./document/configuration-source.js";
+export { vst3TransportSchema, type Vst3Transport } from "./plugins/vst3-transport.js";
+export * from "./plugins/vst3-buses.js";
+export * from "./authoring/automation-recording.js";
+export * from "./document/vst3-recording.js";

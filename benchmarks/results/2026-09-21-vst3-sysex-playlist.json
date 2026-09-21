@@ -1,0 +1,267 @@
+{
+  "date": "2026-09-21T08:18:00.402609+00:00",
+  "cpu": "Apple M4",
+  "os": "Darwin 27.0.0",
+  "arch": "arm64",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01) (Homebrew)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: aarch64-apple-darwin\nrelease: 1.98.1\nLLVM version: 22.1.8",
+  "sampleRate": 48000,
+  "blockSize": 128,
+  "channels": 2,
+  "device": null,
+  "callbackP95Ms": null,
+  "callbackP99Ms": null,
+  "xruns": null,
+  "warmupSeconds": 1,
+  "measurementSeconds": 2,
+  "samples": 20,
+  "note": "Run after workspace/host/TypeScript tests and builds completed. Criterion compares the previous local run, not a verified release baseline. Keep both the 32-placement improvement and 1024-placement mean regression; DSP quantiles and repeat evidence are reported separately.",
+  "log": "    Finished `bench` profile [optimized + debuginfo] target(s) in 0.28s\n     Running benches/playlist.rs (target/release/deps/playlist-dd3c96940112b0f8)\nGnuplot not found, using plotters backend\nPlaylist DSP profile: 32 placements; 48000 Hz; 128 frames; p95=122791 ns; p99=127333 ns; offline sink (no device callback or xruns)\nBenchmarking playlist/32_placements/render_128\nBenchmarking playlist/32_placements/render_128: Warming up for 1.0000 s\nBenchmarking playlist/32_placements/render_128: Collecting 20 samples in estimated 2.0045 s (18k iterations)\nBenchmarking playlist/32_placements/render_128: Analyzing\nplaylist/32_placements/render_128\n                        time:   [109.33 \u00b5s 109.72 \u00b5s 110.11 \u00b5s]\n                        change: [-12.297% -10.214% -8.2936%] (p = 0.00 < 0.05)\n                        Performance has improved.\nFound 3 outliers among 20 measurements (15.00%)\n  2 (10.00%) low mild\n  1 (5.00%) high mild\n\nPlaylist DSP profile: 1024 placements; 48000 Hz; 128 frames; p95=131042 ns; p99=136792 ns; offline sink (no device callback or xruns)\nBenchmarking playlist/1024_placements/render_128\nBenchmarking playlist/1024_placements/render_128: Warming up for 1.0000 s\nBenchmarking playlist/1024_placements/render_128: Collecting 20 samples in estimated 2.0061 s (18k iterations)\nBenchmarking playlist/1024_placements/render_128: Analyzing\nplaylist/1024_placements/render_128\n                        time:   [116.08 \u00b5s 121.31 \u00b5s 130.04 \u00b5s]\n                        change: [+3.1526% +8.8882% +14.586%] (p = 0.00 < 0.05)\n                        Performance has regressed.\n\n",
+  "profiles": [
+    {
+      "placements": 32,
+      "dspP95Ns": 122791,
+      "dspP99Ns": 127333
+    },
+    {
+      "placements": 1024,
+      "dspP95Ns": 131042,
+      "dspP99Ns": 136792
+    }
+  ],
+  "benchmarks": [
+    {
+      "placements": 32,
+      "estimates": {
+        "mean": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 109047.38581666707,
+            "upper_bound": 110088.30619238193
+          },
+          "point_estimate": 109582.93229691053,
+          "standard_error": 265.472147797814
+        },
+        "median": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 109315.55316091955,
+            "upper_bound": 110026.26340996168
+          },
+          "point_estimate": 109741.89726166328,
+          "standard_error": 183.4416764155063
+        },
+        "median_abs_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 320.8638886713408,
+            "upper_bound": 1287.52536756677
+          },
+          "point_estimate": 707.0393594303066,
+          "standard_error": 261.92362063860503
+        },
+        "slope": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 109332.36013787439,
+            "upper_bound": 110110.3596782028
+          },
+          "point_estimate": 109723.80052465056,
+          "standard_error": 200.29570361479728
+        },
+        "std_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 619.6736584125077,
+            "upper_bound": 1651.2796677255744
+          },
+          "point_estimate": 1227.4506967991558,
+          "standard_error": 258.0709180764397
+        }
+      },
+      "samples": {
+        "sampling_mode": "Linear",
+        "iters": [
+          87.0,
+          174.0,
+          261.0,
+          348.0,
+          435.0,
+          522.0,
+          609.0,
+          696.0,
+          783.0,
+          870.0,
+          957.0,
+          1044.0,
+          1131.0,
+          1218.0,
+          1305.0,
+          1392.0,
+          1479.0,
+          1566.0,
+          1653.0,
+          1740.0
+        ],
+        "times": [
+          9763167.0,
+          19131709.0,
+          27781959.0,
+          38485542.0,
+          46664667.0,
+          57472292.0,
+          66683875.0,
+          76679583.0,
+          86075166.0,
+          95410583.0,
+          103904500.0,
+          114227250.0,
+          123284417.0,
+          134602083.0,
+          142161708.0,
+          152031500.0,
+          162418541.0,
+          171973083.0,
+          181233791.0,
+          192932625.0
+        ]
+      },
+      "change": {
+        "mean": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": -0.1229669932248761,
+            "upper_bound": -0.08293621772456983
+          },
+          "point_estimate": -0.10214152616590788,
+          "standard_error": 0.010244522354942909
+        },
+        "median": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": -0.11675063754757709,
+            "upper_bound": -0.06415012777864093
+          },
+          "point_estimate": -0.08758657828555494,
+          "standard_error": 0.013107803171732971
+        }
+      }
+    },
+    {
+      "placements": 1024,
+      "estimates": {
+        "mean": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 122839.94285421672,
+            "upper_bound": 135763.20947264272
+          },
+          "point_estimate": 129090.77040860336,
+          "standard_error": 3309.336785313201
+        },
+        "median": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 118573.32817460317,
+            "upper_bound": 132533.2782051282
+          },
+          "point_estimate": 126388.640625,
+          "standard_error": 3835.66052849253
+        },
+        "median_abs_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 6257.137028336692,
+            "upper_bound": 26984.70311781411
+          },
+          "point_estimate": 17524.733152832123,
+          "standard_error": 5475.661583607942
+        },
+        "slope": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 116079.80130346499,
+            "upper_bound": 130041.0833314724
+          },
+          "point_estimate": 121310.28838145014,
+          "standard_error": 3604.9482504911457
+        },
+        "std_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 10440.449999021503,
+            "upper_bound": 17917.926467891473
+          },
+          "point_estimate": 15137.853518150245,
+          "standard_error": 1905.9951069338724
+        }
+      },
+      "samples": {
+        "sampling_mode": "Linear",
+        "iters": [
+          84.0,
+          168.0,
+          252.0,
+          336.0,
+          420.0,
+          504.0,
+          588.0,
+          672.0,
+          756.0,
+          840.0,
+          924.0,
+          1008.0,
+          1092.0,
+          1176.0,
+          1260.0,
+          1344.0,
+          1428.0,
+          1512.0,
+          1596.0,
+          1680.0
+        ],
+        "times": [
+          10177708.0,
+          20719375.0,
+          35594250.0,
+          43697167.0,
+          64526250.0,
+          77260833.0,
+          76541667.0,
+          86078333.0,
+          94059833.0,
+          111968792.0,
+          139806541.0,
+          158549291.0,
+          143893250.0,
+          146629000.0,
+          146139167.0,
+          152015833.0,
+          161582875.0,
+          169816625.0,
+          178421042.0,
+          187681250.0
+        ]
+      },
+      "change": {
+        "mean": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 0.031526277812695014,
+            "upper_bound": 0.145861812715881
+          },
+          "point_estimate": 0.08888194302538421,
+          "standard_error": 0.02944886854257807
+        },
+        "median": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 0.003067264122804003,
+            "upper_bound": 0.12147356619316296
+          },
+          "point_estimate": 0.06947871091398317,
+          "standard_error": 0.03353117795313148
+        }
+      }
+    }
+  ]
+}

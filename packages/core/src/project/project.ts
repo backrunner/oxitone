@@ -17,6 +17,7 @@ import { AutomationClip } from "../automation/clip.js";
 import type { AutomationSource } from "../automation/source.js";
 import { ProjectAutomation } from "./automation.js";
 import { registerPattern } from "../patterns/registration.js";
+import { recordAutomation } from "./recording.js";
 import type { Pattern } from "../patterns/pattern.js";
 import { PatternClip } from "../arrangement/pattern-clip.js";
 import { ProjectTimeline } from "./timeline.js";
@@ -28,6 +29,7 @@ import { parseRestorableSnapshot } from "./restore.js";
 import { restoreEntities } from "./hydrate.js";
 import { arrange } from "./arrangement.js";
 import { configure } from "./edit.js";
+import { importAudio } from "./audio-import.js";
 
 export type { Marker } from "./timeline.js";
 
@@ -113,6 +115,16 @@ export class Project extends ProjectTimeline {
   /** Edit mixer, Track, tempo or plugin configuration using current builder order. */
   configure(edit: import("@oxitone/protocol").ProjectEdit): this {
     configure(this, edit);
+    return this;
+  }
+  /** Accept a recorded Project-beat take as editable Playlist automation clips. */
+  recordAutomation(edit: import("@oxitone/protocol").AutomationRecordingEdit): this {
+    recordAutomation(this, edit);
+    return this;
+  }
+  /** Add a frozen audio resource on a new Playlist track; runtime decoding remains native. */
+  importAudio(edit: import("@oxitone/protocol").ProjectAudioImport): this {
+    importAudio(this, edit);
     return this;
   }
 

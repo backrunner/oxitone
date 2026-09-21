@@ -9,6 +9,9 @@ import {
   type RenderOptions,
   type RenderReport,
   registerPluginOptionsSchema,
+  registerVst3OptionsSchema,
+  type RegisterVst3Options,
+  type RegisteredVst3,
   type RegisterPluginOptions,
   type RegisteredPlugin,
   type PluginUiManifest,
@@ -20,6 +23,7 @@ import {
   renderWav as nativeRenderWav,
   exportMidi as nativeExportMidi,
   registerPlugin as nativeRegisterPlugin,
+  registerVst3 as nativeRegisterVst3,
 } from "@oxitone/native";
 import { resolve } from "#platform-path";
 import { Session, withTempEngine, type TransportPosition, type LoopRegion } from "./session.js";
@@ -31,10 +35,45 @@ export type ProjectCompileOptions = EngineOptions & CompileOptions;
 export abstract class ProjectPlayback {
   private activeSession?: Session;
   private pluginList: RegisterPluginOptions[] = [];
+  private vst3List: RegisterVst3Options[] = [];
   private pluginUiList: PluginUiManifest[] = [];
   private policy: EngineOptions["allowPlugins"];
   get registeredPlugins(): RegisterPluginOptions[] {
     return structuredClone(this.pluginList);
+  }
+  get registeredVst3Plugins(): RegisterVst3Options[] {
+    return structuredClone(this.vst3List);
+  }
+  withVst3Registration(input: RegisterVst3Options): this {
+    this.registerVst3(input);
+    return this;
+  }
+  /** Register an isolated class for this project's current and future native engines. */
+  registerVst3(input: RegisterVst3Options): RegisteredVst3 {
+    const plugin = registerVst3OptionsSchema.parse(input);
+    plugin.source.bundlePath = resolve(plugin.source.bundlePath);
+    plugin.helperPath = resolve(plugin.helperPath);
+    const policy = this.policy ?? plugin.source.allowPlugins;
+    const engine = createEngine({ allowPlugins: policy });
+    try {
+      for (const existing of this.pluginList) nativeRegisterPlugin(engine, existing);
+      for (const existing of this.vst3List) nativeRegisterVst3(engine, existing);
+      const result = nativeRegisterVst3(engine, plugin);
+      const pinned = { ...plugin, source: { ...plugin.source, expectedHash: result.sha256 } };
+      this.session?.registerVst3(pinned);
+      if (
+        !this.vst3List.some(
+          (existing) =>
+            existing.source.classId.toLowerCase() === plugin.source.classId.toLowerCase() &&
+            existing.source.expectedHash === result.sha256,
+        )
+      )
+        this.vst3List.push(pinned);
+      this.policy = policy;
+      return result;
+    } finally {
+      nativeDispose(engine);
+    }
   }
   get pluginPolicy(): EngineOptions["allowPlugins"] {
     return this.policy;
@@ -70,6 +109,7 @@ export abstract class ProjectPlayback {
     const engine = createEngine({ allowPlugins: policy });
     try {
       for (const existing of this.pluginList) nativeRegisterPlugin(engine, existing);
+      for (const existing of this.vst3List) nativeRegisterVst3(engine, existing);
       const result = nativeRegisterPlugin(engine, plugin);
       this.session?.registerPlugin({ ...plugin, expectedHash: result.sha256 });
       if (
@@ -106,6 +146,7 @@ export abstract class ProjectPlayback {
     let snapshot: ProjectSnapshot;
     try {
       for (const plugin of this.pluginList) nativeRegisterPlugin(engine, plugin);
+      for (const plugin of this.vst3List) nativeRegisterVst3(engine, plugin);
       snapshot = nativeCompile(engine, this.snapshot(), { assetBaseDir: options?.assetBaseDir });
     } catch (error) {
       nativeDispose(engine);
@@ -139,6 +180,7 @@ export abstract class ProjectPlayback {
       (engine) => nativeRenderWav(engine, snapshot, { assetBaseDir: this.assetBaseDir, ...options }),
       { allowPlugins: this.policy },
       this.pluginList,
+      this.vst3List,
     );
   }
 

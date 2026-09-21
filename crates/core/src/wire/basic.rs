@@ -310,6 +310,8 @@ pub struct EffectRef {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub resources: Option<BTreeMap<String, String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub state: Option<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bypass: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub mix: Option<f64>,

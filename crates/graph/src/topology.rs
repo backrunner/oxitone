@@ -38,9 +38,30 @@ pub struct MixerRouting {
 /// Deterministic: the same specs always yield the same order regardless of
 /// declaration order.
 pub fn build_mixer_routing(channels: &[MixerChannelSpec]) -> Result<MixerRouting, OxitoneError> {
+    crate::insert_routes::validate_references(channels)?;
     let ids: BTreeSet<&str> = channels.iter().map(|c| c.id.as_str()).collect();
     let mut edges: Vec<RoutingEdge> = Vec::new();
     for channel in channels {
+        for routes in channel
+            .insert_routes
+            .iter()
+            .flat_map(|routes| routes.values())
+        {
+            for source in routes.inputs.iter().flat_map(|inputs| inputs.values()) {
+                edges.push(RoutingEdge {
+                    source: source.clone(),
+                    destination: channel.id.clone(),
+                    sidechain: true,
+                });
+            }
+            for destination in routes.outputs.iter().flat_map(|outputs| outputs.values()) {
+                edges.push(RoutingEdge {
+                    source: channel.id.clone(),
+                    destination: destination.clone(),
+                    sidechain: false,
+                });
+            }
+        }
         if channel.id == MASTER_MIXER_CHANNEL_ID {
             continue;
         }
@@ -64,6 +85,7 @@ pub fn build_mixer_routing(channels: &[MixerChannelSpec]) -> Result<MixerRouting
     edges.sort_by(|a, b| {
         (&a.source, &a.destination, a.sidechain).cmp(&(&b.source, &b.destination, b.sidechain))
     });
+    edges.dedup();
 
     let mut adjacency: BTreeMap<&str, BTreeSet<&str>> = BTreeMap::new();
     let mut indegree: BTreeMap<&str, usize> = BTreeMap::new();

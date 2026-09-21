@@ -2,6 +2,8 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createEngine, dispose, getPluginInfo } from "@oxitone/native";
+import { Vst3Workbench } from "./vst3-workbench.js";
+import { localVst3, vst3ParameterSpecs, vst3PluginKind } from "./vst3-discovery.js";
 import {
   effectPluginIds,
   engineOptionsSchema,
@@ -57,12 +59,71 @@ let builtinCache: DiscoveredPlugin[] | undefined;
 export class ProjectPluginCatalog {
   private plugins = builtins();
   private reads: SourceRead[] = [];
-  constructor(private readonly root: string) {}
+  private readonly vst3: Vst3Workbench;
+  constructor(private readonly root: string) {
+    this.vst3 = new Vst3Workbench(root);
+  }
   get dependencyPaths(): string[] {
     return this.reads.flatMap((read) => [read.path, read.realPath]);
   }
+  get vst3Bundles(): string[] | undefined {
+    return this.vst3.scannedBundles;
+  }
   async checkReads(): Promise<void> {
     await checkSourceReads(this.reads);
+  }
+  async vst3Command(
+    command: import("@oxitone/protocol").Vst3WorkbenchCommand,
+    frame: PreviewSnapshotFrame | undefined,
+    signal: AbortSignal,
+    check: () => void,
+  ): Promise<void> {
+    check();
+    if (command.kind === "cancel") return this.vst3.cancel();
+    if (command.kind === "scan") return this.vst3.scan(signal, check);
+    if (
+      command.kind === "controlInstance" ||
+      command.kind === "captureInstance" ||
+      command.kind === "startRecording" ||
+      command.kind === "stopRecording" ||
+      command.kind === "cancelRecording"
+    )
+      throw new OxitoneError(ErrorCode.InvalidProject, "Instance editing requires a source transaction");
+    if (command.kind === "addBundle") {
+      const plugins = await this.vst3.addBundle(
+        command.bundlePath,
+        frame?.allowPlugins ?? "signed-only",
+        signal,
+        check,
+      );
+      for (const plugin of plugins) {
+        const index = this.plugins.findIndex((item) => item.entry.handle === plugin.entry.handle);
+        if (index < 0) this.plugins.push(plugin);
+        else this.plugins[index] = plugin;
+      }
+      return;
+    }
+    if (command.kind === "add" || command.kind === "loadPreset") {
+      const plugin =
+        command.kind === "add" ? this.vst3.add(command.source) : await this.vst3.loadPreset(command.path, check);
+      const index = this.plugins.findIndex((item) => item.entry.handle === plugin.entry.handle);
+      if (index < 0) this.plugins.push(plugin);
+      else this.plugins[index] = plugin;
+      return;
+    }
+    if (command.kind === "remove") {
+      this.vst3.remove(command.plugin);
+      this.plugins = this.plugins.filter((plugin) => plugin.entry.handle !== command.plugin);
+      return;
+    }
+    const plugin = this.plugins.find((plugin) => plugin.entry.handle === command.plugin);
+    if (!plugin) throw new OxitoneError(ErrorCode.EditTargetMissing, "VST3 selection expired");
+    if (command.kind === "edit")
+      return this.vst3.edit(plugin, command.parameters, frame?.allowPlugins ?? "signed-only", signal, check);
+    if (command.kind === "savePreset") return this.vst3.savePreset(plugin, command.path, command.parameters, check);
+    if (command.kind === "attachRender")
+      throw new OxitoneError(ErrorCode.InvalidProject, "Attach requires a source transaction");
+    await this.vst3.render(plugin, command.options, frame?.allowPlugins ?? "signed-only", signal, check);
   }
   selection(handle: string): DiscoveredPlugin {
     const plugin = this.plugins.find((p) => p.entry.handle === handle);
@@ -74,7 +135,25 @@ export class ProjectPluginCatalog {
   async refresh(frame: PreviewSnapshotFrame | undefined, check: () => void): Promise<void> {
     const discovery = await discoverProjectPlugins(this.root);
     check();
-    const plugins = [...builtins(), ...discovery.plugins];
+    const plugins = [...builtins(), ...discovery.plugins, ...this.vst3.refresh()];
+    for (const registration of frame?.vst3Plugins ?? []) {
+      const id = `vst3.${registration.source.classId.toLowerCase()}`;
+      const version = `0.0.0+${registration.metadata.sha256}`;
+      if (plugins.some((p) => p.entry.pluginId === id && p.entry.pluginVersion === version)) continue;
+      const candidate = localVst3(registration.source);
+      const existing = plugins.find((p) => p.entry.handle === candidate.entry.handle);
+      const plugin = existing ?? candidate;
+      plugin.vst3Info ??= registration.metadata;
+      Object.assign(plugin.entry, {
+        pluginId: id,
+        pluginVersion: version,
+        displayName: registration.metadata.name,
+        vendor: registration.metadata.vendor,
+        kind: vst3PluginKind(registration.metadata),
+        parameters: vst3ParameterSpecs(registration.metadata),
+      });
+      if (!existing) plugins.push(plugin);
+    }
     for (const registration of frame?.plugins ?? []) {
       if (
         plugins.some(
@@ -173,6 +252,7 @@ export class ProjectPluginCatalog {
     const plugin = this.plugins.find((plugin) => plugin.entry.handle === handle);
     if (!plugin) throw new OxitoneError(ErrorCode.EditTargetMissing, "plugin catalog selection expired");
     if (plugin.entry.source === "builtin") return;
+    if (plugin.entry.vst3) return this.vst3.inspect(plugin, frame?.allowPlugins ?? "signed-only", signal, check);
     if (!plugin.registration)
       throw new OxitoneError(ErrorCode.AssetUnavailable, "plugin has no available platform library");
     const directory = await mkdtemp(join(tmpdir(), "oxitone-plugin-verify-"));

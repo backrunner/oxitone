@@ -20,9 +20,24 @@ pub fn get_plugin_info(
             .ok_or_else(|| {
                 OxitoneError::new(codes::PLUGIN_MANIFEST_MISMATCH, "unknown plugin ID/version")
             })?;
+        let mut format = if engine
+            .dynamic_plugins
+            .contains_key(&(plugin_id.clone(), plugin_version.clone()))
+        {
+            "oxi"
+        } else {
+            "builtin"
+        };
+        #[cfg(target_os = "macos")]
+        if engine
+            .vst3_plugins
+            .contains_key(&(plugin_id, plugin_version))
+        {
+            format = "vst3";
+        }
         Ok(serde_json::json!({
             "protocolVersion": PROTOCOL_VERSION, "pluginId": descriptor.plugin_id,
-            "pluginVersion": descriptor.plugin_version, "abiMajor": 1,
+            "pluginVersion": descriptor.plugin_version, "abiMajor": if format == "vst3" { None } else { Some(1) }, "format": format,
             "kind": match descriptor.kind { oxitone_graph::PluginKind::Instrument => "instrument", oxitone_graph::PluginKind::Effect => "effect" },
             "parameters": descriptor.parameters, "stateSchema": descriptor.state_schema.map(|id| id.0),
         }).to_string())
@@ -91,8 +106,13 @@ pub fn get_plugin_diagnostics(engine_id: String) -> napi::Result<String> {
         let engine = engines
             .get(&engine_id)
             .ok_or_else(|| unknown_engine(&engine_id))?;
-        Ok(serde_json::Value::Array(engine.dynamic_plugins.values().map(|p| serde_json::json!({
+        let mut diagnostics: Vec<_> = engine.dynamic_plugins.values().map(|p| serde_json::json!({
             "pluginId": p.registration.plugin_id, "pluginVersion": p.registration.plugin_version, "faults": p.fault_count()
-        })).collect()).to_string())
+        })).collect();
+        #[cfg(target_os = "macos")]
+        diagnostics.extend(engine.vst3_plugins.values().map(|p| serde_json::json!({
+            "pluginId": p.registration.plugin_id, "pluginVersion": p.registration.plugin_version, "faults": p.fault_count()
+        })));
+        Ok(serde_json::Value::Array(diagnostics).to_string())
     })
 }

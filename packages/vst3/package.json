@@ -1,0 +1,36 @@
+{
+  "name": "@oxitone/vst3",
+  "version": "0.1.0",
+  "description": "Optional isolated VST3 project, inspection and offline render adapter",
+  "license": "MPL-2.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "vite build",
+    "lint": "eslint src test",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@oxitone/protocol": "workspace:*"
+  },
+  "optionalDependencies": {
+    "@oxitone/vst3-host-darwin-arm64": "workspace:*",
+    "@oxitone/vst3-host-darwin-x64": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.11"
+  }
+}

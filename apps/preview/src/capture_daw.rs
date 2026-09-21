@@ -18,6 +18,7 @@ pub struct Smoke {
     review: crate::capture_ui_review::Smoke,
     library: crate::capture_library::Smoke,
     controls: crate::capture_controls::Smoke,
+    vst3: crate::capture_vst3::Smoke,
 }
 impl Smoke {
     pub fn complete(&self) -> bool {
@@ -29,6 +30,7 @@ impl Smoke {
             && self.review.complete()
             && self.library.complete()
             && self.controls.complete()
+            && self.vst3.complete()
     }
     pub fn step(
         &mut self,
@@ -78,6 +80,10 @@ impl Smoke {
             }
             self.controls.step(view, window, cx);
             if !self.controls.complete() {
+                return;
+            }
+            self.vst3.step(view, window, cx);
+            if !self.vst3.complete() {
                 return;
             }
             self.review.step(view, window, cx);

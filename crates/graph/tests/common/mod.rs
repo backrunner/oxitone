@@ -198,10 +198,13 @@ pub fn base_snapshot() -> ProjectSnapshot {
             pan: 0.0,
             swing: None,
             mixer_channel_id: "mix_0001".to_string(),
+            output_routes: None,
+            midi_routes: None,
             mute: None,
             solo: None,
         }],
         mixer_channels: vec![MixerChannelSpec {
+            insert_routes: None,
             id: "mix_0001".to_string(),
             name: None,
             level: 1.0,

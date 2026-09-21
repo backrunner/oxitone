@@ -48,6 +48,7 @@ import {
 } from "@oxitone/protocol";
 import { call, native } from "./call.js";
 import { parseRequest, parameterFrame, encodeRequestSnapshot } from "./request.js";
+export { registerVst3, getVst3Instances, controlVst3Instance } from "./vst3.js";
 
 export type {
   CompileOptions,

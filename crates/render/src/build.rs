@@ -16,7 +16,8 @@ use oxitone_graph::PluginRegistry;
 use oxitone_mixer::{DelayLine, MixerEngine};
 
 use crate::assets::SampleStore;
-use crate::build_plugins::{create_insert, create_instrument, preprocess_mixer_channel};
+use crate::build_instrument::create_instrument;
+use crate::build_plugins::{create_insert, preprocess_mixer_channel};
 use crate::channel::ChannelNode;
 use crate::clip::ClipNode;
 use crate::graph::RenderGraph;
@@ -65,6 +66,15 @@ impl RenderGraph {
         options: &RenderGraphOptions,
     ) -> Result<Self, OxitoneError> {
         let sample_rate = options.compile.sample_rate.unwrap_or(snapshot.sample_rate);
+        let configured_registry = crate::configured_registry::prepare(
+            snapshot,
+            registry,
+            &HostContext {
+                sample_rate: f64::from(sample_rate),
+                max_block_size: options.compile.block_size.unwrap_or(snapshot.block_size),
+            },
+        )?;
+        let registry = &configured_registry;
         samples.prepare_all(snapshot, sample_rate)?;
         let compile = CompileOptions {
             respect_solo: options.respect_solo,
@@ -101,6 +111,10 @@ impl RenderGraph {
             let mut inserts = Vec::with_capacity(channel_plan.effect_chain.len());
             for (index, effect) in channel_plan.effect_chain.iter().enumerate() {
                 inserts.push(create_insert(
+                    effect
+                        .instance_id
+                        .as_ref()
+                        .is_some_and(|id| channel_plan.midi_routes.contains_key(id)),
                     &channel_plan.id,
                     index,
                     effect,
@@ -123,6 +137,17 @@ impl RenderGraph {
             channels.push(ChannelNode {
                 id: channel_plan.id.clone(),
                 bus_id: channel_plan.mixer_channel_id.clone(),
+                output_routes: channel_plan
+                    .output_routes
+                    .iter()
+                    .map(|(&index, destination)| {
+                        crate::output_route::OutputRoute::new(
+                            index,
+                            destination.clone(),
+                            max_block as usize,
+                        )
+                    })
+                    .collect(),
                 instrument,
                 instrument_param_ids,
                 instrument_specs: instrument_specs.clone(),
@@ -160,6 +185,12 @@ impl RenderGraph {
             channel
                 .comp
                 .set_delay((channel_latency_max - latency) as usize);
+            for route in &mut channel.output_routes {
+                route.align(
+                    (channel_latency_max - channel.instrument.latency_frames()) as usize,
+                    max_block as usize,
+                );
+            }
         }
 
         // Track membership per channel (for track stems).
@@ -244,6 +275,8 @@ impl RenderGraph {
             .metronome_level
             .map(|level| Metronome::new(&plan, level));
 
+        let controls =
+            crate::plugin_controls::ControlGraph::collect(snapshot, &channels, &mixer, registry)?;
         Ok(RenderGraph::new(
             plan,
             channels,
@@ -257,6 +290,7 @@ impl RenderGraph {
             channel_latency_max,
             metronome,
             options.respect_solo,
+            controls,
         ))
     }
 }

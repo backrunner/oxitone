@@ -1,7 +1,67 @@
 # Oxitone Plugin ABI 与动态加载
 
+Engine 1.7 新增 Channel.midiRoutes：稳定实例 ID → 目标 Channel ID 数组，源可以是该
+Channel 的乐器或 insert，目标必须是支持 MIDI 输入的隔离原生乐器。控制线程验证能力、
+引用、重复目标和环；执行按 Channel 拓扑顺序传递同段 sample offset，不引入一块延迟。
+MIDI 使用插件发出的时间位置，音频 PDC 不改变 MIDI 时间；mute/solo/fader/mix/bypass
+仅影响音频，不截断 MIDI note-off。MIDI 源 insert 不会自动收到 Channel 乐谱音符。
+Stream 11 双向承载 MIDI 1.0 通道消息，主事件 bus 0，256 条/段（输入含参数和 authored notes）。
+主总线 SysEx 使用预分配 payload：单条最多 4096 bytes，每段合计 16384 bytes，保留 sample offset。
+捕获由 midiOutput 显式启用；未路由输出不捕获。Note Expression、非主事件总线、
+无效位置/值和溢出报错，禁止丢弃最早事件继续播放。seek/reset 清空暂存事件。
+当前不支持 Mixer/Master 到 Channel 的反馈 MIDI、内置/C ABI 1 MIDI 接收、硬件输出或
+把插件运行时 MIDI 写入静态 SMF 导出；这些边界不改变 C ABI 1。
+Stream 11 支持物理音频输入/输出均为空、具有主 MIDI 输出的纯 MIDI 插件。工程将其作为
+Channel 乐器节点，Rust adapter 仅提供静音给 stereo 混音图，实际 VST3 process 的
+numInputs/numOutputs 仍为零。无 noteInput 的生成器拒绝乐谱和 MIDI 路由输入。
+
+Engine 1.6 的 Mixer insert 路由使用 Rust factory.input_bus_count 和
+PluginInstance.configure_input_buses/input_bus_mut，配合既有输出总线接口。
+输入激活仅在 prepare 前进行；process 前将已补偿 PCM 复制到预分配的物理输入槽位，
+借用结束后才调用 processor，不保留跨调用指针。没有能力的 factory/instance 明确拒绝。
+只允许隔离执行的原生多总线适配器，C ABI 1 不变。完整路由/PDC 语义见 24。
+
+Rust factory 可声明 configuration_dependent，并在控制线程 configured_factory 为一个
+instanceId 返回恢复配置后的不可变工厂。其 class/version 必须保持不变；graph-local registry
+供参数、automation、路由校验和实例创建共用，不替换全 engine 注册。RenderGraph 的原生
+控制目录保留这些 descriptor 的只读副本供 Preview 实例详情和录制参数选择，不调用厂商。
+静态/C ABI 1 工厂不参与协商；静态图不克隆注册表、不增加重复结构校验。C 调用表不变。
+
+Rust PluginInstance 可提供 control-only `native_control` capability，返回独立可克隆控制句柄。
+句柄声明协议名，接收该协议的版本化 JSON 并返回已校验结果；具体 adapter 负责严格验证。
+编译器按 ref.instanceId 收集句柄，执行图不解析控制 JSON。没有此能力的 builtin/C ABI 1
+实例返回 None；不扩展 C 调用表、不在 callback 访问控制目录。图发布/退役状态用原子值传递，
+注册表 clone 不延长图的可编辑生命周期。VST3 facade 只允许 `vst3` capability。
+
+PluginInstance.initial_parameters_applied 在 prepare 后声明 adapter 已负责参数初始化。
+默认 false 保留 ABI 1 的首块参数事件；VST3 为 true，避免播放前的控制修改在首块被重复
+authoring seed 覆盖。此能力只在控制线程查询，不改变后续时间线自动化的优先级。
+
+Engine 1.4 的乐器辅助输出通过 Rust trait 的 output_bus_count、configure_output_buses 和
+output_bus 借用访问器实现；仅 prepare 可改变激活状态。辅助 PCM 在 process 后借用，不得分配。
+默认 factory 只有 bus 0、拒绝辅助路由；C ABI 1 调用表和能力保持不变。
+当前辅助路由只允许 requires_isolation 的 native adapter，错误传播在后台执行域；direct
+graph 在 compile 拒绝此能力，callback 不进入可能构造错误对象的辅助输出路径。
+
 新增静态 npm 插件目录格式和 GPUI/helper 验证入口见 [18-project-daw.md](18-project-daw.md)。
 metadata format 1 不改变 ABI 1 的执行能力，不声称资源/state 已进入外部 C 插件。
+VST3 helper、工程实例与 DAW 工作台见 [24-vst3-sdk.md](24-vst3-sdk.md)。VST3 使用独立的
+`registerVst3` 契约和后台执行域，可分配为乐器/insert；不占用设备 callback，也不冒充 C ABI。
+Rust trait 新增 control-only `try_create_configured` 与 `process_isolated`，C ABI 1 调用表不变。
+VST3 stream 11 保留所有物理总线索引；工程 bus insert 将 mixer sidechain 映射到输入 bus 1，
+prepare 时显式激活，缺省信号为零。乐器辅助输出通过 Channel.outputRoutes 路由；
+Mixer 效果实例通过 Engine 1.6 insertRoutes 选择多个辅助输入与输出。
+注册核对真实 category，带音频输入的 Instrument 不会被误分类成 Effect。
+VST3 descriptor 的 state schema 为 `oxitone.vst3.configuration@1`；不支持 state 的 C 工厂
+拒绝该字段，不能静默丢弃。`getPluginInfo` 返回 format，VST3 的 abiMajor 为 null。
+stream 3 的精确 transport 通过隔离 helper 内的本地 MIT loader 扩展实现；保留来源与
+LICENSE，见 `vendor/vst3-host/OXITONE.md`。它不更改 C ABI 1 的调用表或兼容性。
+同一扩展公开可选的单调 editor-event overflow counter；不支持检测的 backend 不得启动
+手势日志。Helper control 1 的 begin/value/end 游标日志、实际音频块定位与预算见 [24](24-vst3-sdk.md)。
+厂商回调和日志仍在隔离 helper，设备 callback 不读取日志、不执行参数回调或 JSON。
+VST3 参数去重必须比较本段已排入的最新值，再查前段缓存。A→B→A 在同段内保留 B 与
+返回 A 两个事件及其 sample offset；不能因最后值等于起始缓存而丢掉恢复事件。去重后的
+参数加音符仍受 256 事件预算约束，失败不得提前更新用于后续恢复的参数缓存。
 
 发布前已批准迁移到 [ABI 2 与插件管理器](../designs/source-daw/05-plugins.md)：参数、资源、
 configuration state、UI 事务与独立实例均进入同一 authoring 模型。下文仍记录现行 ABI 1，

@@ -2,6 +2,10 @@ import { randomUUID } from "node:crypto";
 import { writeArrangement, assertArrangement } from "../editing/arrangement-writer.js";
 import { writeProjectEdit } from "../editing/project-edit-writer.js";
 import { preparePluginAssignment, type PluginAssignment } from "../plugins/plugin-assignment.js";
+import { prepareVst3AudioImport } from "../plugins/vst3-audio-import.js";
+import { controlVst3Instance } from "../plugins/vst3-instance-control.js";
+import type { Vst3Runtime } from "../../preview/vst3-client.js";
+import { writeVst3Configuration } from "../editing/vst3-configuration-writer.js";
 import { dirname, resolve } from "node:path";
 import { Pattern } from "@oxitone/core";
 import {
@@ -47,6 +51,7 @@ import { projectSites } from "./project-sites.js";
 import { PluginLifecycle, type PluginTaskRunner } from "../plugins/plugin-lifecycle.js";
 import { mergeThreeWay } from "../save/three-way-merge.js";
 import { sourceSpan } from "../eval/source-timing.js";
+import { DocumentVst3Recording } from "./vst3-recording.js";
 
 export interface ProjectDocumentOptions {
   entry: string;
@@ -54,6 +59,7 @@ export interface ProjectDocumentOptions {
   sourceRoots?: readonly string[];
   readPaths?: readonly string[];
   pluginTaskRunner?: PluginTaskRunner;
+  vst3Runtime?: Vst3Runtime;
 }
 function changed(): never {
   throw new OxitoneError(ErrorCode.SourceChanged, "document revision changed or conflicts with external source");
@@ -89,6 +95,7 @@ export class ProjectDocument {
   private readonly future: Map<string, string>[] = [];
   private readonly plugins: ProjectPluginCatalog;
   private readonly pluginLifecycle: PluginLifecycle;
+  private readonly recordings: DocumentVst3Recording;
   private constructor(
     private readonly options: ProjectDocumentOptions,
     private readonly ownership: SourceOwnership,
@@ -99,6 +106,20 @@ export class ProjectDocument {
     this.disk = new Map(files);
     this.plugins = new ProjectPluginCatalog(options.projectRoot ?? dirname(options.entry));
     this.pluginLifecycle = new PluginLifecycle(options.projectRoot ?? dirname(options.entry), options.pluginTaskRunner);
+    this.recordings = new DocumentVst3Recording({
+      runtime: options.vst3Runtime,
+      ready: (revision) => this.ready(revision),
+      isCurrent: (revision, before) =>
+        this.status !== "closed" && this.revision === revision && this.accepted === before,
+      handle: (site) => this.handle(site),
+      files: () => this.files,
+      emit: () => this.emit(),
+      transact: (before, files, validate) =>
+        this.transact(before, files, validate, (candidate) => {
+          validate(candidate);
+          this.adopt(files, candidate);
+        }),
+    });
   }
 
   static async open(options: ProjectDocumentOptions): Promise<ProjectDocument> {
@@ -129,6 +150,8 @@ export class ProjectDocument {
       files: [...this.files].map(([path, text]) => ({ path, text })),
       conflicts: this.conflicts,
       plugins: this.plugins.view(this.accepted?.frame),
+      vst3Bundles: this.plugins.vst3Bundles,
+      ...(this.recordings.view ? { vst3Recording: this.recordings.view } : {}),
       ...(this.rackMaterialization ? { rackMaterialization: this.rackMaterialization.review } : {}),
       ...(this.materialization ? { materialization: this.materialization.review } : {}),
       ...(this.error ? { diagnostic: this.error } : {}),
@@ -181,6 +204,10 @@ export class ProjectDocument {
     return this.accepted;
   }
   private begin(): number {
+    this.recordings.invalidate();
+    return this.beginControl();
+  }
+  private beginControl(): number {
     this.materialization = undefined;
     this.rackMaterialization = undefined;
     this.controller.abort();
@@ -537,7 +564,9 @@ export class ProjectDocument {
       this.check(generation);
       this.ready(revision);
     });
-    const candidate = preparePluginAssignment(before, this.files, this.plugins, input);
+    const candidate = await preparePluginAssignment(before, this.files, this.plugins, input);
+    this.check(generation);
+    this.ready(revision);
     return this.transact(
       candidate.before,
       candidate.files,
@@ -674,7 +703,7 @@ export class ProjectDocument {
   async save(revision: number): Promise<DocumentView> {
     const accepted = this.ready(revision);
     const files = projectSaveFiles(this.files, this.disk);
-    const generation = this.begin();
+    const generation = this.beginControl();
     if (!files.length) {
       this.emit();
       return this.view;
@@ -805,6 +834,73 @@ export class ProjectDocument {
     }
     return this.view;
   }
+  async vst3Command(revision: number, command: import("@oxitone/protocol").Vst3WorkbenchCommand): Promise<void> {
+    if (command.kind === "cancelRecording") return this.recordings.cancel(command.recordingId);
+    this.current(revision);
+    if (command.kind === "startRecording") return this.recordings.start(revision, command);
+    if (command.kind === "stopRecording") return this.recordings.stop(revision, command.recordingId);
+    const generation = this.generation;
+    if (command.kind === "controlInstance" || command.kind === "captureInstance") {
+      const before = this.ready(revision);
+      const site = before.configurationSites.find((site) => this.handle(site) === command.site);
+      if (
+        !site ||
+        site.usages.length !== 1 ||
+        (command.usage && (site.scope !== "reference" || site.usages[0]?.handle !== command.usage))
+      )
+        throw new OxitoneError(ErrorCode.EditScopeConflict, "VST3 source boundary no longer isolates this instance");
+      const state = await controlVst3Instance(
+        before,
+        site,
+        String(revision + 1),
+        { kind: command.kind === "captureInstance" ? "capture" : command.action },
+        this.options.vst3Runtime,
+        this.controller.signal,
+        () => {
+          this.check(generation);
+          this.ready(revision);
+        },
+      );
+      if (!state) return;
+      const candidate = writeVst3Configuration(this.files.get(site.fileName)!, site, state);
+      if (canonicalEncode(candidate.config) === canonicalEncode(site.config)) return;
+      const files = new Map(this.files);
+      files.set(site.fileName, candidate.text);
+      await this.transact(before, files, (evaluated) =>
+        assertProjectConfigurationEdit(before.frame.snapshot, evaluated.frame.snapshot, site.usages, candidate.config),
+      );
+      return;
+    }
+    if (command.kind === "attachRender") {
+      const before = this.ready(revision);
+      const candidate = await prepareVst3AudioImport(
+        before,
+        this.files,
+        this.options.projectRoot!,
+        this.plugins.view().find((entry) => entry.handle === command.plugin),
+        command.name,
+        command.startBeat,
+        () => {
+          this.check(generation);
+          this.ready(revision);
+        },
+      );
+      this.check(generation);
+      this.ready(revision);
+      await this.transact(before, candidate.files, (evaluated) =>
+        assertArrangement(before.frame.snapshot, candidate.expected, evaluated.frame.snapshot),
+      );
+      return;
+    }
+    try {
+      await this.plugins.vst3Command(command, this.accepted?.frame, this.controller.signal, () => {
+        this.check(generation);
+        this.current(revision);
+      });
+    } finally {
+      this.emit();
+    }
+  }
   private async pluginTask(
     revision: number,
     task: import("../plugins/plugin-lifecycle.js").PluginTask,
@@ -845,6 +941,7 @@ export class ProjectDocument {
     return this.pluginTask(revision, { kind: "repair", packageName });
   }
   close(): void {
+    this.recordings.close();
     this.begin();
     this.status = "closed";
     this.emit();

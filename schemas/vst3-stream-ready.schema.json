@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "classId": {
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{32}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "category": {
+      "type": "string"
+    },
+    "inputChannels": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2
+    },
+    "outputChannels": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2
+    },
+    "audioBuses": {
+      "type": "object",
+      "properties": {
+        "inputs": {
+          "maxItems": 16,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "channels": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 2
+              },
+              "active": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "channels",
+              "active"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "outputs": {
+          "maxItems": 16,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "channels": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 2
+              },
+              "active": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "channels",
+              "active"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "inputs",
+        "outputs"
+      ],
+      "additionalProperties": false
+    },
+    "noteInput": {
+      "type": "boolean"
+    },
+    "noteOutput": {
+      "type": "boolean"
+    },
+    "streamProtocolVersion": {
+      "type": "number",
+      "const": 11
+    },
+    "sampleRate": {
+      "type": "integer",
+      "minimum": 8000,
+      "maximum": 192000
+    },
+    "blockSize": {
+      "type": "integer",
+      "minimum": 16,
+      "maximum": 4096
+    },
+    "latencyFrames": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1920000
+    },
+    "tailFrames": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4294967295
+    },
+    "helperTimeConstraint": {
+      "type": "boolean"
+    },
+    "parameters": {
+      "maxItems": 4096,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295
+          },
+          "writable": {
+            "type": "boolean"
+          },
+          "automatable": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "writable",
+          "automatable"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "classId",
+    "sha256",
+    "category",
+    "inputChannels",
+    "outputChannels",
+    "audioBuses",
+    "noteInput",
+    "noteOutput",
+    "streamProtocolVersion",
+    "sampleRate",
+    "blockSize",
+    "latencyFrames",
+    "tailFrames",
+    "helperTimeConstraint",
+    "parameters"
+  ],
+  "additionalProperties": false
+}

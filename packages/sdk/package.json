@@ -8,6 +8,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./vst3": {
+      "types": "./dist/vst3.d.ts",
+      "import": "./dist/vst3.js"
     }
   },
   "files": [
@@ -26,7 +30,8 @@
     "@oxitone/core": "workspace:*",
     "@oxitone/native": "workspace:*",
     "@oxitone/protocol": "workspace:*",
-    "@oxitone/samples": "workspace:*"
+    "@oxitone/samples": "workspace:*",
+    "@oxitone/vst3": "workspace:*"
   },
   "devDependencies": {
     "vitest": "^4.1.11"

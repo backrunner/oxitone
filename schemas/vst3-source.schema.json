@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "bundlePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "classId": {
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{32}$"
+    },
+    "expectedHash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "allowPlugins": {
+      "default": "signed-only",
+      "type": "string",
+      "enum": [
+        "signed-only",
+        "any"
+      ]
+    }
+  },
+  "required": [
+    "bundlePath",
+    "classId",
+    "allowPlugins"
+  ],
+  "additionalProperties": false
+}

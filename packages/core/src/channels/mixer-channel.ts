@@ -5,6 +5,7 @@ import {
   type EffectRef,
   type EntityId,
   type MixerChannelSpec,
+  type InsertRouting,
   type SendSpec,
 } from "@oxitone/protocol";
 import { parseAuthoring } from "../authoring-validation.js";
@@ -14,6 +15,7 @@ import type { Project } from "../project/project.js";
 import { ConfigurationSources } from "./configuration-sources.js";
 import { PluginInstances } from "../plugins/plugin-instances.js";
 import type { PluginInstance } from "../plugins/plugin-instance.js";
+import { retainInsertRoutes, validateInsertRouting } from "./insert-routing.js";
 
 /** Options for `project.addMixerChannel(...)`; sends are added with `send(...)`. */
 export interface MixerChannelOptions {
@@ -119,6 +121,17 @@ export class MixerChannel {
 
   get effectInstances(): readonly PluginInstance[] {
     return this.spec.inserts.map((ref) => this.instances.handle(ref, "effect"));
+  }
+  /** Auxiliary input sources and output destinations, indexed by stable insert instance. */
+  get insertRoutes(): Readonly<Record<string, InsertRouting>> {
+    return structuredClone(this.spec.insertRoutes ?? {});
+  }
+  routeInsert(instance: PluginInstance, routing?: InsertRouting): void {
+    this.instances.require(instance, "effect");
+    const routes = structuredClone(this.spec.insertRoutes ?? {});
+    if (routing === undefined) delete routes[instance.id];
+    else routes[instance.id] = routing;
+    this.update({ insertRoutes: routes });
   }
   reorderEffects(order: readonly PluginInstance[]): void {
     order.forEach((instance) => this.instances.require(instance, "effect"));
@@ -231,6 +244,8 @@ export class MixerChannel {
     const next = parseAuthoring(mixerChannelSpecSchema, { ...this.spec, ...patch }, "mixerChannel");
     this.checkMaster(next);
     next.inserts = this.instances.adopt(next.inserts, this.spec.inserts);
+    if (patch.inserts !== undefined && next.insertRoutes !== undefined) next.insertRoutes = retainInsertRoutes(next)!;
+    validateInsertRouting(this.project, next);
     this.spec = next;
     this.configurationSources.update(patch);
     if (this.isMaster) this.project.materializeMaster();

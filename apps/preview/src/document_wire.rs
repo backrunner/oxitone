@@ -60,7 +60,7 @@ pub struct SourceFile {
     pub path: String,
     pub text: String,
 }
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize)]
 pub struct DocumentError {
     pub code: String,
     pub message: String,
@@ -104,6 +104,8 @@ pub struct DocumentView {
     pub conflicts: Vec<SourceConflict>,
     pub materialization: Option<MaterializationReview>,
     pub plugins: Vec<crate::plugin_manager::CatalogEntry>,
+    pub vst3_bundles: Option<Vec<String>>,
+    pub vst3_recording: Option<crate::vst3_recording::Recording>,
     pub diagnostic: Option<DocumentError>,
 }
 #[derive(Clone, Debug, Deserialize)]
@@ -138,7 +140,14 @@ impl DocumentMessage {
                     || view.configuration_sites.len() > 4096
                     || view.rack_sites.len() > 4096
                     || view.files.len() > 4096
+                    || view.vst3_bundles.as_ref().is_some_and(|paths| {
+                        paths.len() > 4096 || paths.iter().any(|p| p.len() > 4096)
+                    })
                     || view.sites.iter().any(|site| site.outputs.len() > 100_000)
+                    || view
+                        .vst3_recording
+                        .as_ref()
+                        .is_some_and(|recording| !recording.valid())
                 {
                     return Err(crate::wire::invalid("document projection exceeds budget"));
                 }
@@ -165,6 +174,9 @@ impl DocumentMessage {
     rename_all_fields = "camelCase"
 )]
 pub enum DocumentOperation {
+    Vst3 {
+        command: crate::vst3_model::Command,
+    },
     AssignPlugin {
         plugin: String,
         owner: String,

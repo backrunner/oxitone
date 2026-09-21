@@ -56,6 +56,15 @@ export function instrumentProjectSource(
     ts.forEachChild(node, visit);
   };
   const add = (expression: ts.Expression, label: string, scope: SourceSite["scope"]) => {
+    // Primitive literals cannot identify an authoring object. Dense plugin state must not
+    // spend the object-boundary budget on thousands of individual numeric parameters.
+    if (
+      ts.isStringLiteralLike(expression) ||
+      ts.isNumericLiteral(expression) ||
+      ts.isBigIntLiteral(expression) ||
+      [ts.SyntaxKind.TrueKeyword, ts.SyntaxKind.FalseKeyword, ts.SyntaxKind.NullKeyword].includes(expression.kind)
+    )
+      return;
     // Functions are not Pattern values, and wrapping anonymous definitions alters inferred names.
     if (ts.isArrowFunction(expression) || ts.isFunctionExpression(expression) || ts.isClassExpression(expression))
       return;

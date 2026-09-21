@@ -1,13 +1,26 @@
 import { z } from "zod";
 import { projectSnapshotSchema } from "./snapshot.js";
 import { registerPluginOptionsSchema } from "../plugins/plugin.js";
+import { registerVst3OptionsSchema } from "../plugins/vst3-registration.js";
 import { transportCommandSchema } from "./commands.js";
 import { frameWireSchema } from "../base/primitives.js";
 import { documentMessageSchema, documentRequestSchema } from "../document/source-daw.js";
+import {
+  vst3InstanceInventorySchema,
+  vst3InstanceRequestSchema,
+  vst3InstanceResultSchema,
+} from "../plugins/vst3-instance-control.js";
 
 const version = { protocolVersion: z.literal("1.0") };
 export const PREVIEW_MAX_FRAME_BYTES = 64 * 1024 * 1024;
 export const previewFrameSchema = z.discriminatedUnion("type", [
+  z.strictObject({ ...version, type: z.literal("vst3Instances"), snapshotRevision: frameWireSchema }),
+  z.strictObject({
+    ...version,
+    type: z.literal("vst3Control"),
+    snapshotRevision: frameWireSchema,
+    request: vst3InstanceRequestSchema,
+  }),
   z.object({ ...version, type: z.literal("document"), message: documentMessageSchema }),
   z.object({
     ...version,
@@ -15,6 +28,7 @@ export const previewFrameSchema = z.discriminatedUnion("type", [
     snapshot: projectSnapshotSchema,
     assetBaseDir: z.string().min(1),
     plugins: z.array(registerPluginOptionsSchema).default([]),
+    vst3Plugins: z.array(registerVst3OptionsSchema).default([]),
     // Optional UI metadata is validated locally by the viewer; it cannot reject valid music.
     pluginUis: z.unknown().optional(),
     allowPlugins: z.enum(["any", "signed-only"]).optional(),
@@ -36,6 +50,18 @@ export type PreviewFrame = z.infer<typeof previewFrameSchema>;
 export type PreviewSnapshotFrame = Extract<PreviewFrame, { type: "snapshot" }>;
 
 export const previewResponseSchema = z.discriminatedUnion("type", [
+  z.strictObject({
+    ...version,
+    type: z.literal("vst3Instances"),
+    snapshotRevision: frameWireSchema,
+    inventory: vst3InstanceInventorySchema,
+  }),
+  z.strictObject({
+    ...version,
+    type: z.literal("vst3Control"),
+    snapshotRevision: frameWireSchema,
+    result: vst3InstanceResultSchema,
+  }),
   z.object({
     ...version,
     type: z.literal("state"),

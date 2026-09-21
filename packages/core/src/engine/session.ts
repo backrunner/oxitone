@@ -16,6 +16,12 @@ import {
   type EngineOptions,
   type RegisterPluginOptions,
   type RegisteredPlugin,
+  type RegisterVst3Options,
+  type RegisteredVst3,
+  type Vst3InstanceTarget,
+  type Vst3InstanceInventory,
+  type Vst3InstanceResult,
+  type Vst3ControlCommand,
   type PluginDiagnostics,
 } from "@oxitone/protocol";
 import {
@@ -30,9 +36,13 @@ import {
   setParameter as nativeSetParameter,
   type EngineHandle,
   registerPlugin as nativeRegisterPlugin,
+  registerVst3 as nativeRegisterVst3,
+  getVst3Instances,
+  controlVst3Instance,
   getPluginDiagnostics,
 } from "@oxitone/native";
 import { positionFields, type TransportPosition } from "../timing/transport-position.js";
+import { Vst3AutomationRecorder, type Vst3RecordingOptions } from "./vst3-recording.js";
 export type { TransportPosition } from "../timing/transport-position.js";
 
 /** Absolute sample-frame loop region. End is exclusive. */
@@ -70,10 +80,38 @@ export class Session {
     this.assertActive();
     return nativeRegisterPlugin(this.engine, options);
   }
+  registerVst3(options: RegisterVst3Options): RegisteredVst3 {
+    this.assertActive();
+    return nativeRegisterVst3(this.engine, options);
+  }
+
+  /** Stable instance targets for the current accepted graph generation. */
+  vst3Instances(): Vst3InstanceInventory {
+    this.assertActive();
+    return getVst3Instances(this.engine);
+  }
+
+  /** Audition or capture a live instance. Persist captured state through an explicit authoring edit. */
+  async controlVst3Instance(
+    target: Vst3InstanceTarget,
+    command: Vst3ControlCommand,
+    options: { timeoutMs?: number } = {},
+  ): Promise<Vst3InstanceResult> {
+    this.assertActive();
+    return controlVst3Instance(this.engine, { ...target, instanceControlVersion: 1, command, ...options });
+  }
 
   pluginDiagnostics(): PluginDiagnostics[] {
     this.assertActive();
     return getPluginDiagnostics(this.engine);
+  }
+  /** Record selected vendor parameters on this graph; stop before pausing playback. */
+  async recordVst3Automation(
+    target: Vst3InstanceTarget,
+    options: Vst3RecordingOptions,
+  ): Promise<Vst3AutomationRecorder> {
+    this.assertActive();
+    return Vst3AutomationRecorder.start(this, target, options);
   }
 
   private assertActive(): void {
@@ -179,10 +217,12 @@ export async function withTempEngine<T>(
   run: (engine: EngineHandle) => T,
   options?: EngineOptions,
   plugins: readonly RegisterPluginOptions[] = [],
+  vst3Plugins: readonly RegisterVst3Options[] = [],
 ): Promise<T> {
   const engine = createEngine(options);
   try {
     for (const plugin of plugins) nativeRegisterPlugin(engine, plugin);
+    for (const plugin of vst3Plugins) nativeRegisterVst3(engine, plugin);
     return run(engine);
   } finally {
     nativeDispose(engine);

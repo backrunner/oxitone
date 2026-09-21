@@ -12,6 +12,9 @@ export interface NativeBinding {
   createEngine: typeof generated.createEngine;
   compile: typeof generated.compile;
   registerPlugin: typeof generated.registerPlugin;
+  registerVst3: typeof generated.registerVst3;
+  getVst3Instances: typeof generated.getVst3Instances;
+  controlVst3Instance: typeof generated.controlVst3Instance;
   getPluginDiagnostics: typeof generated.getPluginDiagnostics;
   getPluginInfo: typeof generated.getPluginInfo;
   dispose: typeof generated.dispose;

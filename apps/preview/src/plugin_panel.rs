@@ -11,6 +11,10 @@ pub fn view(this: &PluginWindow, width: f32, cx: &mut Context<PluginWindow>) -> 
         return div();
     };
     let mut content = div().w_full().p_3().flex().flex_col().gap_2();
+    if details.info.descriptor.plugin_id.starts_with("vst3.") {
+        content = content.child(crate::plugin_vst3_controls::view(this, cx));
+        content = content.child(crate::plugin_vst3_recording::view(this, cx));
+    }
     let key = (
         details.info.descriptor.plugin_id.clone(),
         details.info.descriptor.plugin_version.clone(),

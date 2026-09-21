@@ -16,6 +16,13 @@ pub const MAX_FRAME: usize = 64 * 1024 * 1024;
     rename_all_fields = "camelCase"
 )]
 pub enum Frame {
+    Vst3Instances {
+        snapshot_revision: String,
+    },
+    Vst3Control {
+        snapshot_revision: String,
+        request: Value,
+    },
     Document {
         message: crate::document_wire::DocumentMessage,
     },
@@ -24,6 +31,8 @@ pub enum Frame {
         asset_base_dir: String,
         #[serde(default)]
         plugins: Vec<RegisterPluginOptions>,
+        #[serde(default)]
+        vst3_plugins: Vec<Value>,
         #[serde(default)]
         plugin_uis: Value,
         allow_plugins: Option<AllowPlugins>,

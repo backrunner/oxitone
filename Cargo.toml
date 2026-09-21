@@ -1,5 +1,6 @@
 [workspace]
 resolver = "2"
+exclude = ["vendor/vst3-host"]
 members = [
     "crates/core",
     "crates/graph",
@@ -14,6 +15,7 @@ members = [
     "crates/wasm",
     "crates/bench",
     "crates/example-drums",
+    "crates/vst3-host",
     "apps/preview",
 ]
 

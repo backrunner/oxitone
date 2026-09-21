@@ -42,6 +42,46 @@ export type ProjectSnapshot = z.infer<typeof snapshotShape>;
 function checkSnapshotVersion(snapshot: ProjectSnapshot): void {
   checkProtocolVersion(snapshot.protocolVersion);
   if (
+    Number(snapshot.protocolVersion.split(".")[1]) < 7 &&
+    snapshot.channels.some((channel) => channel.midiRoutes !== undefined)
+  ) {
+    throw new OxitoneError(ErrorCode.ProtocolVersionUnsupported, "MIDI routes require protocol 1.7");
+  }
+  if (
+    Number(snapshot.protocolVersion.split(".")[1]) < 6 &&
+    snapshot.mixerChannels.some((bus) => bus.insertRoutes !== undefined)
+  ) {
+    throw new OxitoneError(ErrorCode.ProtocolVersionUnsupported, "insert bus routes require protocol 1.6");
+  }
+  if (
+    Number(snapshot.protocolVersion.split(".")[1]) < 5 &&
+    snapshot.automation.some((lane) => lane.priority !== undefined)
+  ) {
+    throw new OxitoneError(ErrorCode.ProtocolVersionUnsupported, "automation priority requires protocol 1.5");
+  }
+  if (
+    Number(snapshot.protocolVersion.split(".")[1]) < 4 &&
+    snapshot.channels.some((c) => c.outputRoutes !== undefined)
+  ) {
+    throw new OxitoneError(ErrorCode.ProtocolVersionUnsupported, "instrument output routes require protocol 1.4");
+  }
+  if (
+    Number(snapshot.protocolVersion.split(".")[1]) < 3 &&
+    (snapshot.channels.some(
+      (c) =>
+        c.instrument.pluginId.startsWith("vst3.") ||
+        c.effectChain.some((e) => e.state !== undefined || e.pluginId.startsWith("vst3.")),
+    ) ||
+      snapshot.mixerChannels.some((b) =>
+        b.inserts.some((e) => e.state !== undefined || e.pluginId.startsWith("vst3.")),
+      ))
+  ) {
+    throw new OxitoneError(
+      ErrorCode.ProtocolVersionUnsupported,
+      "VST3 project plugins and effect state require protocol 1.3",
+    );
+  }
+  if (
     Number(snapshot.protocolVersion.split(".")[1]) < 2 &&
     (snapshot.patterns.some((pattern) => pattern.parts !== undefined) ||
       snapshot.tracks.some((track) => track.mute !== undefined || track.solo !== undefined) ||

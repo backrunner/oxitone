@@ -11,6 +11,7 @@ fn scenario() -> ProjectSnapshot {
     let mut s = common::typical_snapshot(1, 4, 0);
     s.automation.clear();
     let effect = EffectRef {
+        state: None,
         instance_id: None,
         plugin_id: "oxitone.utility".into(),
         plugin_version: "1.0.0".into(),
@@ -25,6 +26,7 @@ fn scenario() -> ProjectSnapshot {
     }
     if !s.mixer_channels.iter().any(|b| b.id == "mix_master") {
         s.mixer_channels.push(MixerChannelSpec {
+            insert_routes: None,
             id: "mix_master".into(),
             name: None,
             level: 1.,
@@ -41,6 +43,7 @@ fn scenario() -> ProjectSnapshot {
         .collect();
     for (i, owner) in owners.into_iter().enumerate() {
         s.automation.push(AutomationLaneSpec {
+            priority: None,
             playback: None,
             id: format!("auto_insert_{i}"),
             target: AutomationTarget {
@@ -114,6 +117,40 @@ fn bench(c: &mut Criterion) {
     group.bench_function("render_128", |b| {
         b.iter(|| {
             typed_graph.process_block(black_box(&mut l), black_box(&mut r));
+            black_box(&l);
+        })
+    });
+    group.finish();
+    // Recorded ranges add one priority layer per parameter without replacing its original source.
+    let mut recording = typed.clone();
+    recording.protocol_version = "1.5".into();
+    let mut clips = Vec::new();
+    for (index, mut lane) in typed.automation.iter().cloned().enumerate() {
+        lane.id = format!("auto_recording_{index}");
+        lane.priority = Some(1);
+        lane.combine = Some(AutomationCombine::Replace);
+        lane.playback = Some(AutomationPlayback::Playlist);
+        lane.source = AutomationSourceSpec::Constant { value: 0.75 };
+        clips.push(AutomationClipSpec {
+            id: format!("acl_recording_{index}"),
+            lane_id: lane.id.clone(),
+            track_id: recording.tracks[0].id.clone(),
+            start_beat: common::beat(1, 100),
+            duration_beats: Some(common::beat(4, 5)),
+            enabled: None,
+        });
+        recording.automation.push(lane);
+    }
+    recording.automation_clips = Some(clips);
+    let mut graph = RenderGraph::compile(&recording, &registry, &store, &options).unwrap();
+    graph.transport_mut().play_from(0, Some((0, 96_000)));
+    let mut group = c.benchmark_group("insert/recording_layers");
+    group.bench_function("compile", |b| {
+        b.iter(|| RenderGraph::compile(black_box(&recording), &registry, &store, &options).unwrap())
+    });
+    group.bench_function("render_128", |b| {
+        b.iter(|| {
+            graph.process_block(black_box(&mut l), black_box(&mut r));
             black_box(&l);
         })
     });

@@ -48,6 +48,7 @@ impl Preview {
                     self.document.mixer.pending = None;
                     self.document.manager.assignment_pending = false;
                     self.document.automation.pending = None;
+                    self.document.manager.vst3 = Default::default();
                 }
                 if changed {
                     self.document.plugin.cancel();
@@ -71,6 +72,7 @@ impl Preview {
                     "{} · Source {} · Saved {}",
                     view.status, view.revision, view.saved_revision
                 );
+                self.observe_vst3_catalog(&view);
                 self.document.view = Some(view);
             }
             DocumentMessage::Response {
@@ -204,7 +206,20 @@ impl Preview {
     }
     pub fn document_operation_ready(&self, operation: &DocumentOperation) -> bool {
         match operation {
+            DocumentOperation::Vst3 {
+                command: crate::vst3_model::Command::CancelRecording { recording_id },
+            } => self.document.view.as_ref().is_some_and(|view| {
+                view.status != "closed"
+                    && view
+                        .vst3_recording
+                        .as_ref()
+                        .is_some_and(|r| r.id == *recording_id)
+            }),
+            DocumentOperation::Vst3 {
+                command: crate::vst3_model::Command::AttachRender { .. },
+            } => self.document_ready(),
             DocumentOperation::RefreshPlugins
+            | DocumentOperation::Vst3 { .. }
             | DocumentOperation::VerifyPlugin { .. }
             | DocumentOperation::InstallPlugin { .. }
             | DocumentOperation::UpgradePlugin { .. }
@@ -252,5 +267,20 @@ impl Preview {
             .commands
             .send(Command::Document(request))
             .is_ok()
+    }
+    pub fn cancel_vst3(&mut self) {
+        let Some(view) = &self.document.view else {
+            return;
+        };
+        self.document.serial += 1;
+        self.send_document(DocumentRequest {
+            document_protocol_version: "2.0".into(),
+            session_id: view.session_id.clone(),
+            request_id: format!("stream/gpui-{}/{}", view.session_id, self.document.serial),
+            base_revision: view.revision,
+            operation: DocumentOperation::Vst3 {
+                command: crate::vst3_model::Command::Cancel,
+            },
+        });
     }
 }

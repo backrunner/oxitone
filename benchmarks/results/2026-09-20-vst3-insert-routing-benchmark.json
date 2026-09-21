@@ -1,0 +1,1375 @@
+{
+  "scenario": "mixer routing with zero-delay fast path",
+  "date": "2026-09-20T16:28:45.086806+00:00",
+  "cpu": "Apple M4",
+  "os": "Darwin 27.0.0",
+  "rust": "rustc 1.98.1 (48a229cea 2026-09-01) (Homebrew)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: aarch64-apple-darwin\nrelease: 1.98.1\nLLVM version: 22.1.8",
+  "sampleRate": 48000,
+  "blockSize": 128,
+  "profile": "bench",
+  "device": null,
+  "callbackP95Ms": null,
+  "callbackP99Ms": null,
+  "xruns": null,
+  "command": "cargo bench -p oxitone-bench --bench mixer_routing -- --sample-size 20 --warm-up-time 1 --measurement-time 2",
+  "note": "Measured after workspace Rust and TS tests completed. Historical baseline provenance remains unknown. Compare against the archived first pass to diagnose the zero-delay optimization, not to clear the release performance gate.",
+  "results": {
+    "target/criterion/mixer_routing/buses/16": {
+      "tukey.json": [
+        16390.390079713776,
+        16527.62122614863,
+        16893.5709499749,
+        17030.80209640975
+      ],
+      "benchmark.json": {
+        "group_id": "mixer/routing",
+        "function_id": "buses",
+        "value_str": "16",
+        "throughput": {
+          "Elements": 128
+        },
+        "full_id": "mixer/routing/buses/16",
+        "directory_name": "mixer_routing/buses/16",
+        "title": "mixer/routing/buses/16"
+      },
+      "sample.json": {
+        "sampling_mode": "Linear",
+        "iters": [
+          569.0,
+          1138.0,
+          1707.0,
+          2276.0,
+          2845.0,
+          3414.0,
+          3983.0,
+          4552.0,
+          5121.0,
+          5690.0,
+          6259.0,
+          6828.0,
+          7397.0,
+          7966.0,
+          8535.0,
+          9104.0,
+          9673.0,
+          10242.0,
+          10811.0,
+          11380.0
+        ],
+        "times": [
+          9458500.0,
+          18953958.0,
+          28398709.0,
+          37992833.0,
+          47376000.0,
+          56912792.0,
+          66783333.0,
+          76926375.0,
+          86367875.0,
+          96041458.0,
+          104602209.0,
+          113886584.0,
+          123444542.0,
+          132665334.0,
+          142261125.0,
+          152517084.0,
+          162333458.0,
+          170889000.0,
+          180350042.0,
+          190545000.0
+        ]
+      },
+      "estimates.json": {
+        "mean": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 16686.773776927563,
+            "upper_bound": 16756.679697019383
+          },
+          "point_estimate": 16719.483169413626,
+          "standard_error": 17.90043736851804
+        },
+        "median": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 16669.191857059166,
+            "upper_bound": 16748.302065026364
+          },
+          "point_estimate": 16686.790275336847,
+          "standard_error": 19.323796280687052
+        },
+        "median_abs_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 20.1336555300799,
+            "upper_bound": 113.30859324320757
+          },
+          "point_estimate": 49.86128013411688,
+          "standard_error": 23.699035869536345
+        },
+        "slope": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 16696.680972667913,
+            "upper_bound": 16755.737602790454
+          },
+          "point_estimate": 16723.6849567981,
+          "standard_error": 14.985320501380532
+        },
+        "std_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 46.80430917700891,
+            "upper_bound": 101.18181282683211
+          },
+          "point_estimate": 81.77958667722963,
+          "standard_error": 13.526541271108734
+        }
+      }
+    },
+    "target/criterion/mixer_routing/buses/8": {
+      "tukey.json": [
+        9987.375374369489,
+        10146.210740463433,
+        10569.771716713953,
+        10728.607082807897
+      ],
+      "benchmark.json": {
+        "group_id": "mixer/routing",
+        "function_id": "buses",
+        "value_str": "8",
+        "throughput": {
+          "Elements": 128
+        },
+        "full_id": "mixer/routing/buses/8",
+        "directory_name": "mixer_routing/buses/8",
+        "title": "mixer/routing/buses/8"
+      },
+      "sample.json": {
+        "sampling_mode": "Linear",
+        "iters": [
+          915.0,
+          1830.0,
+          2745.0,
+          3660.0,
+          4575.0,
+          5490.0,
+          6405.0,
+          7320.0,
+          8235.0,
+          9150.0,
+          10065.0,
+          10980.0,
+          11895.0,
+          12810.0,
+          13725.0,
+          14640.0,
+          15555.0,
+          16470.0,
+          17385.0,
+          18300.0
+        ],
+        "times": [
+          9452000.0,
+          18897625.0,
+          28351917.0,
+          37716125.0,
+          47053000.0,
+          56574875.0,
+          66054625.0,
+          75391750.0,
+          84896000.0,
+          94658375.0,
+          105148417.0,
+          114587292.0,
+          124039750.0,
+          131979750.0,
+          142398041.0,
+          152333375.0,
+          167722708.0,
+          172682334.0,
+          179621625.0,
+          187402166.0
+        ]
+      },
+      "estimates.json": {
+        "mean": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 10326.79766927947,
+            "upper_bound": 10424.686886916164
+          },
+          "point_estimate": 10369.03018075004,
+          "standard_error": 25.219169591051283
+        },
+        "median": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 10307.122799028537,
+            "upper_bound": 10390.185066029144
+          },
+          "point_estimate": 10329.31092896175,
+          "standard_error": 19.347246426127068
+        },
+        "median_abs_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 19.949398193425605,
+            "upper_bound": 110.23575694719534
+          },
+          "point_estimate": 41.760101799594686,
+          "standard_error": 24.484115893022736
+        },
+        "slope": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 10323.28142007571,
+            "upper_bound": 10503.962673368547
+          },
+          "point_estimate": 10403.3381218941,
+          "standard_error": 46.87886527960643
+        },
+        "std_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 47.73418758097169,
+            "upper_bound": 173.93126136363102
+          },
+          "point_estimate": 115.7105423355339,
+          "standard_error": 37.855464865382686
+        }
+      }
+    },
+    "target/criterion/mixer_routing/buses/2": {
+      "tukey.json": [
+        5385.225807384279,
+        5514.839932633649,
+        5860.477599965305,
+        5990.0917252146755
+      ],
+      "benchmark.json": {
+        "group_id": "mixer/routing",
+        "function_id": "buses",
+        "value_str": "2",
+        "throughput": {
+          "Elements": 128
+        },
+        "full_id": "mixer/routing/buses/2",
+        "directory_name": "mixer_routing/buses/2",
+        "title": "mixer/routing/buses/2"
+      },
+      "sample.json": {
+        "sampling_mode": "Linear",
+        "iters": [
+          1647.0,
+          3294.0,
+          4941.0,
+          6588.0,
+          8235.0,
+          9882.0,
+          11529.0,
+          13176.0,
+          14823.0,
+          16470.0,
+          18117.0,
+          19764.0,
+          21411.0,
+          23058.0,
+          24705.0,
+          26352.0,
+          27999.0,
+          29646.0,
+          31293.0,
+          32940.0
+        ],
+        "times": [
+          9780833.0,
+          19252250.0,
+          28911000.0,
+          38067125.0,
+          46387625.0,
+          55779917.0,
+          65951500.0,
+          75920000.0,
+          84494209.0,
+          93481375.0,
+          102271000.0,
+          111548458.0,
+          121458625.0,
+          130608875.0,
+          139875792.0,
+          148882292.0,
+          157940000.0,
+          163982292.0,
+          174084792.0,
+          187657708.0
+        ]
+      },
+      "estimates.json": {
+        "mean": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 5655.853663121053,
+            "upper_bound": 5740.152356628951
+          },
+          "point_estimate": 5695.942390950769,
+          "standard_error": 21.552174626305245
+        },
+        "median": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 5644.813743077404,
+            "upper_bound": 5710.348604003431
+          },
+          "point_estimate": 5668.541745898303,
+          "standard_error": 18.729835846529745
+        },
+        "median_abs_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 19.791250067578606,
+            "upper_bound": 133.99278073721422
+          },
+          "point_estimate": 44.53846149860622,
+          "standard_error": 28.87527043396386
+        },
+        "slope": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 5606.757663646625,
+            "upper_bound": 5677.151574697113
+          },
+          "point_estimate": 5641.535021546937,
+          "standard_error": 18.22536066546923
+        },
+        "std_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 57.061702344134325,
+            "upper_bound": 126.23618005105264
+          },
+          "point_estimate": 97.80806116505373,
+          "standard_error": 17.67033004767055
+        }
+      }
+    },
+    "target/criterion/mixer_routing/sends_per_bus_8buses/1": {
+      "tukey.json": [
+        13002.595103387892,
+        13089.754441132889,
+        13322.179341786217,
+        13409.338679531216
+      ],
+      "benchmark.json": {
+        "group_id": "mixer/routing",
+        "function_id": "sends_per_bus_8buses",
+        "value_str": "1",
+        "throughput": {
+          "Elements": 128
+        },
+        "full_id": "mixer/routing/sends_per_bus_8buses/1",
+        "directory_name": "mixer_routing/sends_per_bus_8buses/1",
+        "title": "mixer/routing/sends_per_bus_8buses/1"
+      },
+      "sample.json": {
+        "sampling_mode": "Linear",
+        "iters": [
+          707.0,
+          1414.0,
+          2121.0,
+          2828.0,
+          3535.0,
+          4242.0,
+          4949.0,
+          5656.0,
+          6363.0,
+          7070.0,
+          7777.0,
+          8484.0,
+          9191.0,
+          9898.0,
+          10605.0,
+          11312.0,
+          12019.0,
+          12726.0,
+          13433.0,
+          14140.0
+        ],
+        "times": [
+          9362458.0,
+          18662250.0,
+          27942500.0,
+          37290083.0,
+          46604666.0,
+          55900291.0,
+          65487750.0,
+          75680417.0,
+          84793500.0,
+          93691750.0,
+          102535667.0,
+          111746500.0,
+          120978209.0,
+          130536208.0,
+          139883625.0,
+          148911208.0,
+          158290334.0,
+          167948042.0,
+          177599375.0,
+          189500333.0
+        ]
+      },
+      "estimates.json": {
+        "mean": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 13193.265521773092,
+            "upper_bound": 13252.873563975423
+          },
+          "point_estimate": 13220.242070533477,
+          "standard_error": 15.285272245509802
+        },
+        "median": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 13180.797996228193,
+            "upper_bound": 13226.823467792536
+          },
+          "point_estimate": 13189.243180440493,
+          "standard_error": 11.194401909311335
+        },
+        "median_abs_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 11.63851464486171,
+            "upper_bound": 66.52553961545306
+          },
+          "point_estimate": 27.455786766078297,
+          "standard_error": 14.469059952390529
+        },
+        "slope": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 13186.815859335618,
+            "upper_bound": 13284.028587663151
+          },
+          "point_estimate": 13227.761873549227,
+          "standard_error": 26.417062504880036
+        },
+        "std_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 28.011961489473787,
+            "upper_bound": 91.97849045094777
+          },
+          "point_estimate": 70.15051612700867,
+          "standard_error": 15.568446055142418
+        }
+      }
+    },
+    "target/criterion/mixer_routing/sends_per_bus_8buses/4": {
+      "tukey.json": [
+        20031.794770542732,
+        20494.868930225064,
+        21729.73335604462,
+        22192.807515726956
+      ],
+      "benchmark.json": {
+        "group_id": "mixer/routing",
+        "function_id": "sends_per_bus_8buses",
+        "value_str": "4",
+        "throughput": {
+          "Elements": 128
+        },
+        "full_id": "mixer/routing/sends_per_bus_8buses/4",
+        "directory_name": "mixer_routing/sends_per_bus_8buses/4",
+        "title": "mixer/routing/sends_per_bus_8buses/4"
+      },
+      "sample.json": {
+        "sampling_mode": "Linear",
+        "iters": [
+          449.0,
+          898.0,
+          1347.0,
+          1796.0,
+          2245.0,
+          2694.0,
+          3143.0,
+          3592.0,
+          4041.0,
+          4490.0,
+          4939.0,
+          5388.0,
+          5837.0,
+          6286.0,
+          6735.0,
+          7184.0,
+          7633.0,
+          8082.0,
+          8531.0,
+          8980.0
+        ],
+        "times": [
+          9555666.0,
+          19103291.0,
+          28653041.0,
+          38191875.0,
+          47446375.0,
+          56189500.0,
+          65499167.0,
+          74907667.0,
+          85062000.0,
+          95627833.0,
+          104571125.0,
+          113983167.0,
+          123679792.0,
+          131278875.0,
+          142660042.0,
+          153327416.0,
+          162124708.0,
+          171134250.0,
+          178518125.0,
+          188298500.0
+        ]
+      },
+      "estimates.json": {
+        "mean": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 21043.334576165304,
+            "upper_bound": 21187.78473724114
+          },
+          "point_estimate": 21117.983839714034,
+          "standard_error": 36.92254540652824
+        },
+        "median": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 21009.196362286566,
+            "upper_bound": 21252.468017162322
+          },
+          "point_estimate": 21173.63501383546,
+          "standard_error": 51.66342459997449
+        },
+        "median_abs_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 60.04144659552232,
+            "upper_bound": 267.54628199843626
+          },
+          "point_estimate": 154.1825675097252,
+          "standard_error": 50.98790195636426
+        },
+        "slope": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 21016.68513209585,
+            "upper_bound": 21189.983833186692
+          },
+          "point_estimate": 21101.29494346709,
+          "standard_error": 44.4630228105484
+        },
+        "std_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 123.04107246710566,
+            "upper_bound": 194.64603499350068
+          },
+          "point_estimate": 169.30767757719016,
+          "standard_error": 18.232037443151444
+        }
+      }
+    },
+    "target/criterion/mixer_routing/sends_per_bus_8buses/2": {
+      "tukey.json": [
+        13720.394116225176,
+        14612.658284544785,
+        16992.029400063744,
+        17884.293568383357
+      ],
+      "benchmark.json": {
+        "group_id": "mixer/routing",
+        "function_id": "sends_per_bus_8buses",
+        "value_str": "2",
+        "throughput": {
+          "Elements": 128
+        },
+        "full_id": "mixer/routing/sends_per_bus_8buses/2",
+        "directory_name": "mixer_routing/sends_per_bus_8buses/2",
+        "title": "mixer/routing/sends_per_bus_8buses/2"
+      },
+      "sample.json": {
+        "sampling_mode": "Linear",
+        "iters": [
+          591.0,
+          1182.0,
+          1773.0,
+          2364.0,
+          2955.0,
+          3546.0,
+          4137.0,
+          4728.0,
+          5319.0,
+          5910.0,
+          6501.0,
+          7092.0,
+          7683.0,
+          8274.0,
+          8865.0,
+          9456.0,
+          10047.0,
+          10638.0,
+          11229.0,
+          11820.0
+        ],
+        "times": [
+          9159709.0,
+          18360375.0,
+          27515459.0,
+          36639333.0,
+          45893167.0,
+          56209250.0,
+          64152208.0,
+          73181250.0,
+          82343167.0,
+          91450958.0,
+          102345250.0,
+          115545417.0,
+          124799125.0,
+          147885917.0,
+          143796166.0,
+          150680125.0,
+          161349459.0,
+          173028917.0,
+          178424875.0,
+          183701000.0
+        ]
+      },
+      "estimates.json": {
+        "mean": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 15665.62984109543,
+            "upper_bound": 16140.618175229985
+          },
+          "point_estimate": 15871.80287792673,
+          "standard_error": 122.35974677078491
+        },
+        "median": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 15513.046370155507,
+            "upper_bound": 15997.167901488006
+          },
+          "point_estimate": 15642.270419935394,
+          "standard_error": 161.22416328187367
+        },
+        "median_abs_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 38.92774029028309,
+            "upper_bound": 562.0790727904192
+          },
+          "point_estimate": 246.36193974018306,
+          "standard_error": 187.87550189484435
+        },
+        "slope": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 15788.220731100582,
+            "upper_bound": 16394.606535577754
+          },
+          "point_estimate": 16051.652654509866,
+          "standard_error": 155.88799393084818
+        },
+        "std_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 252.32258921964518,
+            "upper_bound": 841.7352627555795
+          },
+          "point_estimate": 561.8033065938092,
+          "standard_error": 180.5458691081127
+        }
+      }
+    },
+    "target/criterion/mixer_routing/inserts_per_bus_8buses/1": {
+      "tukey.json": [
+        42247.803733170156,
+        43187.37340881274,
+        45692.892543859634,
+        46632.462219502224
+      ],
+      "benchmark.json": {
+        "group_id": "mixer/routing",
+        "function_id": "inserts_per_bus_8buses",
+        "value_str": "1",
+        "throughput": {
+          "Elements": 128
+        },
+        "full_id": "mixer/routing/inserts_per_bus_8buses/1",
+        "directory_name": "mixer_routing/inserts_per_bus_8buses/1",
+        "title": "mixer/routing/inserts_per_bus_8buses/1"
+      },
+      "sample.json": {
+        "sampling_mode": "Linear",
+        "iters": [
+          215.0,
+          430.0,
+          645.0,
+          860.0,
+          1075.0,
+          1290.0,
+          1505.0,
+          1720.0,
+          1935.0,
+          2150.0,
+          2365.0,
+          2580.0,
+          2795.0,
+          3010.0,
+          3225.0,
+          3440.0,
+          3655.0,
+          3870.0,
+          4085.0,
+          4300.0
+        ],
+        "times": [
+          9620000.0,
+          19238125.0,
+          28866041.0,
+          38487792.0,
+          48128666.0,
+          57723666.0,
+          66910750.0,
+          75849000.0,
+          85213792.0,
+          95566083.0,
+          106461500.0,
+          114966792.0,
+          132769709.0,
+          134902250.0,
+          142211208.0,
+          151947583.0,
+          161097250.0,
+          171491583.0,
+          180297625.0,
+          189513458.0
+        ]
+      },
+      "estimates.json": {
+        "mean": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 44357.58325508307,
+            "upper_bound": 44981.1760067627
+          },
+          "point_estimate": 44615.7918096262,
+          "standard_error": 163.16285532812714
+        },
+        "median": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 44153.65725979192,
+            "upper_bound": 44750.137209302324
+          },
+          "point_estimate": 44509.87109634551,
+          "standard_error": 173.69994543941306
+        },
+        "median_abs_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 70.28971996141357,
+            "upper_bound": 626.1200508053942
+          },
+          "point_estimate": 421.89840116097827,
+          "standard_error": 138.08842379580673
+        },
+        "slope": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 44196.44287985857,
+            "upper_bound": 44999.62798031989
+          },
+          "point_estimate": 44476.87225184345,
+          "standard_error": 214.1804433814532
+        },
+        "std_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 274.1725473587803,
+            "upper_bound": 1179.3049984755855
+          },
+          "point_estimate": 749.6425076664993,
+          "standard_error": 293.45023169744445
+        }
+      }
+    },
+    "target/criterion/mixer_routing/inserts_per_bus_8buses/4": {
+      "tukey.json": [
+        140026.7699112426,
+        143377.6027810651,
+        152313.15710059175,
+        155663.98997041423
+      ],
+      "benchmark.json": {
+        "group_id": "mixer/routing",
+        "function_id": "inserts_per_bus_8buses",
+        "value_str": "4",
+        "throughput": {
+          "Elements": 128
+        },
+        "full_id": "mixer/routing/inserts_per_bus_8buses/4",
+        "directory_name": "mixer_routing/inserts_per_bus_8buses/4",
+        "title": "mixer/routing/inserts_per_bus_8buses/4"
+      },
+      "sample.json": {
+        "sampling_mode": "Linear",
+        "iters": [
+          65.0,
+          130.0,
+          195.0,
+          260.0,
+          325.0,
+          390.0,
+          455.0,
+          520.0,
+          585.0,
+          650.0,
+          715.0,
+          780.0,
+          845.0,
+          910.0,
+          975.0,
+          1040.0,
+          1105.0,
+          1170.0,
+          1235.0,
+          1300.0
+        ],
+        "times": [
+          9677042.0,
+          19327542.0,
+          28988709.0,
+          38681833.0,
+          48796292.0,
+          58861791.0,
+          69641708.0,
+          78281417.0,
+          86054958.0,
+          95381375.0,
+          104794375.0,
+          114364083.0,
+          123954750.0,
+          134209375.0,
+          145428417.0,
+          154853208.0,
+          164158375.0,
+          171580208.0,
+          180502625.0,
+          190915917.0
+        ]
+      },
+      "estimates.json": {
+        "mean": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 147619.90394446146,
+            "upper_bound": 149162.20075334585
+          },
+          "point_estimate": 148356.98892360195,
+          "standard_error": 394.1141233810056
+        },
+        "median": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 146799.4873076923,
+            "upper_bound": 148887.4423076923
+          },
+          "point_estimate": 148609.8307692308,
+          "standard_error": 680.1365985843247
+        },
+        "median_abs_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 346.8214496538522,
+            "upper_bound": 2890.5297208248458
+          },
+          "point_estimate": 2434.458238548963,
+          "standard_error": 728.7010414120656
+        },
+        "slope": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 146980.03579008128,
+            "upper_bound": 148344.346146027
+          },
+          "point_estimate": 147578.4588206915,
+          "standard_error": 349.66648307247726
+        },
+        "std_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 1165.508773901752,
+            "upper_bound": 2333.441683868064
+          },
+          "point_estimate": 1809.875599522015,
+          "standard_error": 308.19593591148566
+        }
+      }
+    },
+    "target/criterion/mixer_routing/sidechain_detector_8buses/true": {
+      "tukey.json": [
+        14476.048458413623,
+        14707.294830347377,
+        15323.95182217072,
+        15555.198194104474
+      ],
+      "benchmark.json": {
+        "group_id": "mixer/routing",
+        "function_id": "sidechain_detector_8buses",
+        "value_str": "true",
+        "throughput": {
+          "Elements": 128
+        },
+        "full_id": "mixer/routing/sidechain_detector_8buses/true",
+        "directory_name": "mixer_routing/sidechain_detector_8buses/true",
+        "title": "mixer/routing/sidechain_detector_8buses/true"
+      },
+      "sample.json": {
+        "sampling_mode": "Linear",
+        "iters": [
+          633.0,
+          1266.0,
+          1899.0,
+          2532.0,
+          3165.0,
+          3798.0,
+          4431.0,
+          5064.0,
+          5697.0,
+          6330.0,
+          6963.0,
+          7596.0,
+          8229.0,
+          8862.0,
+          9495.0,
+          10128.0,
+          10761.0,
+          11394.0,
+          12027.0,
+          12660.0
+        ],
+        "times": [
+          9551208.0,
+          19057541.0,
+          28654458.0,
+          38140834.0,
+          47054125.0,
+          56365750.0,
+          67015334.0,
+          77140000.0,
+          85848542.0,
+          95417375.0,
+          106135209.0,
+          116037666.0,
+          122689041.0,
+          132471583.0,
+          143404083.0,
+          150432041.0,
+          159713250.0,
+          171370708.0,
+          181076125.0,
+          189839042.0
+        ]
+      },
+      "estimates.json": {
+        "mean": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 14983.007092567976,
+            "upper_bound": 15094.33146078063
+          },
+          "point_estimate": 15038.447844211336,
+          "standard_error": 28.45451723883405
+        },
+        "median": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 14971.728300609342,
+            "upper_bound": 15089.01579778831
+          },
+          "point_estimate": 15059.66103350794,
+          "standard_error": 27.759806757873427
+        },
+        "median_abs_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 28.773681953619462,
+            "upper_bound": 247.17566104092904
+          },
+          "point_estimate": 95.63945939210745,
+          "standard_error": 61.7592427306812
+        },
+        "slope": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 14954.383525070316,
+            "upper_bound": 15080.827173289746
+          },
+          "point_estimate": 15014.611130560188,
+          "standard_error": 32.09105173092931
+        },
+        "std_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 91.42641616531648,
+            "upper_bound": 157.49870059286994
+          },
+          "point_estimate": 130.62208784359527,
+          "standard_error": 16.91206085234178
+        }
+      }
+    },
+    "target/criterion/mixer_routing/sidechain_detector_8buses/false": {
+      "tukey.json": [
+        12549.92285926897,
+        12631.778777617335,
+        12850.061226546306,
+        12931.917144894669
+      ],
+      "benchmark.json": {
+        "group_id": "mixer/routing",
+        "function_id": "sidechain_detector_8buses",
+        "value_str": "false",
+        "throughput": {
+          "Elements": 128
+        },
+        "full_id": "mixer/routing/sidechain_detector_8buses/false",
+        "directory_name": "mixer_routing/sidechain_detector_8buses/false",
+        "title": "mixer/routing/sidechain_detector_8buses/false"
+      },
+      "sample.json": {
+        "sampling_mode": "Linear",
+        "iters": [
+          733.0,
+          1466.0,
+          2199.0,
+          2932.0,
+          3665.0,
+          4398.0,
+          5131.0,
+          5864.0,
+          6597.0,
+          7330.0,
+          8063.0,
+          8796.0,
+          9529.0,
+          10262.0,
+          10995.0,
+          11728.0,
+          12461.0,
+          13194.0,
+          13927.0,
+          14660.0
+        ],
+        "times": [
+          9320250.0,
+          18639291.0,
+          27960333.0,
+          37390708.0,
+          46809333.0,
+          56020333.0,
+          65222083.0,
+          74481666.0,
+          83836500.0,
+          93548708.0,
+          102939875.0,
+          111784833.0,
+          121263709.0,
+          130556166.0,
+          140195917.0,
+          151555041.0,
+          162599125.0,
+          170877042.0,
+          176867959.0,
+          187433167.0
+        ]
+      },
+      "estimates.json": {
+        "mean": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 12732.782175278873,
+            "upper_bound": 12813.188729252885
+          },
+          "point_estimate": 12768.612271398777,
+          "standard_error": 20.656853054745085
+        },
+        "median": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 12714.704297407912,
+            "upper_bound": 12764.693898052834
+          },
+          "point_estimate": 12731.7188144961,
+          "standard_error": 15.40185289951553
+        },
+        "median_abs_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 10.390094904214862,
+            "upper_bound": 73.23390470247173
+          },
+          "point_estimate": 34.51683412064897,
+          "standard_error": 15.885772315493343
+        },
+        "slope": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 12739.79399279537,
+            "upper_bound": 12880.555303970734
+          },
+          "point_estimate": 12809.537355433971,
+          "standard_error": 35.928784331378644
+        },
+        "std_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 27.646521556637886,
+            "upper_bound": 129.4942746463755
+          },
+          "point_estimate": 94.50334730012581,
+          "standard_error": 24.279577433383714
+        }
+      }
+    },
+    "target/criterion/mixer_meter/bus_meter_block": {
+      "tukey.json": [
+        82.29481382167579,
+        83.31428097095923,
+        86.03286003571506,
+        87.05232718499849
+      ],
+      "benchmark.json": {
+        "group_id": "mixer/meter",
+        "function_id": "bus_meter_block",
+        "value_str": null,
+        "throughput": {
+          "Elements": 128
+        },
+        "full_id": "mixer/meter/bus_meter_block",
+        "directory_name": "mixer_meter/bus_meter_block",
+        "title": "mixer/meter/bus_meter_block"
+      },
+      "sample.json": {
+        "sampling_mode": "Linear",
+        "iters": [
+          111777.0,
+          223554.0,
+          335331.0,
+          447108.0,
+          558885.0,
+          670662.0,
+          782439.0,
+          894216.0,
+          1005993.0,
+          1117770.0,
+          1229547.0,
+          1341324.0,
+          1453101.0,
+          1564878.0,
+          1676655.0,
+          1788432.0,
+          1900209.0,
+          2011986.0,
+          2123763.0,
+          2235540.0
+        ],
+        "times": [
+          9426791.0,
+          18779667.0,
+          28033333.0,
+          37389125.0,
+          47381458.0,
+          57977625.0,
+          67218333.0,
+          76525500.0,
+          85494292.0,
+          94966708.0,
+          103685125.0,
+          112294750.0,
+          122558583.0,
+          133017416.0,
+          142596541.0,
+          151541584.0,
+          160668208.0,
+          169791333.0,
+          180510417.0,
+          190148417.0
+        ]
+      },
+      "estimates.json": {
+        "mean": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 84.41746892701845,
+            "upper_bound": 85.03902701636724
+          },
+          "point_estimate": 84.71968425018727,
+          "standard_error": 0.1593452798051272
+        },
+        "median": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 84.33923932335054,
+            "upper_bound": 84.99866816589233
+          },
+          "point_estimate": 84.75643737083658,
+          "standard_error": 0.21254986428713257
+        },
+        "median_abs_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 0.20644777204001447,
+            "upper_bound": 1.0598646496065438
+          },
+          "point_estimate": 0.5783426428514633,
+          "standard_error": 0.23163761743194247
+        },
+        "slope": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 84.55485530594616,
+            "upper_bound": 84.97017615885993
+          },
+          "point_estimate": 84.77159158577281,
+          "standard_error": 0.10548568933287622
+        },
+        "std_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 0.4693996085266586,
+            "upper_bound": 0.9311604224038842
+          },
+          "point_estimate": 0.7325378843234889,
+          "standard_error": 0.11880517615166711
+        }
+      }
+    },
+    "target/criterion/mixer_meter/true_peak_block": {
+      "tukey.json": [
+        3145.2135698961165,
+        3158.2273811540203,
+        3192.930877841764,
+        3205.944689099668
+      ],
+      "benchmark.json": {
+        "group_id": "mixer/meter",
+        "function_id": "true_peak_block",
+        "value_str": null,
+        "throughput": {
+          "Elements": 128
+        },
+        "full_id": "mixer/meter/true_peak_block",
+        "directory_name": "mixer_meter/true_peak_block",
+        "title": "mixer/meter/true_peak_block"
+      },
+      "sample.json": {
+        "sampling_mode": "Linear",
+        "iters": [
+          2952.0,
+          5904.0,
+          8856.0,
+          11808.0,
+          14760.0,
+          17712.0,
+          20664.0,
+          23616.0,
+          26568.0,
+          29520.0,
+          32472.0,
+          35424.0,
+          38376.0,
+          41328.0,
+          44280.0,
+          47232.0,
+          50184.0,
+          53136.0,
+          56088.0,
+          59040.0
+        ],
+        "times": [
+          9356625.0,
+          18920416.0,
+          28085791.0,
+          37468125.0,
+          47004917.0,
+          56322625.0,
+          65694958.0,
+          75095500.0,
+          84484334.0,
+          93602250.0,
+          103484250.0,
+          112358541.0,
+          121379792.0,
+          131160125.0,
+          140348417.0,
+          149807959.0,
+          159602000.0,
+          168372958.0,
+          178078625.0,
+          187332875.0
+        ]
+      },
+      "estimates.json": {
+        "mean": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 3172.892178614988,
+            "upper_bound": 3180.452330401787
+          },
+          "point_estimate": 3176.3332120927444,
+          "standard_error": 1.943779481087033
+        },
+        "median": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 3171.5663568484642,
+            "upper_bound": 3179.885106142728
+          },
+          "point_estimate": 3173.3759497193187,
+          "standard_error": 2.474696239974461
+        },
+        "median_abs_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 2.3072980027362155,
+            "upper_bound": 10.709526662236586
+          },
+          "point_estimate": 6.277256867440978,
+          "standard_error": 2.2744996608523262
+        },
+        "slope": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 3171.18954009671,
+            "upper_bound": 3176.5691503679986
+          },
+          "point_estimate": 3173.7012151449912,
+          "standard_error": 1.3635516078401528
+        },
+        "std_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 4.562362059599942,
+            "upper_bound": 12.684582114211402
+          },
+          "point_estimate": 8.89149166588104,
+          "standard_error": 2.2764508651177597
+        }
+      }
+    }
+  },
+  "output": "    Finished `bench` profile [optimized + debuginfo] target(s) in 0.40s\n     Running benches/mixer_routing.rs (target/release/deps/mixer_routing-4ba7d7d81cc2cc86)\nGnuplot not found, using plotters backend\nBenchmarking mixer/routing/buses/2\nBenchmarking mixer/routing/buses/2: Warming up for 1.0000 s\nBenchmarking mixer/routing/buses/2: Collecting 20 samples in estimated 2.0007 s (346k iterations)\nBenchmarking mixer/routing/buses/2: Analyzing\nmixer/routing/buses/2   time:   [5.6068 \u00b5s 5.6415 \u00b5s 5.6772 \u00b5s]\n                        thrpt:  [22.547 Melem/s 22.689 Melem/s 22.830 Melem/s]\n                 change:\n                        time:   [-27.877% -26.830% -25.824%] (p = 0.00 < 0.05)\n                        thrpt:  [+34.815% +36.668% +38.651%]\n                        Performance has improved.\nFound 1 outliers among 20 measurements (5.00%)\n  1 (5.00%) high mild\nBenchmarking mixer/routing/buses/8\nBenchmarking mixer/routing/buses/8: Warming up for 1.0000 s\nBenchmarking mixer/routing/buses/8: Collecting 20 samples in estimated 2.0007 s (192k iterations)\nBenchmarking mixer/routing/buses/8: Analyzing\nmixer/routing/buses/8   time:   [10.323 \u00b5s 10.403 \u00b5s 10.504 \u00b5s]\n                        thrpt:  [12.186 Melem/s 12.304 Melem/s 12.399 Melem/s]\n                 change:\n                        time:   [-33.061% -32.129% -31.264%] (p = 0.00 < 0.05)\n                        thrpt:  [+45.485% +47.338% +49.389%]\n                        Performance has improved.\nFound 1 outliers among 20 measurements (5.00%)\n  1 (5.00%) high severe\nBenchmarking mixer/routing/buses/16\nBenchmarking mixer/routing/buses/16: Warming up for 1.0000 s\nBenchmarking mixer/routing/buses/16: Collecting 20 samples in estimated 2.0005 s (119k iterations)\nBenchmarking mixer/routing/buses/16: Analyzing\nmixer/routing/buses/16  time:   [16.697 \u00b5s 16.724 \u00b5s 16.756 \u00b5s]\n                        thrpt:  [7.6392 Melem/s 7.6538 Melem/s 7.6662 Melem/s]\n                 change:\n                        time:   [-35.555% -33.799% -32.078%] (p = 0.00 < 0.05)\n                        thrpt:  [+47.227% +51.054% +55.172%]\n                        Performance has improved.\nFound 1 outliers among 20 measurements (5.00%)\n  1 (5.00%) high mild\nBenchmarking mixer/routing/sends_per_bus_8buses/1\nBenchmarking mixer/routing/sends_per_bus_8buses/1: Warming up for 1.0000 s\nBenchmarking mixer/routing/sends_per_bus_8buses/1: Collecting 20 samples in estimated 2.0024 s (148k iterations)\nBenchmarking mixer/routing/sends_per_bus_8buses/1: Analyzing\nmixer/routing/sends_per_bus_8buses/1\n                        time:   [13.187 \u00b5s 13.228 \u00b5s 13.284 \u00b5s]\n                        thrpt:  [9.6356 Melem/s 9.6766 Melem/s 9.7067 Melem/s]\n                 change:\n                        time:   [-23.828% -23.297% -22.703%] (p = 0.00 < 0.05)\n                        thrpt:  [+29.371% +30.373% +31.282%]\n                        Performance has improved.\nFound 3 outliers among 20 measurements (15.00%)\n  3 (15.00%) high mild\nBenchmarking mixer/routing/sends_per_bus_8buses/2\nBenchmarking mixer/routing/sends_per_bus_8buses/2: Warming up for 1.0000 s\nBenchmarking mixer/routing/sends_per_bus_8buses/2: Collecting 20 samples in estimated 2.0030 s (124k iterations)\nBenchmarking mixer/routing/sends_per_bus_8buses/2: Analyzing\nmixer/routing/sends_per_bus_8buses/2\n                        time:   [15.788 \u00b5s 16.052 \u00b5s 16.395 \u00b5s]\n                        thrpt:  [7.8074 Melem/s 7.9743 Melem/s 8.1073 Melem/s]\n                 change:\n                        time:   [-26.101% -24.602% -22.991%] (p = 0.00 < 0.05)\n                        thrpt:  [+29.855% +32.630% +35.320%]\n                        Performance has improved.\nFound 1 outliers among 20 measurements (5.00%)\n  1 (5.00%) high mild\nBenchmarking mixer/routing/sends_per_bus_8buses/4\nBenchmarking mixer/routing/sends_per_bus_8buses/4: Warming up for 1.0000 s\nBenchmarking mixer/routing/sends_per_bus_8buses/4: Collecting 20 samples in estimated 2.0005 s (94k iterations)\nBenchmarking mixer/routing/sends_per_bus_8buses/4: Analyzing\nmixer/routing/sends_per_bus_8buses/4\n                        time:   [21.017 \u00b5s 21.101 \u00b5s 21.190 \u00b5s]\n                        thrpt:  [6.0406 Melem/s 6.0660 Melem/s 6.0904 Melem/s]\n                 change:\n                        time:   [-27.505% -24.446% -21.701%] (p = 0.00 < 0.05)\n                        thrpt:  [+27.716% +32.356% +37.941%]\n                        Performance has improved.\nBenchmarking mixer/routing/sidechain_detector_8buses/false\nBenchmarking mixer/routing/sidechain_detector_8buses/false: Warming up for 1.0000 s\nBenchmarking mixer/routing/sidechain_detector_8buses/false: Collecting 20 samples in estimated 2.0007 s (154k iterations)\nBenchmarking mixer/routing/sidechain_detector_8buses/false: Analyzing\nmixer/routing/sidechain_detector_8buses/false\n                        time:   [12.740 \u00b5s 12.810 \u00b5s 12.881 \u00b5s]\n                        thrpt:  [9.9375 Melem/s 9.9926 Melem/s 10.047 Melem/s]\n                 change:\n                        time:   [-36.897% -35.489% -34.108%] (p = 0.00 < 0.05)\n                        thrpt:  [+51.763% +55.012% +58.472%]\n                        Performance has improved.\nFound 3 outliers among 20 measurements (15.00%)\n  1 (5.00%) high mild\n  2 (10.00%) high severe\nBenchmarking mixer/routing/sidechain_detector_8buses/true\nBenchmarking mixer/routing/sidechain_detector_8buses/true: Warming up for 1.0000 s\nBenchmarking mixer/routing/sidechain_detector_8buses/true: Collecting 20 samples in estimated 2.0018 s (133k iterations)\nBenchmarking mixer/routing/sidechain_detector_8buses/true: Analyzing\nmixer/routing/sidechain_detector_8buses/true\n                        time:   [14.954 \u00b5s 15.015 \u00b5s 15.081 \u00b5s]\n                        thrpt:  [8.4876 Melem/s 8.5250 Melem/s 8.5594 Melem/s]\n                 change:\n                        time:   [-32.159% -30.285% -28.608%] (p = 0.00 < 0.05)\n                        thrpt:  [+40.071% +43.441% +47.404%]\n                        Performance has improved.\nBenchmarking mixer/routing/inserts_per_bus_8buses/1\nBenchmarking mixer/routing/inserts_per_bus_8buses/1: Warming up for 1.0000 s\nBenchmarking mixer/routing/inserts_per_bus_8buses/1: Collecting 20 samples in estimated 2.0081 s (45k iterations)\nBenchmarking mixer/routing/inserts_per_bus_8buses/1: Analyzing\nmixer/routing/inserts_per_bus_8buses/1\n                        time:   [44.196 \u00b5s 44.477 \u00b5s 45.000 \u00b5s]\n                        thrpt:  [2.8445 Melem/s 2.8779 Melem/s 2.8962 Melem/s]\n                 change:\n                        time:   [-13.520% -12.372% -11.187%] (p = 0.00 < 0.05)\n                        thrpt:  [+12.597% +14.119% +15.633%]\n                        Performance has improved.\nFound 1 outliers among 20 measurements (5.00%)\n  1 (5.00%) high severe\nBenchmarking mixer/routing/inserts_per_bus_8buses/4\nBenchmarking mixer/routing/inserts_per_bus_8buses/4: Warming up for 1.0000 s\nBenchmarking mixer/routing/inserts_per_bus_8buses/4: Collecting 20 samples in estimated 2.0216 s (14k iterations)\nBenchmarking mixer/routing/inserts_per_bus_8buses/4: Analyzing\nmixer/routing/inserts_per_bus_8buses/4\n                        time:   [146.98 \u00b5s 147.58 \u00b5s 148.34 \u00b5s]\n                        thrpt:  [862.86 Kelem/s 867.34 Kelem/s 870.87 Kelem/s]\n                 change:\n                        time:   [-10.725% -9.3797% -8.0867%] (p = 0.00 < 0.05)\n                        thrpt:  [+8.7982% +10.351% +12.014%]\n                        Performance has improved.\nFound 1 outliers among 20 measurements (5.00%)\n  1 (5.00%) high mild\n\nBenchmarking mixer/meter/bus_meter_block\nBenchmarking mixer/meter/bus_meter_block: Warming up for 1.0000 s\nBenchmarking mixer/meter/bus_meter_block: Collecting 20 samples in estimated 2.0000 s (23M iterations)\nBenchmarking mixer/meter/bus_meter_block: Analyzing\nmixer/meter/bus_meter_block\n                        time:   [84.555 ns 84.772 ns 84.970 ns]\n                        thrpt:  [1.5064 Gelem/s 1.5099 Gelem/s 1.5138 Gelem/s]\n                 change:\n                        time:   [-10.328% -8.0104% -5.9647%] (p = 0.00 < 0.05)\n                        thrpt:  [+6.3431% +8.7080% +11.518%]\n                        Performance has improved.\nFound 1 outliers among 20 measurements (5.00%)\n  1 (5.00%) high mild\nBenchmarking mixer/meter/true_peak_block\nBenchmarking mixer/meter/true_peak_block: Warming up for 1.0000 s\nBenchmarking mixer/meter/true_peak_block: Collecting 20 samples in estimated 2.0007 s (620k iterations)\nBenchmarking mixer/meter/true_peak_block: Analyzing\nmixer/meter/true_peak_block\n                        time:   [3.1712 \u00b5s 3.1737 \u00b5s 3.1766 \u00b5s]\n                        thrpt:  [40.295 Melem/s 40.331 Melem/s 40.363 Melem/s]\n                 change:\n                        time:   [-3.8159% -3.0065% -2.2733%] (p = 0.00 < 0.05)\n                        thrpt:  [+2.3262% +3.0997% +3.9673%]\n                        Performance has improved.\nFound 1 outliers among 20 measurements (5.00%)\n  1 (5.00%) high mild\n\n"
+}

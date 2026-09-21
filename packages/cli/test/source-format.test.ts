@@ -88,6 +88,34 @@ describe("source emission formatting", () => {
     expect(out).toContain("`line1\nline2 ${x}\nline3`");
     expect(out).toContain(".edit([\n      {");
   });
+
+  it("preserves template indentation when prettier wraps the temporary declaration", async () => {
+    const root = await workspace({ ".prettierrc": JSON.stringify({ printWidth: 40 }) });
+    const template = "`first\n  second ${value}\n    third`";
+    const expression = `anExtremelyLongFunctionIdentifierName(${template})`;
+    const out = formatSourceExpression(join(root, "song.ts"), "", expression);
+    expect(out).toContain(template);
+  });
+
+  it("preserves escaped newlines in quoted strings while indenting generated code", () => {
+    const expression = "sample('first\\\nsecond').edit([\n  { remove: true },\n])";
+    expect(reindentEmitted("song.ts", expression, "\n", "    ")).toContain("'first\\\nsecond'");
+  });
+
+  it("keeps tagged template data instead of formatting it as an embedded language", () => {
+    const expression = "html`<div>\n      <span>phrase</span>\n </div>`";
+    expect(formatSourceExpression("song.ts", "", expression)).toBe(expression);
+  });
+
+  it("reloads changed prettier configuration after the source cache is reset", async () => {
+    const root = await workspace({ ".prettierrc": JSON.stringify({ singleQuote: true }) });
+    const entry = join(root, "song.ts");
+    const expression = 'project.configure({ kind: "tempo", bpm: 132 })';
+    expect(formatSourceExpression(entry, "", expression)).toContain("'tempo'");
+    await writeFile(join(root, ".prettierrc"), JSON.stringify({ singleQuote: false }));
+    resetSourceFormatCache();
+    expect(formatSourceExpression(entry, "", expression)).toContain('"tempo"');
+  });
 });
 
 describe("candidate eslint polish", () => {

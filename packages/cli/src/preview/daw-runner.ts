@@ -3,6 +3,7 @@ import { ProjectDocument } from "../source/document/project-document.js";
 import { DocumentDispatcher } from "../source/document/document-dispatch.js";
 import { watchProjectDocument } from "../source/document/document-watch.js";
 import { openDocumentBridge } from "../source/document/document-bridge.js";
+import type { Vst3Runtime } from "./vst3-client.js";
 
 /** GPUI projects observe this owner; all note and code commands share one document transaction queue. */
 export class DawRunner {
@@ -17,10 +18,19 @@ export class DawRunner {
   constructor(
     private readonly entry: string,
     private readonly send: (frame: PreviewFrame) => void,
-    private readonly options: { watch?: boolean; watchPaths?: string[]; documentSocket?: string } = {},
+    private readonly options: {
+      watch?: boolean;
+      watchPaths?: string[];
+      documentSocket?: string;
+      vst3Runtime?: Vst3Runtime;
+    } = {},
   ) {}
   async start(): Promise<void> {
-    this.document = await ProjectDocument.open({ entry: this.entry, readPaths: this.options.watchPaths ?? [] });
+    this.document = await ProjectDocument.open({
+      entry: this.entry,
+      readPaths: this.options.watchPaths ?? [],
+      ...(this.options.vst3Runtime ? { vst3Runtime: this.options.vst3Runtime } : {}),
+    });
     this.dispatcher = new DocumentDispatcher(this.document);
     if (this.options.documentSocket) {
       this.closeBridge = await openDocumentBridge(this.options.documentSocket, this.document, this.dispatcher);

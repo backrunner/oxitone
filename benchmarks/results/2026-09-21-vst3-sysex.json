@@ -1,0 +1,199 @@
+{
+  "streamProtocolVersion": 11,
+  "packets": 400,
+  "sampleRate": 48000,
+  "blockSize": 128,
+  "device": null,
+  "channelAndOffsets": true,
+  "resetNoStaleEvents": true,
+  "disabledCapture": true,
+  "overflowFault": true,
+  "invalidOutputFault": true,
+  "roundtripP95Micros": 180.084,
+  "roundtripP99Micros": 322.167,
+  "callbackP95Ms": null,
+  "callbackP99Ms": null,
+  "diagnostics": {
+    "completedBlocks": 402,
+    "maximumIdleWaitMs": 0.111416,
+    "maximumSendMs": 0.058625,
+    "maximumReplyWaitMs": 0.154125,
+    "maximumHelperProcessingMs": 0.072,
+    "workerTimeConstraint": true,
+    "helperTimeConstraint": true
+  },
+  "midiOnlyThru": true,
+  "midiOnlyGenerator": true,
+  "sysex": {
+    "packets": 400,
+    "messagesPerPacket": 4,
+    "bytesPerPacket": 16384,
+    "roundtripP95Micros": 313.167,
+    "roundtripP99Micros": 316.25,
+    "sampleOffsets": true,
+    "resetClearsPayload": true,
+    "invalidAndOversizedFaults": true,
+    "disabledCapture": true,
+    "diagnostics": {
+      "completedBlocks": 402,
+      "maximumIdleWaitMs": 0.108917,
+      "maximumSendMs": 0.030291,
+      "maximumReplyWaitMs": 0.070042,
+      "maximumHelperProcessingMs": 0.027,
+      "workerTimeConstraint": true,
+      "helperTimeConstraint": true
+    }
+  },
+  "midiOnlyRoundtripP95Micros": 157.166,
+  "midiOnlyRoundtripP99Micros": 260.875,
+  "simulated": {
+    "state": "stopped",
+    "cursor": "0",
+    "blocks": 393,
+    "deadlineMisses": 0,
+    "xruns": 0,
+    "nanBlocks": 0,
+    "queueDrops": 0,
+    "performanceWarnings": 0,
+    "engineLoad": 0.21798474725144723,
+    "ringOccupancyFrames": 2048,
+    "blockTimeNs": {
+      "p50": 1048576,
+      "p95": 1048576,
+      "p99": 2097152,
+      "max": 2097152
+    },
+    "events": [
+      {
+        "code": "ModeFallback",
+        "severity": "warning",
+        "frame": "0",
+        "message": "direct mode requires callback-safe plugins, matching sample rates and block sizes; using buffered mode"
+      }
+    ]
+  },
+  "checks": [
+    {
+      "peakError": 0,
+      "samples": 48000
+    },
+    {
+      "peakError": 1.401298464324817e-45,
+      "samples": 48000
+    },
+    {
+      "peakError": 0,
+      "samples": 48000
+    },
+    {
+      "peakError": 0,
+      "samples": 48000
+    }
+  ],
+  "insertMidi": true,
+  "rejectedMissingCapability": true,
+  "date": "2026-09-21T08:19:09.924Z",
+  "cpu": "Apple M4",
+  "os": "darwin 27.0.0",
+  "sourceTransactions": {
+    "configurationEdit": true,
+    "undoRedo": true,
+    "saveReopen": true,
+    "stableRoutes": true
+  },
+  "midiOnly": {
+    "checks": [
+      {
+        "peakError": 0,
+        "samples": 48000
+      },
+      {
+        "peakError": 0,
+        "samples": 48000
+      },
+      {
+        "peakError": 0,
+        "samples": 48000
+      },
+      {
+        "peakError": 0,
+        "samples": 48000
+      }
+    ],
+    "sourceTransactions": {
+      "configurationEdit": true,
+      "undoRedo": true,
+      "saveReopen": true,
+      "catalogKind": true
+    },
+    "diagnostics": {
+      "state": "stopped",
+      "cursor": "0",
+      "blocks": 263,
+      "deadlineMisses": 0,
+      "xruns": 0,
+      "nanBlocks": 0,
+      "queueDrops": 0,
+      "performanceWarnings": 0,
+      "engineLoad": 0.1055337690321285,
+      "ringOccupancyFrames": 2048,
+      "blockTimeNs": {
+        "p50": 262144,
+        "p95": 524288,
+        "p99": 524288,
+        "max": 1048576
+      },
+      "events": []
+    },
+    "configuration": true,
+    "liveCapture": true,
+    "rejectedMissingNoteInput": true,
+    "rejectedStandaloneWav": true
+  },
+  "sysexGraph": {
+    "checks": [
+      {
+        "peakError": 0,
+        "samples": 48000
+      },
+      {
+        "peakError": 0,
+        "samples": 48000
+      },
+      {
+        "peakError": 1.401298464324817e-45,
+        "samples": 48000
+      },
+      {
+        "peakError": 0,
+        "samples": 48000
+      },
+      {
+        "peakError": 0,
+        "samples": 512
+      }
+    ],
+    "diagnostics": {
+      "state": "stopped",
+      "cursor": "0",
+      "blocks": 243,
+      "deadlineMisses": 0,
+      "xruns": 0,
+      "nanBlocks": 0,
+      "queueDrops": 0,
+      "performanceWarnings": 0,
+      "engineLoad": 0.1902283057138994,
+      "ringOccupancyFrames": 2048,
+      "blockTimeNs": {
+        "p50": 524288,
+        "p95": 1048576,
+        "p99": 1048576,
+        "max": 2097152
+      },
+      "events": []
+    },
+    "standaloneInput": true,
+    "outputOwnership": true,
+    "overflowNoFile": true
+  }
+}

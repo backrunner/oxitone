@@ -68,6 +68,8 @@ export const sampleClipSpecSchema = z.object({
 export type SampleClipSpec = z.infer<typeof sampleClipSpecSchema>;
 
 export const channelSpecSchema = z.object({
+  /** Main MIDI output of owned instances to other Channel instruments. */
+  midiRoutes: z.record(entityIdSchema, z.array(entityIdSchema).min(1).max(256)).optional(),
   id: entityIdSchema,
   name: z.string().optional(),
   instrument: instrumentRefSchema,
@@ -76,6 +78,8 @@ export const channelSpecSchema = z.object({
   pan: z.number().finite().min(-1).max(1),
   swing: z.number().finite().min(0).max(1).optional(),
   mixerChannelId: entityIdSchema,
+  /** Instrument auxiliary output bus indices 1..15; bus 0 follows mixerChannelId. */
+  outputRoutes: z.record(z.string().regex(/^(?:[1-9]|1[0-5])$/), entityIdSchema).optional(),
   mute: z.boolean().optional(),
   solo: z.boolean().optional(),
 });
@@ -89,6 +93,13 @@ export const sendSpecSchema = z.object({
 });
 export type SendSpec = z.infer<typeof sendSpecSchema>;
 
+/** Physical auxiliary buses; bus 0 remains in the owner's serial insert chain. */
+export const insertRoutingSchema = z.strictObject({
+  inputs: z.record(z.string().regex(/^(?:[1-9]|1[0-5])$/), entityIdSchema).optional(),
+  outputs: z.record(z.string().regex(/^(?:[1-9]|1[0-5])$/), entityIdSchema).optional(),
+});
+export type InsertRouting = z.infer<typeof insertRoutingSchema>;
+
 export const mixerChannelSpecSchema = z.object({
   id: entityIdSchema,
   name: z.string().optional(),
@@ -96,6 +107,7 @@ export const mixerChannelSpecSchema = z.object({
   balance: z.number().finite().min(-1).max(1),
   masterSendRatio: z.number().finite().min(0).max(1).optional(),
   inserts: z.array(effectRefSchema),
+  insertRoutes: z.record(entityIdSchema, insertRoutingSchema).optional(),
   sends: z.array(sendSpecSchema),
   mute: z.boolean().optional(),
   solo: z.boolean().optional(),
@@ -111,6 +123,7 @@ export const automationLaneSpecSchema = z.object({
   }),
   source: automationSourceSchema,
   combine: z.enum(["replace", "add", "multiply", "max"]).optional(),
+  priority: z.number().int().min(0).max(0xffffffff).optional(),
   playback: z.enum(["global", "playlist"]).optional(),
   loop: loopSpecSchema.optional(),
   lastBeat: beatWireSchema.optional(),

@@ -14,6 +14,8 @@ use crate::descriptor::PluginDescriptor;
 #[derive(Default, Clone)]
 pub struct PluginRegistry {
     plugins: BTreeMap<(String, String), Arc<dyn Plugin>>,
+    instances: BTreeMap<String, Arc<dyn Plugin>>,
+    configuration_dependent: bool,
 }
 
 impl PluginRegistry {
@@ -42,6 +44,7 @@ impl PluginRegistry {
     pub fn register(&mut self, plugin: Arc<dyn Plugin>) -> Result<(), oxitone_core::OxitoneError> {
         let descriptor = plugin.descriptor();
         descriptor.validate()?;
+        self.configuration_dependent |= plugin.configuration_dependent();
         self.plugins
             .entry((
                 descriptor.plugin_id.to_string(),
@@ -69,9 +72,63 @@ impl PluginRegistry {
             .map(|plugin| plugin.descriptor())
     }
 
+    /// Graph-local capability override. Never modifies the engine's shared registration.
+    pub fn register_instance(
+        &mut self,
+        instance_id: &str,
+        plugin: Arc<dyn Plugin>,
+    ) -> Result<(), oxitone_core::OxitoneError> {
+        plugin.descriptor().validate()?;
+        if self.instances.contains_key(instance_id) {
+            return Err(oxitone_core::OxitoneError::new(
+                "InvalidProject",
+                "duplicate configured instance",
+            ));
+        }
+        self.instances.insert(instance_id.to_owned(), plugin);
+        Ok(())
+    }
+
+    fn instance(
+        &self,
+        id: &str,
+        version: &str,
+        instance: Option<&str>,
+    ) -> Option<&Arc<dyn Plugin>> {
+        let plugin = self.instances.get(instance?)?;
+        let descriptor = plugin.descriptor();
+        (descriptor.plugin_id == id && descriptor.plugin_version == version).then_some(plugin)
+    }
+
+    pub fn lookup_instance(
+        &self,
+        id: &str,
+        version: &str,
+        instance: Option<&str>,
+    ) -> Option<Arc<dyn Plugin>> {
+        self.instance(id, version, instance)
+            .cloned()
+            .or_else(|| self.lookup(id, version))
+    }
+
+    pub fn instance_descriptor(
+        &self,
+        id: &str,
+        version: &str,
+        instance: Option<&str>,
+    ) -> Option<&PluginDescriptor> {
+        self.instance(id, version, instance)
+            .map(|plugin| plugin.descriptor())
+            .or_else(|| self.lookup_descriptor(id, version))
+    }
+
     /// Whether any version of `plugin_id` is registered.
     pub fn contains_id(&self, plugin_id: &str) -> bool {
         self.plugins.keys().any(|(id, _)| id == plugin_id)
+    }
+
+    pub fn has_configured_factories(&self) -> bool {
+        self.configuration_dependent
     }
 
     pub fn len(&self) -> usize {

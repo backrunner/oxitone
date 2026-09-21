@@ -1,5 +1,13 @@
 # Oxitone Preview App（GPUI Viewer）
 
+Engine 1.7 MIDI 路由显示为 Channel 间连接，标注源 Instrument 或当前 Insert 位置和目标
+Instrument；可双向导航，不显示音频比例/dB。连接来自已接受快照，仍由源码 routeMidi 编辑。
+
+Engine 1.6 insertRoutes 投影为 Mixer 的输入/输出连接，标签包含当前 insert 位置与
+物理辅助 bus 索引；重排后从已接受快照刷新。辅助输入在来源 bus 的 sends 和目标 bus
+的 inputs 中可导航，辅助输出在 owner 的 outputs 中可导航。路由不属于 PluginConfig，
+不以普通 send 比例显示，编辑仍经 authoring/source 事务。
+
 **目标变更**：已批准升级为 [GPUI DAW 与 Node Document Service](../designs/source-daw/README.md)，
 包含音符/编排/automation/插件编辑和插件管理器。`oxitone daw` 已接入音符编辑、作用范围、
 拆散 review、Automation source 绘制、插件初始配置与串联效果链拆散、Undo/Save、editor bridge、冲突解决及插件目录/验证，见
@@ -31,8 +39,17 @@ viewer 操作 -> transport command -> engine（仅此一个方向回到引擎）
 
 ## 同步语义
 
+DAW 原生 VST3 实例控制使用独立 IPC 连接与 vst3Instances/vst3Control 请求，不占用
+snapshot/document 的单帧队列。请求从 Node 文档服务校验后发送，绑定 snapshotRevision
+和图 generation；后台任务完成时再次核对当前图。GPUI 不直接调用控制句柄或写源码。
+状态接受仍通过 Document captureInstance 事务，详见 [24](24-vst3-sdk.md)。
+接受后的 VST3 实例详情、自动化名称和录制参数选择使用对应 instanceId 的编译 descriptor；
+相同 class/hash 的其他实例仍显示自己的表。副本来自已准备图，不在 UI 线程调用插件。
+
 入口默认导出 Project 或返回 Project 的 sync/async factory，也可返回
-`{ project, assetBaseDir? }`；Project.registerPlugin 的已校验库配置随 IPC 发送。
+`{ project, assetBaseDir? }`；Project.registerPlugin 与 registerVst3 的已校验库配置随 IPC 发送。
+VST3 registration 在 Native candidate validation 和 Preview 控制编译时重放；外部处理走
+buffered worker，设备回调仍只读取 ring PCM。验证失败保留上一可播放工程。
 runner 用 esbuild 合并本地静态 import/export、JSON 和可静态解析的 dynamic import，
 每轮生成一个带 inline source map 的临时 `.mjs`，独立 Node 子进程只执行这个产物，
 不再执行原始入口。各模块 import.meta.url/dirname/filename 由 AST 转换保留为原文件
@@ -62,6 +79,16 @@ diagnostic、status、transport、query、shutdown；所有帧含 protocolVersio
 - 换图在 block 边界完成；正在播放时换图不中断 transport，seek/loop 状态保留。
 
 ## 视图
+
+VST3 实例面板可展开 Record automation，选择 Touch/Write 和最多 32 个可自动化参数，
+参数每页 16 个。Record/Stop/Cancel 全部提交文档语义请求；取消可穿过正在等待的请求。
+DocumentView.vst3Recording 显示 starting/recording/stopping/captured/failed，面板观察
+该状态而不持有音频对象。停止仍需播放边界；录制片段及曲线在接受后进入普通 Playlist
+和 Source 范围编辑流程。详见 [24](24-vst3-sdk.md)。
+
+Engine 1.4 的乐器辅助输出也进入 Mixer 的 Routing/Signal Flow 和目标 bus 的 INPUTS，
+按物理输出索引排列、标出 Output N 与 before inserts。它们与普通 send 分开呈现；
+多个输出到同一个 bus 时仍保留各条连接。路由卡片只导航，音乐路由通过源码更新。
 
 普通 `preview` 是只读音乐投影；`daw` 接入 Document Service 后提供 [18](18-project-daw.md)
 的语义编辑、撤销和保存。两种入口共用窗口、导航和 transport。
@@ -123,12 +150,21 @@ diagnostic、status、transport、query、shutdown；所有帧含 protocolVersio
   并取消活动手势。源码错误与 native 图诊断分别持有，迟到的 native Accepted 不清除源码失败；
   底栏区分 Saved、Modified、Syncing、Updating audio、Saving、Invalid code、Conflict、Error 与 Disconnected。
 - Browser、Piano、Mixer、Automation、Plugin Library、实例配置和插件面板共用一个内部窗口管理器。
+  Plugin Library 的 Add VST3 / Offline tools 提供本地检查、参数和 WAV 渲染；Files / project
+  保存/加载独立预设，并把最近渲染冻结为可 Undo/Save 的 Playlist 音轨。所有操作经过
+  Document Service；能力与测试边界见 [24-vst3-sdk.md](24-vst3-sdk.md)。
   点击置前、标题拖动/双击最大化、八方向缩放、恢复/关闭和 Piano/Mixer 停靠均在同一 GPUI
   主窗口内处理，浮层占用实测 desktop，保持主传输栏可用。Arrange 隐藏浮层，再次打开
   编辑器恢复其状态；⌘/Ctrl+W 关闭当前内部窗口。手势命中不穿透窗口；Playlist 拖放还验证
   滚动视口边界，并在释放时重新计算目标。`OXITONE_PREVIEW_CAPTURE_WINDOWS=1` 配合
   `scripts/smoke-daw.mjs` 验证六个内部视图共存、真实标题/边角/最大化按钮与 Browser 拖放保存，
   同时断言系统窗口数量为 1。完整音频及来源契约见 [18](18-project-daw.md)。
+  Add VST3 的 Scan installed VST3 列出用户与系统目录中的 bundle；选择路径后显式 Discover
+  plugins 枚举 factory，不在浏览时加载。Native editor 则在隔离 helper 的主线程开独立静音
+  配置窗口，工作台 Apply 保留会话状态，实例面板 Apply 通过单实例源码事务更新并参与
+  Undo/Redo/Save。窗口内尚未 Apply 的调整不影响当前播放，取消/崩溃/超时保留旧状态。
+  配置会话已支持多总线零样本处理和有界 I/O/latency/controller 重查；工作台重新 Inspect
+  已导入/已 Apply 的预设时先恢复实际配置，再发布参数表和当前值，原始恢复数据继续保留。
 - 全部 26 个内置效果器与 4 个音源的 Panel 页提供专用分组和原生参数响应图，窄窗口重新排列图形与控制组。
   DAW 可拖动旋钮/fader、选择模式及切换 host Mix/bypass；Shift 精调、双击恢复默认、Escape 取消。
   手势即时投影参数/图形，释放后经 Document Service 提交一次实例配置，支持 Undo/Redo 和源码保存。
@@ -143,6 +179,7 @@ diagnostic、status、transport、query、shutdown；所有帧含 protocolVersio
   实例配置通过使用位置 Edit 或插件面板 Configure 打开独立窗口，标题标明归属和槽位；
   浏览插件库不改变正在编辑的实例。配置保留初始值输入、作用范围、Mix/bypass、重排和拆散 review。
   配置窗口初始高度随参数数量夹紧，重开同插件保留用户尺寸；库详情随窗口高度缩小，保留列表空间。
+  库详情与使用位置列表提供可拖动的垂直滚动条；内容不压缩，窄窗仍可访问全部详情和操作。
   控件分普通、主操作、无背景和图标按钮，工具用分组容器。图标有原生悬停名称/快捷键；
   钢琴/曲线底部仅显示音乐数据，不常驻操作教程，所有快捷操作集中于 ? 面板。
   Pattern 作用范围和 Detach 位于钢琴工具栏，传输栏只保留全局文档操作。

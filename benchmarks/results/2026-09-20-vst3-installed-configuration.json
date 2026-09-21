@@ -1,0 +1,35 @@
+{
+  "date": "2026-09-19T19:28:13.454Z",
+  "device": null,
+  "processedFrames": 0,
+  "ensembleLoaded": false,
+  "results": [
+    {
+      "name": "Reaktor 6",
+      "classId": "5653544e6952367265616b746f722036",
+      "sha256": "f49e16a28a7fa39de6ef494998df159785f0a2fa4f85777367b6eb72aaba7895",
+      "inputs": 1,
+      "outputs": 8,
+      "parameters": 3097,
+      "stateBytes": 39
+    },
+    {
+      "name": "Reaktor 6 FX",
+      "classId": "5653544e52366a7265616b746f722036",
+      "sha256": "f49e16a28a7fa39de6ef494998df159785f0a2fa4f85777367b6eb72aaba7895",
+      "inputs": 8,
+      "outputs": 8,
+      "parameters": 3097,
+      "stateBytes": 39
+    },
+    {
+      "name": "Vesti Gain",
+      "classId": "56455354494741494e30303030303031",
+      "sha256": "a2ec83f9537b03c694f98ee6440bf66d28d722e1d74ba33a30fd7410115246aa",
+      "inputs": 1,
+      "outputs": 1,
+      "parameters": 2,
+      "stateBytes": 264
+    }
+  ]
+}

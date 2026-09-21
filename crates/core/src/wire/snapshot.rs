@@ -68,6 +68,57 @@ pub fn check_snapshot_version(snapshot: &ProjectSnapshot) -> Result<(), OxitoneE
         .1
         .parse::<u64>()
         .unwrap();
+    if minor < 7 && snapshot.channels.iter().any(|c| c.midi_routes.is_some()) {
+        return Err(OxitoneError::new(
+            codes::PROTOCOL_VERSION_UNSUPPORTED,
+            "MIDI routes require protocol 1.7",
+        ));
+    }
+    if minor < 6
+        && snapshot
+            .mixer_channels
+            .iter()
+            .any(|bus| bus.insert_routes.is_some())
+    {
+        return Err(OxitoneError::new(
+            codes::PROTOCOL_VERSION_UNSUPPORTED,
+            "insert bus routes require protocol 1.6",
+        ));
+    }
+    if minor < 5
+        && snapshot
+            .automation
+            .iter()
+            .any(|lane| lane.priority.is_some())
+    {
+        return Err(OxitoneError::new(
+            codes::PROTOCOL_VERSION_UNSUPPORTED,
+            "automation priority requires protocol 1.5",
+        ));
+    }
+    if minor < 4 && snapshot.channels.iter().any(|c| c.output_routes.is_some()) {
+        return Err(OxitoneError::new(
+            codes::PROTOCOL_VERSION_UNSUPPORTED,
+            "instrument output routes require protocol 1.4",
+        ));
+    }
+    if minor < 3
+        && (snapshot.channels.iter().any(|c| {
+            c.instrument.plugin_id.starts_with("vst3.")
+                || c.effect_chain
+                    .iter()
+                    .any(|e| e.state.is_some() || e.plugin_id.starts_with("vst3."))
+        }) || snapshot.mixer_channels.iter().any(|b| {
+            b.inserts
+                .iter()
+                .any(|e| e.state.is_some() || e.plugin_id.starts_with("vst3."))
+        }))
+    {
+        return Err(OxitoneError::new(
+            codes::PROTOCOL_VERSION_UNSUPPORTED,
+            "VST3 project plugins and effect state require protocol 1.3",
+        ));
+    }
     if minor < 2
         && (snapshot.patterns.iter().any(|p| p.parts.is_some())
             || snapshot

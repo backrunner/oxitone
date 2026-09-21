@@ -924,6 +924,26 @@
       "items": {
         "type": "object",
         "properties": {
+          "midiRoutes": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[A-Za-z0-9_-]+$"
+            },
+            "additionalProperties": {
+              "minItems": 1,
+              "maxItems": 256,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128,
+                "pattern": "^[A-Za-z0-9_-]+$"
+              }
+            }
+          },
           "id": {
             "type": "string",
             "minLength": 1,
@@ -1014,6 +1034,7 @@
                     "type": "string"
                   }
                 },
+                "state": {},
                 "bypass": {
                   "type": "boolean"
                 },
@@ -1051,6 +1072,19 @@
             "minLength": 1,
             "maxLength": 128,
             "pattern": "^[A-Za-z0-9_-]+$"
+          },
+          "outputRoutes": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^(?:[1-9]|1[0-5])$"
+            },
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[A-Za-z0-9_-]+$"
+            }
           },
           "mute": {
             "type": "boolean"
@@ -1136,6 +1170,7 @@
                     "type": "string"
                   }
                 },
+                "state": {},
                 "bypass": {
                   "type": "boolean"
                 },
@@ -1150,6 +1185,47 @@
                 "pluginVersion",
                 "parameters"
               ],
+              "additionalProperties": false
+            }
+          },
+          "insertRoutes": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[A-Za-z0-9_-]+$"
+            },
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "inputs": {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string",
+                    "pattern": "^(?:[1-9]|1[0-5])$"
+                  },
+                  "additionalProperties": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "pattern": "^[A-Za-z0-9_-]+$"
+                  }
+                },
+                "outputs": {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string",
+                    "pattern": "^(?:[1-9]|1[0-5])$"
+                  },
+                  "additionalProperties": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "pattern": "^[A-Za-z0-9_-]+$"
+                  }
+                }
+              },
               "additionalProperties": false
             }
           },
@@ -1249,6 +1325,11 @@
               "multiply",
               "max"
             ]
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295
           },
           "playback": {
             "type": "string",

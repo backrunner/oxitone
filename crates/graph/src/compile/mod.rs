@@ -14,6 +14,9 @@
 //! the control thread.
 
 mod bindings;
+mod channels;
+mod lane_bindings;
+pub use channels::ChannelPlan;
 mod initial_value;
 mod placement;
 pub use placement::{lane_has_edge, LanePlacement};
@@ -27,7 +30,7 @@ use std::sync::Arc;
 
 use oxitone_core::beat::Beat;
 use oxitone_core::error::{codes, OxitoneError};
-use oxitone_core::wire::{EffectRef, EntityId, InstrumentRef, ProjectSnapshot, SampleRef};
+use oxitone_core::wire::{ProjectSnapshot, SampleRef};
 use oxitone_samples::PreparedSample;
 use oxitone_transport::scheduler::{ClipSource, Scheduler};
 use oxitone_transport::tempo::{CompiledTempoMap, TempoMap};
@@ -64,26 +67,10 @@ pub struct CompileOptions {
     pub respect_solo: bool,
 }
 
-/// One mixer-bound channel of the arrangement (sorted by channel ID).
-#[derive(Debug, Clone)]
-pub struct ChannelPlan {
-    pub id: EntityId,
-    pub mixer_channel_id: EntityId,
-    pub level: f64,
-    pub pan: f64,
-    /// Static swing; a `ChannelSwing` binding (if any) replaces it.
-    pub swing: f64,
-    pub mute: bool,
-    pub solo: bool,
-    pub instrument: InstrumentRef,
-    pub effect_chain: Vec<EffectRef>,
-    /// Index into `RenderPlan::bindings` for the automated swing lane.
-    pub swing_binding: Option<usize>,
-}
-
 /// Immutable output of [`compile_plan`]: every compiled structure the
 /// runtime needs, in deterministic order.
 pub struct RenderPlan {
+    pub midi_routing: Option<crate::midi::MidiRouting>,
     pub sample_rate: u32,
     pub block_size: u32,
     pub seed: u64,
@@ -231,6 +218,7 @@ pub fn compile_plan(
         }
     }
     let scheduler = Scheduler::compile(&sources, &tempo, seed)?;
+    crate::midi::validate_note_inputs(&channel_specs, registry, &scheduler)?;
 
     // Sample clip plans with the effective clock (sorted by clip ID).
     let mut clip_plans = Vec::with_capacity(sample_clips.len());
@@ -267,7 +255,7 @@ pub fn compile_plan(
         .collect();
 
     let content_end_beat = clock::content_end(snapshot, &tempo)?;
-    let bindings = bindings::compile_bindings(
+    let bindings = lane_bindings::compile_bindings(
         snapshot,
         registry,
         &channel_index,
@@ -276,28 +264,10 @@ pub fn compile_plan(
         any_track_solo,
     )?;
 
-    let mut has_swing = channel_specs.iter().any(|c| c.swing.unwrap_or(0.0) != 0.0);
-    let mut channels = Vec::with_capacity(channel_specs.len());
-    for (i, spec) in channel_specs.iter().enumerate() {
-        let swing_binding = bindings
-            .iter()
-            .position(|b| matches!(&b.target, BindingTarget::ChannelSwing(c) if *c == i));
-        has_swing |= swing_binding.is_some();
-        channels.push(ChannelPlan {
-            id: spec.id.clone(),
-            mixer_channel_id: spec.mixer_channel_id.clone(),
-            level: spec.level,
-            pan: spec.pan,
-            swing: spec.swing.unwrap_or(0.0),
-            mute: spec.mute.unwrap_or(false),
-            solo: spec.solo.unwrap_or(false),
-            instrument: spec.instrument.clone(),
-            effect_chain: spec.effect_chain.clone(),
-            swing_binding,
-        });
-    }
+    let (channels, has_swing) = channels::compile(&channel_specs, &bindings);
 
     Ok(RenderPlan {
+        midi_routing: crate::midi::compile(&snapshot.channels, Some(registry))?,
         sample_rate,
         block_size,
         seed,

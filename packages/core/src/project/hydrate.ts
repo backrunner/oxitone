@@ -18,6 +18,7 @@ export function restoreEntities(project: Project, snapshot: ProjectSnapshot) {
       level: spec.level,
       pan: spec.pan,
       mixerChannelId: spec.mixerChannelId,
+      ...(spec.outputRoutes === undefined ? {} : { outputRoutes: spec.outputRoutes }),
       ...(spec.name === undefined ? {} : { name: spec.name }),
       ...(spec.swing === undefined ? {} : { swing: spec.swing }),
       ...(spec.mute === undefined ? {} : { mute: spec.mute }),

@@ -83,6 +83,7 @@ it("discovers unused multi-plugin packages without executing JS, validates only 
       hash: "0".repeat(64),
       snapshot: new Project().snapshot(),
       plugins: [],
+      vst3Plugins: [],
       assetBaseDir: root,
       allowPlugins: "any",
     };

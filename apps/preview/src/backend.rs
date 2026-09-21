@@ -20,6 +20,13 @@ use std::{
 pub enum Command {
     Document(crate::document_wire::DocumentRequest),
     Frame(Frame, Option<Sender<Value>>),
+    Vst3Control {
+        snapshot_revision: String,
+        request: Value,
+        received: std::time::Instant,
+        reply: Sender<Value>,
+    },
+    Vst3Completed(Box<crate::engine::ControlCompleted>, Sender<Value>),
     Invalid(String),
     Shutdown,
 }
@@ -41,12 +48,14 @@ impl Backend {
         let (events_tx, events) = mpsc::channel();
         let stop = Arc::new(AtomicBool::new(false));
         let engine_stop = stop.clone();
+        let task_sender = commands.clone();
         let thread = thread::Builder::new()
             .name("oxitone-preview-control".into())
             .spawn(move || {
                 let document_events = events_tx.clone();
                 let mut engine = Engine::new(simulated, events_tx);
                 let mut document_requests = std::collections::VecDeque::new();
+                let mut vst3_tasks = 0usize;
                 while !engine_stop.load(Ordering::Relaxed) {
                     match receiver.recv_timeout(Duration::from_millis(33)) {
                         Ok(Command::Document(request)) => {
@@ -67,6 +76,54 @@ impl Backend {
                                     },
                                 ));
                             }
+                        }
+                        Ok(Command::Frame(Frame::Vst3Instances { snapshot_revision }, reply)) => {
+                            if let Some(reply) = reply {
+                                let _ = reply.send(engine.vst3_instances(snapshot_revision));
+                            }
+                        }
+                        Ok(Command::Vst3Control {
+                            snapshot_revision,
+                            request,
+                            received,
+                            reply,
+                        }) => {
+                            let job = if vst3_tasks >= 8 {
+                                Err(oxitone_core::OxitoneError::new(
+                                    "BudgetExceeded",
+                                    "Preview VST3 control task queue is full",
+                                ))
+                            } else {
+                                engine.prepare_vst3_control(snapshot_revision, request, received)
+                            };
+                            match job {
+                                Ok(job) => {
+                                    let sender = task_sender.clone();
+                                    let response = reply.clone();
+                                    match thread::Builder::new()
+                                        .name("oxitone-preview-vst3".into())
+                                        .spawn(move || {
+                                            let _ = sender.send(Command::Vst3Completed(
+                                                Box::new(job.run()),
+                                                response,
+                                            ));
+                                        }) {
+                                        Ok(_) => vst3_tasks += 1,
+                                        Err(error) => {
+                                            let _ = reply.send(
+                                                engine.error(wire::invalid(&error.to_string())),
+                                            );
+                                        }
+                                    }
+                                }
+                                Err(error) => {
+                                    let _ = reply.send(engine.error(error));
+                                }
+                            }
+                        }
+                        Ok(Command::Vst3Completed(completed, reply)) => {
+                            vst3_tasks -= 1;
+                            let _ = reply.send(engine.complete_vst3_control(*completed));
                         }
                         Ok(Command::Frame(frame, reply)) => {
                             let shutdown = matches!(frame, Frame::Shutdown);
@@ -121,7 +178,13 @@ impl Backend {
                             };
                             let shutdown = matches!(frame, Frame::Shutdown);
                             let (reply, response) = mpsc::channel();
-                            if sender.send(Command::Frame(frame, Some(reply))).is_err() { break; }
+                            let command = match frame {
+                                Frame::Vst3Control { snapshot_revision, request } => Command::Vst3Control {
+                                    snapshot_revision, request, received: std::time::Instant::now(), reply,
+                                },
+                                frame => Command::Frame(frame, Some(reply)),
+                            };
+                            if sender.send(command).is_err() { break; }
                             match response.recv() {
                                 Ok(value) if wire::write_frame(&mut stream, &value).is_ok() => {},
                                 _ => break,

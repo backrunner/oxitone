@@ -29,6 +29,7 @@ pub fn details(descriptor: PluginDescriptor) -> PluginDetails {
             })
             .collect(),
         info: PluginInfo {
+            instances: Default::default(),
             descriptor,
             library: None,
         },

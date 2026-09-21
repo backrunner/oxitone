@@ -12,14 +12,14 @@ const fixtures = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..",
 const snapshotText = readFileSync(join(fixtures, "project-snapshot.canonical.json"), "utf8");
 
 describe("protocol version", () => {
-  it("exposes 1.2 and accepts the legacy minor", () => {
-    expect(PROTOCOL_VERSION).toBe("1.2");
+  it("exposes 1.7 and accepts the legacy minor", () => {
+    expect(PROTOCOL_VERSION).toBe("1.7");
     expect(() => checkProtocolVersion("1.0")).not.toThrow();
     expect(() => checkProtocolVersion("1.1")).not.toThrow();
   });
 
   it("rejects unknown major versions and newer minors", () => {
-    for (const version of ["2.0", "0.9", "1.3", "banana"]) {
+    for (const version of ["2.0", "0.9", "1.8", "banana"]) {
       expect(() => checkProtocolVersion(version)).toThrowError(
         expect.objectContaining({ code: ErrorCode.ProtocolVersionUnsupported }) as Error,
       );
@@ -28,6 +28,83 @@ describe("protocol version", () => {
 });
 
 describe("project snapshot codec", () => {
+  it("requires 1.6 for insert routes and accepts only physical auxiliary indices", () => {
+    const snapshot = decodeProjectSnapshot(snapshotText);
+    const bus = snapshot.mixerChannels[0]!;
+    for (const routes of [{}, { fx_fixture: { inputs: { "1": bus.id }, outputs: { "15": "mix_master" } } }]) {
+      bus.insertRoutes = routes;
+      snapshot.protocolVersion = "1.5";
+      expect(() => encodeProjectSnapshot(snapshot)).toThrowError(
+        expect.objectContaining({ code: ErrorCode.ProtocolVersionUnsupported }),
+      );
+      snapshot.protocolVersion = "1.6";
+      expect(decodeProjectSnapshot(encodeProjectSnapshot(snapshot))).toEqual(snapshot);
+    }
+    for (const index of ["0", "01", "16", "-1", "1.0", "aux"]) {
+      bus.insertRoutes = { fx_fixture: { inputs: { [index]: bus.id } } };
+      expect(projectSnapshotSchema.safeParse(snapshot).success).toBe(false);
+    }
+  });
+  it("requires 1.5 for explicit automation priority, including zero", () => {
+    const snapshot = decodeProjectSnapshot(snapshotText);
+    for (const priority of [0, 1, 0xffffffff]) {
+      snapshot.automation[0]!.priority = priority;
+      snapshot.protocolVersion = "1.4";
+      expect(() => encodeProjectSnapshot(snapshot)).toThrowError(
+        expect.objectContaining({ code: ErrorCode.ProtocolVersionUnsupported }),
+      );
+      snapshot.protocolVersion = "1.5";
+      expect(decodeProjectSnapshot(encodeProjectSnapshot(snapshot))).toEqual(snapshot);
+    }
+    for (const priority of [-1, 0.5, 0x100000000]) {
+      snapshot.automation[0]!.priority = priority;
+      expect(projectSnapshotSchema.safeParse(snapshot).success).toBe(false);
+    }
+  });
+  it("requires 1.4 for auxiliary output routes and preserves canonical physical indices", () => {
+    const snapshot = decodeProjectSnapshot(snapshotText);
+    for (const routes of [{}, { "1": snapshot.mixerChannels[0]!.id }]) {
+      snapshot.channels[0]!.outputRoutes = routes;
+      snapshot.protocolVersion = "1.3";
+      expect(projectSnapshotSchema.safeParse(snapshot).success).toBe(false);
+      expect(() => decodeProjectSnapshot(JSON.stringify(snapshot))).toThrowError(
+        expect.objectContaining({ code: ErrorCode.ProtocolVersionUnsupported }),
+      );
+      snapshot.protocolVersion = "1.4";
+      expect(decodeProjectSnapshot(encodeProjectSnapshot(snapshot))).toEqual(snapshot);
+    }
+    for (const key of ["0", "16", "01", "-1", "1.0", "aux"]) {
+      snapshot.channels[0]!.outputRoutes = { [key]: snapshot.mixerChannels[0]!.id };
+      expect(projectSnapshotSchema.safeParse(snapshot).success).toBe(false);
+    }
+  });
+  it("preserves VST3 and effect state only at protocol 1.3 or newer", () => {
+    for (const target of ["instrument", "channel", "bus"] as const) {
+      const snapshot = decodeProjectSnapshot(snapshotText);
+      const pluginId = "vst3.56455354494741494e30303030303031";
+      const effect = { pluginId, pluginVersion: "1.0.0", parameters: {}, state: { opaque: "fixture" } };
+      if (target === "instrument") snapshot.channels[0]!.instrument.pluginId = pluginId;
+      else if (target === "channel") snapshot.channels[0]!.effectChain = [effect];
+      else snapshot.mixerChannels[0]!.inserts = [effect];
+      for (const version of ["1.0", "1.1", "1.2"]) {
+        snapshot.protocolVersion = version;
+        expect(projectSnapshotSchema.safeParse(snapshot).success).toBe(false);
+        expect(() => decodeProjectSnapshot(JSON.stringify(snapshot))).toThrowError(
+          expect.objectContaining({ code: ErrorCode.ProtocolVersionUnsupported }),
+        );
+      }
+      snapshot.protocolVersion = "1.3";
+      expect(decodeProjectSnapshot(encodeProjectSnapshot(snapshot))).toEqual(snapshot);
+    }
+    const snapshot = decodeProjectSnapshot(snapshotText);
+    snapshot.protocolVersion = "1.2";
+    snapshot.channels[0]!.effectChain = [
+      { pluginId: "fixture.effect", pluginVersion: "1.0.0", parameters: {}, state: {} },
+    ];
+    expect(() => encodeProjectSnapshot(snapshot)).toThrowError(
+      expect.objectContaining({ code: ErrorCode.ProtocolVersionUnsupported }),
+    );
+  });
   it("round-trips Track M/S and rejects them below their protocol floor", () => {
     const snapshot = decodeProjectSnapshot(snapshotText);
     snapshot.tracks[0]!.mute = true;
@@ -145,10 +222,16 @@ describe("error codes", () => {
       "RealtimeFault",
       "WavTooLarge",
       "PluginAbiMismatch",
+      "PluginCapabilityUnsupported",
+      "PluginConfigInvalid",
+      "PluginHostUnavailable",
+      "PluginHostTimeout",
+      "PluginHostCrashed",
       "PluginInstallFailed",
       "PluginManifestMismatch",
       "PluginMigrationFailed",
       "PluginTaskConflict",
+      "PluginRestartRequired",
       "PerformanceWarning",
     ];
     expect([...ERROR_CODES].sort()).toEqual([...expected, "ProtocolVersionUnsupported"].sort());

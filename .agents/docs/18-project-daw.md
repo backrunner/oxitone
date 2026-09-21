@@ -98,7 +98,9 @@ DocumentRequest 含 documentProtocolVersion/sessionId/requestId/baseRevision 和
 新序号可继续，不因累计请求次数耗尽服务。客户端对同一 stream 有序提交，重连保留序号。
 只接受该 stream 格式，任意旧式 ID 与非法序号均拒绝，不再维护 retired ID 兼容集合。
 服务重启用 sessionId 隔离。
-提交队列 64，单帧 64 MiB，超预算显式失败。DocumentEvent 与 correlated response 独立。
+提交队列 64，另保留一个即时 VST3 cancel 槽；单帧 64 MiB，超预算显式失败。
+保留 256 个已完成结果及有界队列内的未完成请求，乱序取消应答不能淘汰运行中 render 的幂等记录。
+DocumentEvent 与 correlated response 独立。
 
 GPUI 反向队列随 Node 每 50 ms query 的 native response 返回；本地 transport/query 不
 消耗它。Node 保留所有事务应答，只合并呈现/query。旧 Viewer 没有 Document 2.0 声明时
@@ -137,6 +139,17 @@ Verify library 仅在独立可终止 Node helper 加载所选库，10 秒超时�
 hash/manifest/ABI/工程签名策略验证，无 DSP 实例/设备。未指定策略时 signed-only，
 不会自动降级 any。校验前后复核 metadata 和库字节，refresh 保守重置验证状态。
 验证不是 DSP prepare/实时行为认证，helper 也不是恶意原生代码沙箱。
+
+metadata format 1 可用 `vst3` 数组声明可选本地 VST3：pluginId、pluginVersion、displayName、
+vendor、可选 license、kind、包内相对 bundle、32-hex classId、可选 sha256。`plugins` 可省略，
+但两组总计至少一项；各组最多 256，仍受目录 4096 和 metadata 1 MiB 总预算约束。
+发现只检查静态文件和路径，不执行包入口；bundle 根 symbolic link、越界或不支持平台均拒绝。
+GPUI Add VST3 也可显式添加会话本地路径/class。VST3 条目提供 Inspect 与 Offline tools，
+参数/测试音符/离线 WAV 经 Document Service 调用独立 native helper；Files / project 显式
+保存/加载带 hash 的独立预设，或把最近 WAV 复制到工程内容寻址资产并通过源码事务导入新
+Playlist 音轨，支持 Undo/Redo/Save/重开。VST3 processor 不可 Assign 到 C ABI 插槽。
+刷新失效、取消队列、签名/hash/state、UI 参数和准确能力边界见
+[24-vst3-sdk.md](24-vst3-sdk.md)。
 
 独立实例配置窗口提供初始参数数值输入、增减/默认值、效果器 mix/bypass 和局部/共享配置范围，
 以及串联 chain 拆散 review；源码派生、真实 C 插件与 npm 边界见

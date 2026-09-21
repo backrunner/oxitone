@@ -32,6 +32,8 @@ pub mod codes {
     pub const WAV_TOO_LARGE: &str = "WavTooLarge";
     pub const PLUGIN_ABI_MISMATCH: &str = "PluginAbiMismatch";
     pub const PLUGIN_MANIFEST_MISMATCH: &str = "PluginManifestMismatch";
+    pub const PLUGIN_CAPABILITY_UNSUPPORTED: &str = "PluginCapabilityUnsupported";
+    pub const PLUGIN_RESTART_REQUIRED: &str = "PluginRestartRequired";
     pub const PERFORMANCE_WARNING: &str = "PerformanceWarning";
 }
 

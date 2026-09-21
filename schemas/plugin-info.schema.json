@@ -12,8 +12,23 @@
       "type": "string"
     },
     "abiMajor": {
-      "type": "number",
-      "const": 1
+      "anyOf": [
+        {
+          "type": "number",
+          "const": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "format": {
+      "type": "string",
+      "enum": [
+        "builtin",
+        "oxi",
+        "vst3"
+      ]
     },
     "kind": {
       "type": "string",
@@ -108,6 +123,7 @@
     "pluginId",
     "pluginVersion",
     "abiMajor",
+    "format",
     "kind",
     "parameters",
     "stateSchema"

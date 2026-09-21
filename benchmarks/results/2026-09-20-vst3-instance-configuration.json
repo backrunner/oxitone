@@ -1,0 +1,48 @@
+{
+  "date": "2026-09-19T20:47:54.766Z",
+  "cpu": "Apple M4",
+  "os": "darwin 27.0.0",
+  "sampleRate": 48000,
+  "blockSize": 128,
+  "processedFrames": 0,
+  "device": null,
+  "callbackP95": null,
+  "callbackP99": null,
+  "xruns": null,
+  "configurationElapsedMs": 1692.5333329999999,
+  "layouts": [
+    {
+      "inputs": 2,
+      "outputs": 1
+    },
+    {
+      "inputs": 3,
+      "outputs": 3
+    },
+    {
+      "inputs": 0,
+      "outputs": 3
+    }
+  ],
+  "checks": [
+    "dynamicBusLayout",
+    "inactiveMiddle",
+    "latencyRestart",
+    "parameterTableRestore",
+    "processorFlush",
+    "stateRoundTrip",
+    "bulkControllerValues",
+    "dense4096Overrides",
+    "unknownParameter",
+    "readOnlyParameter",
+    "reloadRejected",
+    "restartStormBounded",
+    "zeroInputInstrument",
+    "liveControlBulkValues",
+    "liveControlLayoutInvalidation",
+    "liveControlReloadInvalidation",
+    "liveControlRestartStorm",
+    "liveControlDense4096BeforeAudio",
+    "sdkGraphDenseInstancesAndStalePromises"
+  ]
+}

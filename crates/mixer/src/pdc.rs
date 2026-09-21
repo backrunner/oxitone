@@ -14,6 +14,8 @@ use oxitone_graph::topology::MixerRouting;
 /// Static PDC plan for one compiled mixer.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PdcPlan {
+    /// Delay for direct Channel contributions at each bus's input.
+    pub bus_input_latency: BTreeMap<EntityId, u64>,
     /// Compensation delay per routing edge, keyed by (source, destination,
     /// sidechain) — the same key order `MixerRouting::edges` is sorted by.
     pub edge_delays: BTreeMap<(EntityId, EntityId, bool), u64>,
@@ -74,6 +76,7 @@ pub fn plan_pdc(routing: &MixerRouting, insert_latency: &BTreeMap<EntityId, u64>
         .copied()
         .unwrap_or(0);
     PdcPlan {
+        bus_input_latency: input_latency,
         edge_delays,
         bus_output_latency: output_latency,
         graph_latency_frames,
@@ -156,6 +159,7 @@ mod tests {
 
     fn channel(id: &str, destinations: &[&str]) -> MixerChannelSpec {
         MixerChannelSpec {
+            insert_routes: None,
             id: id.to_string(),
             name: None,
             level: 1.0,

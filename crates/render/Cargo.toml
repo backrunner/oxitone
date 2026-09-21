@@ -24,3 +24,6 @@ oxitone-io-macos = { path = "../io-macos" }
 
 [dev-dependencies]
 sha2.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+oxitone-vst3-host = { path = "../vst3-host", features = ["stream"] }

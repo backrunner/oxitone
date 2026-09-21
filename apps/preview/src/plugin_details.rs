@@ -76,7 +76,11 @@ pub fn resolve(project: &ViewProject, target: &DetailTarget) -> Option<PluginDet
     let mut settings = Vec::new();
     let (owner_name, id, version, parameters, resources, state, source, host) = match target {
         DetailTarget::Instrument(owner) => {
-            let channel = snapshot.channels.iter().find(|c| c.id == *owner)?;
+            let (index, channel) = snapshot
+                .channels
+                .iter()
+                .enumerate()
+                .find(|(_, c)| c.id == *owner)?;
             let instrument = &channel.instrument;
             settings.extend([
                 (
@@ -102,7 +106,10 @@ pub fn resolve(project: &ViewProject, target: &DetailTarget) -> Option<PluginDet
                 ),
             ]);
             (
-                channel.name.clone().unwrap_or_else(|| owner.clone()),
+                channel
+                    .name
+                    .clone()
+                    .unwrap_or_else(|| format!("Channel {}", index + 1)),
                 &instrument.plugin_id,
                 &instrument.plugin_version,
                 &instrument.parameters,
@@ -115,9 +122,16 @@ pub fn resolve(project: &ViewProject, target: &DetailTarget) -> Option<PluginDet
         DetailTarget::ChannelInsert(owner, index) | DetailTarget::BusInsert(owner, index) => {
             let (owner_name, effect) = match target {
                 DetailTarget::ChannelInsert(..) => {
-                    let channel = snapshot.channels.iter().find(|c| c.id == *owner)?;
+                    let (channel_index, channel) = snapshot
+                        .channels
+                        .iter()
+                        .enumerate()
+                        .find(|(_, c)| c.id == *owner)?;
                     (
-                        channel.name.clone().unwrap_or_else(|| owner.clone()),
+                        channel
+                            .name
+                            .clone()
+                            .unwrap_or_else(|| format!("Channel {}", channel_index + 1)),
                         channel.effect_chain.get(*index)?,
                     )
                 }
@@ -144,13 +158,16 @@ pub fn resolve(project: &ViewProject, target: &DetailTarget) -> Option<PluginDet
                 &effect.plugin_version,
                 &effect.parameters,
                 &effect.resources,
-                None,
+                effect.state.clone(),
                 serde_json::to_value(effect).ok()?,
                 Some((effect.mix, effect.bypass)),
             )
         }
     };
-    let info = project.plugins.get(&(id.clone(), version.clone()))?.clone();
+    let mut info = project.plugins.get(&(id.clone(), version.clone()))?.clone();
+    info.descriptor = info
+        .descriptor_for(source.get("instanceId").and_then(Value::as_str))
+        .clone();
     let mut rows = Vec::new();
     if let Some((mix, bypass)) = host {
         for (kind, value) in [
@@ -175,7 +192,12 @@ pub fn resolve(project: &ViewProject, target: &DetailTarget) -> Option<PluginDet
             snapshot,
             target.owner(),
             spec.clone(),
-            parameters.get(&spec.id).copied(),
+            parameters.get(&spec.id).copied().or_else(|| {
+                if !id.starts_with("vst3.") {
+                    return None;
+                }
+                state.as_ref()?.get("parameters")?.get(&spec.id)?.as_f64()
+            }),
             &path,
             false,
         );
@@ -201,7 +223,7 @@ pub fn resolve(project: &ViewProject, target: &DetailTarget) -> Option<PluginDet
     Some(PluginDetails {
         target: target.clone(),
         owner_name,
-        name: crate::mixer_model::plugin_name(id),
+        name: crate::plugin_catalog::display_name(&project.plugins, id, version),
         info,
         parameters: rows,
         settings,

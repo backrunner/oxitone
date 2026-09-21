@@ -1,0 +1,294 @@
+{
+  "date": "2026-09-21T08:18:24.035184+00:00",
+  "scope": "Installed Vesti plugins: audible PCM, source/state and simulated playback. Reaktor: default-state processing/capture only; no ensemble explicitly loaded, no audible-content acceptance. All tests use offline or simulated sinks.",
+  "instrumentAndEffect": {
+    "date": "2026-09-21T08:19:21.388Z",
+    "cpu": "Apple M4",
+    "os": "darwin 27.0.0",
+    "profile": "release",
+    "sampleRate": 48000,
+    "blockSize": 128,
+    "device": "simulated stereo sink",
+    "callbackP95Ms": null,
+    "callbackP99Ms": null,
+    "plugins": [
+      {
+        "name": "Vesti MIDI Synth",
+        "version": "",
+        "sha256": "7248c9acef2ea38249d2b4ad33c73148d7856c772a24b8591a5f3764113d142f",
+        "classId": "564553544953594e5448303030303031"
+      },
+      {
+        "name": "Vesti Gain",
+        "version": "",
+        "sha256": "a2ec83f9537b03c694f98ee6440bf66d28d722e1d74ba33a30fd7410115246aa",
+        "classId": "56455354494741494e30303030303031"
+      }
+    ],
+    "results": {
+      "instrumentAndEffect": {
+        "peakError": 3.2646552267090456e-09,
+        "samples": 96000
+      },
+      "beforeUpdate": {
+        "state": "playing",
+        "cursor": "5024",
+        "blocks": 149,
+        "deadlineMisses": 0,
+        "xruns": 0,
+        "nanBlocks": 0,
+        "queueDrops": 0,
+        "performanceWarnings": 0,
+        "engineLoad": 0.13593376359948262,
+        "ringOccupancyFrames": 2048,
+        "blockTimeNs": {
+          "p50": 262144,
+          "p95": 524288,
+          "p99": 524288,
+          "max": 1048576
+        },
+        "events": []
+      },
+      "savedState": {
+        "peakError": 0,
+        "samples": 96000
+      },
+      "afterUpdate": {
+        "state": "playing",
+        "cursor": "21792",
+        "blocks": 790,
+        "deadlineMisses": 0,
+        "xruns": 0,
+        "nanBlocks": 0,
+        "queueDrops": 0,
+        "performanceWarnings": 0,
+        "engineLoad": 0.12328820119190186,
+        "ringOccupancyFrames": 2048,
+        "blockTimeNs": {
+          "p50": 262144,
+          "p95": 524288,
+          "p99": 524288,
+          "max": 1048576
+        },
+        "events": []
+      },
+      "stopped": {
+        "state": "stopped",
+        "cursor": "0",
+        "blocks": 793,
+        "deadlineMisses": 0,
+        "xruns": 0,
+        "nanBlocks": 0,
+        "queueDrops": 0,
+        "performanceWarnings": 0,
+        "engineLoad": 0.10284100604840803,
+        "ringOccupancyFrames": 2048,
+        "blockTimeNs": {
+          "p50": 262144,
+          "p95": 524288,
+          "p99": 524288,
+          "max": 1048576
+        },
+        "events": []
+      },
+      "faults": [
+        {
+          "pluginId": "vst3.56455354494741494e30303030303031",
+          "pluginVersion": "0.0.0+a2ec83f9537b03c694f98ee6440bf66d28d722e1d74ba33a30fd7410115246aa",
+          "faults": 0
+        },
+        {
+          "pluginId": "vst3.564553544953594e5448303030303031",
+          "pluginVersion": "0.0.0+7248c9acef2ea38249d2b4ad33c73148d7856c772a24b8591a5f3764113d142f",
+          "faults": 0
+        }
+      ],
+      "checks": [
+        "noteOnOff",
+        "polyphony",
+        "effectPcm",
+        "independentParameters",
+        "preplayEdit",
+        "liveCapture",
+        "stateUpdate",
+        "saveReopen",
+        "loopSeekPauseResumeStop"
+      ]
+    }
+  },
+  "effectProject": {
+    "date": "2026-09-21T08:17:43.562Z",
+    "cpu": "Apple M4",
+    "os": "darwin 27.0.0",
+    "profile": "release",
+    "sampleRate": 48000,
+    "blockSize": 128,
+    "device": "simulated stereo sink",
+    "results": {
+      "pluginBypass": {
+        "peakError": 0,
+        "samples": 48000
+      },
+      "gain": {
+        "peakError": 1.0760323805591998e-08,
+        "samples": 48000
+      },
+      "mix": {
+        "peakError": 1.2963769377427603e-08,
+        "samples": 48000
+      },
+      "hostBypass": {
+        "peakError": 0,
+        "samples": 48000
+      },
+      "serial": {
+        "peakError": 5.82478882488191e-09,
+        "samples": 48000
+      },
+      "master": {
+        "peakError": 8.020360951765948e-09,
+        "samples": 48000
+      },
+      "saved": {
+        "peakError": 0,
+        "samples": 48000
+      },
+      "automation": {
+        "frame": 73,
+        "graphLatencyFrames": 264,
+        "limiterTransitionMarginFrames": 32
+      },
+      "simulated": {
+        "playing": {
+          "state": "playing",
+          "cursor": "19328",
+          "blocks": 167,
+          "deadlineMisses": 0,
+          "xruns": 0,
+          "nanBlocks": 0,
+          "queueDrops": 0,
+          "performanceWarnings": 0,
+          "engineLoad": 0.060760342899610006,
+          "ringOccupancyFrames": 2048,
+          "blockTimeNs": {
+            "p50": 131072,
+            "p95": 262144,
+            "p99": 262144,
+            "max": 524288
+          },
+          "events": [
+            {
+              "code": "ModeFallback",
+              "severity": "warning",
+              "frame": "0",
+              "message": "direct mode requires callback-safe plugins, matching sample rates and block sizes; using buffered mode"
+            }
+          ]
+        },
+        "looping": {
+          "state": "playing",
+          "cursor": "4736",
+          "blocks": 1057,
+          "deadlineMisses": 0,
+          "xruns": 0,
+          "nanBlocks": 0,
+          "queueDrops": 0,
+          "performanceWarnings": 0,
+          "engineLoad": 0.05873342027012146,
+          "ringOccupancyFrames": 2048,
+          "blockTimeNs": {
+            "p50": 131072,
+            "p95": 262144,
+            "p99": 262144,
+            "max": 524288
+          },
+          "events": []
+        },
+        "final": {
+          "state": "stopped",
+          "cursor": "0",
+          "blocks": 1058,
+          "deadlineMisses": 0,
+          "xruns": 0,
+          "nanBlocks": 0,
+          "queueDrops": 0,
+          "performanceWarnings": 0,
+          "engineLoad": 0.0573679151796297,
+          "ringOccupancyFrames": 2048,
+          "blockTimeNs": {
+            "p50": 131072,
+            "p95": 262144,
+            "p99": 262144,
+            "max": 524288
+          },
+          "events": []
+        },
+        "faults": [
+          {
+            "pluginId": "vst3.56455354494741494e30303030303031",
+            "pluginVersion": "0.0.0+a2ec83f9537b03c694f98ee6440bf66d28d722e1d74ba33a30fd7410115246aa",
+            "faults": 0
+          }
+        ]
+      }
+    }
+  },
+  "sourceDawLog": "VST3 DAW smoke passed: actual instrument assignment, registration/state source writeback, Undo/Redo/Save/reopen, MIDI note-on/off and native project WAV",
+  "effectStandaloneLog": "VST3 native smoke passed: exact class, state restore, mono duplication, 129-frame content + 7 silent tail frames, create-only WAV, hash/state/parameter/symlink rejection; no device",
+  "commercialDefaultState": [
+    {
+      "name": "Reaktor 6",
+      "classId": "5653544e6952367265616b746f722036",
+      "sha256": "f49e16a28a7fa39de6ef494998df159785f0a2fa4f85777367b6eb72aaba7895",
+      "parameterCount": 3097,
+      "stateBytes": 39,
+      "kind": "instrument",
+      "render": {
+        "files": [
+          {
+            "durationSeconds": 0.05,
+            "peakDbfs": -144,
+            "truePeakDbfs": -144,
+            "integratedLufs": -144
+          }
+        ],
+        "graphLatencyFrames": "264"
+      },
+      "capturedParameters": 3097,
+      "faults": [
+        {
+          "pluginId": "vst3.5653544e6952367265616b746f722036",
+          "pluginVersion": "0.0.0+f49e16a28a7fa39de6ef494998df159785f0a2fa4f85777367b6eb72aaba7895",
+          "faults": 0
+        }
+      ]
+    },
+    {
+      "name": "Reaktor 6 FX",
+      "classId": "5653544e52366a7265616b746f722036",
+      "sha256": "f49e16a28a7fa39de6ef494998df159785f0a2fa4f85777367b6eb72aaba7895",
+      "parameterCount": 3097,
+      "stateBytes": 39,
+      "kind": "effect",
+      "render": {
+        "files": [
+          {
+            "durationSeconds": 0.05,
+            "peakDbfs": -144,
+            "truePeakDbfs": -144,
+            "integratedLufs": -144
+          }
+        ],
+        "graphLatencyFrames": "264"
+      },
+      "capturedParameters": 3097,
+      "faults": [
+        {
+          "pluginId": "vst3.5653544e52366a7265616b746f722036",
+          "pluginVersion": "0.0.0+f49e16a28a7fa39de6ef494998df159785f0a2fa4f85777367b6eb72aaba7895",
+          "faults": 0
+        }
+      ]
+    }
+  ]
+}

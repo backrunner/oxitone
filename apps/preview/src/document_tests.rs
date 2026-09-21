@@ -36,6 +36,18 @@ fn gui_document_requests_survive_local_transport_and_are_correlated_separately()
     stream
         .set_read_timeout(Some(Duration::from_secs(5)))
         .unwrap();
+    // Dedicated plugin RPCs must never consume reverse requests intended for DawRunner.
+    for frame in [
+        json!({"protocolVersion":"1.0","type":"vst3Instances","snapshotRevision":"1"}),
+        json!({"protocolVersion":"1.0","type":"vst3Control","snapshotRevision":"1","request":{
+            "instanceControlVersion":1,"graphGeneration":"1","instanceId":"missing","command":{"kind":"poll"}
+        }}),
+    ] {
+        wire::write_frame(&mut stream, &frame).unwrap();
+        let response = wire::read_frame(&mut stream).unwrap().unwrap();
+        assert_eq!(response["type"], "rejected");
+        assert!(response.get("documentRequests").is_none());
+    }
     wire::write_frame(
         &mut stream,
         &json!({ "protocolVersion": "1.0", "type": "query" }),

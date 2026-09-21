@@ -5,6 +5,25 @@ pub fn step(this: &mut Preview, frame: usize, mode: &str, cx: &mut Context<Previ
     let Some(project) = &this.project else {
         return;
     };
+    if mode == "outputs" {
+        if frame == 2 {
+            let selected = mixer_model::strips(project)
+                .iter()
+                .find(|strip| strip.instrument && strip.outputs.len() > 1)
+                .expect("multi-output instrument required");
+            assert!(selected.outputs.iter().all(|route| route.is_output()));
+            let id = selected.id.clone();
+            this.select_mixer(&id);
+            this.workspace.inspector_tab = InspectorTab::Routing;
+            this.workspace.inspector_open = true;
+            this.workspace.mode = crate::workspace_layout::EditorMode::Mixer;
+            cx.notify();
+        } else if frame == 12 {
+            assert!(!this.playback.playing);
+            eprintln!("Preview instrument output routing smoke passed");
+        }
+        return;
+    }
     if frame == 2 {
         let strips = mixer_model::strips(project);
         let selected = strips

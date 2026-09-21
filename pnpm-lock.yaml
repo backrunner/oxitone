@@ -201,9 +201,15 @@ importers:
       '@oxitone/protocol':
         specifier: workspace:*
         version: link:../protocol
+      '@oxitone/vst3':
+        specifier: workspace:*
+        version: link:../vst3
       '@prettier/sync':
         specifier: 0.6.1
         version: 0.6.1(prettier@3.9.6)
+      diff:
+        specifier: ^8.0.2
+        version: 8.0.4
       esbuild:
         specifier: ^0.28.2
         version: 0.28.2
@@ -345,10 +351,37 @@ importers:
       '@oxitone/samples':
         specifier: workspace:*
         version: link:../samples
+      '@oxitone/vst3':
+        specifier: workspace:*
+        version: link:../vst3
     devDependencies:
       vitest:
         specifier: ^4.1.11
         version: 4.1.11(@types/node@24.13.5)(vite@8.3.0(@types/node@24.13.5)(esbuild@0.28.2)(tsx@4.23.13))
+
+  packages/vst3:
+    dependencies:
+      '@oxitone/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+    devDependencies:
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: ^4.1.11
+        version: 4.1.11(@types/node@24.13.5)(vite@8.3.0(@types/node@24.13.5)(esbuild@0.28.2)(tsx@4.23.13))
+    optionalDependencies:
+      '@oxitone/vst3-host-darwin-arm64':
+        specifier: workspace:*
+        version: link:../vst3-host-darwin-arm64
+      '@oxitone/vst3-host-darwin-x64':
+        specifier: workspace:*
+        version: link:../vst3-host-darwin-x64
+
+  packages/vst3-host-darwin-arm64: {}
+
+  packages/vst3-host-darwin-x64: {}
 
   packages/web:
     dependencies:
@@ -1884,6 +1917,10 @@ packages:
   detect-libc@2.1.2:
     resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==, tarball: https://registry.npmjs.org/detect-libc/-/detect-libc-2.1.2.tgz}
     engines: {node: '>=8'}
+
+  diff@8.0.4:
+    resolution: {integrity: sha512-DPi0FmjiSU5EvQV0++GFDOJ9ASQUVFh5kD+OzOnYdi7n3Wpm9hWWGfB/O2blfHcMVTL5WkQXSnRiK9makhrcnw==, tarball: https://registry.npmjs.org/diff/-/diff-8.0.4.tgz}
+    engines: {node: '>=0.3.1'}
 
   dom-serializer@2.0.0:
     resolution: {integrity: sha512-wIkAryiqt/nV5EQKqQpo3SToSOV9J0DnbJqwK7Wv/Trc92zIAYZ4FlMu+JPFW1DfGFt81ZTCGgDEabffXeLyJg==, tarball: https://registry.npmjs.org/dom-serializer/-/dom-serializer-2.0.0.tgz}
@@ -4685,6 +4722,8 @@ snapshots:
   delayed-stream@1.0.0: {}
 
   detect-libc@2.1.2: {}
+
+  diff@8.0.4: {}
 
   dom-serializer@2.0.0:
     dependencies:

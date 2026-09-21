@@ -10,14 +10,14 @@ pub fn audio_key(
     snapshot: &ProjectSnapshot,
     base: &str,
     plugins: &[RegisterPluginOptions],
+    vst3_plugins: &[serde_json::Value],
     policy: Option<AllowPlugins>,
 ) -> Result<[u8; 32], OxitoneError> {
     let registrations: Vec<_> = plugins
         .iter()
         .map(|p| json!({"path":p.library_path, "manifest":p.manifest, "hash":p.expected_hash}))
         .collect();
-    let mut source =
-        json!({ "snapshot": snapshot, "base": base, "plugins": registrations, "policy": policy });
+    let mut source = json!({ "snapshot": snapshot, "base": base, "plugins": registrations, "vst3Plugins": vst3_plugins, "policy": policy });
     source["snapshot"]["revision"] = json!("0");
     let bytes = serde_json::to_vec(&source).map_err(|e| crate::wire::invalid(&e.to_string()))?;
     Ok(Sha256::digest(bytes).into())

@@ -44,6 +44,13 @@ export class PluginConfig {
   withParameters(parameters: Readonly<Record<string, number>>): PluginConfig {
     return new PluginConfig(this.kind, { ...this.toSpec(), parameters: { ...this.parameters, ...parameters } });
   }
+  /** Replace the complete parameter table, for configuration changes that remove parameter IDs. */
+  replaceParameters(parameters: Readonly<Record<string, number>>): PluginConfig {
+    return new PluginConfig(this.kind, { ...this.toSpec(), parameters: { ...parameters } });
+  }
+  withState(state: unknown): PluginConfig {
+    return new PluginConfig(this.kind, { ...this.toSpec(), state });
+  }
   withHost(settings: { mix?: number | undefined; bypass?: boolean | undefined }): PluginConfig {
     if (this.kind !== "effect")
       throw new OxitoneError(ErrorCode.InvalidProject, "only an effect has insert mix/bypass settings");

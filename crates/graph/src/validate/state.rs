@@ -256,9 +256,10 @@ pub(super) fn validate_states(
         };
         let path = format!("$.channels[{i}].instrument.state");
         let descriptor = registry
-            .lookup_descriptor(
+            .instance_descriptor(
                 &channel.instrument.plugin_id,
                 &channel.instrument.plugin_version,
+                channel.instrument.instance_id.as_deref(),
             )
             .expect("instrument references are validated before state");
         let Some(schema) = descriptor.state_schema else {

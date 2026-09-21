@@ -65,6 +65,8 @@ jobs:
       - run: pnpm lint
       - name: Build native addon, SDK and examples
         run: pnpm build
+      - name: Verify packed VST3 SDK and matching platform helper
+        run: node scripts/smoke-vst3-package.mjs
       - name: Build import-free Wasm engine
         run: pnpm build:wasm
       - name: Build GPUI viewer and development bundle
@@ -78,6 +80,36 @@ jobs:
       # so typecheck must stay after the workspace build.
       - run: pnpm typecheck
       - run: cargo test --workspace --locked
+      - name: Verify isolated VST3 host and realtime ports without devices
+        run: cargo test -p oxitone-vst3-host --features host,stream --locked
+      - name: Verify VST3 processor clocks and transport context without devices
+        env:
+          OXITONE_VST3_TRANSPORT_REPORT: target/ci/vst3-transport.json
+        run: node scripts/smoke-vst3-transport.mjs
+      - name: Verify VST3 buses, sidechain and instrument output routing without devices
+        env:
+          OXITONE_VST3_BUS_REPORT: target/ci/vst3-buses.json
+        run: node scripts/smoke-vst3-buses.mjs
+      - name: Verify VST3 gesture clocks, loss detection and live SDK without devices
+        env:
+          OXITONE_VST3_EDITS_REPORT: target/ci/vst3-edits.json
+        run: node scripts/smoke-vst3-edits.mjs
+      - name: Verify VST3 configuration restarts, live SDK and DAW instance state restoration without devices
+        env:
+          OXITONE_VST3_CONFIGURATION_REPORT: target/ci/vst3-configuration.json
+        run: node scripts/smoke-vst3-configuration.mjs
+      - name: Verify VST3 DAW recording source transactions and exact offline replay without devices
+        env:
+          OXITONE_VST3_RECORDING_DAW_REPORT: target/ci/vst3-recording-daw.json
+        run: node scripts/smoke-vst3-recording-daw.mjs
+      - name: Verify VST3 runtime restart, graph recovery and PDC without devices
+        env:
+          OXITONE_VST3_RESTART_REPORT: target/ci/vst3-restart.json
+        run: node scripts/smoke-vst3-restart.mjs
+      - name: Verify VST3 MIDI, SysEx, MIDI-only chains and source persistence without devices
+        env:
+          OXITONE_VST3_MIDI_REPORT: target/ci/vst3-midi.json
+        run: node scripts/smoke-vst3-midi.mjs
       - run: pnpm test
       - name: Verify Web Audio output in Chromium
         run: |

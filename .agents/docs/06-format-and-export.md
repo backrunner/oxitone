@@ -95,7 +95,7 @@ prepare 资源查找。缓存导入后可删除源文件，保存/移动/恢复�
 `renderWav` 默认 32-bit float little-endian WAV，支持 16-bit PCM 和 24-bit PCM。写入 RIFF/WAVE header、fmt、data；文件大小超过 RIFF 限制时返回 `WavTooLarge`，Phase 1 不隐式切 RF64。render options 中的 start/end 用 bar/beat/timecode/marker 之一，不能混用；`tailSeconds` 明确是否渲染效果尾音。
 
 - **Dither**：bit depth 降低只在导出边界发生。16/24-bit 导出默认加 1 LSB TPDF dither（`dither: 'none'` 可关闭）；32-bit float 不加 dither。dither 使用项目 seed 驱动的 versioned PRNG，保证相同快照导出字节一致。
-- **Stem 导出**：`stems: 'mixer-channels'|'tracks'` 时 `path` 是输出目录，每个 mixer channel（或 track 对应 channel）一个 WAV，从对应 bus 的 post-fader/post-inserts 位置 tap；master 文件始终附带。所有 stem 与 master 使用同一 RenderGraph、同一 seed、同一 transport 区间，stem 之和必须与 master 混音在数值上一致（容差内），PDC 对齐关系保持一致。
+- **Stem 导出**：`stems: 'mixer-channels'|'tracks'` 时 `path` 是输出目录，master 文件始终附带。Mixer stems 使用同一 RenderGraph、seed 和 transport 区间，在各 bus 送入 Master 前、完成 PDC 后 tap；包含该 bus 实例直接送往 Master 的辅助输出，其余输出计入最终送入 Master 的目标 bus。求和重建的是这些 bus 对 Master 入口的贡献，不包含 Master inserts/fader 和最终 limiter；不能与经过非线性 Master 处理的文件直接逐样本相加比较。Track stems 分别关闭其他 Track 后通过完整图导出，保留辅助输入输出、侧链和效果路由；非线性/跨 Track 处理不承诺分轨求和等于总混音。
 - **Render report**：每次导出返回每个文件的 `durationSeconds`、`peakDbfs`、4x oversampled `truePeakDbfs`、EBU R128 `integratedLufs`，以及图内部总延迟 `graphLatencyFrames`。loudness 计算与导出共用同一遍渲染，不允许二次渲染引入差异。
 - Metronome 默认不进导出，`includeMetronome: true` 时混入 master 与所有 stem。
 

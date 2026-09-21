@@ -41,6 +41,8 @@ oxitone/
     web/                  # @oxitone/web: Wasm memory ABI client + Worker/AudioWorklet host
     sdk/                  # oxitone: unified public authoring/native/sample entry
     native-generated/     # generated N-API TS declarations; never hand edit
+    vst3/                 # @oxitone/vst3: isolated VST3 registration, discovery and offline SDK
+    vst3-host-darwin-*/    # @oxitone/vst3-host-darwin-arm64/x64: optional native helper packages
     cli/                  # @oxitone/cli: render/export-midi/doctor and preview/watch runner
     editor-vscode/        # oxitone-vscode (private VSIX): VS Code buffers and Document Service adapter
   crates/
@@ -55,6 +57,7 @@ oxitone/
     io-macos/             # oxitone-io-macos: CoreAudio output adapter
     napi/                 # oxitone-napi: thin versioned bridge only
     wasm/                 # oxitone-wasm: import-free memory ABI, same Rust engine and static drum plugin
+    vst3-host/            # oxitone-vst3-host: isolated macOS helper + optional bounded native stream
     bench/                # oxitone-bench: criterion + callback harness
     example-drums/        # oxitone-example-drums: unpublished C ABI drum-machine cdylib example
   apps/
@@ -67,7 +70,8 @@ oxitone/
 
 The first npm package may bundle `@oxitone/core`, `@oxitone/protocol`, and the native resolver for ergonomics. Subpath packages remain separately testable and must not create circular dependencies.
 
-统一入口 `oxitone`（packages/sdk）依赖 core、samples、native；core/samples/midi
+统一入口 `oxitone`（packages/sdk）依赖 core、samples、native；可选 `oxitone/vst3`
+子路径只转出 `@oxitone/vst3`，不会改变主入口运行时；core/samples/midi
 依赖底层 `@oxitone/native`，不能反向依赖统一入口。保留原有低层函数导出并新增
 Project、Pattern、音源 helpers、importSample 等 authoring 导出，无循环依赖。
 
@@ -84,6 +88,7 @@ Project、Pattern、音源 helpers、importSample 等 authoring 导出，无循�
 | ------------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------- |
 | `@oxitone/core`     | IDs, TS builders, Chord/Arp, validation hints                                             | audio buffers, device handles, native state  |
 | `@oxitone/protocol` | schema version, encode/decode, compatibility                                              | DSP decisions or mutable runtime state       |
+| `@oxitone/vst3`     | optional local VST3 inspection/offline-render client and versioned helper contract        | realtime graph, DAW/GUI, editor ownership    |
 | `@oxitone/samples`  | non-destructive edit descriptors and metadata                                             | decoding in JS or realtime transforms        |
 | `oxitone-napi`      | command/snapshot bridge, error translation                                                | render loop, graph ownership, business logic |
 | `oxitone-graph`     | graph validation、编译成不可变 `RenderPlan`（纯数据）、plugin manifests                   | OS APIs, N-API, file I/O, 插件实例所有权     |
@@ -102,7 +107,16 @@ Instruments and effects implement the same conceptual lifecycle in Rust and adve
 3. `process(ProcessContext)` runs per block and is realtime-safe.
 4. `reset()` is a realtime-safe flush used by seek/loop; `dispose()` runs on the control thread.
 
-Phase 1 plugins implement the stable C ABI in `08-plugin-abi.md` and ship in two forms: statically linked Rust crates registered at build time, or dynamically loaded `.dylib` distributed through npm platform packages. Built-in instruments/effects use Rust traits with the same descriptor/lifecycle contract; third-party libraries use the C entry table and an owned adapter. The TS manifest is the compatibility seam for future WASM/VST3 adapters; the ABI and manifest must not expose Rust-specific types.
+Phase 1 plugins implement the stable C ABI in `08-plugin-abi.md` and ship in two forms: statically linked Rust crates registered at build time, or dynamically loaded `.dylib` distributed through npm platform packages. Built-in instruments/effects use Rust traits with the same descriptor/lifecycle contract; third-party libraries use the C entry table and an owned adapter. The optional `@oxitone/vst3` package starts a separate Rust helper for exact-class inspection, project instruments/inserts and offline WAV rendering, and reads/writes explicit preset files. Project registration and DAW source transactions carry hash-pinned class metadata and configuration. `oxitone-render` uses an explicit isolated background executor for these nodes; the hardware callback only consumes completed PCM. Ordinary built-in/C graphs retain their hard realtime executor. The vendor editor and current playback-instance controls return captured state through source transactions. Stream 11 preserves physical mono/stereo bus slots and activation, with Project bus-insert sidechain support and Touch/Write recording. Engine 1.4 routes instrument auxiliary outputs through Channel.outputRoutes with shared events, independent PDC and explicit activation; Engine 1.6 routes Mixer insert auxiliary inputs and outputs by stable instance identity, with activation, complete PDC and stems. Engine 1.5 adds explicit automation priority for DAW recording layers, whose editable Sources and Playlist clips use the shared source transaction and Undo/Save history. Engine 1.7 routes Channel instance MIDI output to downstream native instruments in the same segment; stream 11 carries bounded MIDI and SysEx payloads in both directions. MIDI graphs always use background execution and preserve channel-ID audio summation order. None of these extensions change C ABI v1. See `24-vst3-sdk.md`.
+
+The native `stream` feature adds a persistent isolated helper and preallocated Rust PCM/event queues.
+Only a background IO worker accesses sockets/processes; the realtime port only validates, copies and
+queues bounded blocks. The native ScheduledPort assembles segments, schedules results at an explicit
+fixed sample latency, and latches silence on missed deadlines or epoch discontinuity. It reports total
+latency but has no graph PDC or absolute seek/loop binding. Invalidation requires control-side retirement
+and a fresh session. Controller/AudioSlot provides bounded prepared replacements, a monotonic epoch
+floor and control-side process/buffer retirement. It does not bind the slot into RenderGraph or implement
+transport/PDC. Queue capacity does not select latency. The client builds without the VST3 loader.
 
 第三方 npm 分发（对应产品目标"用户按标准自行开发音源/效果器并经 npm 分发"）在 Phase 1 的落地方式：
 

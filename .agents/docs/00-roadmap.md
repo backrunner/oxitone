@@ -100,7 +100,48 @@ Oxitone Phase 1 是 macOS 优先的编程化 DAW SDK，不是图形编辑器，�
 
 ## Phase 2 预留
 
-VST3 只作为 `PluginHost` 的新 adapter，复用 `08-plugin-abi.md` 的 manifest 与参数模型。不得把 Steinberg SDK、VST 参数 ID、编辑器线程模型或厂商二进制放入 Phase 1 核心接口。Phase 2 还需要新增进程外沙箱/WASM 隔离、VST3 生命周期、参数映射、尾音和线程安全规范，并保持现有 `Instrument`/`Effect` contracts 与 Plugin ABI 不变。
+VST3 使用独立 helper 与工程后台执行器，现行能力见 [`24-vst3-sdk.md`](24-vst3-sdk.md)。
+已支持精确 class/hash 注册、工程乐器/insert、参数/音符、transport/seek/loop reset、
+图 PDC、预设/工程状态、离线 WAV 和模拟 sink 验证。厂商配置编辑器通过 Apply 原子回写源码，
+DAW 实例面板可控制播放实例窗口并显式接受当前状态，catalog 仍使用独立配置窗口。
+stream 11 保留完整总线 metadata、显式激活和按索引的多总线 PCM；
+工程 bus insert 支持一个侧链输入；Engine 1.4 的 Channel.outputRoutes 将乐器辅助输出
+独立路由到 mixer，并保留共用事件、轨道控制与 PDC。设备 callback 始终只读取完成的 PCM。
+本轮实现、测试和未清除的性能门禁见 [多总线接入记录](../reports/2026-09-20-vst3-multibus-output-routing.md)。
+配置窗口和 `configureVst3Plugin` 已统一多总线零样本处理，支持配置阶段的 I/O/latency/
+参数表重查与有界重启；预设先恢复再校验，并合并参数覆盖。工作台刷新保留原始恢复数据，
+发布重新解析后的配置。详见 [配置协商记录](../reports/2026-09-20-vst3-configuration-negotiation.md)。
+原生 Session 已提供有界 live controller：厂商窗口绑定同一个处理实例，可实时修改参数、
+捕获 state、关闭/重开窗口；超时和 session 关闭回收 helper，旧句柄失效。capture 不重置
+已发声音符。SDK/DAW 已接通精确实例定位和试听状态的源码事务，包含 Undo/Redo/Save。
+实现与证据见 [常驻实例控制记录](../reports/2026-09-20-vst3-live-control.md)。
+厂商 begin/value/end 已通过有界游标日志绑定实际下一播放音频块，支持 SDK 读取、停止、
+取消和丢失检测；Touch/Write 覆盖、停止/失败释放及 SDK take/source 区间合并已接通。
+DAW 录制按钮、参数选择、Playlist 时间映射和源码事务已接入，曲线支持后续范围编辑。
+真实 Preview、独立 PCM、Undo/Redo/Save、取消与重试证据见
+[DAW 录制记录](../reports/2026-09-20-vst3-daw-recording.md)。
+实现与验证见 [手势日志记录](../reports/2026-09-20-vst3-gesture-journal.md)。
+录制覆盖、SDK Source/WAV 与保存恢复验证见 [自动化录制记录](../reports/2026-09-20-vst3-automation-recording.md)。
+
+stream 11 在运行中 I/O/latency/参数表变化时冻结旧实例并保留恢复状态。显式接受状态后，
+每个实例独立恢复和协商描述，再校验参数/路由、重算 PDC、准备并换图；候选失败保留旧图。
+DAW 参数与自动化面板使用已编译实例的描述。实现与验证见
+[运行中恢复记录](../reports/2026-09-20-vst3-runtime-recovery.md)。
+
+Engine 1.6 已接入 Mixer 效果实例的多路输入选择与辅助输出，包括 PDC、stems 和 Preview 路由投影。
+Engine 1.7 / stream 11 已接入 Channel 乐器及 insert 的主 MIDI 输出到下游原生乐器。
+stream 11 同时保留纯 MIDI 处理器的零音频总线布局，支持 Channel MIDI 变换链和自主生成器。
+同段采样位置、扇出、故障清理和源码保存恢复的验证见
+[MIDI 路由记录](../reports/2026-09-21-vst3-midi-routing.md)。
+零音频总线、MIDI 变换链、自主生成与配置事务见
+[MIDI-only 接入记录](../reports/2026-09-21-vst3-midi-only.md)。
+stream 11 新增主总线 SysEx：有界 payload、采样位置、输入/输出、图路由与独立 WAV 接入。
+实现与验证见 [SysEx 与效果器/音源验收](../reports/2026-09-21-vst3-sysex.md)。
+后续优先保障效果器和音源的加载、发声、参数、状态恢复与播放；高级事件协议按实际需要推进。
+剩余：Note Expression、辅助事件总线、Mixer 反馈 MIDI 与 surround，
+以及商业插件、原生窗口和 Intel 的兼容性验收。
+商业插件资源/负载矩阵、真实原生窗口操作、
+Intel 实机及发布签名/公证仍需独立验收；inspection/离线测试不等于这些项目完成。
 
 ## 依赖顺序
 

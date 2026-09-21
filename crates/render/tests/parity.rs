@@ -93,6 +93,7 @@ fn block_sizes_render_identically_without_automation() {
 fn block_sizes_stay_close_with_control_rate_automation() {
     let mut snapshot = parity_snapshot();
     snapshot.automation = vec![AutomationLaneSpec {
+        priority: None,
         playback: None,
         id: "auto_lvl".into(),
         target: AutomationTarget {

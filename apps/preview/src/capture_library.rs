@@ -17,7 +17,7 @@ pub struct Smoke {
 }
 impl Smoke {
     pub fn complete(&self) -> bool {
-        std::env::var_os("OXITONE_PREVIEW_CAPTURE_LIBRARY").is_none() || self.stage == 15
+        std::env::var_os("OXITONE_PREVIEW_CAPTURE_LIBRARY").is_none() || self.stage == 17
     }
     pub fn step(&mut self, view: &Entity<Preview>, window: &mut Window, cx: &mut App) {
         if self.complete() || !view.read(cx).document_ready() {
@@ -181,7 +181,40 @@ impl Smoke {
                 let row = scroll.bounds_for_item(index).unwrap();
                 assert!(row.top() + scroll.offset().y >= scroll.bounds().top() - px(1.));
                 assert!(row.bottom() + scroll.offset().y <= scroll.bounds().bottom() + px(1.));
-                eprintln!("Plugin library smoke passed: actual type filters, search input isolation, keyboard list selection and usage drawer, stable instance selection, unchanged source and native projection, selected row remains visible");
+                if s.document.manager.section == Some(LibrarySection::Details) {
+                    let details = &s.document.manager.details_scroll;
+                    assert!(
+                        details.max_offset().height > px(0.),
+                        "details must remain scrollable"
+                    );
+                    self.button = point(
+                        details.bounds().right() + px(5.),
+                        details.bounds().bottom() - px(4.),
+                    );
+                    pointer(window, self.button, false, cx);
+                }
+            }
+            15 => {
+                if view.read(cx).document.manager.section == Some(LibrarySection::Details) {
+                    pointer(window, self.button, true, cx);
+                }
+            }
+            16 => {
+                let s = view.read(cx);
+                if s.document.manager.section == Some(LibrarySection::Details) {
+                    let scroll = &s.document.manager.details_scroll;
+                    assert!(
+                        (f32::from(scroll.offset().y + scroll.max_offset().height)).abs() < 1.,
+                        "detail scrollbar reaches the last metadata row"
+                    );
+                    assert!(
+                        s.workspace.gesture.is_none(),
+                        "scrollbar release ends capture"
+                    );
+                }
+                assert!(s.document.pending.is_none());
+                assert_eq!(s.document.view.as_ref().unwrap().revision, self.revision);
+                eprintln!("Plugin library smoke passed: actual type filters, search input isolation, keyboard list selection and usage drawer, stable instance selection, unchanged source and native projection, selected row remains visible, detail scrollbar reaches end");
             }
             _ => {}
         }

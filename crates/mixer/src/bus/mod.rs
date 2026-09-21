@@ -11,8 +11,14 @@
 use std::collections::BTreeMap;
 
 mod build;
+mod controls;
+mod insert_build;
+mod insert_process;
 mod parameters;
 mod process;
+mod route_build;
+mod route_process;
+mod routes;
 
 use oxitone_core::error::{codes, OxitoneError};
 use oxitone_core::wire::EntityId;
@@ -33,7 +39,9 @@ pub struct ChannelInput<'a> {
 
 struct InsertSlot {
     instance: Box<dyn PluginInstance>,
-    accepts_sidechain: bool,
+    sidechain: Option<routes::SidechainInput>,
+    inputs: Vec<routes::InputRoute>,
+    outputs: Vec<routes::OutputRoute>,
     param_ids: Vec<String>,
     specs: std::sync::Arc<Vec<oxitone_core::wire::ParameterSpec>>,
     pending: crate::parameter_queue::ParameterQueue,
@@ -62,6 +70,8 @@ struct Bus {
     solo: bool,
     master_send_ratio: f32,
     sends: Vec<SendSlot>,
+    input_sends: Vec<routes::InputSend>,
+    input_delay: DelayLine,
     master_delay: DelayLine,
     sum_l: Vec<f32>,
     sum_r: Vec<f32>,
@@ -267,6 +277,7 @@ impl MixerEngine {
     /// Control thread: clear insert state, compensation delays and meters.
     pub fn reset(&mut self) {
         for bus in &mut self.buses {
+            route_process::reset(bus);
             for slot in &mut bus.inserts {
                 slot.instance.reset();
                 slot.dry_delay.reset();

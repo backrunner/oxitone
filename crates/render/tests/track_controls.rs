@@ -93,6 +93,7 @@ fn sample_and_playlist_automation_share_track_gating() {
         .push(sample_clip("scl_a", "smp_a", "trk_a", Some((1, 1))));
     s.tracks[0].sample_clip_ids.push("scl_a".into());
     s.automation.push(AutomationLaneSpec {
+        priority: None,
         id: "auto_a".into(),
         target: AutomationTarget {
             entity_id: "chn_a".into(),

@@ -1,0 +1,645 @@
+{
+  "scenario": "insert-automation-final-verification",
+  "date": "2026-09-20",
+  "cpu": "Apple M4",
+  "os": "Darwin 27.0.0",
+  "rust": "1.98.1",
+  "llvm": "22.1.8",
+  "profile": "release",
+  "sampleRate": 48000,
+  "blockSize": 128,
+  "device": null,
+  "callbackP95Ms": null,
+  "callbackP99Ms": null,
+  "xruns": null,
+  "command": "cargo bench -p oxitone-bench --bench insert_automation -- --warm-up-time 1 --measurement-time 3 --sample-size 30",
+  "baselineNote": "Final code compared by Criterion with the first integration run, not a clean pre-change baseline. Original run retained separately. No intentional concurrent test/build load during measurement.",
+  "results": {
+    "target/criterion/insert_automation/render_128": {
+      "estimates.json": {
+        "mean": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 182579.11557927504,
+            "upper_bound": 193381.22016683966
+          },
+          "point_estimate": 187448.48265145303,
+          "standard_error": 2762.6914052070583
+        },
+        "median": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 181087.08212560386,
+            "upper_bound": 185068.28703703702
+          },
+          "point_estimate": 181873.38926767677,
+          "standard_error": 968.0531792364798
+        },
+        "median_abs_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 1370.525207866427,
+            "upper_bound": 6736.855888207917
+          },
+          "point_estimate": 2869.569149905143,
+          "standard_error": 1535.5654810038689
+        },
+        "slope": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 184126.33248866367,
+            "upper_bound": 201371.53303175766
+          },
+          "point_estimate": 191921.9445884012,
+          "standard_error": 4466.205490796192
+        },
+        "std_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 6578.591647921411,
+            "upper_bound": 21367.875607415426
+          },
+          "point_estimate": 15380.464857583662,
+          "standard_error": 3735.6366935573797
+        }
+      },
+      "sample.json": {
+        "sampling_mode": "Linear",
+        "iters": [
+          36.0,
+          72.0,
+          108.0,
+          144.0,
+          180.0,
+          216.0,
+          252.0,
+          288.0,
+          324.0,
+          360.0,
+          396.0,
+          432.0,
+          468.0,
+          504.0,
+          540.0,
+          576.0,
+          612.0,
+          648.0,
+          684.0,
+          720.0,
+          756.0,
+          792.0,
+          828.0,
+          864.0,
+          900.0,
+          936.0,
+          972.0,
+          1008.0,
+          1044.0,
+          1080.0
+        ],
+        "times": [
+          6979291.0,
+          11983500.0,
+          19989875.0,
+          25495791.0,
+          32666459.0,
+          39969750.0,
+          44565417.0,
+          52140000.0,
+          58523500.0,
+          65352458.0,
+          71445000.0,
+          78970667.0,
+          104920750.0,
+          102190916.0,
+          97159416.0,
+          105242125.0,
+          110325375.0,
+          116608208.0,
+          123937125.0,
+          131312583.0,
+          137000167.0,
+          144312041.0,
+          149977708.0,
+          156331667.0,
+          166817209.0,
+          226597250.0,
+          210735375.0,
+          197705167.0,
+          194474834.0,
+          200513208.0
+        ]
+      },
+      "benchmark.json": {
+        "group_id": "insert/automation",
+        "function_id": "render_128",
+        "value_str": null,
+        "throughput": null,
+        "full_id": "insert/automation/render_128",
+        "directory_name": "insert_automation/render_128",
+        "title": "insert/automation/render_128"
+      }
+    },
+    "target/criterion/insert_automation/resolve": {
+      "estimates.json": {
+        "mean": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 53.29522251284328,
+            "upper_bound": 54.82654852136248
+          },
+          "point_estimate": 53.99062073927415,
+          "standard_error": 0.39191294899921736
+        },
+        "median": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 52.617338410633806,
+            "upper_bound": 54.190956359083756
+          },
+          "point_estimate": 53.40229618082575,
+          "standard_error": 0.3550456381079993
+        },
+        "median_abs_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 0.6657515641403823,
+            "upper_bound": 2.1586472247288695
+          },
+          "point_estimate": 1.407181895294893,
+          "standard_error": 0.3463661257209936
+        },
+        "slope": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 53.9676913996685,
+            "upper_bound": 56.496612476322234
+          },
+          "point_estimate": 55.14766523404574,
+          "standard_error": 0.6524579886672134
+        },
+        "std_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 1.1409014005364102,
+            "upper_bound": 2.9776813625228784
+          },
+          "point_estimate": 2.1752045727848945,
+          "standard_error": 0.47634227801379375
+        }
+      },
+      "sample.json": {
+        "sampling_mode": "Linear",
+        "iters": [
+          122703.0,
+          245406.0,
+          368109.0,
+          490812.0,
+          613515.0,
+          736218.0,
+          858921.0,
+          981624.0,
+          1104327.0,
+          1227030.0,
+          1349733.0,
+          1472436.0,
+          1595139.0,
+          1717842.0,
+          1840545.0,
+          1963248.0,
+          2085951.0,
+          2208654.0,
+          2331357.0,
+          2454060.0,
+          2576763.0,
+          2699466.0,
+          2822169.0,
+          2944872.0,
+          3067575.0,
+          3190278.0,
+          3312981.0,
+          3435684.0,
+          3558387.0,
+          3681090.0
+        ],
+        "times": [
+          6443250.0,
+          12822208.0,
+          19190500.0,
+          25640375.0,
+          32249959.0,
+          38617250.0,
+          45916875.0,
+          52056250.0,
+          58998708.0,
+          66888167.0,
+          71822125.0,
+          76552709.0,
+          83574792.0,
+          90105583.0,
+          96230917.0,
+          104172208.0,
+          113554417.0,
+          120030791.0,
+          126310042.0,
+          129252375.0,
+          138999625.0,
+          156454500.0,
+          165150500.0,
+          166087834.0,
+          169721125.0,
+          170706042.0,
+          179574000.0,
+          211594500.0,
+          189945125.0,
+          203525625.0
+        ]
+      },
+      "benchmark.json": {
+        "group_id": "insert/automation",
+        "function_id": "resolve",
+        "value_str": null,
+        "throughput": null,
+        "full_id": "insert/automation/resolve",
+        "directory_name": "insert_automation/resolve",
+        "title": "insert/automation/resolve"
+      }
+    },
+    "target/criterion/insert_automation/compile": {
+      "estimates.json": {
+        "mean": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 44127.405180961934,
+            "upper_bound": 45210.05365043552
+          },
+          "point_estimate": 44666.02107904954,
+          "standard_error": 277.87490037160643
+        },
+        "median": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 44178.08065347351,
+            "upper_bound": 45429.789070294784
+          },
+          "point_estimate": 44868.72916666667,
+          "standard_error": 316.4565210565897
+        },
+        "median_abs_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 799.6987929453633,
+            "upper_bound": 2310.6775781004776
+          },
+          "point_estimate": 1668.4537933287513,
+          "standard_error": 391.71593785361034
+        },
+        "slope": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 44120.871419723924,
+            "upper_bound": 45406.49528827381
+          },
+          "point_estimate": 44826.4142738428,
+          "standard_error": 328.7512591376216
+        },
+        "std_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 1165.8186252895496,
+            "upper_bound": 1904.2940592246405
+          },
+          "point_estimate": 1548.2910867289763,
+          "standard_error": 192.23960167585506
+        }
+      },
+      "sample.json": {
+        "sampling_mode": "Linear",
+        "iters": [
+          147.0,
+          294.0,
+          441.0,
+          588.0,
+          735.0,
+          882.0,
+          1029.0,
+          1176.0,
+          1323.0,
+          1470.0,
+          1617.0,
+          1764.0,
+          1911.0,
+          2058.0,
+          2205.0,
+          2352.0,
+          2499.0,
+          2646.0,
+          2793.0,
+          2940.0,
+          3087.0,
+          3234.0,
+          3381.0,
+          3528.0,
+          3675.0,
+          3822.0,
+          3969.0,
+          4116.0,
+          4263.0,
+          4410.0
+        ],
+        "times": [
+          6526250.0,
+          13527291.0,
+          19731875.0,
+          26392542.0,
+          32920875.0,
+          40082458.0,
+          46240000.0,
+          52746167.0,
+          59394084.0,
+          66439500.0,
+          78866042.0,
+          80764041.0,
+          82209417.0,
+          88205708.0,
+          93435209.0,
+          99641625.0,
+          106024916.0,
+          114616041.0,
+          119729083.0,
+          125724625.0,
+          131887583.0,
+          142263584.0,
+          157754458.0,
+          162395000.0,
+          166898708.0,
+          176112667.0,
+          182482625.0,
+          190306917.0,
+          195263334.0,
+          195654875.0
+        ]
+      },
+      "benchmark.json": {
+        "group_id": "insert/automation",
+        "function_id": "compile",
+        "value_str": null,
+        "throughput": null,
+        "full_id": "insert/automation/compile",
+        "directory_name": "insert_automation/compile",
+        "title": "insert/automation/compile"
+      }
+    },
+    "target/criterion/insert_typed_automation/render_128": {
+      "estimates.json": {
+        "mean": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 178629.14531969558,
+            "upper_bound": 183469.57282115577
+          },
+          "point_estimate": 180897.99199998626,
+          "standard_error": 1239.2137368472193
+        },
+        "median": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 178611.71430476528,
+            "upper_bound": 180251.5797047047
+          },
+          "point_estimate": 179404.25644963144,
+          "standard_error": 464.7396615457205
+        },
+        "median_abs_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 1195.6594814657929,
+            "upper_bound": 3594.0114847204854
+          },
+          "point_estimate": 2310.717208300884,
+          "standard_error": 622.7096503404503
+        },
+        "slope": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 179537.3935730741,
+            "upper_bound": 182382.2902520219
+          },
+          "point_estimate": 180829.11340774936,
+          "standard_error": 726.4349035260472
+        },
+        "std_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 3161.1988668501713,
+            "upper_bound": 9647.852237161778
+          },
+          "point_estimate": 6886.166799642499,
+          "standard_error": 1661.37050160041
+        }
+      },
+      "sample.json": {
+        "sampling_mode": "Linear",
+        "iters": [
+          37.0,
+          74.0,
+          111.0,
+          148.0,
+          185.0,
+          222.0,
+          259.0,
+          296.0,
+          333.0,
+          370.0,
+          407.0,
+          444.0,
+          481.0,
+          518.0,
+          555.0,
+          592.0,
+          629.0,
+          666.0,
+          703.0,
+          740.0,
+          777.0,
+          814.0,
+          851.0,
+          888.0,
+          925.0,
+          962.0,
+          999.0,
+          1036.0,
+          1073.0,
+          1110.0
+        ],
+        "times": [
+          6966791.0,
+          12158417.0,
+          22735542.0,
+          26288042.0,
+          33627833.0,
+          40169041.0,
+          45328375.0,
+          53670208.0,
+          58916875.0,
+          66301542.0,
+          73279875.0,
+          78954083.0,
+          85364458.0,
+          92095541.0,
+          99311416.0,
+          105746375.0,
+          123708000.0,
+          126491333.0,
+          125554250.0,
+          132728375.0,
+          138565417.0,
+          146068917.0,
+          152946667.0,
+          160001250.0,
+          164953459.0,
+          172379833.0,
+          180141250.0,
+          189471083.0,
+          193292167.0,
+          203035084.0
+        ]
+      },
+      "benchmark.json": {
+        "group_id": "insert/typed_automation",
+        "function_id": "render_128",
+        "value_str": null,
+        "throughput": null,
+        "full_id": "insert/typed_automation/render_128",
+        "directory_name": "insert_typed_automation/render_128",
+        "title": "insert/typed_automation/render_128"
+      }
+    },
+    "target/criterion/insert_typed_automation/compile": {
+      "estimates.json": {
+        "mean": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 43465.29394007265,
+            "upper_bound": 45219.9589141672
+          },
+          "point_estimate": 44204.407806587544,
+          "standard_error": 454.6109696884819
+        },
+        "median": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 42816.82662192394,
+            "upper_bound": 44476.91359473667
+          },
+          "point_estimate": 42954.48048897411,
+          "standard_error": 533.3278366962027
+        },
+        "median_abs_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 132.3114339597232,
+            "upper_bound": 2395.4163854119906
+          },
+          "point_estimate": 392.84917627563954,
+          "standard_error": 700.1597186174499
+        },
+        "slope": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 44224.11432257807,
+            "upper_bound": 46650.57611851476
+          },
+          "point_estimate": 45196.18957761775,
+          "standard_error": 644.0459046663162
+        },
+        "std_dev": {
+          "confidence_interval": {
+            "confidence_level": 0.95,
+            "lower_bound": 1090.539943699815,
+            "upper_bound": 3891.2602899504595
+          },
+          "point_estimate": 2532.1922749085716,
+          "standard_error": 888.4010333767534
+        }
+      },
+      "sample.json": {
+        "sampling_mode": "Linear",
+        "iters": [
+          149.0,
+          298.0,
+          447.0,
+          596.0,
+          745.0,
+          894.0,
+          1043.0,
+          1192.0,
+          1341.0,
+          1490.0,
+          1639.0,
+          1788.0,
+          1937.0,
+          2086.0,
+          2235.0,
+          2384.0,
+          2533.0,
+          2682.0,
+          2831.0,
+          2980.0,
+          3129.0,
+          3278.0,
+          3427.0,
+          3576.0,
+          3725.0,
+          3874.0,
+          4023.0,
+          4172.0,
+          4321.0,
+          4470.0
+        ],
+        "times": [
+          6418625.0,
+          12774458.0,
+          19143958.0,
+          25541667.0,
+          31979542.0,
+          38281458.0,
+          44647750.0,
+          51028709.0,
+          57412542.0,
+          63650833.0,
+          69971833.0,
+          76303459.0,
+          82685167.0,
+          89663375.0,
+          95532125.0,
+          101993125.0,
+          108348542.0,
+          123982666.0,
+          130515791.0,
+          136161334.0,
+          140913292.0,
+          150008458.0,
+          190985208.0,
+          163382458.0,
+          172571292.0,
+          171938333.0,
+          176428333.0,
+          185525292.0,
+          192218292.0,
+          198983459.0
+        ]
+      },
+      "benchmark.json": {
+        "group_id": "insert/typed_automation",
+        "function_id": "compile",
+        "value_str": null,
+        "throughput": null,
+        "full_id": "insert/typed_automation/compile",
+        "directory_name": "insert_typed_automation/compile",
+        "title": "insert/typed_automation/compile"
+      }
+    }
+  },
+  "output": "   Compiling oxitone-vst3-host v0.1.0 (/Volumes/BRData/projects/oxitone/crates/vst3-host)\n   Compiling oxitone-graph v0.1.0 (/Volumes/BRData/projects/oxitone/crates/graph)\n   Compiling oxitone-instruments v0.1.0 (/Volumes/BRData/projects/oxitone/crates/instruments)\n   Compiling oxitone-mixer v0.1.0 (/Volumes/BRData/projects/oxitone/crates/mixer)\n   Compiling oxitone-render v0.1.0 (/Volumes/BRData/projects/oxitone/crates/render)\n   Compiling oxitone-bench v0.1.0 (/Volumes/BRData/projects/oxitone/crates/bench)\n    Finished `bench` profile [optimized + debuginfo] target(s) in 34.17s\n     Running benches/insert_automation.rs (target/release/deps/insert_automation-edb48d32c1db835b)\nGnuplot not found, using plotters backend\nBenchmarking insert/automation/compile\nBenchmarking insert/automation/compile: Warming up for 1.0000 s\nBenchmarking insert/automation/compile: Collecting 30 samples in estimated 3.0156 s (68k iterations)\nBenchmarking insert/automation/compile: Analyzing\ninsert/automation/compile\n                        time:   [44.121 \u00b5s 44.826 \u00b5s 45.406 \u00b5s]\n                        change: [-4.7583% -3.4106% -2.0065%] (p = 0.00 < 0.05)\n                        Performance has improved.\nBenchmarking insert/automation/resolve\nBenchmarking insert/automation/resolve: Warming up for 1.0000 s\nBenchmarking insert/automation/resolve: Collecting 30 samples in estimated 3.0000 s (57M iterations)\nBenchmarking insert/automation/resolve: Analyzing\ninsert/automation/resolve\n                        time:   [53.968 ns 55.148 ns 56.497 ns]\n                        change: [-11.291% -8.5137% -5.5050%] (p = 0.00 < 0.05)\n                        Performance has improved.\nFound 3 outliers among 30 measurements (10.00%)\n  2 (6.67%) high mild\n  1 (3.33%) high severe\nBenchmarking insert/automation/render_128\nBenchmarking insert/automation/render_128: Warming up for 1.0000 s\nBenchmarking insert/automation/render_128: Collecting 30 samples in estimated 3.0560 s (17k iterations)\nBenchmarking insert/automation/render_128: Analyzing\ninsert/automation/render_128\n                        time:   [184.13 \u00b5s 191.92 \u00b5s 201.37 \u00b5s]\n                        change: [-4.6208% -1.2503% +2.3997%] (p = 0.50 > 0.05)\n                        No change in performance detected.\nFound 7 outliers among 30 measurements (23.33%)\n  1 (3.33%) low mild\n  2 (6.67%) high mild\n  4 (13.33%) high severe\n\nBenchmarking insert/typed_automation/compile\nBenchmarking insert/typed_automation/compile: Warming up for 1.0000 s\nBenchmarking insert/typed_automation/compile: Collecting 30 samples in estimated 3.0067 s (69k iterations)\nBenchmarking insert/typed_automation/compile: Analyzing\ninsert/typed_automation/compile\n                        time:   [44.224 \u00b5s 45.196 \u00b5s 46.651 \u00b5s]\n                        change: [-10.906% -8.1449% -5.2608%] (p = 0.00 < 0.05)\n                        Performance has improved.\nFound 1 outliers among 30 measurements (3.33%)\n  1 (3.33%) high severe\nBenchmarking insert/typed_automation/render_128\nBenchmarking insert/typed_automation/render_128: Warming up for 1.0000 s\nBenchmarking insert/typed_automation/render_128: Collecting 30 samples in estimated 3.0508 s (17k iterations)\nBenchmarking insert/typed_automation/render_128: Analyzing\ninsert/typed_automation/render_128\n                        time:   [179.54 \u00b5s 180.83 \u00b5s 182.38 \u00b5s]\n                        change: [-5.0384% -2.6280% -0.4596%] (p = 0.02 < 0.05)\n                        Change within noise threshold.\nFound 5 outliers among 30 measurements (16.67%)\n  1 (3.33%) low severe\n  1 (3.33%) high mild\n  3 (10.00%) high severe\n\n"
+}

@@ -105,6 +105,8 @@ pub struct SampleClipSpec {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ChannelSpec {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub midi_routes: Option<std::collections::BTreeMap<EntityId, Vec<EntityId>>>,
     pub id: EntityId,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
@@ -115,6 +117,8 @@ pub struct ChannelSpec {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub swing: Option<f64>,
     pub mixer_channel_id: EntityId,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub output_routes: Option<std::collections::BTreeMap<String, EntityId>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub mute: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -132,6 +136,15 @@ pub struct SendSpec {
     pub sidechain: Option<bool>,
 }
 
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct InsertRouting {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub inputs: Option<std::collections::BTreeMap<String, EntityId>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub outputs: Option<std::collections::BTreeMap<String, EntityId>>,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MixerChannelSpec {
@@ -143,6 +156,8 @@ pub struct MixerChannelSpec {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub master_send_ratio: Option<f64>,
     pub inserts: Vec<EffectRef>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub insert_routes: Option<std::collections::BTreeMap<EntityId, InsertRouting>>,
     pub sends: Vec<SendSpec>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub mute: Option<bool>,
@@ -185,6 +200,8 @@ pub enum AutomationPlayback {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AutomationLaneSpec {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub priority: Option<u32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub playback: Option<AutomationPlayback>,
     pub id: EntityId,

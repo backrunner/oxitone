@@ -27,6 +27,28 @@ import {
   slicerStateSchema,
   beatDurationQuerySchema,
   beatDurationResultSchema,
+  vst3SourceSchema,
+  vst3BundleSourceSchema,
+  vst3ClassListSchema,
+  vst3EditorOptionsSchema,
+  vst3ConfigurationOptionsSchema,
+  vst3EditorResultSchema,
+  vst3ConfigurationSchema,
+  vst3RenderOptionsSchema,
+  vst3PresetSchema,
+  vst3StreamStartSchema,
+  vst3StreamReadySchema,
+  vst3StreamScheduleSchema,
+  vst3StreamManagerSchema,
+  vst3ControlRequestSchema,
+  vst3ControlResponseSchema,
+  vst3EditPageSchema,
+  vst3InstanceInventorySchema,
+  vst3InstanceRequestSchema,
+  vst3InstanceResultSchema,
+  vst3TransportSchema,
+  registerVst3OptionsSchema,
+  registeredVst3Schema,
 } from "../index.js";
 import { write } from "./output.js";
 import { pluginUiFixture } from "./plugin-ui.js";
@@ -38,6 +60,12 @@ function writeSchema(rel: string, schema: z.ZodType): void {
 }
 
 export function generateSchemas(): void {
+  writeSchema("schemas/vst3-edit-page.schema.json", vst3EditPageSchema);
+  writeSchema("schemas/vst3-instance-inventory.schema.json", vst3InstanceInventorySchema);
+  writeSchema("schemas/vst3-instance-request.schema.json", vst3InstanceRequestSchema);
+  writeSchema("schemas/vst3-instance-result.schema.json", vst3InstanceResultSchema);
+  writeSchema("schemas/vst3-control-request.schema.json", vst3ControlRequestSchema);
+  writeSchema("schemas/vst3-control-response.schema.json", vst3ControlResponseSchema);
   write("schemas/fixtures/automation-range.json", `${JSON.stringify(automationRangeFixture, null, 2)}\n`);
   writeSchema("schemas/pattern-source.schema.json", patternSourceDocumentSchema);
   writeSchema("schemas/document-view.schema.json", documentViewSchema);
@@ -70,6 +98,22 @@ export function generateSchemas(): void {
   writeSchema("schemas/preview-frame.schema.json", previewFrameSchema);
   writeSchema("schemas/preview-response.schema.json", previewResponseSchema);
   writeSchema("schemas/register-plugin-options.schema.json", registerPluginOptionsSchema);
+  writeSchema("schemas/vst3-source.schema.json", vst3SourceSchema);
+  writeSchema("schemas/vst3-bundle-source.schema.json", vst3BundleSourceSchema);
+  writeSchema("schemas/vst3-class-list.schema.json", vst3ClassListSchema);
+  writeSchema("schemas/vst3-editor-options.schema.json", vst3EditorOptionsSchema);
+  writeSchema("schemas/vst3-configuration-options.schema.json", vst3ConfigurationOptionsSchema);
+  writeSchema("schemas/vst3-editor-result.schema.json", vst3EditorResultSchema);
+  writeSchema("schemas/vst3-configuration.schema.json", vst3ConfigurationSchema);
+  writeSchema("schemas/vst3-render-options.schema.json", vst3RenderOptionsSchema);
+  writeSchema("schemas/vst3-preset.schema.json", vst3PresetSchema);
+  writeSchema("schemas/vst3-stream-start.schema.json", vst3StreamStartSchema);
+  writeSchema("schemas/vst3-stream-ready.schema.json", vst3StreamReadySchema);
+  writeSchema("schemas/vst3-stream-schedule.schema.json", vst3StreamScheduleSchema);
+  writeSchema("schemas/vst3-stream-manager.schema.json", vst3StreamManagerSchema);
+  writeSchema("schemas/vst3-transport.schema.json", vst3TransportSchema);
+  writeSchema("schemas/vst3-registration.schema.json", registerVst3OptionsSchema);
+  writeSchema("schemas/vst3-registered.schema.json", registeredVst3Schema);
 
   // The recursive automation source is hand-maintained: zod cannot emit a
   // self-referential JSON Schema from the lazy union.

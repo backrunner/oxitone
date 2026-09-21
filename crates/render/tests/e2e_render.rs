@@ -20,6 +20,7 @@ fn lane(
     source: AutomationSourceSpec,
 ) -> AutomationLaneSpec {
     AutomationLaneSpec {
+        priority: None,
         playback: None,
         id: id.into(),
         target: AutomationTarget {
@@ -129,6 +130,7 @@ fn e2e_snapshot() -> oxitone_core::wire::ProjectSnapshot {
             },
         ),
         AutomationLaneSpec {
+            priority: None,
             playback: None,
             combine: Some(AutomationCombine::Replace),
             ..lane(

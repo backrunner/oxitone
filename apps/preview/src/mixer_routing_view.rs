@@ -35,9 +35,12 @@ pub fn view(this: &Preview, strip: &Strip, cx: &mut Context<Preview>) -> Div {
             content = content.child(card(this, route, Direction::Outgoing, cx));
         }
     }
-    content = content.child(section(theme, "OUTPUT", 1));
-    if let Some(route) = strip.output() {
-        content = content.child(card(this, route, Direction::Outgoing, cx));
+    let outputs: Vec<_> = strip.outputs.iter().filter(|r| !r.is_send()).collect();
+    content = content.child(section(theme, "OUTPUTS", outputs.len().max(1)));
+    if !outputs.is_empty() {
+        for route in outputs {
+            content = content.child(card(this, route, Direction::Outgoing, cx));
+        }
     } else {
         content = content.child(
             div()
@@ -90,11 +93,11 @@ pub fn card(
     } else {
         theme.accent
     };
-    let direct = route.kind == RouteKind::Output;
+    let direct = route.is_output();
     div()
         .id(SharedString::from(format!(
-            "route-{}-{}-{id}",
-            route.source, route.destination
+            "route-{}-{}-{:?}-{id}",
+            route.source, route.destination, route.kind
         )))
         .p_2()
         .rounded_md()
@@ -151,7 +154,7 @@ pub fn card(
                 .text_color(rgb(theme.muted))
                 .child(format!(
                     "{}{}",
-                    route.tap(),
+                    route.label(),
                     if route.automated { " · Auto" } else { "" }
                 ))
                 .when(!direct, |d| {

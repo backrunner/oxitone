@@ -330,6 +330,7 @@
             "type": "string"
           }
         },
+        "state": {},
         "bypass": {
           "type": "boolean"
         },
@@ -938,6 +939,7 @@
                   "type": "string"
                 }
               },
+              "state": {},
               "bypass": {
                 "type": "boolean"
               },

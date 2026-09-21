@@ -1,0 +1,45 @@
+{
+  "date": "2026-09-19T21:56:25.035Z",
+  "cpu": "Apple M4",
+  "os": "darwin 27.0.0",
+  "profile": "debug Preview, release helper/addon",
+  "sampleRate": 48000,
+  "blockSize": 128,
+  "device": "simulated stereo sink",
+  "callbackP95": null,
+  "callbackP99": null,
+  "guiVisualAcceptance": false,
+  "results": {
+    "playing": {
+      "protocolVersion": "1.0",
+      "documentProtocolVersion": "2.0",
+      "type": "state",
+      "revision": "2",
+      "seenRevision": "2",
+      "cursor": "9568",
+      "audibleFrame": "8664",
+      "playing": true,
+      "xruns": 0,
+      "pluginFaults": 0,
+      "tracks": 1,
+      "patterns": 1
+    },
+    "acceptedPcm": {
+      "peakError": 3.815415174773795e-9,
+      "samples": 48000
+    },
+    "checks": [
+      "actualPreviewInstance",
+      "independentSharedPresetUses",
+      "sourceUnchangedByAudition",
+      "captureTransaction",
+      "identicalCaptureIsNoop",
+      "stableInstanceIds",
+      "hostMixBypassPreserved",
+      "retiredGraphRejected",
+      "undoRestoresLiveState",
+      "redo",
+      "saveReopenRestoresLiveState"
+    ]
+  }
+}

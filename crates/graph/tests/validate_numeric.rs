@@ -88,6 +88,7 @@ fn sample_clip() -> SampleClipSpec {
 
 fn lane(parameter_id: &str) -> AutomationLaneSpec {
     AutomationLaneSpec {
+        priority: None,
         playback: None,
         id: "auto_0001".to_string(),
         target: AutomationTarget {
@@ -322,6 +323,7 @@ fn channel_and_mixer_domains() {
 
     let mut s = base_snapshot();
     s.channels[0].effect_chain.push(EffectRef {
+        state: None,
         instance_id: None,
         plugin_id: EFFECT_ID.to_string(),
         plugin_version: PLUGIN_VERSION.to_string(),
@@ -342,6 +344,7 @@ fn channel_and_mixer_domains() {
 
     let mut s = base_snapshot();
     s.mixer_channels.push(MixerChannelSpec {
+        insert_routes: None,
         id: "mix_0002".to_string(),
         ..s.mixer_channels[0].clone()
     });
@@ -436,6 +439,7 @@ fn midi_channel_range() {
 fn automation_lane_loop_rules() {
     let mut s = base_snapshot();
     s.automation.push(AutomationLaneSpec {
+        priority: None,
         playback: None,
         loop_spec: Some(LoopSpec {
             start_beat: None,
@@ -450,6 +454,7 @@ fn automation_lane_loop_rules() {
 
     let mut s = base_snapshot();
     s.automation.push(AutomationLaneSpec {
+        priority: None,
         playback: None,
         last_beat: Some(beat(16, 1)),
         ..lane("level")

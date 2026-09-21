@@ -2,8 +2,9 @@
 //! no allocation, no locks, no logging; all buffers were preallocated by
 //! `MixerEngine::build`.
 
+use oxitone_core::OxitoneError;
 use oxitone_dsp::gain_pan::equal_power_gains;
-use oxitone_graph::abi::ProcessContext;
+use oxitone_graph::execution::{Execution, ProcessPosition, Realtime};
 
 use super::{Bus, ChannelInput, MixerEngine};
 
@@ -38,99 +39,105 @@ impl MixerEngine {
         out_left: &mut [f32],
         out_right: &mut [f32],
     ) {
+        let _ =
+            self.process_with::<Realtime>(inputs, out_left, out_right, &ProcessPosition::default());
+    }
+
+    pub fn requires_isolation(&self) -> bool {
+        self.buses.iter().any(|bus| {
+            bus.inserts
+                .iter()
+                .any(|slot| slot.instance.requires_isolation())
+        })
+    }
+
+    pub fn process_with<'a, E: Execution>(
+        &mut self,
+        inputs: impl IntoIterator<Item = ChannelInput<'a>>,
+        out_left: &mut [f32],
+        out_right: &mut [f32],
+        position: &ProcessPosition,
+    ) -> Result<(), OxitoneError> {
         let frames = out_left.len().min(self.max_block);
         for bus in &mut self.buses {
             bus.sum_l[..frames].fill(0.0);
             bus.sum_r[..frames].fill(0.0);
             bus.sc_l[..frames].fill(0.0);
             bus.sc_r[..frames].fill(0.0);
+            if bus.input_delay.delay_frames() != 0 {
+                bus.work_l[..frames].fill(0.0);
+                bus.work_r[..frames].fill(0.0);
+            }
+            for slot in &mut bus.inserts {
+                for input in &mut slot.inputs {
+                    input.incoming[0][..frames].fill(0.);
+                    input.incoming[1][..frames].fill(0.);
+                }
+            }
         }
         for input in inputs {
             if let Some(&index) = self.index.get(input.bus_id) {
                 let bus = &mut self.buses[index];
+                let (left, right) = if bus.input_delay.delay_frames() == 0 {
+                    (&mut bus.sum_l, &mut bus.sum_r)
+                } else {
+                    (&mut bus.work_l, &mut bus.work_r)
+                };
                 for n in 0..frames {
-                    bus.sum_l[n] += input.left[n];
-                    bus.sum_r[n] += input.right[n];
+                    left[n] += input.left[n];
+                    right[n] += input.right[n];
                 }
             }
+        }
+        for bus in &mut self.buses {
+            if bus.input_delay.delay_frames() == 0 {
+                continue;
+            }
+            bus.input_delay.process_add(
+                &bus.work_l[..frames],
+                &bus.work_r[..frames],
+                1.,
+                &mut bus.sum_l[..frames],
+                &mut bus.sum_r[..frames],
+            );
         }
         let any_solo = self.respect_solo && self.buses.iter().any(|b| b.solo && !b.is_master);
         let sample_rate = self.sample_rate;
         for i in 0..self.buses.len() {
             let tap = self.stem_taps.as_mut().map(|taps| &mut taps[i]);
-            process_bus(&mut self.buses, i, frames, any_solo, sample_rate, tap);
+            process_bus::<E>(
+                &mut self.buses,
+                i,
+                frames,
+                any_solo,
+                sample_rate,
+                tap,
+                position,
+            )?;
         }
         let master = &self.buses[self.buses.len() - 1];
         self.true_peak
             .add_block(&master.out_l[..frames], &master.out_r[..frames]);
         out_left[..frames].copy_from_slice(&master.out_l[..frames]);
         out_right[..frames].copy_from_slice(&master.out_r[..frames]);
+        Ok(())
     }
 }
 
 /// Process one bus and deliver its sends. `buses[i]`'s destinations all
 /// come after `i` (topological order), so `split_at_mut` hands both over
 /// safely. RT-safe.
-fn process_bus(
+#[allow(clippy::too_many_arguments)]
+fn process_bus<E: Execution>(
     buses: &mut [Bus],
     i: usize,
     frames: usize,
     any_solo: bool,
     sample_rate: f64,
-    stem_tap: Option<&mut [Vec<f32>; 2]>,
-) {
-    // Insert chain, ping-ponging between the sum and work buffers.
-    {
-        let bus = &mut buses[i];
-        let mut in_sum = true;
-        for slot in &mut bus.inserts {
-            let (input_l, input_r, output_l, output_r) = if in_sum {
-                (&bus.sum_l, &bus.sum_r, &mut bus.work_l, &mut bus.work_r)
-            } else {
-                (&bus.work_l, &bus.work_r, &mut bus.sum_l, &mut bus.sum_r)
-            };
-            let sidechain: Option<[&[f32]; 2]> = if slot.accepts_sidechain {
-                Some([&bus.sc_l[..frames], &bus.sc_r[..frames]])
-            } else {
-                None
-            };
-            slot.pending.with_events(|events| {
-                let inputs: [&[f32]; 2] = [&input_l[..frames], &input_r[..frames]];
-                let mut outputs: [&mut [f32]; 2] =
-                    [&mut output_l[..frames], &mut output_r[..frames]];
-                let mut ctx = ProcessContext {
-                    frames,
-                    sample_rate,
-                    inputs: &inputs,
-                    outputs: &mut outputs,
-                    note_events: &[],
-                    parameter_events: events,
-                    sidechain: sidechain.as_ref().map(|sc| &sc[..]),
-                };
-                slot.instance.process(&mut ctx);
-            });
-            slot.dry_l[..frames].fill(0.0);
-            slot.dry_r[..frames].fill(0.0);
-            slot.dry_delay.process_add(
-                &input_l[..frames],
-                &input_r[..frames],
-                1.0,
-                &mut slot.dry_l[..frames],
-                &mut slot.dry_r[..frames],
-            );
-            for n in 0..frames {
-                let smoothed = slot.mix.next_sample();
-                let mix = if slot.bypass { 0.0 } else { smoothed };
-                output_l[n] = output_l[n] * mix + slot.dry_l[n] * (1.0 - mix);
-                output_r[n] = output_r[n] * mix + slot.dry_r[n] * (1.0 - mix);
-            }
-            in_sum = !in_sum;
-        }
-        if !in_sum {
-            bus.sum_l[..frames].copy_from_slice(&bus.work_l[..frames]);
-            bus.sum_r[..frames].copy_from_slice(&bus.work_r[..frames]);
-        }
-    }
+    mut stem_tap: Option<&mut [Vec<f32>; 2]>,
+    position: &ProcessPosition,
+) -> Result<(), OxitoneError> {
+    super::insert_process::process::<E>(&mut buses[i], frames, sample_rate, position)?;
 
     // Pre-fader send taps (post-insert signal).
     deliver_sends(buses, i, frames, true);
@@ -140,16 +147,30 @@ fn process_bus(
         let bus = &mut buses[i];
         let audible = !(bus.mute || (any_solo && !bus.solo && !bus.is_master));
         let (gain_l, gain_r) = equal_power_gains(bus.balance);
+        let has_auxiliary = bus.inserts.iter().any(|slot| !slot.outputs.is_empty());
         for n in 0..frames {
             let level = bus.level.next_sample();
             let gain = if audible { level } else { 0.0 };
             bus.out_l[n] = bus.sum_l[n] * gain * gain_l;
             bus.out_r[n] = bus.sum_r[n] * gain * gain_r;
+            if has_auxiliary {
+                for slot in &mut bus.inserts {
+                    for route in &mut slot.outputs {
+                        route.aligned[0][n] *= gain * gain_l;
+                        route.aligned[1][n] *= gain * gain_r;
+                    }
+                }
+            }
         }
     }
 
     // Post-fader sends and the masterSendRatio route to Master.
     deliver_sends(buses, i, frames, false);
+    if let Some(tap) = stem_tap.as_deref_mut() {
+        tap[0][..frames].fill(0.);
+        tap[1][..frames].fill(0.);
+    }
+    super::route_process::deliver(buses, i, frames, stem_tap.as_deref_mut());
     if !buses[i].is_master {
         let master = buses.len() - 1;
         let (head, tail) = buses.split_at_mut(master);
@@ -158,8 +179,6 @@ fn process_bus(
         match stem_tap {
             Some(tap) => {
                 let [tap_l, tap_r] = tap;
-                tap_l[..frames].fill(0.0);
-                tap_r[..frames].fill(0.0);
                 bus.master_delay.process_add(
                     &bus.out_l[..frames],
                     &bus.out_r[..frames],
@@ -190,6 +209,7 @@ fn process_bus(
         bus.meter
             .add_block(&bus.out_l[..frames], &bus.out_r[..frames]);
     }
+    Ok(())
 }
 
 /// Deliver all sends of `buses[i]` for one tap point. Sidechain sends tap

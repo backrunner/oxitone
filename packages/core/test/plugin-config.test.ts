@@ -20,6 +20,16 @@ it("derives immutable plugin and host settings without mutating factories, resou
     state: { version: 1, values: [1, 2] },
   });
   expect(base.parameters["filter.cutoff"]).toBe(300);
+  const changedState = variant.withState({ version: 2, values: [4] });
+  expect(changedState.state).toEqual({ version: 2, values: [4] });
+  expect(variant.state).toEqual({ version: 1, values: [1, 2] });
+  expect(changedState.parameters).toEqual(variant.parameters);
+  const replacement = variant.replaceParameters({ next: 0.25 });
+  expect(replacement.parameters).toEqual({ next: 0.25 });
+  expect(replacement.state).toEqual(variant.state);
+  expect(variant.parameters).toHaveProperty("filter.cutoff", 500);
+  expect(() => variant.replaceParameters({ next: NaN })).toThrow();
+  expect(() => variant.withState({ invalid: undefined })).toThrow();
   expect(() => {
     // @ts-expect-error Frozen configuration maps are also read-only to TypeScript callers.
     variant.parameters.level = 0;

@@ -39,7 +39,11 @@ pub fn resolve(
         InsertParameter::Mix => Some(insert_parameter(InsertParam::Mix)),
         InsertParameter::Bypass => Some(insert_parameter(InsertParam::Bypass)),
         InsertParameter::Plugin(id) => registry
-            .lookup_descriptor(&effect.plugin_id, &effect.plugin_version)?
+            .instance_descriptor(
+                &effect.plugin_id,
+                &effect.plugin_version,
+                effect.instance_id.as_deref(),
+            )?
             .parameters
             .iter()
             .find(|spec| spec.id == id)

@@ -207,3 +207,75 @@ fn rejected_watch_keeps_the_last_accepted_detail_and_descriptor() {
         "oxitone.wavetable"
     );
 }
+
+#[test]
+fn vst3_details_use_persisted_values_and_the_plugin_name() {
+    let engine = crate::tests::engine();
+    let old = engine.current.as_ref().unwrap();
+    let mut project = crate::model::ViewProject {
+        snapshot: old.snapshot.clone(),
+        plan: old.plan.clone(),
+        telemetry: old.telemetry.clone(),
+        graph_latency: old.graph_latency,
+        pattern_labels: Default::default(),
+        automation_previews: Default::default(),
+        plugins: old.plugins.clone(),
+        panels: old.panels.clone(),
+        mixer_strips: Default::default(),
+    };
+    let channel = &mut project.snapshot.channels[0];
+    let mut info = project.plugins[&(
+        channel.instrument.plugin_id.clone(),
+        channel.instrument.plugin_version.clone(),
+    )]
+        .clone();
+    let id = "vst3.11111111111111111111111111111111";
+    info.descriptor.plugin_id = id.into();
+    info.library = Some(crate::plugin_catalog::LibraryInfo {
+        path: "/Fixture.vst3".into(),
+        sha256: "a".repeat(64),
+        display_name: Some("VST3 fixture synth".into()),
+    });
+    let parameter = info.descriptor.parameters[0].id.clone();
+    channel.instrument.plugin_id = id.into();
+    channel.instrument.parameters.clear();
+    channel.instrument.state = Some(json!({"parameters": {parameter.clone(): 0.2}}));
+    project
+        .plugins
+        .insert((id.into(), channel.instrument.plugin_version.clone()), info);
+    let target = DetailTarget::Instrument(channel.id.clone());
+    let detail = resolve(&project, &target).unwrap();
+    assert_eq!(detail.name, "VST3 fixture synth");
+    assert_eq!(detail.parameters[0].value, 0.2);
+    project.snapshot.channels[0]
+        .instrument
+        .parameters
+        .insert(parameter, 0.7);
+    assert_eq!(resolve(&project, &target).unwrap().parameters[0].value, 0.7);
+    project.snapshot.channels[0].instrument.instance_id = Some("ins_configured".into());
+    let info = project
+        .plugins
+        .get_mut(&(id.into(), "1.0.0".into()))
+        .unwrap();
+    let mut configured = info.descriptor.clone();
+    configured.parameters.truncate(1);
+    configured.parameters[0].id = "7".into();
+    configured.parameters[0].label = "Expanded gain".into();
+    configured.parameters[0].automation = Some(true);
+    info.instances
+        .insert("ins_configured".into(), std::sync::Arc::new(configured));
+    let detail = resolve(&project, &target).unwrap();
+    assert_eq!(detail.parameters.len(), 1);
+    assert_eq!(detail.parameters[0].spec.id, "7");
+    assert_eq!(detail.parameters[0].spec.automation, Some(true));
+    let lane = serde_json::from_value(json!({"id":"auto_changed", "target":{
+        "entityId":"ins_configured", "parameterId":"7", "scope":"plugin"},
+        "source":{"kind":"constant","value":0.25}}))
+    .unwrap();
+    assert_eq!(project.automation_target(&lane).parameter, "Expanded gain");
+    project.snapshot.channels[0].instrument.instance_id = Some("ins_unchanged".into());
+    assert_ne!(
+        resolve(&project, &target).unwrap().parameters[0].spec.id,
+        "7"
+    );
+}

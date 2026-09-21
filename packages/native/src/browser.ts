@@ -14,6 +14,12 @@ export const inspectSample: typeof import("./index.js").inspectSample = unavaila
 export const cacheSample: typeof import("./index.js").cacheSample = unavailable;
 export const createEngine: typeof import("./index.js").createEngine = unavailable;
 export const registerPlugin: typeof import("./index.js").registerPlugin = unavailable;
+export const registerVst3: typeof import("./index.js").registerVst3 = unavailable;
+function vst3Unavailable(): never {
+  throw new OxitoneError(ErrorCode.PluginCapabilityUnsupported, "VST3 instance control requires the native host");
+}
+export const getVst3Instances: typeof import("./index.js").getVst3Instances = vst3Unavailable;
+export const controlVst3Instance: typeof import("./index.js").controlVst3Instance = async () => vst3Unavailable();
 export const getPluginDiagnostics: typeof import("./index.js").getPluginDiagnostics = unavailable;
 export const getPluginInfo: typeof import("./index.js").getPluginInfo = unavailable;
 export const compile: typeof import("./index.js").compile = unavailable;

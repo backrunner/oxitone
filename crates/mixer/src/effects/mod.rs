@@ -104,7 +104,7 @@ pub fn create_effect(
             return convolver::from_impulse(provider.impulse(id)?, host.sample_rate);
         }
     }
-    plugin.try_create(host)
+    plugin.try_create_configured(host, &reference.parameters, reference.state.as_ref())
 }
 
 /// Continuous control-rate parameter.

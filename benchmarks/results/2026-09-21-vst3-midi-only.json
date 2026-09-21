@@ -1,0 +1,133 @@
+{
+  "streamProtocolVersion": 10,
+  "packets": 400,
+  "sampleRate": 48000,
+  "blockSize": 128,
+  "device": null,
+  "channelAndOffsets": true,
+  "resetNoStaleEvents": true,
+  "disabledCapture": true,
+  "overflowFault": true,
+  "invalidOutputFault": true,
+  "roundtripP95Micros": 156.375,
+  "roundtripP99Micros": 160.584,
+  "callbackP95Ms": null,
+  "callbackP99Ms": null,
+  "diagnostics": {
+    "completedBlocks": 402,
+    "maximumIdleWaitMs": 0.111042,
+    "maximumSendMs": 0.031958,
+    "maximumReplyWaitMs": 0.050875,
+    "maximumHelperProcessingMs": 0.02,
+    "workerTimeConstraint": true,
+    "helperTimeConstraint": true
+  },
+  "midiOnlyThru": true,
+  "midiOnlyGenerator": true,
+  "midiOnlyRoundtripP95Micros": 156.042,
+  "midiOnlyRoundtripP99Micros": 259.125,
+  "simulated": {
+    "state": "stopped",
+    "cursor": "0",
+    "blocks": 392,
+    "deadlineMisses": 0,
+    "xruns": 0,
+    "nanBlocks": 0,
+    "queueDrops": 0,
+    "performanceWarnings": 0,
+    "engineLoad": 0.25981625501133093,
+    "ringOccupancyFrames": 2048,
+    "blockTimeNs": {
+      "p50": 524288,
+      "p95": 1048576,
+      "p99": 2097152,
+      "max": 2097152
+    },
+    "events": [
+      {
+        "code": "ModeFallback",
+        "severity": "warning",
+        "frame": "0",
+        "message": "direct mode requires callback-safe plugins, matching sample rates and block sizes; using buffered mode"
+      }
+    ]
+  },
+  "checks": [
+    {
+      "peakError": 0,
+      "samples": 48000
+    },
+    {
+      "peakError": 1.401298464324817e-45,
+      "samples": 48000
+    },
+    {
+      "peakError": 0,
+      "samples": 48000
+    },
+    {
+      "peakError": 0,
+      "samples": 48000
+    }
+  ],
+  "insertMidi": true,
+  "rejectedMissingCapability": true,
+  "date": "2026-09-21T07:28:06.720Z",
+  "cpu": "Apple M4",
+  "os": "darwin 27.0.0",
+  "sourceTransactions": {
+    "configurationEdit": true,
+    "undoRedo": true,
+    "saveReopen": true,
+    "stableRoutes": true
+  },
+  "midiOnly": {
+    "checks": [
+      {
+        "peakError": 0,
+        "samples": 48000
+      },
+      {
+        "peakError": 0,
+        "samples": 48000
+      },
+      {
+        "peakError": 0,
+        "samples": 48000
+      },
+      {
+        "peakError": 0,
+        "samples": 48000
+      }
+    ],
+    "sourceTransactions": {
+      "configurationEdit": true,
+      "undoRedo": true,
+      "saveReopen": true,
+      "catalogKind": true
+    },
+    "diagnostics": {
+      "state": "stopped",
+      "cursor": "0",
+      "blocks": 263,
+      "deadlineMisses": 0,
+      "xruns": 0,
+      "nanBlocks": 0,
+      "queueDrops": 0,
+      "performanceWarnings": 0,
+      "engineLoad": 0.09920864629359122,
+      "ringOccupancyFrames": 2048,
+      "blockTimeNs": {
+        "p50": 262144,
+        "p95": 524288,
+        "p99": 524288,
+        "max": 1048576
+      },
+      "events": []
+    },
+    "configuration": true,
+    "liveCapture": true,
+    "rejectedMissingNoteInput": true,
+    "rejectedStandaloneWav": true
+  }
+}

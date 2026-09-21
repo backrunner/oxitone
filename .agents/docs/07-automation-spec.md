@@ -18,6 +18,26 @@ Playlist placement 同时受所属 Track 的 enabled/mute/solo 过滤；全局 l
 
 本文是 Automation source 的规范性定义。TypeScript builder、wire schema、Rust validator、Rust evaluator、离线渲染和 MIDI export 必须遵循同一语义。
 
+VST3 厂商手势的有界日志见 [24-vst3-sdk.md](24-vst3-sdk.md)：使用实际下一播放块的
+Project beat/frame，不能由 UI 墙钟推算。日志本身不改变同帧 automation 优先级，也不
+自动成为 source.replaceRange。显式 Touch/Write 录制由隔离 helper 抑制所选参数的
+入站自动化并应用记录值，详见 24；非录制路径优先级和既有 golden 不变。录制的 sample
+区间转为 step replaceRange，可用原 source evaluator 离线回放，源码事务继续由 Document 管理。
+
+Engine 1.5 增加 lane.priority（可选 u32，缺省 0）。同 target 按 priority 升序，再按
+既有 lane ID 顺序组合；同一 priority 内有多条 lane 时仍要求每条显式声明 combine。
+不同 priority 允许单条 lane 缺省 replace。新增字段不能标记为旧 minor，否则拒绝。
+这是用于录制覆盖的显式优先级，不宣称完成 Engine 2 的 authoring-order/random-v2 迁移。
+
+DAW 录制接受时为每个有数据的参数建立独立自动化 Track。后录入的重叠区间优先归约，
+每个连续区间生成本地零点 step source、一个 Playlist lane 与一个 [start,end) clip，
+priority 高于工程现有 lanes。原来所有 global/playlist/loop/combine 源码与时间映射保持。
+只在新 clip 有效时覆盖；空隙和 clip 结束恢复原合成结果。录制 Track 的 M/S 沿用既有
+Playlist 规则。Project beat 转为 clip 本地 beat 只减该区间起点，不套用旧 lane 的 loop。
+若工程已有 enabled 的 solo Track，新录制 Track 同样设为 solo，保证接受后仍可听见该层，
+同时保持原有 Track 控制不变；之后由正常 M/S 编辑控制。
+没有数据的 Touch 不创建实体或历史；容量/优先级耗尽时整次接受失败，不能部分写入。
+
 ## 1. 坐标与输出
 
 - 输入时间 `t` 使用 Project beat，beat 0 是 Project 时间轴起点。

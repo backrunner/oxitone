@@ -6,6 +6,8 @@ import {
   type ProjectSnapshot,
 } from "@oxitone/protocol";
 import { parseAuthoring } from "../authoring-validation.js";
+import { validateInsertRoutingIds } from "../channels/insert-routing.js";
+import { validateMidiRouting } from "../channels/midi-routing.js";
 
 function invalid(message: string): never {
   throw new OxitoneError(ErrorCode.InvalidProject, message);
@@ -18,6 +20,7 @@ export function parseRestorableSnapshot(input: ProjectSnapshot): { snapshot: Pro
   }
   checkProtocolVersion(input.protocolVersion);
   const snapshot = parseAuthoring(projectSnapshotSchema, input, "project");
+  validateMidiRouting(snapshot.channels);
   const ids = new Set<string>();
   const master = snapshot.mixerChannels.find((bus) => bus.id === "mix_master");
   if (snapshot.id === "mix_master") invalid("project ID is reserved for Master");
@@ -84,6 +87,7 @@ export function parseRestorableSnapshot(input: ProjectSnapshot): { snapshot: Pro
     if (channel.mixerChannelId !== "mix_master") requireId(channel.mixerChannelId, mixerIds);
   }
   for (const bus of snapshot.mixerChannels) {
+    validateInsertRoutingIds(bus, new Set([...mixerIds, "mix_master"]));
     const destinations = new Set<string>();
     for (const send of bus.sends) {
       requireId(send.destinationId, mixerIds);

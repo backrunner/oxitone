@@ -1,0 +1,82 @@
+{
+  "streamProtocolVersion": 8,
+  "device": null,
+  "sampleRate": 48000,
+  "blockSize": 128,
+  "elapsedMs": 192.40787500000002,
+  "freezeMs": [
+    1.264458,
+    0.161,
+    1.084583
+  ],
+  "checks": [
+    "controllerAndProcessRestart",
+    "triggeringBlockMuted",
+    "oldBusShapePreserved",
+    "resetDoesNotLoseState",
+    "captureNewParametersAndLatency",
+    "mutationsRejected",
+    "recordingFailedAndDiscarded",
+    "stableFrozenState",
+    "replacementRestoresCurrentState",
+    "newBusShapeAndParameterUsable",
+    "helpersReaped",
+    "sdkNativeFrozenCapture",
+    "otherInstanceUnchanged",
+    "graphSeekPlayPreservesFrozenState"
+  ],
+  "graph": {
+    "pdc": {
+      "peakError": 4.6566128730773926e-9,
+      "samples": 96000
+    },
+    "daw": {
+      "checks": [
+        "actualPreviewInstance",
+        "independentSharedPresetUses",
+        "sourceUnchangedByAudition",
+        "captureTransaction",
+        "identicalCaptureIsNoop",
+        "stableInstanceIds",
+        "hostMixBypassPreserved",
+        "retiredGraphRejected",
+        "undoRestoresLiveState",
+        "redo",
+        "saveReopenRestoresLiveState"
+      ]
+    },
+    "diagnostics": {
+      "state": "playing",
+      "cursor": "21888",
+      "blocks": 187,
+      "deadlineMisses": 0,
+      "xruns": 0,
+      "nanBlocks": 0,
+      "queueDrops": 0,
+      "performanceWarnings": 0,
+      "engineLoad": 0.1185880273928816,
+      "ringOccupancyFrames": 2048,
+      "blockTimeNs": {
+        "p50": 524288,
+        "p95": 524288,
+        "p99": 1048576,
+        "max": 1048576
+      },
+      "events": []
+    },
+    "checks": [
+      "configuredInstanceIsolation",
+      "failedCompilePreservesFrozenState",
+      "newBusLayoutAndParameter",
+      "newParameterAutomation",
+      "pdcRecompiled",
+      "savedPcmExact",
+      "playingGraphSwap"
+    ]
+  },
+  "date": "2026-09-20T15:25:13.422Z",
+  "cpu": "Apple M4",
+  "os": "darwin 27.0.0",
+  "sdkNative": true,
+  "guiVisualAcceptance": false
+}

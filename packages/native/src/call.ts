@@ -13,3 +13,11 @@ export function call<T>(fn: (binding: NativeBinding) => T): T {
     throw toOxitoneError(error);
   }
 }
+
+export async function callAsync<T>(fn: (binding: NativeBinding) => Promise<T>): Promise<T> {
+  try {
+    return await fn(native());
+  } catch (error) {
+    throw toOxitoneError(error);
+  }
+}

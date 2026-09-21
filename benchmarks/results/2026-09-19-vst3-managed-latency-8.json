@@ -1,0 +1,64 @@
+{
+  "scenario": "vst3-managed-lifecycle",
+  "profile": "release",
+  "rust": "rustc 1.98.1 (48a229cea 2026-09-01) (Homebrew)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: aarch64-apple-darwin\nrelease: 1.98.1\nLLVM version: 22.1.8",
+  "sampleRate": 48000,
+  "blockSize": 128,
+  "channels": 2,
+  "segmentFrames": [
+    17,
+    111
+  ],
+  "capacity": 2,
+  "queueDepth": 8,
+  "latencyBlocks": 8,
+  "totalLatencyFrames": 1024,
+  "warmupEpochs": 2,
+  "plannedEpochs": 32,
+  "preparedEpochs": 3,
+  "activatedEpochs": 2,
+  "completedEpochs": 1,
+  "blocksPerEpoch": 40,
+  "checkedFrames": 6272,
+  "reclaimedReplacements": 1,
+  "reapedProcesses": 3,
+  "pluginHash": "a2ec83f9537b03c694f98ee6440bf66d28d722e1d74ba33a30fd7410115246aa",
+  "parameters": {
+    "1": 1
+  },
+  "prepare": {
+    "p50Ms": 194.326458,
+    "p95Ms": 2077.314,
+    "p99Ms": 2077.314,
+    "maxMs": 2077.314,
+    "samplesMs": [
+      95.474208,
+      194.326458,
+      2077.314
+    ]
+  },
+  "activate": null,
+  "process": null,
+  "reclaim": {
+    "p50Ms": 4.927125,
+    "p95Ms": 4.927125,
+    "p99Ms": 4.927125,
+    "maxMs": 4.927125,
+    "samplesMs": [
+      0.000125,
+      4.927125
+    ]
+  },
+  "callerInterval": null,
+  "shutdownMs": 81.957334,
+  "failure": "epoch 1, frame 1152: Schedule(DeadlineMissed)",
+  "device": null,
+  "callbackP95Ms": null,
+  "callbackP99Ms": null,
+  "cpuUtilization": null,
+  "xruns": null,
+  "scope": "native lifecycle methods and PCM epoch isolation; paced no-device caller; control preparation before epoch audio; no graph, absolute seek or device deadline guarantee",
+  "recordedAt": "2026-09-19T10:39:34.955Z",
+  "cpu": "Apple M4",
+  "os": "darwin 27.0.0"
+}

@@ -6,13 +6,17 @@ import {
   OxitoneError,
   type PluginCatalogEntry,
   type RegisterPluginOptions,
+  type Vst3Source,
 } from "@oxitone/protocol";
 import { captureSourceReads, type SourceRead } from "../files/read-set.js";
 import { sourceHash } from "../syntax/program.js";
+import { discoverVst3PackagePlugin } from "./vst3-discovery.js";
 
 export interface DiscoveredPlugin {
+  vst3Info?: import("@oxitone/protocol").Vst3Info;
   entry: PluginCatalogEntry;
   registration?: RegisterPluginOptions;
+  vst3Source?: Vst3Source;
   sourceLibraryPath?: string;
   reads: SourceRead[];
 }
@@ -137,6 +141,10 @@ export async function discoverProjectPlugins(
           entry.diagnostic = String(error);
           plugins.push({ entry, reads: evidence });
         }
+      }
+      for (const plugin of install.vst3 ?? []) {
+        const vst3 = await discoverVst3PackagePlugin(plugin, packageRoot, packagePath, evidence, identity);
+        if (vst3) plugins.push(vst3);
       }
     } catch (error) {
       plugins.push({

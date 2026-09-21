@@ -7,9 +7,10 @@
 
 use std::sync::Arc;
 
-use oxitone_core::wire::ParameterSpec;
+use oxitone_core::{wire::ParameterSpec, OxitoneError};
 use oxitone_dsp::gain_pan::{equal_power_gains, OnePoleSmoother};
 use oxitone_graph::abi::{NoteEvent, PluginInstance, ProcessContext};
+use oxitone_graph::execution::{Execution, ProcessPosition};
 use oxitone_mixer::DelayLine;
 
 pub use crate::insert::{BeatParam, InsertNode};
@@ -18,6 +19,7 @@ pub use crate::insert::{BeatParam, InsertNode};
 pub struct ChannelNode {
     pub id: String,
     pub bus_id: String,
+    pub(crate) output_routes: Vec<crate::output_route::OutputRoute>,
     pub instrument: Box<dyn PluginInstance>,
     pub instrument_param_ids: Arc<Vec<String>>,
     /// Descriptor parameter specs aligned with `instrument_param_ids`
@@ -73,7 +75,12 @@ impl ChannelNode {
     /// Phase 1: run the instrument into `dry_l`/`dry_r` (overwrite).
     /// Sample-clip contributions are added onto these buffers by the
     /// renderer before [`ChannelNode::process_chain`]. RT-safe.
-    pub fn process_instrument(&mut self, frames: usize, sample_rate: f64) {
+    pub fn process_instrument<E: Execution>(
+        &mut self,
+        frames: usize,
+        sample_rate: f64,
+        position: &ProcessPosition,
+    ) -> Result<(), OxitoneError> {
         self.instrument_staged.with_events(|events| {
             let mut outputs: [&mut [f32]; 2] =
                 [&mut self.dry_l[..frames], &mut self.dry_r[..frames]];
@@ -86,15 +93,38 @@ impl ChannelNode {
                 parameter_events: events,
                 sidechain: None,
             };
-            self.instrument.process(&mut ctx);
-        });
+            E::process(self.instrument.as_mut(), &mut ctx, position)
+        })?;
         self.notes.clear();
+        for route in &mut self.output_routes {
+            let output = self.instrument.output_bus(route.bus_index).ok_or_else(|| {
+                OxitoneError::new(
+                    "RealtimeFault",
+                    "instrument auxiliary output is unavailable",
+                )
+            })?;
+            if output.iter().any(|channel| channel.len() < frames) {
+                return Err(OxitoneError::new(
+                    "RealtimeFault",
+                    "instrument auxiliary output is shorter than the process block",
+                ));
+            }
+            route.left[..frames].copy_from_slice(&output[0][..frames]);
+            route.right[..frames].copy_from_slice(&output[1][..frames]);
+        }
+        Ok(())
     }
 
     /// Phase 2: inserts (mix/bypass) → fader/pan/mute into
     /// `out_l`/`out_r`, then the compensation delay into
     /// `delayed_l`/`delayed_r`. RT-safe.
-    pub fn process_chain(&mut self, frames: usize, sample_rate: f64, audible: bool) {
+    pub fn process_chain<E: Execution>(
+        &mut self,
+        frames: usize,
+        sample_rate: f64,
+        audible: bool,
+        position: &ProcessPosition,
+    ) -> Result<(), OxitoneError> {
         for insert in &mut self.inserts {
             {
                 {
@@ -111,8 +141,8 @@ impl ChannelNode {
                             parameter_events: events,
                             sidechain: None,
                         };
-                        insert.instance.process(&mut ctx);
-                    });
+                        E::process(insert.instance.as_mut(), &mut ctx, position)
+                    })?;
                 }
                 insert.delayed_l[..frames].fill(0.0);
                 insert.delayed_r[..frames].fill(0.0);
@@ -140,6 +170,10 @@ impl ChannelNode {
             let gain = if audible { level } else { 0.0 };
             self.out_l[n] = self.dry_l[n] * gain * gain_l;
             self.out_r[n] = self.dry_r[n] * gain * gain_r;
+            for route in &mut self.output_routes {
+                route.left[n] *= gain * gain_l;
+                route.right[n] *= gain * gain_r;
+            }
         }
 
         for slot in &mut self.delayed_l[..frames] {
@@ -155,5 +189,9 @@ impl ChannelNode {
             &mut self.delayed_l[..frames],
             &mut self.delayed_r[..frames],
         );
+        for route in &mut self.output_routes {
+            route.process_delay(frames);
+        }
+        Ok(())
     }
 }

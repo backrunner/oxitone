@@ -68,8 +68,37 @@ pub struct ProcessContext<'a> {
 /// A statically registered plugin factory. Implementations must be cheap to
 /// query: `descriptor` borrows immutable metadata from the factory.
 pub trait Plugin: Send + Sync {
+    fn midi_input(&self) -> bool {
+        false
+    }
+    fn midi_output(&self) -> bool {
+        false
+    }
     /// Static metadata; identical across calls and instances.
     fn descriptor(&self) -> &PluginDescriptor;
+    /// Physical routable input buses. C ABI v1 exposes no auxiliary bus routing.
+    fn input_bus_count(&self) -> usize {
+        1
+    }
+    /// Physical instrument output buses, including auxiliary slots. Control-side capability query.
+    fn output_bus_count(&self) -> usize {
+        1
+    }
+    /// Whether graph compilation must negotiate per-instance capability tables.
+    fn configuration_dependent(&self) -> bool {
+        false
+    }
+
+    /// Control-only factory specialization before graph validation. Native adapters may negotiate
+    /// configuration-dependent capabilities. The returned factory keeps the exact plugin identity.
+    fn configured_factory(
+        &self,
+        _host: &HostContext,
+        _parameters: &std::collections::BTreeMap<String, f64>,
+        _state: Option<&serde_json::Value>,
+    ) -> Result<Option<std::sync::Arc<dyn Plugin>>, oxitone_core::OxitoneError> {
+        Ok(None)
+    }
 
     /// Create an instance. Runs on the control thread; may allocate.
     fn create(&self, host: &HostContext) -> Box<dyn PluginInstance>;
@@ -80,6 +109,22 @@ pub trait Plugin: Send + Sync {
     ) -> Result<Box<dyn PluginInstance>, oxitone_core::OxitoneError> {
         Ok(self.create(host))
     }
+
+    /// Control-only structured configuration for native Rust adapters. C ABI v1 is unchanged.
+    fn try_create_configured(
+        &self,
+        host: &HostContext,
+        _parameters: &std::collections::BTreeMap<String, f64>,
+        state: Option<&serde_json::Value>,
+    ) -> Result<Box<dyn PluginInstance>, oxitone_core::OxitoneError> {
+        if state.is_some() {
+            return Err(oxitone_core::OxitoneError::new(
+                "PluginConfigInvalid",
+                "plugin does not accept structured configuration",
+            ));
+        }
+        self.try_create(host)
+    }
 }
 
 /// One running plugin instance.
@@ -88,6 +133,89 @@ pub trait Plugin: Send + Sync {
 /// `prepare` and destruction run on the control thread; `process`, `reset`,
 /// `tail_frames`, and `latency_frames` must be realtime-safe.
 pub trait PluginInstance: Send {
+    /// Control-only capture activation before prepare. C ABI 1 has no MIDI output.
+    fn configure_midi_output(&mut self, enabled: bool) -> Result<(), oxitone_core::OxitoneError> {
+        if enabled {
+            Err(oxitone_core::OxitoneError::new(
+                "PluginCapabilityUnsupported",
+                "no MIDI output",
+            ))
+        } else {
+            Ok(())
+        }
+    }
+    /// Bounded event staging for the next isolated process segment. No allocation on success.
+    fn stage_midi(
+        &mut self,
+        _events: &[crate::midi::MidiEvent],
+        _payload: &[u8],
+    ) -> Result<(), oxitone_core::OxitoneError> {
+        Err(oxitone_core::OxitoneError::new(
+            "PluginCapabilityUnsupported",
+            "no MIDI input",
+        ))
+    }
+    /// Last successful segment's emitted events; cleared on reset/fault.
+    fn output_midi(&self) -> (&[crate::midi::MidiEvent], &[u8]) {
+        (&[], &[])
+    }
+    /// Control-only activation of explicit auxiliary inputs before prepare.
+    fn configure_input_buses(&mut self, buses: &[usize]) -> Result<(), oxitone_core::OxitoneError> {
+        if buses.is_empty() {
+            Ok(())
+        } else {
+            Err(oxitone_core::OxitoneError::new(
+                "PluginCapabilityUnsupported",
+                "plugin has no routable auxiliary inputs",
+            ))
+        }
+    }
+    /// Preallocated input staging; the host fills it before processing the segment.
+    fn input_bus_mut(&mut self, _index: usize) -> Option<[&mut [f32]; 2]> {
+        None
+    }
+    /// Control-only: configured parameters already reached the processor during prepare.
+    /// Such adapters must not receive a duplicate authoring seed on their first audio block.
+    fn initial_parameters_applied(&self) -> bool {
+        false
+    }
+    /// Control-only capability discovery after prepare. C ABI v1 exposes no native editor.
+    fn native_control(&self) -> Option<std::sync::Arc<dyn crate::control::NativeControl>> {
+        None
+    }
+    /// Control-only auxiliary output activation, before prepare. Main bus 0 stays active.
+    fn configure_output_buses(
+        &mut self,
+        buses: &[usize],
+    ) -> Result<(), oxitone_core::OxitoneError> {
+        if buses.is_empty() {
+            Ok(())
+        } else {
+            Err(oxitone_core::OxitoneError::new(
+                "PluginCapabilityUnsupported",
+                "plugin has no auxiliary output buses",
+            ))
+        }
+    }
+    /// Borrow the last processed auxiliary stereo bus. RT-safe; lifetime ends before the next mutable call.
+    fn output_bus(&self, _index: usize) -> Option<[&[f32]; 2]> {
+        None
+    }
+    /// Isolated instances require the explicit background/offline executor.
+    fn requires_isolation(&self) -> bool {
+        false
+    }
+
+    /// Background/offline only; may wait for an isolated process. Never called by process_block.
+    fn process_isolated(
+        &mut self,
+        ctx: &mut ProcessContext<'_>,
+        _position: &crate::execution::ProcessPosition,
+    ) -> Result<(), oxitone_core::OxitoneError> {
+        self.process(ctx);
+        Ok(())
+    }
+
     /// (Re)configure for a new sample rate / maximum block size. Control
     /// thread only; may allocate. All latency changes happen here — changing
     /// `latency_frames` during `process` is a fault. Always called before the

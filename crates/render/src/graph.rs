@@ -31,9 +31,18 @@ pub struct MixerBeatParam {
     pub state: crate::channel::BeatParam,
 }
 
+mod channels;
+mod initialize;
+mod position;
 /// Compiled, playable/renderable graph. `process_block` is RT-safe: every
 /// buffer was preallocated at compile; no allocation, no locks, no I/O.
+mod process;
+mod segment;
+
 pub struct RenderGraph {
+    pub(crate) controls: crate::plugin_controls::ControlGraph,
+    isolated: bool,
+    continuous_frame: u64,
     pub(crate) preview: Option<std::sync::Arc<crate::preview::PreviewTelemetry>>,
     pub(crate) plan: RenderPlan,
     pub(crate) sample_rate: f64,
@@ -73,83 +82,11 @@ pub struct RenderGraph {
     clip_r: Vec<f32>,
     clip_gain: Vec<f32>,
     clip_pan: Vec<f32>,
+    midi_clip_l: Vec<f32>,
+    midi_clip_r: Vec<f32>,
 }
 
 impl RenderGraph {
-    #[allow(clippy::too_many_arguments)]
-    pub(crate) fn new(
-        plan: RenderPlan,
-        channels: Vec<ChannelNode>,
-        channel_tracks: BTreeMap<String, Vec<String>>,
-        clips: Vec<ClipNode>,
-        mixer: MixerEngine,
-        mixer_beat_params: Vec<MixerBeatParam>,
-        mixer_sends: BTreeSet<(String, String)>,
-        limiter: Option<Box<dyn PluginInstance>>,
-        limiter_latency: u64,
-        channel_latency_max: u64,
-        metronome: Option<Metronome>,
-        respect_solo: bool,
-    ) -> Self {
-        let block_size = plan.block_size as usize;
-        let sample_rate = f64::from(plan.sample_rate);
-        let channel_index = channels
-            .iter()
-            .enumerate()
-            .map(|(i, c)| (c.id.clone(), i))
-            .collect();
-        let graph_latency = mixer.graph_latency_frames() + channel_latency_max + limiter_latency;
-        let dispatcher = Dispatcher::new(
-            sample_rate as u32,
-            plan.scheduler.events_in_range(0, u64::MAX).len(),
-        );
-        let mut graph = Self {
-            plan,
-            sample_rate,
-            block_size,
-            channels,
-            channel_index,
-            channel_tracks,
-            clips,
-            mixer,
-            mixer_beat_params,
-            mixer_sends,
-            preview: None,
-            effect_targets: Default::default(),
-            limiter,
-            metronome,
-            transport: Transport::new(),
-            dispatcher,
-            rt_bindings: Vec::new(),
-            param_queue: VecDeque::with_capacity(4096),
-            respect_solo,
-            eval_ctx: EvalContext::default(),
-            faulted: false,
-            graph_latency,
-            master_l: vec![0.0; block_size],
-            master_r: vec![0.0; block_size],
-            limited_l: vec![0.0; block_size],
-            limited_r: vec![0.0; block_size],
-            metro_block_l: vec![0.0; block_size],
-            metro_block_r: vec![0.0; block_size],
-            metro_l: vec![0.0; block_size],
-            metro_r: vec![0.0; block_size],
-            clip_l: vec![0.0; block_size],
-            clip_r: vec![0.0; block_size],
-            clip_gain: vec![0.0; block_size],
-            clip_pan: vec![0.0; block_size],
-        };
-        for beat in &mut graph.mixer_beat_params {
-            beat.bus_index = graph
-                .mixer
-                .bus_index(&beat.bus)
-                .expect("validated mixer bus");
-        }
-        graph.effect_targets = crate::effect_targets::EffectTargetIndex::from_graph(&graph);
-        graph.rt_bindings = resolve_bindings(&graph);
-        graph
-    }
-
     pub fn plan(&self) -> &RenderPlan {
         &self.plan
     }
@@ -223,6 +160,9 @@ impl RenderGraph {
                 insert.dry_delay.reset();
             }
             channel.comp.reset();
+            for route in &mut channel.output_routes {
+                route.reset();
+            }
             channel.notes.clear();
             channel.instrument_staged.clear();
             channel.note_active = [false; 128];
@@ -238,272 +178,6 @@ impl RenderGraph {
         if let Some(metronome) = &mut self.metronome {
             metronome.seek(&self.plan, frame);
         }
-    }
-
-    /// Render one block at the transport cursor into `out_l`/`out_r`
-    /// (overwrite; `out` length must equal the compiled block size). Silent
-    /// blocks are produced while stopped/paused without advancing the
-    /// cursor. RT-safe: no allocation, no locks, no I/O.
-    pub fn process_block(&mut self, out_l: &mut [f32], out_r: &mut [f32]) {
-        let frames = out_l.len().min(out_r.len()).min(self.block_size);
-        out_l.fill(0.0);
-        out_r.fill(0.0);
-        if !self.transport.running() {
-            return;
-        }
-        let mut offset = 0;
-        while offset < frames {
-            let cur = self.transport.cursor;
-            let mut count = frames - offset;
-            if self.transport.state == TransportState::Playing {
-                if let Some((start, end)) = self.transport.loop_region {
-                    if end > start {
-                        if cur >= end {
-                            self.seek(start);
-                            continue;
-                        }
-                        count = count.min((end - cur) as usize);
-                    }
-                }
-            }
-            if let Some(event) = self.param_queue.iter().find(|e| e.frame > cur) {
-                count = count.min(event.frame.saturating_sub(cur).min(count as u64) as usize);
-            }
-            for n in 1..count {
-                if self
-                    .rt_bindings
-                    .iter()
-                    .any(|b| crate::bindings::binding_due(self, b, cur + n as u64))
-                {
-                    count = n;
-                    break;
-                }
-            }
-            self.process_segment(
-                &mut out_l[offset..offset + count],
-                &mut out_r[offset..offset + count],
-                offset == 0,
-            );
-            self.mixer.capture_stem_segment(offset, count);
-            self.metro_block_l[offset..offset + count].copy_from_slice(&self.metro_l[..count]);
-            self.metro_block_r[offset..offset + count].copy_from_slice(&self.metro_r[..count]);
-            if self.transport.cursor < cur + count as u64 {
-                let iteration = self.eval_ctx.loop_iteration.wrapping_add(1);
-                self.seek(self.transport.cursor);
-                self.eval_ctx.loop_iteration = iteration;
-            }
-            offset += count;
-        }
-    }
-
-    fn process_segment(&mut self, out_l: &mut [f32], out_r: &mut [f32], first: bool) {
-        let frames = out_l.len().min(self.block_size);
-        if !self.transport.running() {
-            for slot in out_l.iter_mut() {
-                *slot = 0.0;
-            }
-            for slot in out_r.iter_mut() {
-                *slot = 0.0;
-            }
-            return;
-        }
-        let cur = self.transport.cursor;
-        let end = cur + frames as u64;
-        let beat = self.plan.tempo.frame_to_beat(cur).to_f64();
-        let bpm = self.plan.tempo.bpm_at_frame(cur);
-
-        for channel in &mut self.channels {
-            channel.stage_initial();
-            if let Some(sync) = &channel.slicer_tempo {
-                channel
-                    .instrument_staged
-                    .set(sync.parameter_index, sync.factor(bpm));
-            }
-        }
-
-        // Host parameter events due at or before this block's start
-        // (control rate, ahead of automation application).
-        while let Some(event) = self.param_queue.front() {
-            if event.frame > cur {
-                break;
-            }
-            let event = self.param_queue.pop_front().expect("front checked");
-            crate::bindings::apply_rt_target(self, &event.target, event.value);
-        }
-
-        // Control-rate automation and parameter staging.
-        apply_bindings(self, beat, first);
-        for channel in &mut self.channels {
-            for insert in &mut channel.inserts {
-                insert.stage_tempo(bpm);
-            }
-        }
-        for beat_param in &mut self.mixer_beat_params {
-            if let Some((index, seconds)) = beat_param.state.poll(bpm) {
-                self.mixer.set_insert_parameter_at(
-                    beat_param.bus_index,
-                    beat_param.insert,
-                    index,
-                    seconds,
-                );
-            }
-        }
-
-        // Note dispatch (swing-aware) and instrument render.
-        let eval_ctx = self.eval_ctx;
-        let plan = &self.plan;
-        self.dispatcher.dispatch(
-            plan,
-            &mut self.channels,
-            &self.channel_index,
-            cur,
-            end,
-            |channel, event_beat| match plan.channels[channel].swing_binding {
-                Some(binding) => binding_value_at(&plan.bindings[binding], event_beat, &eval_ctx),
-                None => plan.channels[channel].swing,
-            },
-        );
-        if let Some(preview) = &self.preview {
-            let epoch = preview.epoch.load(std::sync::atomic::Ordering::Relaxed);
-            for (node, channel) in preview.channels.iter().zip(&self.channels) {
-                node.echo(cur, epoch, &channel.notes);
-            }
-        }
-        for channel in &mut self.channels {
-            channel.process_instrument(frames, self.sample_rate);
-        }
-
-        // Sample clips: render dry, tone tilt, then mix into each owning
-        // channel's pre-insert buffer with smoothed level/gain/pan.
-        let sample_rate = self.sample_rate;
-        let tempo = &self.plan.tempo;
-        let RenderGraph {
-            clips,
-            channels,
-            clip_l,
-            clip_r,
-            clip_gain,
-            clip_pan,
-            ..
-        } = self;
-        for clip in clips.iter_mut() {
-            if !clip.render(cur, frames, tempo, clip_l, clip_r) {
-                continue;
-            }
-            clip.apply_tone(&mut clip_l[..frames], &mut clip_r[..frames]);
-            for i in 0..frames {
-                clip_gain[i] = clip.level.next_sample() * clip.gain.next_sample();
-                clip_pan[i] = clip.pan.next_sample();
-            }
-            for &ch in &clip.channels {
-                let node = &mut channels[ch];
-                for i in 0..frames {
-                    let (gain_l, gain_r) = equal_power_gains(clip_pan[i]);
-                    node.dry_l[i] += clip_l[i] * clip_gain[i] * gain_l;
-                    node.dry_r[i] += clip_r[i] * clip_gain[i] * gain_r;
-                }
-            }
-        }
-
-        // Channel inserts + fader/pan (+PDC compensation).
-        let any_channel_solo = self.respect_solo && self.channels.iter().any(|c| c.solo);
-        for channel in &mut self.channels {
-            let audible = !(channel.mute || (any_channel_solo && !channel.solo));
-            channel.process_chain(frames, sample_rate, audible);
-        }
-
-        // Mixer buses (inputs in channel order: part of the deterministic
-        // summation order).
-        let inputs = self.channels.iter().map(|channel| ChannelInput {
-            bus_id: &channel.bus_id,
-            left: &channel.delayed_l[..frames],
-            right: &channel.delayed_r[..frames],
-        });
-        self.mixer.process_block_with(
-            inputs,
-            &mut self.master_l[..frames],
-            &mut self.master_r[..frames],
-        );
-
-        // Metronome (pre-limiter), then the master protection limiter.
-        if let Some(metronome) = &mut self.metronome {
-            for slot in &mut self.metro_l[..frames] {
-                *slot = 0.0;
-            }
-            for slot in &mut self.metro_r[..frames] {
-                *slot = 0.0;
-            }
-            let (metro_l, metro_r, master_l, master_r) = (
-                &mut self.metro_l,
-                &mut self.metro_r,
-                &mut self.master_l,
-                &mut self.master_r,
-            );
-            metronome.render_add(
-                &self.plan,
-                cur,
-                &mut metro_l[..frames],
-                &mut metro_r[..frames],
-            );
-            for i in 0..frames {
-                master_l[i] += metro_l[i];
-                master_r[i] += metro_r[i];
-            }
-        }
-        match &mut self.limiter {
-            Some(limiter) => {
-                let inputs: [&[f32]; 2] = [&self.master_l[..frames], &self.master_r[..frames]];
-                let mut outputs: [&mut [f32]; 2] =
-                    [&mut self.limited_l[..frames], &mut self.limited_r[..frames]];
-                let mut ctx = oxitone_graph::ProcessContext {
-                    frames,
-                    sample_rate,
-                    inputs: &inputs,
-                    outputs: &mut outputs,
-                    note_events: &[],
-                    parameter_events: &[],
-                    sidechain: None,
-                };
-                limiter.process(&mut ctx);
-            }
-            None => {
-                self.limited_l[..frames].copy_from_slice(&self.master_l[..frames]);
-                self.limited_r[..frames].copy_from_slice(&self.master_r[..frames]);
-            }
-        }
-
-        // NaN/Inf guard: mute the block and latch the fault flag.
-        let clean = self.limited_l[..frames]
-            .iter()
-            .chain(self.limited_r[..frames].iter())
-            .all(|x| x.is_finite());
-        if clean {
-            out_l[..frames].copy_from_slice(&self.limited_l[..frames]);
-            out_r[..frames].copy_from_slice(&self.limited_r[..frames]);
-        } else {
-            self.faulted = true;
-            for slot in out_l.iter_mut() {
-                *slot = 0.0;
-            }
-            for slot in out_r.iter_mut() {
-                *slot = 0.0;
-            }
-        }
-
-        if let Some(preview) = &self.preview {
-            for (node, channel) in preview.channels.iter().zip(&self.channels) {
-                node.capture(&channel.delayed_l[..frames], &channel.delayed_r[..frames]);
-            }
-            for (index, node) in preview.buses.iter().enumerate() {
-                if node.id == "mix_master" {
-                    node.capture(&out_l[..frames], &out_r[..frames]);
-                } else {
-                    let (left, right) = self.mixer.preview_output(index);
-                    node.capture(&left[..frames], &right[..frames]);
-                }
-            }
-        }
-        self.transport.advance(frames as u64);
     }
 
     /// Current transport state.

@@ -591,6 +591,7 @@
                     "type": "string"
                   }
                 },
+                "state": {},
                 "bypass": {
                   "type": "boolean"
                 },
@@ -830,7 +831,8 @@
             "enum": [
               "builtin",
               "package",
-              "project"
+              "project",
+              "vst3"
             ]
           },
           "packageName": {
@@ -943,6 +945,151 @@
               "additionalProperties": false
             }
           },
+          "vst3": {
+            "type": "object",
+            "properties": {
+              "bundlePath": {
+                "type": "string",
+                "minLength": 1
+              },
+              "classId": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{32}$"
+              },
+              "inputChannels": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2
+              },
+              "outputChannels": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2
+              },
+              "noteInput": {
+                "type": "boolean"
+              },
+              "parameters": {
+                "maxItems": 4096,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 4294967295
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "unit": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "default": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "stepCount": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "canAutomate": {
+                      "type": "boolean"
+                    },
+                    "readOnly": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "unit",
+                    "value",
+                    "default",
+                    "stepCount",
+                    "canAutomate",
+                    "readOnly"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "render": {
+                "type": "object",
+                "properties": {
+                  "protocolVersion": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "path": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096
+                  },
+                  "frames": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "sampleRate": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "pluginSha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "latencyFrames": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "tailFrames": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "peak": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "protocolVersion",
+                  "path",
+                  "frames",
+                  "sampleRate",
+                  "sha256",
+                  "pluginSha256",
+                  "latencyFrames",
+                  "tailFrames",
+                  "peak"
+                ],
+                "additionalProperties": false
+              },
+              "presetPath": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "bundlePath",
+              "classId",
+              "parameters"
+            ],
+            "additionalProperties": false
+          },
           "usages": {
             "maxItems": 100000,
             "type": "array",
@@ -997,6 +1144,83 @@
         ],
         "additionalProperties": false
       }
+    },
+    "vst3Bundles": {
+      "maxItems": 4096,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 4096
+      }
+    },
+    "vst3Recording": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "touch",
+            "write"
+          ]
+        },
+        "parameterIds": {
+          "minItems": 1,
+          "maxItems": 32,
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295
+          }
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "instanceId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "starting",
+            "recording",
+            "stopping",
+            "captured",
+            "failed"
+          ]
+        },
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1
+            },
+            "message": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "code",
+            "message"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "mode",
+        "parameterIds",
+        "id",
+        "instanceId",
+        "status"
+      ],
+      "additionalProperties": false
     },
     "diagnostic": {
       "type": "object",

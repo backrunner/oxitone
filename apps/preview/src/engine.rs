@@ -1,5 +1,7 @@
 //! Control-thread compiler and transport. GPUI and IPC never run on the audio worker.
+mod plugins;
 mod transport;
+mod vst3_control;
 use crate::{
     model::{Diagnostic, PlaybackStatus, UiEvent, ViewProject},
     wire::{self, Frame},
@@ -10,26 +12,26 @@ use oxitone_core::{
     },
     OxitoneError,
 };
-use oxitone_graph::abi::Plugin;
 use oxitone_render::{
-    builtin_registry,
-    plugins::{load_plugin, CPlugin},
     realtime::{RealtimeConfig, RealtimeSession, SimulatedSinkConfig, TransportCmd},
     RenderGraph, RenderGraphOptions, SampleStore, TransportState,
 };
+use plugins::LoadedPlugins;
 use serde_json::{json, Value};
 use std::{
     path::PathBuf,
     sync::{mpsc::Sender, Arc},
 };
+pub use vst3_control::ControlCompleted;
 
 pub struct Engine {
     pub current: Option<Arc<ViewProject>>,
     seen: Option<u64>,
     audio_key: Option<[u8; 32]>,
     graph: Option<Box<RenderGraph>>,
+    controls: Option<oxitone_render::plugin_controls::ControlRegistry>,
     session: Option<RealtimeSession>,
-    plugins: Vec<Arc<CPlugin>>,
+    plugins: LoadedPlugins,
     simulated: bool,
     events: Sender<UiEvent>,
 }
@@ -41,8 +43,9 @@ impl Engine {
             seen: None,
             audio_key: None,
             graph: None,
+            controls: None,
             session: None,
-            plugins: vec![],
+            plugins: LoadedPlugins::default(),
             simulated,
             events,
         }
@@ -50,6 +53,12 @@ impl Engine {
 
     pub fn handle(&mut self, frame: Frame) -> Value {
         let result = match frame {
+            Frame::Vst3Instances { snapshot_revision } => {
+                return self.vst3_instances(snapshot_revision)
+            }
+            Frame::Vst3Control { .. } => Err(wire::invalid(
+                "VST3 control requires the background backend",
+            )),
             Frame::Document { message } => message.validate().map(|()| {
                 let _ = self.events.send(UiEvent::Document(message));
             }),
@@ -57,6 +66,7 @@ impl Engine {
                 snapshot,
                 asset_base_dir,
                 plugins,
+                vst3_plugins,
                 plugin_uis,
                 allow_plugins,
                 hash,
@@ -64,6 +74,7 @@ impl Engine {
                 *snapshot,
                 asset_base_dir,
                 plugins,
+                vst3_plugins,
                 allow_plugins,
                 &hash,
                 plugin_uis,
@@ -113,6 +124,7 @@ impl Engine {
         snapshot: ProjectSnapshot,
         base: String,
         plugins: Vec<RegisterPluginOptions>,
+        vst3_plugins: Vec<Value>,
         policy: Option<AllowPlugins>,
         hash: &str,
         plugin_uis: Value,
@@ -126,7 +138,8 @@ impl Engine {
         }
         // Compute this locally, excluding only UI metadata and the presentation revision.
         // Never trust the runner hash as authorization to skip native graph validation.
-        let audio_key = crate::preview_source::audio_key(&snapshot, &base, &plugins, policy)?;
+        let audio_key =
+            crate::preview_source::audio_key(&snapshot, &base, &plugins, &vst3_plugins, policy)?;
         if self.audio_key == Some(audio_key) {
             if let Some(previous) = &self.current {
                 let project = Arc::new(ViewProject {
@@ -158,36 +171,11 @@ impl Engine {
                 "restart preview to change sample rate or block size during a session",
             ));
         }
-        let mut registry = builtin_registry()?;
-        let mut loaded = vec![];
-        let mut libraries = crate::plugin_catalog::Libraries::new();
-        for options in plugins {
-            if options.manifest.plugin_id.starts_with("oxitone.")
-                || registry
-                    .lookup_descriptor(
-                        &options.manifest.plugin_id,
-                        &options.manifest.plugin_version,
-                    )
-                    .is_some()
-            {
-                return Err(wire::invalid("duplicate or reserved plugin ID/version"));
-            }
-            // Explicit paths and policy arrive from the locally executed authoring entry.
-            let plugin =
-                unsafe { load_plugin(&options, policy.unwrap_or(AllowPlugins::SignedOnly))? };
-            registry.register(plugin.clone())?;
-            libraries.insert(
-                (
-                    options.manifest.plugin_id.clone(),
-                    options.manifest.plugin_version.clone(),
-                ),
-                crate::plugin_catalog::LibraryInfo {
-                    path: options.library_path.clone(),
-                    sha256: plugin.registration.sha256.clone(),
-                },
-            );
-            loaded.push(plugin);
-        }
+        let (registry, loaded, libraries) = LoadedPlugins::load(
+            plugins,
+            vst3_plugins,
+            policy.unwrap_or(AllowPlugins::SignedOnly),
+        )?;
         let mut graph = Box::new(RenderGraph::compile(
             &snapshot,
             &registry,
@@ -197,7 +185,8 @@ impl Engine {
                 ..Default::default()
             },
         )?);
-        let catalog = crate::plugin_catalog::collect(&snapshot, &registry, libraries);
+        let mut catalog = crate::plugin_catalog::collect(&snapshot, &registry, libraries);
+        crate::plugin_catalog::collect_instances(&mut catalog, &graph.plugin_controls());
         let project = Arc::new(ViewProject {
             panels: crate::plugin_layout_registry::resolve(
                 &plugin_uis,
@@ -213,6 +202,7 @@ impl Engine {
             automation_previews: Default::default(),
             telemetry: graph.enable_preview(),
         });
+        let controls = graph.plugin_controls();
         if let Some(session) = &self.session {
             session.replace_graph(graph)?;
         } else {
@@ -221,8 +211,10 @@ impl Engine {
                 graph.transport_mut().state = previous.transport().state;
                 graph.transport_mut().loop_region = previous.transport().loop_region;
             }
+            graph.activate_plugin_controls();
             self.graph = Some(graph);
         }
+        self.controls = Some(controls);
         self.plugins = loaded;
         self.audio_key = Some(audio_key);
         self.current = Some(project.clone());
@@ -231,14 +223,7 @@ impl Engine {
     }
 
     pub fn playback(&self) -> PlaybackStatus {
-        let faults = self.plugins.iter().map(|p| p.fault_count()).sum();
-        let fault_nodes = self
-            .plugins
-            .iter()
-            .filter(|p| p.fault_count() > 0)
-            .map(|p| format!("{}: {}", p.descriptor().plugin_id, p.fault_count()))
-            .collect::<Vec<_>>()
-            .join(", ");
+        let (faults, fault_nodes) = self.plugins.faults();
         match &self.session {
             Some(session) => {
                 let stats = session.snapshot_diagnostics();

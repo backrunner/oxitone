@@ -30,6 +30,7 @@ export interface AutomationLoopInput {
 
 /** Options for `project.addAutomationLane(...)`. */
 export interface AutomationLaneOptions {
+  priority?: number;
   combine?: AutomationCombine;
   playback?: "global" | "playlist";
   loop?: AutomationLoopInput;
@@ -69,6 +70,7 @@ export class AutomationLane {
   readonly target: AutomationLaneTarget;
   readonly source: AutomationSource;
   readonly combine?: AutomationCombine;
+  readonly priority?: number;
   readonly loop?: AutomationLoopInput;
   readonly lastBeat?: number;
   private readonly loopSpec?: LoopSpec;
@@ -93,6 +95,11 @@ export class AutomationLane {
     this.playbackMode = options.playback;
     this.target = Object.freeze({ ...target });
     this.source = source;
+    if (options.priority !== undefined) {
+      if (!Number.isInteger(options.priority) || options.priority < 0 || options.priority > 0xffffffff)
+        throw new OxitoneError(ErrorCode.AutomationRange, "automation priority must be a u32");
+      this.priority = options.priority;
+    }
     if (options.combine !== undefined) {
       this.combine = options.combine;
     }
@@ -116,6 +123,7 @@ export class AutomationLane {
     const loop = spec.loop;
     const options: AutomationLaneOptions = { ...(spec.playback ? { playback: spec.playback } : {}) };
     if (spec.combine !== undefined) options.combine = spec.combine;
+    if (spec.priority !== undefined) options.priority = spec.priority;
     if (spec.lastBeat !== undefined) options.lastBeat = beatFromWire(spec.lastBeat);
     if (loop !== undefined) {
       options.loop = {
@@ -140,6 +148,7 @@ export class AutomationLane {
       target: { ...this.target },
       source: this.source.toSpec(),
       ...(this.combine !== undefined ? { combine: this.combine } : {}),
+      ...(this.priority !== undefined ? { priority: this.priority } : {}),
       ...(this.loopSpec !== undefined ? { loop: structuredClone(this.loopSpec) } : {}),
       ...(this.lastBeat !== undefined ? { lastBeat: beatToWire(this.lastBeat) } : {}),
     };

@@ -6,6 +6,7 @@ use oxitone_graph::{build_mixer_routing, MASTER_MIXER_CHANNEL_ID};
 
 fn bus(id: &str, sends: Vec<SendSpec>) -> MixerChannelSpec {
     MixerChannelSpec {
+        insert_routes: None,
         id: id.to_string(),
         name: None,
         level: 1.0,
@@ -175,4 +176,41 @@ fn edges_are_sorted_and_dangling_dests_ignored() {
     let mut sorted = pairs.clone();
     sorted.sort();
     assert_eq!(pairs, sorted);
+}
+
+#[test]
+fn insert_routing_rejects_invalid_ownership_and_endpoints() {
+    use oxitone_core::wire::{EffectRef, InsertRouting};
+    let mut owner = bus("mix_owner", vec![]);
+    owner.inserts.push(EffectRef {
+        instance_id: Some("fx_owner".into()),
+        plugin_id: "fixture".into(),
+        plugin_version: "1".into(),
+        parameters: Default::default(),
+        resources: None,
+        state: None,
+        bypass: None,
+        mix: None,
+    });
+    for (instance, index, target) in [
+        ("fx_missing", "1", "mix_source"),
+        ("fx_owner", "0", "mix_source"),
+        ("fx_owner", "01", "mix_source"),
+        ("fx_owner", "16", "mix_source"),
+        ("fx_owner", "1", "mix_missing"),
+        ("fx_owner", "1", "mix_owner"),
+        ("fx_owner", "1", "mix_master"),
+    ] {
+        owner.insert_routes = Some(
+            [(
+                instance.into(),
+                InsertRouting {
+                    inputs: Some([(index.into(), target.into())].into()),
+                    outputs: None,
+                },
+            )]
+            .into(),
+        );
+        assert!(build_mixer_routing(&[owner.clone(), bus("mix_source", vec![])]).is_err());
+    }
 }
