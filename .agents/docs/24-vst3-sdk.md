@@ -9,7 +9,7 @@
 此能力只扩展 Rust 原生 factory，不改变 C ABI 1；不向音频 callback 增加工作。
 
 动态变更后使用 capture 获取冻结配置，通过 SDK 更新拥有者配置并 Session.update，或
-DAW 的 Use current state 文档事务恢复。后者仍支持 Undo/Redo/Save/reopen；不隐式重写
+DAW 的 Apply state to code 文档事务恢复。后者仍支持 Undo/Redo/Save/reopen；不隐式重写
 自动化；捕获的完整参数表替换初始参数，已移除的参数或总线仍被 automation/路由引用时
 明确拒绝，用户可修正这些引用后重试。
 新图按既有 block boundary 发布，旧 generation 失效，不承诺旧尾音跨图延续。
@@ -96,7 +96,7 @@ SDK/N-API 模拟输出，验证分页、暂停、seek、停止、丢失和换图
 
 ## DAW 播放实例窗口与状态接受
 
-实例面板的 Open native editor / Close native editor / Use current state 分别发送 Document
+实例面板的 Open native editor / Close native editor / Apply state to code 分别发送 Document
 controlInstance(openEditor/closeEditor) 与 captureInstance。Node 先验证单实例 source site、
 revision、读集与精确 class/hash，再通过独立 Preview IPC 连接查询实际播放图的 instanceId/
 graphGeneration，执行原生控制。旧的 editInstance 独立静音克隆入口删除；工作台 catalog 的
@@ -110,7 +110,7 @@ control 执行前后核对快照 revision 与图 generation。厂商调用在有
 后台任务最多同时 8 个，超过返回 BudgetExceeded。控制时限从原生 IPC 收到完整命令时
 开始，包含控制线程排队和后台线程调度；执行前扣除已耗时间，已过期请求不调用厂商。
 
-打开/关闭窗口不产生源码 revision，窗口关闭不回滚已听到的修改。Use current state 捕获
+打开/关闭窗口不产生源码 revision，窗口关闭不回滚已听到的修改。Apply state to code 捕获
 当前 processor 状态，复核 class/hash、source reads/generation/revision 后生成原有配置
 wrapper 并执行完整候选验证；成功形成一条可 Undo/Redo/Save 的文档事务。失败保留源码与
 最后接受的工程。此入口只允许可隔离的一个配置使用，不猜测共享定义应该修改哪些实例。
@@ -865,7 +865,7 @@ OXITONE_VST3_FIXTURE=/path/VestiGain.vst3 node scripts/smoke-vst3.mjs --managed
 需继续扩大 reset 合规性、商业插件兼容性和负载覆盖。原生多总线、工程乐器辅助输出与
 bus insert 多路输入、辅助输出和侧链已接入；动态 layout/latency/参数表
 变化冻结当前实例后，可通过捕获状态的显式事务恢复、重新校验与 PDC 换图，见本文开头。
-SDK 和 DAW 已能异步控制当前播放实例的厂商窗口；DAW 的 Use current state 已连接文档
+SDK 和 DAW 已能异步控制当前播放实例的厂商窗口；DAW 的 Apply state to code 已连接文档
 捕获事务及 Undo/Redo/Save。Touch/Write helper、SDK take/source、DAW 参数录制入口、
 Playlist 时间映射及源码事务已接入；录制曲线可继续做范围编辑。Channel 主 MIDI 输出已接入；主总线 SysEx 已接入，Note Expression、辅助事件总线、Mixer 反馈 MIDI 与 surround 仍未支持。
 不能将单个插件、模拟设备或离线通过当作全量兼容性或听音证明。

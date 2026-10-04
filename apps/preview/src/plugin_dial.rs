@@ -1,4 +1,4 @@
-//! Native vector readouts. These elements intentionally have no musical input handlers.
+//! Dial paint only; shared gesture wrappers own input and source transactions.
 use crate::{theme::Theme, ui::alpha};
 use gpui::{prelude::*, *};
 
@@ -7,11 +7,21 @@ pub fn dial(fraction: f32, bipolar: bool, theme: Theme) -> impl IntoElement {
         |_, _, _| {},
         move |at, _, window, _| {
             let center = at.origin + point(at.size.width / 2., px(29.));
-            let arc = |from: f32, to: f32, radius: f32, width: f32, color, window: &mut Window| {
+            let position = |fraction: f32, radius: f32| {
+                let angle = (-225. + 270. * fraction).to_radians();
+                center + point(px(radius * angle.cos()), px(radius * angle.sin()))
+            };
+            for i in 0..=10 {
+                let at = position(i as f32 / 10., 27.);
+                window.paint_quad(fill(
+                    Bounds::new(at - point(px(0.7), px(0.7)), size(px(1.4), px(1.4))),
+                    alpha(theme.muted, if i == 5 && bipolar { 0.8 } else { 0.35 }),
+                ));
+            }
+            let arc = |from: f32, to: f32, width: f32, color: Hsla, window: &mut Window| {
                 let mut path = PathBuilder::stroke(px(width));
                 for i in 0..=48 {
-                    let angle = (-225. + 270. * (from + (to - from) * i as f32 / 48.)).to_radians();
-                    let point = center + point(px(radius * angle.cos()), px(radius * angle.sin()));
+                    let point = position(from + (to - from) * i as f32 / 48., 23.);
                     if i == 0 {
                         path.move_to(point);
                     } else {
@@ -22,89 +32,32 @@ pub fn dial(fraction: f32, bipolar: bool, theme: Theme) -> impl IntoElement {
                     window.paint_path(path, color);
                 }
             };
-            arc(0., 1., 24., 3., rgb(theme.border), window);
+            arc(0., 1., 2.5, rgb(theme.border).into(), window);
+            let start = if bipolar { 0.5 } else { 0. };
             arc(
-                if bipolar { 0.5 } else { 0. },
+                start,
                 fraction,
-                24.,
-                3.,
-                rgb(theme.accent),
+                6.,
+                alpha(theme.accent, 0.10).into(),
                 window,
             );
-            window.paint_quad(
-                fill(
-                    Bounds::new(center - point(px(19.), px(17.)), size(px(38.), px(38.))),
-                    alpha(theme.bg, 0.8),
-                )
-                .corner_radii(px(19.)),
-            );
-            window.paint_quad(
-                fill(
-                    Bounds::new(center - point(px(19.), px(19.)), size(px(38.), px(38.))),
-                    rgb(theme.button),
-                )
-                .corner_radii(px(19.)),
-            );
-            arc(0.05, 0.65, 17., 1., alpha(theme.muted, 0.3), window);
-            let angle = (-225. + fraction * 270.).to_radians();
+            arc(start, fraction, 2.5, rgb(theme.accent).into(), window);
+            window.paint_quad(quad(
+                Bounds::new(center - point(px(18.), px(18.)), size(px(36.), px(36.))),
+                px(18.),
+                rgb(theme.raised),
+                px(1.),
+                alpha(theme.muted, 0.15),
+                BorderStyle::default(),
+            ));
             let mut line = PathBuilder::stroke(px(2.));
-            line.move_to(center + point(px(angle.cos() * 8.), px(angle.sin() * 8.)));
-            line.line_to(center + point(px(angle.cos() * 16.), px(angle.sin() * 16.)));
+            line.move_to(position(fraction, 9.));
+            line.line_to(position(fraction, 15.));
             if let Ok(path) = line.build() {
-                window.paint_path(path, rgb(theme.text));
-            }
-        },
-    )
-    .w_full()
-    .h(px(58.))
-}
-
-pub fn envelope(values: [f64; 4], theme: Theme) -> impl IntoElement {
-    canvas(
-        |_, _, _| {},
-        move |at, _, window, _| {
-            let [a, d, s, r] = values;
-            // Source ADSR schematic; fixed sustain hold, no invented effective/live trace.
-            let hold = ((a + d + r) * 0.3).max(0.05);
-            let total = (a + d + hold + r).max(0.001);
-            let w = f32::from(at.size.width) - 20.;
-            let h = f32::from(at.size.height) - 16.;
-            for i in 0..=4 {
-                window.paint_quad(fill(
-                    Bounds::new(
-                        at.origin + point(px(10. + w * i as f32 / 4.), px(8.)),
-                        size(px(1.), px(h)),
-                    ),
-                    alpha(theme.border, 0.5),
-                ));
-            }
-            let mut path = PathBuilder::stroke(px(2.));
-            for (i, (x, y)) in [
-                (0., 0.),
-                (a, 1.),
-                (a + d, s),
-                (a + d + hold, s),
-                (total, 0.),
-            ]
-            .into_iter()
-            .enumerate()
-            {
-                let p = at.origin
-                    + point(
-                        px(10. + w * (x / total) as f32),
-                        px(8. + h * (1. - y as f32)),
-                    );
-                if i == 0 {
-                    path.move_to(p);
-                } else {
-                    path.line_to(p);
-                }
-            }
-            if let Ok(path) = path.build() {
                 window.paint_path(path, rgb(theme.accent));
             }
         },
     )
     .w_full()
-    .h(px(76.))
+    .h(px(58.))
 }

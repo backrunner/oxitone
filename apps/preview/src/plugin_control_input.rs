@@ -8,7 +8,24 @@ pub fn view(
     this: &PluginWindow,
     cx: &mut Context<PluginWindow>,
 ) -> Div {
-    let theme = this.theme;
+    let mut theme = this.theme;
+    if parameter.spec.id.starts_with("oscB.") {
+        theme.accent = theme.secondary;
+    } else if this
+        .details
+        .as_ref()
+        .is_some_and(|d| d.info.library.is_none() && d.info.descriptor.plugin_id == "oxitone.eq")
+    {
+        if let Some(band) = parameter
+            .spec
+            .id
+            .strip_prefix("band")
+            .and_then(|s| s.split('.').next())
+            .and_then(|s| s.parse::<usize>().ok())
+        {
+            theme.accent = theme.track(band);
+        }
+    }
     let enabled = this.owner.upgrade().is_some_and(|owner| {
         let owner = owner.read(cx);
         owner.document_ready() && owner.plugin_configuration_target(&this.target).is_some()

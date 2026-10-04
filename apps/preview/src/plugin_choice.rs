@@ -160,7 +160,13 @@ fn preview(this: &PluginWindow, id: &str, value: f64) -> Option<Div> {
     } else {
         return None;
     };
-    let color = this.theme.accent;
+    let color = if id.starts_with("oscB.") {
+        this.theme.secondary
+    } else if id.ends_with(".shape") {
+        this.theme.tracks[2]
+    } else {
+        this.theme.accent
+    };
     Some(
         div().child(
             canvas(

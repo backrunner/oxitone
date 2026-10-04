@@ -110,6 +110,24 @@ export default project;
     await expect(
       controlVst3Instance(before, findSite(), "1", { kind: "capture" }, runtime, signal, () => {}),
     ).rejects.toMatchObject({ code: "PluginManifestMismatch" });
+    for (const changed of [{ classId: "2".repeat(32) }, { sha256: "b".repeat(64) }]) {
+      runtime.control.mockResolvedValueOnce({
+        instanceControlVersion: 1,
+        graphGeneration: "17",
+        instanceId,
+        state: {
+          editorOpen: true,
+          nextSequence: 5,
+          info: {
+            ...metadata,
+            configuration: { ...state, ...changed },
+          },
+        },
+      });
+      await expect(
+        controlVst3Instance(before, findSite(), "1", { kind: "capture" }, runtime, signal, () => {}),
+      ).rejects.toMatchObject({ code: "PluginManifestMismatch" });
+    }
     await expect(
       controlVst3Instance(before, findSite(), "1", { kind: "capture" }, runtime, signal, () => {
         throw new Error("stale");

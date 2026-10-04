@@ -37,6 +37,7 @@ const effects = [
 const instruments = ["wavetable", "sampler", "multisampler", "slicer"];
 const args = process.argv.slice(2);
 const editing = args.includes("--edit");
+const graphEditing = args.includes("--edit-graph");
 const synthEditing = args.includes("--edit-synth");
 const theme = args.includes("--light") ? "light" : "dark";
 const narrow = args.includes("--narrow");
@@ -45,8 +46,16 @@ const only = args
   ?.slice(7)
   .split(",");
 const page = args.find((a) => a.startsWith("--page="))?.slice(7);
-const cases = synthEditing ? ["wavetable"] : editing ? ["filter"] : (only ?? [...effects, ...instruments]);
+const cases = graphEditing
+  ? (only ?? ["eq", "filter", "wavetable", "compressor"])
+  : synthEditing
+    ? ["wavetable"]
+    : editing
+      ? ["filter"]
+      : (only ?? [...effects, ...instruments]);
 for (const name of cases) if (![...effects, ...instruments].includes(name)) throw new Error("Unknown builtin " + name);
+if (graphEditing && cases.some((name) => !["eq", "filter", "wavetable", "compressor"].includes(name)))
+  throw new Error("Graph editing capture supports eq, filter, wavetable and compressor");
 if (
   page &&
   (editing ||
@@ -57,7 +66,13 @@ if (
   throw new Error("Select a Wavetable page with --only=wavetable");
 const output = resolve(
   "target/builtin-panels",
-  synthEditing ? "synth-editing" : editing ? "editing" : theme + (narrow ? "-narrow" : "") + (page ? "-" + page : ""),
+  graphEditing
+    ? "graph-" + theme
+    : synthEditing
+      ? "synth-editing"
+      : editing
+        ? "editing"
+        : theme + (narrow ? "-narrow" : "") + (page ? "-" + page : ""),
 );
 await mkdir(output, { recursive: true });
 const root = await mkdtemp(join(tmpdir(), "oxitone-builtin-panels-"));
@@ -129,14 +144,22 @@ try {
           OXITONE_PREVIEW_CAPTURE: outputFile,
           OXITONE_PREVIEW_APPEARANCE: theme,
           OXITONE_PREVIEW_CAPTURE_SIZE: "1440x920",
-          OXITONE_PREVIEW_CAPTURE_BUILTIN: synthEditing
-            ? "synth"
-            : editing
-              ? "edit"
-              : instrument
-                ? "instrument"
-                : "effect",
-          ...(page ? { OXITONE_PREVIEW_CAPTURE_PAGE: page } : {}),
+          OXITONE_PREVIEW_CAPTURE_BUILTIN: graphEditing
+            ? instrument
+              ? "graph-instrument"
+              : "graph-effect"
+            : synthEditing
+              ? "synth"
+              : editing
+                ? "edit"
+                : instrument
+                  ? "instrument"
+                  : "effect",
+          ...(graphEditing && instrument
+            ? { OXITONE_PREVIEW_CAPTURE_PAGE: "modulation" }
+            : page
+              ? { OXITONE_PREVIEW_CAPTURE_PAGE: page }
+              : {}),
           ...(narrow ? { OXITONE_PREVIEW_CAPTURE_PLUGIN_SIZE: "440x540" } : {}),
         },
         timeout: 120000,
@@ -148,6 +171,30 @@ try {
     });
     await writeFile(outputFile + ".log", result.stderr);
     if (!result.stderr.includes("Preview capture saved")) throw new Error(result.stderr);
+    if (graphEditing) {
+      if (!result.stderr.includes("Graph editing passed:")) throw new Error(result.stderr);
+      const reopened = await ProjectDocument.open({ entry });
+      try {
+        const [first, second] = reopened.frame.snapshot.channels;
+        const ids = instrument
+          ? ["amp.decay", "amp.sustain", "amp.release"]
+          : name === "filter"
+            ? ["cutoffHz", "resonance"]
+            : name === "compressor"
+              ? ["thresholdDb", "makeupDb", "kneeDb"]
+              : ["band2.freqHz", "band2.gainDb", "band2.q"];
+        const edited = instrument ? first.instrument : first.effectChain[0];
+        const untouched = instrument ? second.instrument : second.effectChain[0];
+        if (
+          ids.some(
+            (id) => !Number.isFinite(edited.parameters[id]) || edited.parameters[id] === untouched.parameters[id],
+          )
+        )
+          throw new Error("Graph edit did not survive source reopen or changed both instances");
+      } finally {
+        reopened.close();
+      }
+    }
     if (synthEditing) {
       if (!result.stderr.includes("Synth editing passed:")) throw new Error(result.stderr);
       const reopened = await ProjectDocument.open({ entry });

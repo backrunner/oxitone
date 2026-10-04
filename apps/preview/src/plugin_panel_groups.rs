@@ -20,20 +20,31 @@ pub fn view(
     );
     let builtin = !this.project.panels.layouts.contains_key(&key);
     let synth = builtin && synth::bundled(details);
-    let group_width = if builtin && width >= 720. && groups.len() > 1 {
+    let eq_row = builtin && details.info.descriptor.plugin_id == "oxitone.eq" && width >= 1040.;
+    let group_width = if eq_row {
+        (width - 64.) * 0.25
+    } else if builtin && width >= 720. && groups.len() > 1 {
         (width - 48.) * 0.5
     } else {
         width - 40.
     };
     let mut cards = div().flex().flex_wrap().gap_2().items_start();
-    for group in groups {
+    for (group_index, group) in groups.iter().enumerate() {
         if synth && !synth::group_visible(details, &group.id) {
             continue;
         }
-        let cols = group
-            .columns
-            .min(((group_width - 18.) / 82.).floor().max(1.) as u32);
+        let cols = group.columns.min(
+            ((group_width - 18.) / if eq_row { 72. } else { 82. })
+                .floor()
+                .max(1.) as u32,
+        );
         let expanded = this.expanded_groups.contains(&group.id);
+        let mut control_theme = t;
+        if synth && group.id == "oscB" {
+            control_theme.accent = t.secondary;
+        } else if builtin && details.info.descriptor.plugin_id == "oxitone.eq" {
+            control_theme.accent = t.track(group_index + 1);
+        }
         let mut rows = Vec::new();
         let mut cells = Vec::new();
         let mut extras = Vec::new();
@@ -144,13 +155,13 @@ pub fn view(
                         .gap_2()
                         .text_size(px(11.))
                         .font_weight(FontWeight::SEMIBOLD)
-                        .child(div().w(px(3.)).h(px(12.)).rounded_full().bg(rgb(
-                            if group.id == "oscB" {
-                                t.secondary
-                            } else {
-                                t.accent
-                            },
-                        )))
+                        .child(
+                            div()
+                                .w(px(3.))
+                                .h(px(12.))
+                                .rounded_full()
+                                .bg(rgb(control_theme.accent)),
+                        )
                         .child(group.title.clone()),
                 )
                 .child(div().px_2().pb_2().flex().flex_col().gap_1().children(rows)),
@@ -176,6 +187,22 @@ fn append(
             visual_theme.accent = this.theme.secondary;
             visual_theme.secondary = this.theme.accent;
         }
+        if let Control::Envelope {
+            attack,
+            decay,
+            sustain,
+            release,
+            ..
+        } = control
+        {
+            rows.push(crate::plugin_envelope_view::view(
+                [attack, decay, sustain, release],
+                this,
+                visual_theme,
+                cx,
+            ));
+            return;
+        }
         let visual = crate::plugin_visuals::view(
             control,
             details,
@@ -185,6 +212,16 @@ fn append(
         );
         rows.push(if let Control::Oscillator { position, .. } = control {
             crate::plugin_control_input::waveform(visual, position, this, cx)
+        } else if let Control::FilterResponse {
+            mode,
+            cutoff,
+            resonance,
+            ..
+        } = control
+        {
+            crate::plugin_response_view::interactive_filter(
+                visual, mode, cutoff, resonance, this, cx,
+            )
         } else {
             visual
         });

@@ -1,17 +1,21 @@
-//! A shared chart surface: calibrated axes, understated fills and bounded cached vector paths.
-use crate::{plugin_plot::Plot, theme::Theme, ui::alpha};
+//! Large response surfaces with calibrated axes and direct parameter handles.
+use crate::{plugin_window::PluginWindow, ui::alpha};
 use gpui::{prelude::*, *};
-use std::sync::Arc;
 
-pub fn view(plots: Arc<Vec<Plot>>, theme: Theme, width: f32) -> Div {
-    let columns = if plots.len() > 1 && width >= 640. {
+pub fn view(this: &PluginWindow, width: f32, cx: &mut Context<PluginWindow>) -> Div {
+    let theme = this.theme;
+    let plots = &this.plots;
+    let editable = this.owner.upgrade().is_some_and(|owner| {
+        let owner = owner.read(cx);
+        owner.document_ready() && owner.plugin_configuration_target(&this.target).is_some()
+    });
+    let columns = if plots.len() > 1 && width >= 720. {
         2
     } else {
         1
     };
     let mut row = div().w_full().flex().flex_wrap().gap_3();
-    for index in 0..plots.len() {
-        let plot = &plots[index];
+    for (index, plot) in plots.iter().enumerate() {
         let data = plots.clone();
         let mut legend = div().flex().flex_wrap().gap_3().items_center();
         for trace in plot.traces.iter().filter(|t| !t.label.is_empty()) {
@@ -22,9 +26,9 @@ pub fn view(plots: Arc<Vec<Plot>>, theme: Theme, width: f32) -> Div {
                     .items_center()
                     .child(
                         div()
-                            .w(px(12.))
-                            .h(px(2.))
-                            .bg(rgb(color(theme, trace.color))),
+                            .size(px(5.))
+                            .rounded_full()
+                            .bg(rgb(theme.track(trace.color))),
                     )
                     .child(
                         div()
@@ -34,6 +38,28 @@ pub fn view(plots: Arc<Vec<Plot>>, theme: Theme, width: f32) -> Div {
                     ),
             );
         }
+        let chart = div()
+            .relative()
+            .w_full()
+            .h(px(if columns == 1 { 252. } else { 208. }))
+            .child(
+                canvas(
+                    |_, _, _| {},
+                    move |bounds, _, window, cx| {
+                        crate::plugin_graph_paint::plot(&data[index], bounds, theme, window, cx);
+                    },
+                )
+                .size_full(),
+            )
+            .child(
+                div()
+                    .absolute()
+                    .left(px(40.))
+                    .right(px(18.))
+                    .top(px(18.))
+                    .bottom(px(30.))
+                    .child(crate::plugin_graph_handle::overlay(&plot.handles, this, cx)),
+            );
         row = row.child(
             div()
                 .flex_1()
@@ -41,10 +67,12 @@ pub fn view(plots: Arc<Vec<Plot>>, theme: Theme, width: f32) -> Div {
                 .flex_basis(px((width - 36.) / columns as f32 - 12.))
                 .rounded_lg()
                 .bg(rgb(theme.scope))
+                .border_1()
+                .border_color(alpha(theme.border, 0.7))
                 .overflow_hidden()
                 .child(
                     div()
-                        .px_3()
+                        .px_4()
                         .pt_3()
                         .flex()
                         .items_center()
@@ -52,142 +80,59 @@ pub fn view(plots: Arc<Vec<Plot>>, theme: Theme, width: f32) -> Div {
                         .gap_2()
                         .child(
                             div()
-                                .text_size(px(12.))
+                                .text_size(px(14.))
                                 .font_weight(FontWeight::SEMIBOLD)
                                 .child(plot.title.clone()),
                         )
-                        .child(legend),
+                        .child(
+                            div()
+                                .text_size(px(9.))
+                                .text_color(rgb(theme.muted))
+                                .child("SOURCE VIEW"),
+                        ),
                 )
                 .child(
                     div()
-                        .px_3()
+                        .px_4()
                         .pt_1()
                         .text_size(px(10.))
                         .text_color(rgb(theme.muted))
                         .child(plot.detail.clone()),
                 )
+                .child(chart)
+                .when(!plot.handles.is_empty(), |d| d.child(
+                        div().px_4().pb_2().child(crate::plugin_graph_readout::view(&plot.handles, this, editable))
+                ))
                 .child(
-                    canvas(
-                        |_, _, _| {},
-                        move |bounds, _, window, cx| {
-                            let plot = &data[index];
-                            let at = Bounds::new(
-                                bounds.origin + point(px(40.), px(14.)),
-                                size(
-                                    (bounds.size.width - px(54.)).max(px(1.)),
-                                    (bounds.size.height - px(42.)).max(px(1.)),
-                                ),
-                            );
-                            window.with_content_mask(Some(ContentMask { bounds }), |window| {
-                                for (x, label) in &plot.x {
-                                    let position = at.origin + point(at.size.width * *x, px(0.));
-                                    window.paint_quad(fill(
-                                        Bounds::new(position, size(px(1.), at.size.height)),
-                                        alpha(theme.border, 0.4),
-                                    ));
-                                    text(
-                                        label,
-                                        position + point(px(0.), at.size.height + px(8.)),
-                                        theme.muted,
-                                        Some(bounds),
-                                        window,
-                                        cx,
-                                    );
-                                }
-                                for (y, label) in &plot.y {
-                                    let position = at.origin + point(px(0.), at.size.height * *y);
-                                    window.paint_quad(fill(
-                                        Bounds::new(position, size(at.size.width, px(1.))),
-                                        alpha(theme.border, 0.45),
-                                    ));
-                                    text(
-                                        label,
-                                        position - point(px(35.), px(6.)),
-                                        theme.muted,
-                                        None,
-                                        window,
-                                        cx,
-                                    );
-                                }
-                                window.with_content_mask(
-                                    Some(ContentMask { bounds: at }),
-                                    |window| {
-                                        for region in &plot.regions {
-                                            let [x, y, w, h] = region.rect;
-                                            let area = Bounds::new(
-                                                at.origin
-                                                    + point(at.size.width * x, at.size.height * y),
-                                                size(at.size.width * w, at.size.height * h),
-                                            );
-                                            window.paint_quad(quad(
-                                                area,
-                                                px(2.),
-                                                alpha(color(theme, region.color), 0.15),
-                                                px(1.),
-                                                alpha(color(theme, region.color), 0.6),
-                                                BorderStyle::default(),
-                                            ));
-                                            if area.size.width > px(32.)
-                                                && area.size.height > px(17.)
-                                            {
-                                                text(
-                                                    &region.label,
-                                                    area.origin + point(px(5.), px(4.)),
-                                                    theme.text,
-                                                    None,
-                                                    window,
-                                                    cx,
-                                                );
-                                            }
+                    div()
+                        .px_4()
+                        .py_2()
+                        .border_t_1()
+                        .border_color(alpha(theme.border, 0.5))
+                        .flex()
+                        .flex_wrap()
+                        .items_center()
+                        .justify_between()
+                        .gap_2()
+                        .child(legend)
+                        .when(editable && !plot.handles.is_empty(), |d| {
+                            d.child(
+                                div()
+                                    .text_size(px(9.))
+                                    .text_color(rgb(theme.muted))
+                                    .child(if plot.handles.iter().any(|h| h.auxiliary.is_some()) {
+                                        if plot.handles.iter().any(|h| h.auxiliary.as_ref().is_some_and(|a| a.parameter == "kneeDb")) {
+                                            "Drag graph · Alt/Option knee · Shift fine · Double-click reset"
+                                        } else {
+                                            "Drag graph · Alt/Option Q · Shift fine · Double-click reset"
                                         }
-                                        for trace in &plot.traces {
-                                            crate::plugin_visuals::trace(
-                                                at,
-                                                trace.points.iter().copied(),
-                                                rgb(color(theme, trace.color)).into(),
-                                                1.8,
-                                                window,
-                                            );
-                                        }
-                                    },
-                                );
-                            });
-                        },
-                    )
-                    .w_full()
-                    .h(px(168.)),
+                                    } else {
+                                        "Drag graph · Shift fine · Double-click reset"
+                                    }),
+                            )
+                        }),
                 ),
         );
     }
     row
-}
-fn color(theme: Theme, index: usize) -> u32 {
-    [theme.accent, theme.gold, theme.muted, theme.text][index % 4]
-}
-fn text(
-    label: &str,
-    mut at: Point<Pixels>,
-    color: u32,
-    centered: Option<Bounds<Pixels>>,
-    window: &mut Window,
-    cx: &mut App,
-) {
-    let run = TextRun {
-        len: label.len(),
-        font: font("Helvetica Neue"),
-        color: rgb(color).into(),
-        background_color: None,
-        underline: None,
-        strikethrough: None,
-    };
-    let line = window
-        .text_system()
-        .shape_line(label.to_owned().into(), px(9.), &[run], None);
-    if let Some(bounds) = centered {
-        at.x = (at.x - line.width / 2.).clamp(
-            bounds.left() + px(4.),
-            (bounds.right() - line.width - px(4.)).max(bounds.left() + px(4.)),
-        );
-    }
-    let _ = line.paint(at, px(12.), window, cx);
 }

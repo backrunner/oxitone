@@ -30,6 +30,13 @@ impl Preview {
         let status = crate::plugin_window::sync_status(self);
         let theme = self.theme;
         let entity = cx.new(|cx| PluginWindow::new(target, project, owner, status, theme, cx));
+        entity.update(cx, |panel, _| {
+            panel.recording = self
+                .document
+                .view
+                .as_ref()
+                .and_then(|v| v.vst3_recording.clone());
+        });
         let id = WindowId::Plugin(entity.entity_id().as_u64());
         if let Some(panel) = &entity.read(cx).panel {
             let mut bounds = self.document.windows.state(id).bounds;

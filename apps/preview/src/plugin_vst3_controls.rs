@@ -22,7 +22,7 @@ pub fn view(this: &PluginWindow, cx: &mut Context<PluginWindow>) -> Div {
             "Close native editor",
             Some(LiveAction::CloseEditor),
         ),
-        ("vst3-instance-capture", "Use current state", None),
+        ("vst3-instance-capture", "Apply state to code", None),
     ] {
         row = row.child(
             this.theme
@@ -60,5 +60,8 @@ pub fn view(this: &PluginWindow, cx: &mut Context<PluginWindow>) -> Div {
                 })),
         );
     }
-    row
+    div().flex().flex_col().gap_2().child(row).child(
+        div().text_size(px(11.)).text_color(rgb(this.theme.muted))
+            .child("Native editor changes are temporary until applied to code. Apply captures parameters and preset state; save the project to keep them.")
+    )
 }

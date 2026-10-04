@@ -14,6 +14,7 @@ pub struct Smoke {
     value: f64,
     settled: u8,
     synth: crate::capture_synth::Smoke,
+    graph: crate::capture_graph::Smoke,
 }
 impl Smoke {
     pub fn complete(&self) -> bool {
@@ -32,11 +33,12 @@ impl Smoke {
             self.panel = view.update(cx, |s, cx| {
                 let project = s.project.as_ref().unwrap();
                 let channel = &project.snapshot.channels[0];
-                let target = if mode == "instrument" || mode == "synth" {
-                    DetailTarget::Instrument(channel.id.clone())
-                } else {
-                    DetailTarget::ChannelInsert(channel.id.clone(), 0)
-                };
+                let target =
+                    if mode == "instrument" || mode == "synth" || mode == "graph-instrument" {
+                        DetailTarget::Instrument(channel.id.clone())
+                    } else {
+                        DetailTarget::ChannelInsert(channel.id.clone(), 0)
+                    };
                 let panel = s.open_plugin(target, cx).unwrap();
                 if let Ok(page) = std::env::var("OXITONE_PREVIEW_CAPTURE_PAGE") {
                     panel.update(cx, |view, cx| {
@@ -64,7 +66,7 @@ impl Smoke {
                 cx.notify();
                 Some(panel)
             });
-            self.stage = if mode == "edit" || mode == "synth" {
+            self.stage = if mode == "edit" || mode == "synth" || mode.starts_with("graph-") {
                 1
             } else {
                 24
@@ -72,6 +74,12 @@ impl Smoke {
             return;
         }
         let panel = self.panel.as_ref().unwrap().clone();
+        if mode.starts_with("graph-") {
+            if self.graph.step(view, &panel, window, cx) {
+                self.stage = 24;
+            }
+            return;
+        }
         if mode == "synth" {
             if self.synth.step(view, &panel, window, cx) {
                 self.stage = 24;

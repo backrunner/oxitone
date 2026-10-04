@@ -86,7 +86,15 @@ pub fn panel(details: &PluginDetails) -> Layout {
         {
             PanelSize {
                 width: 1120,
-                height: 680,
+                height: 720,
+            }
+        } else if bundled
+            && descriptor.plugin_id == "oxitone.eq"
+            && descriptor.plugin_version == "1.0.0"
+        {
+            PanelSize {
+                width: 1120,
+                height: 640,
             }
         } else {
             PanelSize {
@@ -101,9 +109,9 @@ pub fn panel(details: &PluginDetails) -> Layout {
                 },
                 height: if bundled {
                     if pages.iter().any(|page| page.groups.len() > 2) {
-                        660
+                        740
                     } else {
-                        520
+                        640
                     }
                 } else {
                     500

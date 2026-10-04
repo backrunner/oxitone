@@ -3,10 +3,10 @@ use crate::{
     configuration_wire::{ConfigurationEdit, HostEdit},
     document_wire::DocumentOperation,
     plugin_details::{DetailTarget, ParameterDetail},
+    plugin_parameter_drag::{Binding, Range},
     ui::Preview,
 };
 use gpui::{MouseDownEvent, MouseMoveEvent, Pixels, Point};
-use oxitone_core::wire::{ParameterMapping, ParameterSpec, ParameterUnit};
 use std::collections::BTreeMap;
 
 #[derive(Clone)]
@@ -18,26 +18,21 @@ pub struct Change {
     pub value: f64,
 }
 pub struct Gesture {
-    change: Change,
-    spec: ParameterSpec,
+    changes: Vec<Change>,
+    bindings: Vec<Binding>,
     pointer: Point<Pixels>,
-    fraction: f64,
-    horizontal: bool,
     site: String,
     usage: Option<String>,
 }
 #[derive(Default)]
 pub struct PluginEdit {
     pub gesture: Option<Gesture>,
-    pub pending: Option<Change>,
+    pub pending: Vec<Change>,
     pub stamp: u64,
 }
 impl PluginEdit {
-    pub fn change(&self) -> Option<&Change> {
-        self.gesture
-            .as_ref()
-            .map(|g| &g.change)
-            .or(self.pending.as_ref())
+    pub fn changes(&self) -> &[Change] {
+        self.gesture.as_ref().map_or(&self.pending, |g| &g.changes)
     }
     pub fn cancel(&mut self) {
         if self.gesture.take().is_some() {
@@ -45,22 +40,10 @@ impl PluginEdit {
         }
     }
     pub fn clear_pending(&mut self) {
-        if self.pending.take().is_some() {
+        if !self.pending.is_empty() {
+            self.pending.clear();
             self.stamp += 1;
         }
-    }
-}
-pub fn from_fraction(spec: &ParameterSpec, fraction: f64) -> f64 {
-    let f = fraction.clamp(0., 1.);
-    let value = if spec.mapping == Some(ParameterMapping::Log) && spec.min > 0. {
-        spec.min * (spec.max / spec.min).powf(f)
-    } else {
-        spec.min + (spec.max - spec.min) * f
-    };
-    if spec.unit == ParameterUnit::Enum {
-        value.round()
-    } else {
-        value
     }
 }
 impl Preview {
@@ -72,61 +55,76 @@ impl Preview {
         event: &MouseDownEvent,
         horizontal: bool,
     ) {
+        self.begin_plugin_gesture(
+            target,
+            identity,
+            vec![Binding::new(
+                parameter.clone(),
+                Range::parameter(&parameter.spec),
+                horizontal,
+                180.,
+            )],
+            event,
+        );
+    }
+    pub fn begin_plugin_gesture(
+        &mut self,
+        target: &DetailTarget,
+        identity: &str,
+        bindings: Vec<Binding>,
+        event: &MouseDownEvent,
+    ) -> bool {
         if !self.document_ready() || self.close.open || self.show_shortcuts {
-            return;
+            return false;
         }
         let Some((site, usage)) = self.plugin_configuration_target(target) else {
-            return;
+            return false;
         };
         let Some(project) = &self.project else {
-            return;
+            return false;
         };
         if crate::plugin_identity::key(project, target) != identity {
-            return;
+            return false;
         }
         self.document.plugin.gesture = Some(Gesture {
-            change: Change {
-                identity: crate::plugin_identity::key(project, target),
-                parameter: parameter.spec.id.clone(),
-                host: parameter.host,
-                before: parameter.value,
-                value: parameter.value,
-            },
-            spec: parameter.spec.clone(),
+            changes: bindings
+                .iter()
+                .map(|binding| Change {
+                    identity: crate::plugin_identity::key(project, target),
+                    parameter: binding.parameter.spec.id.clone(),
+                    host: binding.parameter.host,
+                    before: binding.parameter.value,
+                    value: binding.parameter.value,
+                })
+                .collect(),
+            bindings,
             pointer: event.position,
-            fraction: parameter.fraction() as f64,
-            horizontal,
             site,
             usage,
         });
         self.document.plugin.stamp += 1;
+        true
     }
     pub fn move_plugin_parameter(&mut self, event: &MouseMoveEvent) {
         let Some(gesture) = &mut self.document.plugin.gesture else {
             return;
         };
         let delta = event.position - gesture.pointer;
-        let distance = if gesture.horizontal {
-            f32::from(delta.x)
-        } else {
-            -f32::from(delta.y)
-        };
-        if distance == 0. {
-            gesture.pointer = event.position;
-            return;
+        for (change, binding) in gesture.changes.iter_mut().zip(&mut gesture.bindings) {
+            change.value = binding.advance(
+                f32::from(delta.x) as f64,
+                f32::from(delta.y) as f64,
+                event.modifiers.shift,
+            );
         }
-        gesture.fraction = (gesture.fraction
-            + f64::from(distance) / 180. * if event.modifiers.shift { 0.1 } else { 1. })
-        .clamp(0., 1.);
         gesture.pointer = event.position;
-        gesture.change.value = from_fraction(&gesture.spec, gesture.fraction);
         self.document.plugin.stamp += 1;
     }
     pub fn finish_plugin_parameter(&mut self) {
         let Some(gesture) = self.document.plugin.gesture.take() else {
             return;
         };
-        self.submit_plugin_change(gesture.change, gesture.site, gesture.usage);
+        self.submit_plugin_changes(gesture.changes, gesture.site, gesture.usage);
     }
     pub fn set_plugin_parameter(
         &mut self,
@@ -154,13 +152,39 @@ impl Preview {
             before: parameter.value,
             value: value.clamp(parameter.spec.min, parameter.spec.max),
         };
-        self.submit_plugin_change(change, site, usage);
+        self.submit_plugin_changes(vec![change], site, usage);
     }
-    fn submit_plugin_change(&mut self, change: Change, site: String, usage: Option<String>) {
-        self.document.plugin.stamp += 1;
-        if change.value == change.before || !change.value.is_finite() || !self.document_ready() {
+    pub fn reset_plugin_graph(
+        &mut self,
+        target: &DetailTarget,
+        identity: &str,
+        bindings: Vec<Binding>,
+        event: &MouseDownEvent,
+    ) {
+        if !self.begin_plugin_gesture(target, identity, bindings, event) {
             return;
         }
+        if let Some(gesture) = &mut self.document.plugin.gesture {
+            for (change, binding) in gesture.changes.iter_mut().zip(&gesture.bindings) {
+                change.value = binding.parameter.spec.default;
+            }
+            self.finish_plugin_parameter();
+        }
+    }
+    fn submit_plugin_changes(
+        &mut self,
+        mut changes: Vec<Change>,
+        site: String,
+        usage: Option<String>,
+    ) {
+        self.document.plugin.stamp += 1;
+        if !self.document_ready() || changes.iter().any(|c| !c.value.is_finite()) {
+            return;
+        }
+        changes.retain(|c| c.value != c.before);
+        let Some(change) = changes.first() else {
+            return;
+        };
         let edit = if change.host {
             ConfigurationEdit::Host {
                 values: HostEdit {
@@ -170,12 +194,15 @@ impl Preview {
             }
         } else {
             ConfigurationEdit::Parameters {
-                values: BTreeMap::from([(change.parameter.clone(), change.value)]),
+                values: changes
+                    .iter()
+                    .map(|c| (c.parameter.clone(), c.value))
+                    .collect::<BTreeMap<_, _>>(),
             }
         };
         self.document_request(DocumentOperation::Configuration { site, usage, edit });
         if self.document.pending.is_some() {
-            self.document.plugin.pending = Some(change);
+            self.document.plugin.pending = changes;
         }
     }
 }

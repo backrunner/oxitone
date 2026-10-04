@@ -101,6 +101,24 @@ fn plots_are_finite_and_bounded_at_every_parameter_extreme() {
                 assert!(plots.len() <= 2);
                 for plot in plots {
                     assert!(plot.traces.len() <= 16);
+                    for handle in &plot.handles {
+                        assert!(handle.position.0.is_finite() && handle.position.1.is_finite());
+                        for axis in [&handle.x, &handle.y, &handle.auxiliary]
+                            .into_iter()
+                            .flatten()
+                        {
+                            let parameter = d
+                                .parameters
+                                .iter()
+                                .find(|p| p.spec.id == axis.parameter)
+                                .expect("graph binding exists");
+                            let value = axis.range.value(axis.range.fraction(parameter.value));
+                            assert!(
+                                (value - parameter.value).abs() < 1e-6,
+                                "graph axes preserve parameter units"
+                            );
+                        }
+                    }
                     for trace in plot.traces {
                         assert!(trace.points.len() <= 4096);
                         assert!(
@@ -165,15 +183,19 @@ fn filter_units_match_the_dsp_and_compressor_preserves_unity_ratio() {
 fn parameter_drag_uses_descriptor_mapping_and_integer_enums() {
     let d = details(oxitone_instruments::sampler::descriptor().clone());
     for parameter in d.parameters {
-        assert_eq!(
-            crate::plugin_edit::from_fraction(&parameter.spec, 0.),
-            parameter.spec.min
-        );
-        assert!(
-            (crate::plugin_edit::from_fraction(&parameter.spec, 1.) - parameter.spec.max).abs()
-                < 1e-8
-        );
-        let value = crate::plugin_edit::from_fraction(&parameter.spec, 0.37);
+        let value_at = |fraction: f64| {
+            let mut p = parameter.clone();
+            p.value = p.spec.min;
+            let range = crate::plugin_parameter_drag::Range::parameter(&p.spec);
+            crate::plugin_parameter_drag::Binding::new(p, range, true, 180.).advance(
+                fraction * 180.,
+                0.,
+                false,
+            )
+        };
+        assert_eq!(value_at(0.), parameter.spec.min);
+        assert!((value_at(1.) - parameter.spec.max).abs() < 1e-8);
+        let value = value_at(0.37);
         if parameter.spec.unit == oxitone_core::wire::ParameterUnit::Enum {
             assert_eq!(value.fract(), 0.);
         }

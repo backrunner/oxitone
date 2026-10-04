@@ -40,6 +40,7 @@ pub struct PluginWindow {
     pub page: String,
     pub stacked_waveforms: bool,
     pub choice_open: Option<String>,
+    pub graph_selected: Option<String>,
     pub expanded_groups: std::collections::HashSet<String>,
     pub plots: Arc<Vec<crate::plugin_plot::Plot>>,
     pub parameter_bounds:
@@ -99,8 +100,9 @@ impl PluginWindow {
                     || owner
                         .document
                         .plugin
-                        .change()
-                        .is_some_and(|c| c.identity == this.identity);
+                        .changes()
+                        .iter()
+                        .any(|c| c.identity == this.identity);
             }
             if parameters_changed {
                 this.project_edit(owner);
@@ -126,6 +128,7 @@ impl PluginWindow {
             source_ready: false,
             stacked_waveforms: true,
             choice_open: None,
+            graph_selected: None,
             expanded_groups: Default::default(),
             page: panel
                 .as_ref()
@@ -147,12 +150,7 @@ impl PluginWindow {
             copied: false,
             parameter_specs: false,
             recording_selection: Default::default(),
-            recording: owner
-                .read(cx)
-                .document
-                .view
-                .as_ref()
-                .and_then(|v| v.vst3_recording.clone()),
+            recording: None,
             owner: owner.downgrade(),
             focus,
             _subscriptions: vec![project_changes],
@@ -178,6 +176,7 @@ impl PluginWindow {
                 .is_some_and(|p| p.pages.iter().any(|p| p.id == self.page))
         {
             self.choice_open = None;
+            self.graph_selected = None;
             self.expanded_groups.clear();
             self.page = panel
                 .as_ref()
@@ -203,10 +202,11 @@ impl PluginWindow {
         self.details = crate::plugin_identity::follow(&self.project, &self.target, &self.identity)
             .and_then(|target| plugin_details::resolve(&self.project, &target));
         if let Some(details) = &mut self.details {
-            if let Some(change) = owner
+            for change in owner
                 .document
                 .plugin
-                .change()
+                .changes()
+                .iter()
                 .filter(|c| c.identity == self.identity)
                 .filter(|_| owner.document.plugin.gesture.is_some() || owner.presentation_active())
             {

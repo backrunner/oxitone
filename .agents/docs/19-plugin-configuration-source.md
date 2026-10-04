@@ -41,8 +41,10 @@ writer 复用可见 pluginConfig 别名/namespace，避开 type-only 与遮蔽�
 
 VST3 实例面板的 Open/Close native editor 发出 `vst3.controlInstance(site,usage?,action)`，
 只接受单实例配置边界，经 Node 校验后控制 Preview 正在使用的实例，打开/关闭不产生 revision。
-Use current state 发出 `vst3.captureInstance`，捕获 class/hash 绑定的 state/参数，再验证 source reads、generation 和 revision，
+Apply state to code 发出 `vst3.captureInstance`，捕获 class/hash 绑定的 state/参数，再验证 source reads、generation 和 revision，
 写成 `pluginConfig(kind, original).replaceParameters(values).withState(state)` 并原生验证候选。
+外层 info 和内层 configuration 的 class/hash 均须匹配注册，不以外层身份代替状态包校验。
+面板明确提示厂商窗口中的更改仍需 Apply state to code，再 Save 才落盘。
 不替换 Project slot，因此实例 ID、typed automation、mix/bypass、其他相同插件保持不变。
 重复接受相同配置不产生 revision；状态变化时仅归约 writer 发射的 literal wrapper，保留工厂调用、副作用与注释，不堆积旧
 opaque payload。accepted graph、Undo/Redo 和 Save 沿用同一源码事务；厂商窗口修改直接
@@ -71,6 +73,9 @@ review 展示源文件前后全文、每条链的效果器数量、使用范围�
 测试通过真实 cc 编译的 fixture.gain 动态库及仅 JS 的 npm rack：review/cancel/confirm、
 两个相同插件只改一个、其他 Channel/Bus 保持、原工厂调用次数保留、参数越界拒绝、保存
 新进程重开和 npm JS/动态库 hash 不变。没有打开音频设备。
+`external-configuration.test.ts` 另以真实双参数 C fixture 验证带点号的 ID、plugin mix/host Mix
+分离、原子修改、非法值/过期 revision/错误实例拒绝、撤销重做，以及保存重开后的离线 WAV
+逐字节一致；测试不会打开系统音频设备。
 
 这是现行 ABI 1 的初始配置回写，不声称外部资源/state、参数连续试听、typed event targets、
 插件安装/替换/升级、并行 rack 和 opaque DSP 拆散已完成。

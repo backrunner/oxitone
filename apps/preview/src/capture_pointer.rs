@@ -29,6 +29,17 @@ pub fn dispatch_checked(
             unsafe { Encoding::from_str("{CGPoint=dd}") }
         }
     }
+    let (click_count, modifiers) = match &input {
+        PlatformInput::MouseDown(e) => (e.click_count.max(1), e.modifiers),
+        PlatformInput::MouseUp(e) => (e.click_count.max(1), e.modifiers),
+        PlatformInput::MouseMove(e) => (1, e.modifiers),
+        _ => panic!("capture pointer accepts mouse events only"),
+    };
+    let flags = (usize::from(modifiers.shift) << 17)
+        | (usize::from(modifiers.control) << 18)
+        | (usize::from(modifiers.alt) << 19)
+        | (usize::from(modifiers.platform) << 20)
+        | (usize::from(modifiers.function) << 23);
     let (position, kind) = match input {
         PlatformInput::MouseDown(e) => (
             e.position,
@@ -65,8 +76,8 @@ pub fn dispatch_checked(
             let number: isize = msg_send![native, windowNumber];
             let mut event: *mut Object = msg_send![class!(NSEvent), mouseEventWithType: kind as usize
                 location: NativePoint { x: f32::from(position.x) as f64, y: height - f32::from(position.y) as f64 }
-                modifierFlags: 0usize timestamp: 0_f64 windowNumber: number context: std::ptr::null_mut::<Object>()
-                eventNumber: 0isize clickCount: 1isize pressure: 1_f32];
+                modifierFlags: flags timestamp: 0_f64 windowNumber: number context: std::ptr::null_mut::<Object>()
+                eventNumber: 0isize clickCount: click_count as isize pressure: 1_f32];
             assert!(!event.is_null());
             if matches!(kind, 3 | 4 | 7) {
                 // The NSEvent constructor leaves buttonNumber at zero, even for right events.

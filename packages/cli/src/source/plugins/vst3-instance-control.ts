@@ -36,5 +36,11 @@ export async function controlVst3Instance(
     info.sha256 !== endpoint.registration.metadata.sha256
   )
     throw new OxitoneError(ErrorCode.PluginManifestMismatch, "VST3 capture changed instance identity");
-  return vst3ConfigurationSchema.parse(info.configuration);
+  const configuration = vst3ConfigurationSchema.parse(info.configuration);
+  if (
+    configuration.classId.toLowerCase() !== endpoint.registration.source.classId.toLowerCase() ||
+    configuration.sha256 !== endpoint.registration.metadata.sha256
+  )
+    throw new OxitoneError(ErrorCode.PluginManifestMismatch, "VST3 captured state changed plugin identity");
+  return configuration;
 }

@@ -7,7 +7,7 @@ pub fn control_view(control: &Control, parameter: &ParameterDetail, theme: Theme
     if matches!(control, Control::Fader { .. }) {
         return fader(label, parameter, theme);
     }
-    let mut root = div().h(px(94.)).px_1().flex().flex_col().items_center();
+    let mut root = div().h(px(100.)).px_1().flex().flex_col().items_center();
     root = root.child(
         div()
             .w_full()
@@ -84,6 +84,10 @@ pub fn control_view(control: &Control, parameter: &ParameterDetail, theme: Theme
     }
     root.child(
         div()
+            .px_2()
+            .py(px(2.))
+            .rounded(px(4.))
+            .bg(rgb(theme.scope))
             .text_size(px(11.))
             .font_weight(FontWeight::MEDIUM)
             .text_color(rgb(if parameter.automation.is_empty() {
@@ -109,7 +113,11 @@ pub fn value(parameter: &ParameterDetail) -> String {
     if parameter.spec.id == "time" {
         return format!("{v:.2}×");
     }
+    if parameter.spec.unit == ParameterUnit::Normalized && parameter.spec.id.ends_with(".q") {
+        return format!("{v:.2}");
+    }
     match parameter.spec.unit {
+        ParameterUnit::Db => format!("{v:.1} dB"),
         ParameterUnit::Hz if v >= 1000. => format!("{:.2} kHz", v / 1000.),
         ParameterUnit::Hz if v < 10. => format!("{v:.2} Hz"),
         ParameterUnit::Hz => format!("{v:.0} Hz"),

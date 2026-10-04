@@ -27,10 +27,6 @@ pub fn view(
         .mb_2()
         .overflow_hidden();
     match control {
-        Control::Envelope { .. } => root.child(crate::plugin_dial::envelope(
-            [values[0], values[1], values[2], values[3]],
-            theme,
-        )),
         Control::Oscillator {
             bank,
             warp_mode,

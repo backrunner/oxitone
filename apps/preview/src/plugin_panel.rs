@@ -46,11 +46,7 @@ pub fn view(this: &PluginWindow, width: f32, cx: &mut Context<PluginWindow>) -> 
         return content;
     };
     if !this.project.panels.layouts.contains_key(&key) && !this.plots.is_empty() {
-        content = content.child(crate::plugin_plot_view::view(
-            this.plots.clone(),
-            theme,
-            width,
-        ));
+        content = content.child(crate::plugin_plot_view::view(this, width, cx));
     }
     content
         .child(crate::plugin_panel_groups::view(

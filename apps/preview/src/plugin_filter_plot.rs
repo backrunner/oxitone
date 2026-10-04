@@ -1,5 +1,7 @@
 //! Frequency diagrams use the same EQ coefficients and filter parameter semantics as DSP.
 use crate::{
+    plugin_graph_handle::{Axis, Handle},
+    plugin_parameter_drag::Range,
     plugin_plot::{Input, Plot, Trace},
     plugin_response_view::response_db,
 };
@@ -21,6 +23,7 @@ pub fn build(p: &Input<'_>) -> Vec<Plot> {
     };
     let mut plot = Plot::new(title, detail);
     p.frequency_axis(&mut plot);
+    plot.baseline = 1. / 3.;
     plot.y = [
         (0., "+24"),
         (1. / 3., "0 dB"),
@@ -30,6 +33,7 @@ pub fn build(p: &Input<'_>) -> Vec<Plot> {
     .map(|(v, s)| (v, s.into()))
     .to_vec();
     if p.id() == "oxitone.eq" {
+        plot.baseline = 0.5;
         let y = |db: f64| (24. - db) / 48.;
         plot.y = [
             (0., "+24"),
@@ -66,20 +70,32 @@ pub fn build(p: &Input<'_>) -> Vec<Plot> {
             })
             .collect();
         for (i, coefficients) in bands.iter().enumerate() {
-            plot.curve("", 2, |x| {
+            plot.curve(&format!("Band {}", i + 1), i + 1, |x| {
                 y(response_db(*coefficients, p.hz(x), p.sample_rate))
             });
             let hz = p.v(&format!("band{}.freqHz", i + 1));
             let x = ((hz / 20.).ln() / (p.hz_max() / 20.).ln()) as f32;
-            plot.regions.push(crate::plugin_plot::Region {
-                label: String::new(),
-                rect: [
-                    x - 0.004,
-                    (y(p.v(&format!("band{}.gainDb", i + 1))) - 0.02) as f32,
-                    0.008,
-                    0.04,
-                ],
-                color: 0,
+            plot.handles.push(Handle {
+                label: (i + 1).to_string(),
+                position: (x, y(p.v(&format!("band{}.gainDb", i + 1))) as f32),
+                color: i + 1,
+                auxiliary: if i == 1 || i == 2 {
+                    p.details
+                        .parameters
+                        .iter()
+                        .find(|v| v.spec.id == format!("band{}.q", i + 1))
+                        .map(|v| Axis::new(v.spec.id.clone(), Range::parameter(&v.spec)))
+                } else {
+                    None
+                },
+                x: Some(Axis::new(
+                    format!("band{}.freqHz", i + 1),
+                    Range::frequency(p.hz_max()),
+                )),
+                y: Some(Axis::new(
+                    format!("band{}.gainDb", i + 1),
+                    Range::linear(-24., 24.),
+                )),
             });
         }
         plot.curve("Sum", 0, |x| {
@@ -90,6 +106,25 @@ pub fn build(p: &Input<'_>) -> Vec<Plot> {
         });
     } else {
         plot.curve("Wet", 0, |x| y(filter_db(p, p.hz(x))));
+        if matches!(p.id(), "oxitone.filter" | "oxitone.nonlinear-filter") {
+            let resonance = p
+                .details
+                .parameters
+                .iter()
+                .find(|v| v.spec.id == "resonance")
+                .unwrap();
+            plot.handles.push(Handle {
+                label: "F".into(),
+                position: (
+                    Range::frequency(p.hz_max()).fraction(p.v("cutoffHz")) as f32,
+                    y(filter_db(p, p.v("cutoffHz"))) as f32,
+                ),
+                color: 0,
+                auxiliary: None,
+                x: Some(Axis::new("cutoffHz", Range::frequency(p.hz_max()))),
+                y: Some(Axis::new("resonance", Range::parameter(&resonance.spec))),
+            });
+        }
     }
     vec![plot]
 }

@@ -53,6 +53,7 @@ pub fn build(p: &Input<'_>) -> Vec<Plot> {
             plot.detail = "Shaded range retains the current gate state".into();
         }
     }
+    crate::plugin_dynamics_handles::transfer(p, &mut plot);
     vec![plot, if bands { crossovers(p) } else { timing(p) }]
 }
 pub fn transfer(p: &Input<'_>, input: f64, band: usize) -> f64 {
@@ -153,6 +154,7 @@ fn crossovers(p: &Input<'_>) -> Plot {
     plot.y = vec![(0., "+18 dB".into()), (0.5, "0".into()), (1., "−18".into())];
     let edge = |hz: f64| ((hz / 20.).ln() / (p.hz_max() / 20.).ln()).clamp(0., 1.) as f32;
     let edges = [0., edge(p.v("lowHz")), edge(p.v("highHz")), 1.];
+    crate::plugin_dynamics_handles::crossovers(p, &mut plot, edges);
     for (i, name) in ["Low", "Mid", "High"].into_iter().enumerate() {
         plot.regions.push(Region {
             label: name.into(),

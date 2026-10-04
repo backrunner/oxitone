@@ -173,6 +173,32 @@ DAW 的 bundled/third-party knob、fader、toggle、choice 共用文档编辑入
 图形投影，拒绝后恢复。重排后仍通过实例的当前使用位置查询配置 site。
 所有保存、撤销和重做继续走 Node Document Service；普通 preview 保持只读。
 
+### 图形直接操作与视觉层次
+
+响应图使用更大的坐标区、轻填充、主曲线高亮与有色节点；EQ 四个频段的曲线、节点、
+分组和旋钮保持同色，宽窗四组并排，窄窗折行。双振荡器分别采用 A/B 色，波表视图
+提供 12 层 source 切片和当前 position 的高亮填充；Sub 波形幅度跟随声明的 level，
+相位、声部数与 octave 以参数读数显示，不推测当前发声状态。
+
+- EQ 节点横向编辑对数频率、纵向编辑增益；Filter/Nonlinear Filter 与声明式 filterResponse
+  横向编辑 cutoff、纵向编辑 resonance。图轴频率映射与响应绘制使用相同的 sampleRate 上限。
+- 图中空白处可选取距离最近的节点并拖动；无移动不改值，选中节点在图下显示精确 source 数值。
+  EQ 中间频段按 Option/Alt 纵向拖动只改 Q，保留频率与增益。压缩器节点横向改 threshold、
+  纵向改 makeup，Option/Alt 只改 knee；Compactor 改 threshold/output，Gate 改 threshold，
+  Limit/Limiter 改 ceiling。多段处理器分频图提供两个频率节点和三个 band trim 节点。
+- 声明式 ADSR 图提供 A/D/S/R 节点和数值条：A/R 横向编辑时间，D 同时编辑 decay 与 sustain，
+  S 纵向编辑 sustain；拖动期间时间轴与示意 hold 固定，节点跟随指针。结束手势后自适应缩放，
+  右侧保留 Release 拖动空间。hold 仍为明确标注的示意值，图形不表示曲率或 live 包络。
+- 每个二维手势包含同一实例的最多两个 plugin 参数。UI 投影与 pending 投影同时覆盖两个参数，
+  释放后提交一个 Configuration parameters map，Undo/Redo 作为整体恢复。Shift 降低增量至 1/10，
+  双击同时恢复节点所绑定的默认值，Escape/外部 revision 取消整个手势，无移动点击不提交。
+  图形绑定保留 descriptor 的范围和 enum 取整；只读 Preview 不可编辑。
+
+复用 UI 1.0 的已有绑定，不新增音频回调工作、连续 DSP setter、音频实例或实时遥测协议。
+`smoke-builtin-panels.mjs --edit-graph` 通过模拟输出和原生指针事件验证 EQ、Filter、ADSR、
+Compressor 的二维投影、单 revision、实例隔离、整体撤销/重做、取消、默认值恢复与保存后重开，
+包括从图面选择节点和 Option/Alt 修改 Q/knee 时其他轴不变。
+
 Delay 按引擎时间优先级只显示当前生效的时间旋钮：显式 `timeSeconds` 使用秒数，
 否则使用 `timeBeats`。时间单位由源配置决定；Inspect 保留全部参数。图形不把
 未暴露的实际 IR、onset markers 或 DSP 运行态猜测为信号数据。专用图形只用于

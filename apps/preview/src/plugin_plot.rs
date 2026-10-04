@@ -21,6 +21,8 @@ pub struct Plot {
     pub y: Vec<(f32, String)>,
     pub traces: Vec<Trace>,
     pub regions: Vec<Region>,
+    pub handles: Vec<crate::plugin_graph_handle::Handle>,
+    pub baseline: f32,
 }
 impl Plot {
     pub fn new(title: &str, detail: impl Into<String>) -> Self {
@@ -31,6 +33,8 @@ impl Plot {
             y: vec![],
             traces: vec![],
             regions: vec![],
+            handles: vec![],
+            baseline: 1.,
         }
     }
     pub fn curve(&mut self, label: &str, color: usize, f: impl Fn(f64) -> f64) {
