@@ -1,6 +1,24 @@
 use super::*;
 
 impl Engine {
+    pub fn set_metronome(&mut self, enabled: bool) {
+        let result = if let Some(session) = &self.session {
+            session.set_metronome_enabled(enabled)
+        } else if let Some(graph) = &mut self.graph {
+            graph.set_metronome_enabled(enabled);
+            Ok(())
+        } else {
+            Err(wire::invalid("no accepted project"))
+        };
+        match result {
+            Ok(()) => self.metronome = enabled,
+            Err(error) => {
+                self.error(error);
+            }
+        }
+        let _ = self.events.send(UiEvent::Metronome(self.metronome));
+    }
+
     pub(super) fn transport(&mut self, cmd: NativeCommand) -> Result<(), OxitoneError> {
         let NativeCommand::Transport {
             command,

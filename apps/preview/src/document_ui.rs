@@ -13,6 +13,7 @@ pub struct DocumentUi {
     pub presentation_revision: Option<u64>,
     pub show_code: bool,
     pub patterns_open: bool,
+    pub browser_open: bool,
     pub patterns_selected: Option<String>,
     pub playlist: crate::playlist_edit::PlaylistUi,
     pub mixer: crate::mixer_edit::MixerUi,

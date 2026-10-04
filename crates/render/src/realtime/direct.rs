@@ -68,6 +68,11 @@ impl DirectCore {
 
     fn handle(&mut self, msg: WorkerMsg) {
         match msg {
+            WorkerMsg::Metronome(enabled) => {
+                if let Some(graph) = self.graph.as_mut() {
+                    graph.set_metronome_enabled(enabled);
+                }
+            }
             WorkerMsg::Transport(cmd) => {
                 if let Some(graph) = self.graph.as_mut() {
                     apply_transport(graph, &cmd, &self.mirror);

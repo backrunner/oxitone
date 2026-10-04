@@ -18,6 +18,7 @@ use std::{
 };
 
 pub enum Command {
+    Metronome(bool),
     Document(crate::document_wire::DocumentRequest),
     Frame(Frame, Option<Sender<Value>>),
     Vst3Control {
@@ -58,6 +59,7 @@ impl Backend {
                 let mut vst3_tasks = 0usize;
                 while !engine_stop.load(Ordering::Relaxed) {
                     match receiver.recv_timeout(Duration::from_millis(33)) {
+                        Ok(Command::Metronome(enabled)) => engine.set_metronome(enabled),
                         Ok(Command::Document(request)) => {
                             if document_requests.len() < 64 {
                                 document_requests.push_back(request);

@@ -1,3 +1,4 @@
+mod about;
 mod analysis;
 mod arrangement;
 mod automation_curve;
@@ -12,6 +13,7 @@ mod automation_panel;
 mod automation_state;
 mod automation_thumbnail;
 mod backend;
+mod browser_sidebar;
 mod capture;
 mod capture_builtin;
 mod capture_controls;
@@ -26,12 +28,14 @@ mod capture_navigation;
 mod capture_piano;
 mod capture_plugin_install;
 mod capture_pointer;
+mod capture_studio;
 #[cfg(target_os = "macos")]
 mod capture_surface;
 mod capture_synth;
 mod capture_track_drag;
 mod capture_transport;
 mod capture_ui_review;
+mod capture_view_menu;
 mod capture_vst3;
 mod capture_vst3_files;
 mod capture_windows;
@@ -52,8 +56,10 @@ mod drag_projection_tests;
 #[cfg(test)]
 mod editing_bench;
 mod engine;
+mod header_workflow;
 mod internal_window_frame;
 mod internal_windows;
+mod master_monitor;
 mod mixer;
 mod mixer_actions;
 mod mixer_chain;
@@ -81,8 +87,11 @@ mod note_velocity_tests;
 mod parameter_format;
 mod parameter_view;
 mod pattern_manager;
+mod pattern_navigation;
 mod pattern_parts;
+mod pattern_picker;
 mod pattern_preview;
+mod pattern_rack;
 mod piano;
 mod piano_actions;
 mod piano_divider;
@@ -185,6 +194,7 @@ mod timeline_input;
 mod ui;
 mod ui_controls;
 mod ui_icons;
+mod view_menu;
 mod vst3_controls;
 mod vst3_files;
 mod vst3_input;
@@ -243,36 +253,39 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         return Ok(());
     }
-    Application::new().run(move |cx: &mut App| {
-        assert!(
-            !cx.text_system().all_font_names().is_empty(),
-            "Preview requires GPUI's native font-kit backend"
-        );
-        let bounds = Bounds::centered(None, capture::window_size(), cx);
-        cx.open_window(
-            WindowOptions {
-                window_bounds: Some(WindowBounds::Windowed(bounds)),
-                titlebar: Some(TitlebarOptions {
-                    title: Some("Oxitone · Project Preview".into()),
-                    appears_transparent: true,
-                    // GPUI expects the traffic-light origin (not its center).
-                    // 44px chrome keeps the 20px controls vertically centered.
-                    traffic_light_position: Some(point(px(18.), px(17.))),
-                }),
-                window_min_size: Some(size(px(1060.), px(720.))),
-                ..Default::default()
-            },
-            |window, cx| cx.new(|cx| ui::Preview::new(backend, window, cx)),
-        )
-        .expect("open preview window");
-        cx.on_window_closed(|cx| {
-            if cx.windows().is_empty() {
-                cx.quit();
-            }
-        })
-        .detach();
-        cx.activate(true);
-    });
+    Application::new()
+        .with_assets(about::BrandAssets)
+        .run(move |cx: &mut App| {
+            assert!(
+                !cx.text_system().all_font_names().is_empty(),
+                "Preview requires GPUI's native font-kit backend"
+            );
+            let bounds = Bounds::centered(None, capture::window_size(), cx);
+            cx.open_window(
+                WindowOptions {
+                    window_bounds: Some(WindowBounds::Windowed(bounds)),
+                    titlebar: Some(TitlebarOptions {
+                        title: Some("Oxitone · Project Preview".into()),
+                        appears_transparent: true,
+                        // GPUI expects the traffic-light origin (not its center).
+                        // 44px chrome keeps the 20px controls vertically centered.
+                        traffic_light_position: Some(point(px(18.), px(17.))),
+                    }),
+                    window_min_size: Some(size(px(1060.), px(720.))),
+                    ..Default::default()
+                },
+                |window, cx| cx.new(|cx| ui::Preview::new(backend, window, cx)),
+            )
+            .expect("open preview window");
+            about::install_menu(cx);
+            cx.on_window_closed(|cx| {
+                if cx.windows().is_empty() {
+                    cx.quit();
+                }
+            })
+            .detach();
+            cx.activate(true);
+        });
     Ok(())
 }
 mod capture_configuration;

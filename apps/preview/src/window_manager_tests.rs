@@ -104,7 +104,7 @@ fn hit_testing_respects_desktop_origin_and_window_order() {
         },
     );
     m.set_bounds(
-        WindowId::Patterns,
+        WindowId::Browser,
         WindowBounds {
             x: 20.,
             y: 20.,
@@ -112,8 +112,8 @@ fn hit_testing_respects_desktop_origin_and_window_order() {
             height: 400.,
         },
     );
-    m.visible = vec![WindowId::Piano, WindowId::Patterns];
-    assert_eq!(m.hit(point(px(30.), px(130.))), Some(WindowId::Patterns));
+    m.visible = vec![WindowId::Piano, WindowId::Browser];
+    assert_eq!(m.hit(point(px(30.), px(130.))), Some(WindowId::Browser));
     assert_eq!(m.hit(point(px(300.), px(130.))), Some(WindowId::Piano));
     assert_eq!(m.hit(point(px(30.), px(30.))), None);
     m.hidden = true;

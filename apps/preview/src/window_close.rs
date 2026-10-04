@@ -20,6 +20,9 @@ impl Preview {
         }
         self.close.open = true;
         self.show_shortcuts = false;
+        self.show_about = false;
+        self.pattern_picker.selected = None;
+        self.view_menu.selected = None;
         crate::pointer_capture::cancel(self);
         self.workspace_focus.focus(window);
         cx.notify();
@@ -62,6 +65,13 @@ impl Preview {
             }
             cx.stop_propagation();
             cx.notify();
+        } else if self.show_about {
+            if matches!(key.key.as_str(), "escape" | "enter") {
+                self.show_about = false;
+                self.workspace_focus.focus(window);
+            }
+            cx.stop_propagation();
+            cx.notify();
         } else if key.key == "q"
             && key.modifiers.platform
             && !key.modifiers.alt
@@ -71,6 +81,10 @@ impl Preview {
                 self.request_close(window, cx);
             }
             cx.stop_propagation();
+        } else if self.view_menu.selected.is_some() {
+            self.view_menu_key(event, window, cx);
+        } else if self.pattern_picker.selected.is_some() {
+            self.pattern_picker_key(event, window, cx);
         }
     }
     pub fn close_review(&self, cx: &mut Context<Self>) -> impl IntoElement {

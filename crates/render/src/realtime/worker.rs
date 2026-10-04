@@ -54,6 +54,7 @@ impl TransportCmd {
 /// Messages from the control thread to the render thread. `Box` payloads
 /// are allocated on the control side; the queue itself is preallocated.
 pub enum WorkerMsg {
+    Metronome(bool),
     Transport(TransportCmd),
     Param(QueuedParameterEvent),
     ReplaceGraph(Box<RenderGraph>),
@@ -273,6 +274,11 @@ impl WorkerCore {
 
     fn handle(&mut self, msg: WorkerMsg) {
         match msg {
+            WorkerMsg::Metronome(enabled) => {
+                if let Some(graph) = self.graph.as_mut() {
+                    graph.set_metronome_enabled(enabled);
+                }
+            }
             WorkerMsg::Transport(cmd) => {
                 if let Some(graph) = self.graph.as_mut() {
                     apply_transport(graph, &cmd, &self.mirror);

@@ -18,6 +18,12 @@ pub struct Preview {
     pub requested_playing: Option<bool>,
     pub requested_position: Option<(u64, u64)>,
     pub show_shortcuts: bool,
+    pub view_menu: crate::view_menu::ViewMenu,
+    pub pattern_picker: crate::pattern_navigation::PatternPicker,
+    pub metronome: bool,
+    pub metronome_pending: Option<bool>,
+    pub show_about: bool,
+    pub workflow_bounds: std::rc::Rc<std::cell::Cell<Bounds<Pixels>>>,
     pub status_details: bool,
     pub close: crate::close_state::CloseState,
     pub analysis: AnalysisMap,
@@ -81,6 +87,12 @@ impl Preview {
             requested_playing: None,
             requested_position: None,
             show_shortcuts: false,
+            view_menu: Default::default(),
+            pattern_picker: Default::default(),
+            metronome: false,
+            metronome_pending: None,
+            show_about: false,
+            workflow_bounds: Default::default(),
             status_details: false,
             close: Default::default(),
             analysis: AnalysisMap::new(),
@@ -106,18 +118,18 @@ impl Preview {
     fn poll(&mut self, cx: &mut Context<Self>) {
         while let Ok(event) = self.backend.events.try_recv() {
             match event {
+                UiEvent::Metronome(enabled) => {
+                    self.metronome = enabled;
+                    self.metronome_pending = None;
+                }
                 UiEvent::Document(message) => self.observe_document(message),
                 UiEvent::Accepted(project) => {
-                    if !project
-                        .snapshot
-                        .pattern_clips
-                        .iter()
-                        .any(|clip| Some(&clip.id) == self.selected_clip.as_ref())
-                    {
-                        self.selected_clip = project.initial_clip().map(|clip| clip.id.clone());
-                    }
                     if self.project.is_none() {
                         self.loop_end = project.plan.content_end_beat.to_f64().max(4.0);
+                        self.document.patterns_open = true;
+                        self.document
+                            .windows
+                            .focus(crate::window_manager::WindowId::Patterns);
                     }
                     if !project
                         .telemetry
@@ -134,6 +146,7 @@ impl Preview {
                         self.analysis.clear();
                     }
                     self.project = Some(project);
+                    self.reconcile_pattern_selection();
                     self.settle_presentation();
                     self.diagnostic = None;
                     self.status = "Code up to date".into();

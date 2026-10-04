@@ -1,0 +1,66 @@
+{
+  "benchmark": "render/realtime soak",
+  "plugin": null,
+  "pluginFaults": null,
+  "date": "2026-10-05",
+  "machine": {
+    "cpu": "Apple M5 Max",
+    "os": "macOS 27.0.1",
+    "arch": "aarch64",
+    "rustc": "rustc 1.98.1 (48a229cea 2026-09-01) (Homebrew)"
+  },
+  "sink": "simulated",
+  "device": null,
+  "config": {
+    "sampleRate": 48000,
+    "blockSize": 128,
+    "renderAheadBlocks": 4,
+    "latencyMode": "buffered",
+    "tracks": 8,
+    "automationLanes": 8,
+    "seed": 7,
+    "seconds": 15,
+    "metronome": true,
+    "metronomeToggles": 59,
+    "loopEndFrame": 768000,
+    "workerJitter": null
+  },
+  "latency": {
+    "frames": 674,
+    "seconds": 0.014041666666666666,
+    "breakdown": {
+      "ring": 512,
+      "resampler": 0,
+      "deviceBuffer": 128,
+      "safetyOffset": 10,
+      "deviceLatency": 24
+    }
+  },
+  "results": {
+    "blocks": 5647,
+    "xruns": 0,
+    "deadlineMisses": 0,
+    "nanBlocks": 0,
+    "queueDrops": 0,
+    "performanceWarnings": 0,
+    "engineLoadEma": 0.136902719978818,
+    "engineLoadMax": 0.1596222949122178,
+    "ringOccupancyMaxFrames": 512,
+    "blockTimeNs": {
+      "p50": 524288,
+      "p95": 524288,
+      "p99": 524288,
+      "max": 1048576,
+      "deadline": 2666666
+    },
+    "events": []
+  },
+  "measurement": {
+    "blockTime": "buffered render worker; logarithmic histogram upper bounds",
+    "callbackP95Ns": null,
+    "callbackP99Ns": null,
+    "cpuUtilization": null,
+    "physicalDevice": null,
+    "releaseAcceptance": false
+  }
+}

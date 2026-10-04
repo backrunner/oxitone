@@ -115,10 +115,22 @@ Engine 1.4 的乐器辅助输出也进入 Mixer 的 Routing/Signal Flow 和目�
 
 - 窗口内容延伸到顶部，系统标题文字/独立标题栏隐藏；44 px 标题区放工程名与编辑器导航，
   标题只使用真实工程名（未命名为 Untitled）及修改标记，不放 slogan 或重复品牌。
-  48 px 传输栏集中播放、位置、BPM 与 Undo/Redo/Save。保留原生 macOS 交通灯按钮。
+  48 px 传输栏集中播放、位置与 Undo/Redo/Save。保留原生 macOS 交通灯按钮。
   非交互标题区可拖动，双击遵循系统标题栏偏好；全屏时收回交通灯预留空间。
-- 标题区将 Arrange / Piano / Mixer 作为独立的图标与文字主视图组；右上角只保留
-  Automation、Plugins、Browser 和快捷键图标入口，使用悬停名称、选中态与分隔线区分层级。
+- 标题栏包含 Pattern 选择器与前后切换、静态 BPM 编辑、运行时节拍器开关，以及
+  Master 波形和 Peak/RMS 电平。Master 固定读取最终 limiter 后的原生遥测，复用 UI
+  分析缓存而不增加 ring 消费者；电平两行明确标为 PK/RMS，不冒充左右声道。
+  节拍器默认关闭，控制线程经有界原生命令队列在 block boundary 生效，不修改工程源码；
+  曲速沿用文档事务，支持 Undo/Save，复杂 tempo map/automation 仍只读。
+- 标题区右上角使用单个 Views 图标下拉入口，不常驻帮助按钮。菜单提供
+  Arrange / Piano / Mixer / Patterns、Browser、DAW 的 Automation / Plugins 和 About Oxitone，勾选当前视图；
+  点击恢复或聚焦已有视图，Arrange 隐藏内部窗口。方向键选择、Enter 确认，Escape、Tab
+  或点击菜单外关闭；菜单打开时隔离底层编辑与播放操作，F5/F7/F9 保留原有快捷键语义。
+  Pattern 下拉及前后按钮仅切换选中资源、对应 placement 和编辑视图，不启动播放或改写源码。
+  独立 Patterns 浮窗显示选中 Pattern 的声部、Channel、音符预览及音源/钢琴入口；
+  Browser 继续管理 Pattern/Sample/Automation 资源，支持独立浮动、左侧停靠和宽度调整。
+  About 使用内嵌品牌 SVG、实际构建版本、项目/许可证链接和原生应用菜单入口；
+  快捷键帮助保留在 Help 菜单和 ?，About/帮助/关闭确认隔离底层键盘与指针。
   插件面板只显示一条固定的声音分页导航，参数检查、资源及插件信息收于 Inspect 入口。
 - 外观始终跟随当前窗口的系统 Light/Dark（含 Vibrant）appearance，启动时读取并
   订阅运行中的变化，无须重启。轨道、钢琴窗、Mixer、Scopes、诊断、按钮 hover/active
@@ -136,7 +148,8 @@ Engine 1.4 的乐器辅助输出也进入 Mixer 的 Routing/Signal Flow 和目�
   手势在窗口 capture 阶段跟踪，跨 sibling hitbox 后继续，尺寸按实测工作区计算，不扣固定标题高度。
   Velocity 分隔线在 prepaint 使用本帧实际画布高度计算命中区与拖动上限，切换独占/停靠时
   不沿用上一帧的小面板坐标或上限；绘制与手势使用相同的力度区夹紧规则。
-  Arrange 默认上方编排、下方整宽钢琴窗；编排栏的停靠工具可切换整宽 Piano/Mixer、并排
+  初次打开默认 Arrange + 独立 Patterns 浮窗，不打开钢琴窗或底部停靠区；watch 更新不
+  重置用户关闭、停靠、尺寸及选择。编排栏的停靠工具可切换整宽 Piano/Mixer、并排
   或再次点击收起。缩放控件位于各自编辑器。F5/F7/F9 或最大化图标切换编排/钢琴独占/Mixer 独占；
   恢复保留停靠配置、尺寸与独立滚动/缩放。独占指完整编辑工作区，可配合原生窗口全屏；
   不是新建第二个文档或 DSP 实例。Analysis 默认折叠，不占工作区行，通过底栏波形图标展开；Mixer 详情默认收起。
@@ -149,7 +162,7 @@ Engine 1.4 的乐器辅助输出也进入 Mixer 的 Routing/Signal Flow 和目�
 - 快捷键帮助和关闭确认在根捕获阶段隔离键盘及指针，阻止底层音符、Undo、播放和内部窗口快捷键，
   并取消活动手势。源码错误与 native 图诊断分别持有，迟到的 native Accepted 不清除源码失败；
   底栏区分 Saved、Modified、Syncing、Updating audio、Saving、Invalid code、Conflict、Error 与 Disconnected。
-- Browser、Piano、Mixer、Automation、Plugin Library、实例配置和插件面板共用一个内部窗口管理器。
+- Patterns、浮动 Browser、Piano、Mixer、Automation、Plugin Library、实例配置和插件面板共用一个内部窗口管理器。
   Plugin Library 的 Add VST3 / Offline tools 提供本地检查、参数和 WAV 渲染；Files / project
   保存/加载独立预设，并把最近渲染冻结为可 Undo/Save 的 Playlist 音轨。所有操作经过
   Document Service；能力与测试边界见 [24-vst3-sdk.md](24-vst3-sdk.md)。

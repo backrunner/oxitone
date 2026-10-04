@@ -24,7 +24,7 @@ fn beat(n: i64, d: u32) -> Beat {
     Beat::new(n, d).unwrap()
 }
 
-fn playable_snapshot() -> ProjectSnapshot {
+pub(super) fn playable_snapshot() -> ProjectSnapshot {
     let note = |pitch: u8, start: (i64, u32)| NoteSpec {
         id: None,
         pitch,

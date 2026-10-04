@@ -27,7 +27,7 @@ impl Smoke {
                 view.update(cx, |s, cx| {
                     s.document.show_code = false;
                     s.show_scopes = false;
-                    s.document.patterns_open = true;
+                    s.document.browser_open = true;
                     s.document.automation.open = true;
                     s.document.manager.open = true;
                     s.float_editor(EditorMode::Piano);
@@ -130,9 +130,9 @@ impl Smoke {
                     s.document.manager.open = false;
                     s.document.automation.open = false;
                     s.workspace.dock_open = false;
-                    s.document.windows.focus(WindowId::Patterns);
+                    s.document.windows.focus(WindowId::Browser);
                     s.document.windows.set_bounds(
-                        WindowId::Patterns,
+                        WindowId::Browser,
                         WindowBounds {
                             x: 12.,
                             y: 12.,

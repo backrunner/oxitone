@@ -5,19 +5,7 @@ use oxitone_core::wire::PatternSpec;
 
 impl Preview {
     pub fn piano_period(&self) -> Option<f64> {
-        let snapshot = &self.project.as_ref()?.snapshot;
-        let clip = snapshot
-            .pattern_clips
-            .iter()
-            .find(|c| Some(&c.id) == self.selected_clip.as_ref())?;
-        Some(
-            snapshot
-                .patterns
-                .iter()
-                .find(|p| p.id == clip.pattern_id)?
-                .length_beats
-                .to_f64(),
-        )
+        Some(self.active_pattern()?.length_beats.to_f64())
     }
     pub fn composite_selected(&self) -> bool {
         self.project.as_ref().is_some_and(|project| {
@@ -31,11 +19,7 @@ impl Preview {
     }
     pub fn piano_pattern(&self) -> Option<&PatternSpec> {
         let snapshot = &self.project.as_ref()?.snapshot;
-        let clip = snapshot
-            .pattern_clips
-            .iter()
-            .find(|c| Some(&c.id) == self.selected_clip.as_ref())?;
-        let root = snapshot.patterns.iter().find(|p| p.id == clip.pattern_id)?;
+        let root = self.active_pattern()?;
         let Some(parts) = &root.parts else {
             return Some(root);
         };
@@ -48,16 +32,7 @@ impl Preview {
 }
 pub fn selector(this: &Preview, cx: &mut Context<Preview>) -> Option<impl IntoElement> {
     let snapshot = &this.project.as_ref()?.snapshot;
-    let clip = snapshot
-        .pattern_clips
-        .iter()
-        .find(|c| Some(&c.id) == this.selected_clip.as_ref())?;
-    let parts = snapshot
-        .patterns
-        .iter()
-        .find(|p| p.id == clip.pattern_id)?
-        .parts
-        .as_ref()?;
+    let parts = this.active_pattern()?.parts.as_ref()?;
     let selected = this
         .piano
         .channel

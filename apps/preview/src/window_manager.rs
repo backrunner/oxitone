@@ -5,6 +5,7 @@ use std::{cell::Cell, collections::BTreeMap, rc::Rc};
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum WindowId {
     Patterns,
+    Browser,
     Automation,
     Plugins,
     Configuration,
@@ -99,7 +100,8 @@ impl WindowManager {
     pub fn state(&self, id: WindowId) -> WindowState {
         self.states.get(&id).copied().unwrap_or_else(|| {
             let (x, y, width, height) = match id {
-                WindowId::Patterns => (12., 12., 244., 420.),
+                WindowId::Browser => (12., 12., 244., 420.),
+                WindowId::Patterns => (290., 28., 560., 300.),
                 WindowId::Automation => (270., 28., 760., 420.),
                 WindowId::Plugins => (160., 44., 540., 480.),
                 WindowId::Configuration => (560., 44., 460., 480.),
@@ -173,7 +175,7 @@ impl WindowManager {
                 top,
                 bottom,
             } => {
-                let min_w = (if drag.id == WindowId::Patterns {
+                let min_w = (if drag.id == WindowId::Browser {
                     190_f32
                 } else {
                     340.

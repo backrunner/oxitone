@@ -12,10 +12,12 @@ pub enum Resize {
     Scopes { height: f32, max: f32 },
     Inspector { width: f32, max: f32 },
     Velocity { height: f32, max: f32 },
+    Browser { width: f32 },
 }
 pub fn apply(this: &mut Preview, region: Resize, delta: Point<Pixels>) {
     let (x, y) = (f32::from(delta.x), f32::from(delta.y));
     match region {
+        Resize::Browser { width } => this.workspace.browser_width = (width + x).clamp(190., 360.),
         Resize::Editor { height, max } => {
             this.workspace.editor_height = (height - y).clamp(220_f32.min(max), max)
         }

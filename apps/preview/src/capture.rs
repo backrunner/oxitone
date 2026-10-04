@@ -58,6 +58,8 @@ pub fn schedule(window: &Window, cx: &mut Context<Preview>) {
         let mut ready_frames = 0;
         let mut transport_smoke = crate::capture_transport::Smoke::default();
         let mut daw_smoke = crate::capture_daw::Smoke::default();
+        let mut view_menu_smoke = crate::capture_view_menu::Smoke::default();
+        let mut studio_smoke = crate::capture_studio::Smoke::default();
         let mut builtin_smoke = crate::capture_builtin::Smoke::default();
         let mut watch_state = String::new();
         let mut settled_frames = 0;
@@ -85,6 +87,17 @@ pub fn schedule(window: &Window, cx: &mut Context<Preview>) {
             surface.redraw();
             if current.is_some() {
                 ready_frames += 1;
+            }
+            if ready_frames == 1 && (daw || navigation || transport) {
+                this.update(cx, |this, cx| {
+                    assert!(!this.workspace.dock_open && this.document.patterns_open);
+                    assert!(!this.document.browser_open && !this.document.windows.piano_open);
+                    eprintln!("Default workspace verified: Arrange and independent Patterns window, no piano dock");
+                    // Existing editing fixtures explicitly request their piano workspace.
+                    this.document.patterns_open = false;
+                    this.workspace.dock_open = true;
+                    cx.notify();
+                }).unwrap();
             }
             if !mixer.is_empty() {
                 this.update(cx, |this, cx| {
@@ -169,6 +182,14 @@ pub fn schedule(window: &Window, cx: &mut Context<Preview>) {
                 })
                 .unwrap();
             }
+            if daw && daw_smoke.complete() && !view_menu_smoke.complete() {
+                cx.update_window(window_handle, |_, window, cx| {
+                    if let Some(view) = this.upgrade() {
+                        view_menu_smoke.step(&view, window, cx);
+                    }
+                })
+                .unwrap();
+            }
             if !builtin.is_empty() {
                 cx.update_window(window_handle, |_, window, cx| {
                     if let Some(view) = this.upgrade() {
@@ -177,9 +198,16 @@ pub fn schedule(window: &Window, cx: &mut Context<Preview>) {
                 })
                 .unwrap();
             }
+            if daw && daw_smoke.complete() && view_menu_smoke.complete() && !studio_smoke.complete() {
+                cx.update_window(window_handle, |_, window, cx| {
+                    if let Some(view) = this.upgrade() { studio_smoke.step(&view, window, cx); }
+                }).unwrap();
+            }
             if ready_frames >= if transport { 36 } else { 14 }
                 && current.is_some_and(|v| v >= revision)
                 && (!daw || daw_smoke.complete())
+                && view_menu_smoke.complete()
+                && studio_smoke.complete()
                 && (builtin.is_empty() || builtin_smoke.complete())
             {
                 // Let the final workspace transition reach the native surface before capture.

@@ -204,6 +204,10 @@ horizon 后按 probability 决定是否暂停，并避免连续 block 暂停。�
 
 使用 Criterion 或等价 Rust harness；microbench 固定 seed 与输入 buffer，并包含 warmup。Realtime benchmark 采用独立高优先级线程、真实 block size 和预热后的 graph，禁止用仅测函数调用的 microbench 代替。realtime-soak 会循环完整 timeline，避免长测试在内容结束后只测静音；可用 `--plugin PATH --plugin-manifest PATH` 给每个 channel 添加已信任的动态效果器，并记录 hash 与 fault 数。
 
+`realtime-soak --simulated --metronome` 预先合成 click buffer，播放期间每 250 ms
+通过有界命令队列切换节拍器，JSON 记录开关次数。blockTimeNs 是 buffered worker 的
+对数直方图上界，不是 HAL callback 时间；模拟输出不代表物理设备或发布 soak 验收。
+
 ## 回归策略
 
 `cargo bench -p oxitone-bench --bench synth_motion --bench electronic_effects`

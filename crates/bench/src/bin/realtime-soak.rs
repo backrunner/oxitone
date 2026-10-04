@@ -7,7 +7,7 @@
 //!
 //! Usage:
 //!   cargo run -p oxitone-bench --release --bin realtime-soak -- \
-//!       [--seconds 600] [--tracks 8] [--simulated] \
+//!       [--seconds 600] [--tracks 8] [--simulated] [--metronome] \
 //!       [--jitter <probability:max-extra-periods:seed>] [--out PATH]
 //!
 //! The default run plays on the system default output device. The project
@@ -29,6 +29,7 @@ struct Args {
     seconds: u64,
     tracks: usize,
     simulated: bool,
+    metronome: bool,
     jitter: Option<JitterConfig>,
     out: Option<PathBuf>,
     plugin: Option<PathBuf>,
@@ -40,6 +41,7 @@ fn parse_args() -> Args {
         seconds: 600,
         tracks: 8,
         simulated: false,
+        metronome: false,
         jitter: None,
         out: None,
         plugin: None,
@@ -51,6 +53,7 @@ fn parse_args() -> Args {
             "--seconds" => args.seconds = argv.next().expect("--seconds value").parse().unwrap(),
             "--tracks" => args.tracks = argv.next().expect("--tracks value").parse().unwrap(),
             "--simulated" => args.simulated = true,
+            "--metronome" => args.metronome = true,
             "--jitter" => {
                 let spec = argv.next().expect("--jitter p:max:seed");
                 let parts: Vec<&str> = spec.split(':').collect();
@@ -164,8 +167,16 @@ fn main() {
     };
     let store = SampleStore::new(None);
     let graph = Box::new(
-        RenderGraph::compile(&snapshot, &registry, &store, &RenderGraphOptions::default())
-            .expect("workload compiles"),
+        RenderGraph::compile(
+            &snapshot,
+            &registry,
+            &store,
+            &RenderGraphOptions {
+                metronome_level: args.metronome.then_some(0.5),
+                ..Default::default()
+            },
+        )
+        .expect("workload compiles"),
     );
 
     let loop_end = graph
@@ -188,8 +199,19 @@ fn main() {
     let mut event_log: Vec<serde_json::Value> = Vec::new();
     let mut engine_load_max = 0.0f64;
     let mut occupancy_max = 0usize;
+    let mut metronome_enabled = args.metronome;
+    let mut metronome_toggles = 0;
     while started.elapsed() < Duration::from_secs(args.seconds) {
-        std::thread::sleep(Duration::from_secs(5));
+        std::thread::sleep(Duration::from_millis(if args.metronome {
+            250
+        } else {
+            5000
+        }));
+        if args.metronome {
+            metronome_enabled = !metronome_enabled;
+            session.set_metronome_enabled(metronome_enabled).unwrap();
+            metronome_toggles += 1;
+        }
         let snapshot = session.snapshot_diagnostics();
         engine_load_max = engine_load_max.max(snapshot.engine_load);
         occupancy_max = occupancy_max.max(snapshot.ring_occupancy_frames);
@@ -237,6 +259,8 @@ fn main() {
             "automationLanes": snapshot.automation.len(),
             "seed": SEED,
             "seconds": args.seconds,
+            "metronome": args.metronome,
+            "metronomeToggles": metronome_toggles,
             "loopEndFrame": loop_end,
             "workerJitter": args.jitter.map(|j| json!({
                 "probability": j.probability,

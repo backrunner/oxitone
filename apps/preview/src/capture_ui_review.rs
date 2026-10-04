@@ -67,7 +67,10 @@ impl Smoke {
                     .unwrap()
                     .read(cx);
                 let bounds = plugin.source_button.get();
-                assert!(bounds.size.width > px(40.));
+                // Source configuration is now a compact 28 px icon, not a text button.
+                assert_eq!(bounds.size.width, px(28.));
+                assert!(bounds.size.height >= px(24.));
+                assert!(bounds.left() >= px(0.) && bounds.right() <= window.viewport_size().width);
                 self.button = bounds.center();
                 pointer(window, self.button, false, cx);
             }

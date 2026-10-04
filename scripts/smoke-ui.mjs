@@ -8,6 +8,11 @@ import { promisify } from "node:util";
 const output = resolve("target/ui-review");
 await mkdir(output, { recursive: true });
 const scenarios = [
+  ["studio-dark", "1440x920", "dark", { STUDIO: "1" }, "Studio chrome smoke passed:"],
+  ["studio-light-small", "1060x720", "light", { STUDIO: "1" }, "Studio chrome smoke passed:"],
+  ["about-dark", "1060x720", "dark", { STUDIO: "about" }, "Studio chrome smoke passed:"],
+  ["views-dark", "1440x920", "dark", { VIEW_MENU: "1" }, "View menu smoke passed:"],
+  ["views-light-small", "1060x720", "light", { VIEW_MENU: "1" }, "View menu smoke passed:"],
   ["controls-dark", "1440x920", "dark", { CONTROLS: "1" }, "Controls smoke passed:"],
   ["controls-light-small", "1060x720", "light", { CONTROLS: "1" }, "Controls smoke passed:"],
   ["library-dark", "1440x920", "dark", { MANAGER: "1", LIBRARY: "1" }, "Plugin library smoke passed:"],

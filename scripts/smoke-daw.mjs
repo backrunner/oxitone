@@ -94,6 +94,10 @@ try {
     throw new Error(result.stderr);
   if (process.env.OXITONE_PREVIEW_CAPTURE_CONTROLS && !result.stderr.includes("Controls smoke passed:"))
     throw new Error(result.stderr);
+  if (process.env.OXITONE_PREVIEW_CAPTURE_VIEW_MENU && !result.stderr.includes("View menu smoke passed:"))
+    throw new Error(result.stderr);
+  if (process.env.OXITONE_PREVIEW_CAPTURE_STUDIO && !result.stderr.includes("Studio chrome smoke passed:"))
+    throw new Error(result.stderr);
   await checkPluginFiles?.();
   const saved = await readFile(entry, "utf8");
   if (process.env.OXITONE_PREVIEW_CAPTURE_UI_REVIEW && !saved.includes("// UI close review"))

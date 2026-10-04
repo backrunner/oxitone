@@ -47,9 +47,13 @@ WAV 导出通过现有 respectSolo 决定是否尊重，默认忽略；MIDI 忽�
 修改仍经 Document 事务接受、撤销和保存，连续 Track configure 合并各字段，不互相覆盖。
 
 传输栏移除 Locate 输入及 G 快捷键，使用时间轴点击、marker、Home、方向键设置 cue。
-BPM 数字可直接输入，Enter 提交，Escape 或点其他区域取消；
+标题栏 BPM 数字可直接输入，Enter 提交，Escape 或点其他区域取消；
 存在 tempo map 多段或 tempo automation 时保持读数，必须编辑已有 tempo 定义，不能静默覆盖。
 输入期间数字／Space／字母不会触发播放或编排快捷键。独立 Preview 没有文档连接时保持只读。
+
+标题栏 Pattern 切换、独立 Patterns 管理浮窗及 Browser 左侧停靠只改变当前视图。
+Browser 资源拖入 Playlist 仍走原有源码事务。节拍器使用独立的本机运行时命令，
+不调用 Project.configure，不写入快照或源码，也不改变 WAV 导出默认排除 click 的行为。
 
 ## Playlist
 

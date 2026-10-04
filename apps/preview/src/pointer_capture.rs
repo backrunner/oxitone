@@ -26,6 +26,12 @@ pub fn view(cx: &Context<Preview>) -> impl IntoElement {
                     return;
                 }
                 let _ = focused.update(cx, |this, cx| {
+                    if this.view_menu.selected.is_some()
+                        || this.pattern_picker.selected.is_some()
+                        || this.show_about
+                    {
+                        return;
+                    }
                     if this.document.tempo.input.is_some()
                         && !this.document.tempo.bounds.get().contains(&event.position)
                     {
@@ -49,7 +55,12 @@ pub fn view(cx: &Context<Preview>) -> impl IntoElement {
                     return;
                 }
                 let _ = moving.update(cx, |this, cx| {
-                    if this.close.open || this.show_shortcuts {
+                    if this.close.open
+                        || this.show_shortcuts
+                        || this.show_about
+                        || this.view_menu.selected.is_some()
+                        || this.pattern_picker.selected.is_some()
+                    {
                         return;
                     }
                     let active = this.workspace.gesture.is_some()
@@ -96,7 +107,12 @@ pub fn view(cx: &Context<Preview>) -> impl IntoElement {
                     return;
                 }
                 let _ = released.update(cx, |this, cx| {
-                    if this.close.open || this.show_shortcuts {
+                    if this.close.open
+                        || this.show_shortcuts
+                        || this.show_about
+                        || this.view_menu.selected.is_some()
+                        || this.pattern_picker.selected.is_some()
+                    {
                         return;
                     }
                     if this.workspace.gesture.is_some()

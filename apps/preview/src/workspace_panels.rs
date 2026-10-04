@@ -10,7 +10,12 @@ pub fn panels(this: &mut Preview, window: &Window, cx: &mut Context<Preview>) ->
     let t = this.theme;
     let bounds = this.workspace.bounds.clone();
     let measured = bounds.get().size;
-    let width = f32::from(window.viewport_size().width);
+    let width = f32::from(window.viewport_size().width)
+        - if this.document.browser_open && this.workspace.browser_docked {
+            this.workspace.browser_width + crate::workspace_layout::DIVIDER
+        } else {
+            0.
+        };
     let height = if measured.height > px(0.) {
         f32::from(measured.height)
     } else {

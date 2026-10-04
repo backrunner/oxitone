@@ -24,6 +24,7 @@ struct ActiveClick {
 }
 
 pub struct Metronome {
+    enabled: bool,
     sample_rate: f64,
     level: f32,
     accent_click: Vec<f32>,
@@ -49,6 +50,7 @@ impl Metronome {
                 .collect()
         };
         Self {
+            enabled: true,
             sample_rate,
             level,
             accent_click: synth(ACCENT_HZ, ACCENT_GAIN),
@@ -75,6 +77,9 @@ impl Metronome {
         out_l: &mut [f32],
         out_r: &mut [f32],
     ) {
+        if !self.enabled {
+            return;
+        }
         let frames = out_l.len() as u64;
         let block_end = frame_start + frames;
         // Schedule clicks starting inside this block.
@@ -125,5 +130,18 @@ impl Metronome {
             }
         }
         self.active.truncate(write);
+    }
+}
+
+impl crate::RenderGraph {
+    /// Toggle a click prepared with `RenderGraphOptions::metronome_level`.
+    /// Allocation-free; apply on the graph's owning render thread at a block boundary.
+    pub fn set_metronome_enabled(&mut self, enabled: bool) {
+        if let Some(click) = &mut self.metronome {
+            if click.enabled != enabled {
+                click.enabled = enabled;
+                click.seek(&self.plan, self.transport.cursor);
+            }
+        }
     }
 }

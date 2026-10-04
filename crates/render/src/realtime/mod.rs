@@ -6,6 +6,8 @@ pub mod diagnostics;
 mod direct;
 pub mod layout;
 #[cfg(test)]
+mod metronome_tests;
+#[cfg(test)]
 mod retirement_tests;
 pub use crate::ring;
 mod session;

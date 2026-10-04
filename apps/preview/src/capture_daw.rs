@@ -249,7 +249,7 @@ impl Smoke {
                         std::env::var_os("OXITONE_PREVIEW_CAPTURE_AUTOMATION").is_some();
                     let patterns = std::env::var_os("OXITONE_PREVIEW_CAPTURE_PATTERNS").is_some();
                     state.document.automation.open = automation;
-                    state.document.patterns_open = patterns;
+                    state.document.browser_open = patterns;
                     state.document.show_code = !manager && !automation && !patterns;
                     state.document.manager.open = manager;
                     state.workspace_focus.focus(window);
@@ -262,7 +262,7 @@ impl Smoke {
             10 if frame > self.review_frame + 3 => {
                 if std::env::var_os("OXITONE_PREVIEW_CAPTURE_PATTERNS").is_some() {
                     let state = view.read(cx);
-                    assert!(state.document.patterns_open);
+                    assert!(state.document.browser_open);
                     assert!(!state.document.manager.open);
                     assert!(!state.document.automation.open);
                     assert!(!state

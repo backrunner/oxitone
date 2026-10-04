@@ -63,6 +63,15 @@ pub fn view(
                 })),
         );
     }
+    if id == WindowId::Browser {
+        header = header.child(
+            t.icon_button("browser-dock", Icon::Split, "Dock Browser left")
+                .on_click(cx.listener(|this, _, _, cx| {
+                    this.dock_browser();
+                    cx.notify();
+                })),
+        );
+    }
     header = header
         .child(
             t.icon_button(

@@ -15,6 +15,9 @@ pub fn overlay(this: &mut Preview, cx: &mut Context<Preview>) -> Div {
     if this.document.patterns_open {
         open.push(WindowId::Patterns);
     }
+    if this.document.browser_open && !this.workspace.browser_docked {
+        open.push(WindowId::Browser);
+    }
     if this.document.automation.open {
         open.push(WindowId::Automation);
     }
@@ -43,6 +46,10 @@ pub fn overlay(this: &mut Preview, cx: &mut Context<Preview>) -> Div {
         let height = (bounds.height - 37.).max(1.);
         let (title, content): (String, AnyElement) = match id {
             WindowId::Patterns => (
+                "Patterns".into(),
+                crate::pattern_rack::view(this, cx).into_any_element(),
+            ),
+            WindowId::Browser => (
                 "Browser".into(),
                 crate::pattern_manager::view(this, cx).into_any_element(),
             ),
@@ -97,6 +104,7 @@ impl Preview {
     pub fn close_internal(&mut self, id: WindowId, window: &mut Window) {
         match id {
             WindowId::Patterns => self.document.patterns_open = false,
+            WindowId::Browser => self.document.browser_open = false,
             WindowId::Automation => self.document.automation.open = false,
             WindowId::Plugins => {
                 self.document.manager.open = false;

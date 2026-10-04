@@ -17,10 +17,6 @@ impl Preview {
                     .beat_to_bar_beat(oxitone_core::Beat::from_f64(beat).unwrap())
             })
             .unwrap_or((1, oxitone_core::Beat::ZERO));
-        let bpm = self
-            .project
-            .as_ref()
-            .map_or(120., |p| p.plan.tempo.bpm_at_beat(beat));
         let controls = div()
             .flex()
             .flex_shrink_0()
@@ -79,8 +75,7 @@ impl Preview {
                         within.to_f64().floor() as u32 + 1,
                         (within.to_f64().fract() * 960.) as u32
                     )),
-            )
-            .child(crate::tempo_edit::view(self, bpm, cx));
+            );
         div()
             .id("transport-controls")
             .h(px(48.))

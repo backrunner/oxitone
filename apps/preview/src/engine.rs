@@ -33,6 +33,7 @@ pub struct Engine {
     session: Option<RealtimeSession>,
     plugins: LoadedPlugins,
     simulated: bool,
+    metronome: bool,
     events: Sender<UiEvent>,
 }
 
@@ -47,6 +48,7 @@ impl Engine {
             session: None,
             plugins: LoadedPlugins::default(),
             simulated,
+            metronome: false,
             events,
         }
     }
@@ -182,9 +184,11 @@ impl Engine {
             &SampleStore::new(Some(PathBuf::from(base))),
             &RenderGraphOptions {
                 respect_solo: true,
+                metronome_level: Some(0.5),
                 ..Default::default()
             },
         )?);
+        graph.set_metronome_enabled(self.metronome);
         let mut catalog = crate::plugin_catalog::collect(&snapshot, &registry, libraries);
         crate::plugin_catalog::collect_instances(&mut catalog, &graph.plugin_controls());
         let project = Arc::new(ViewProject {

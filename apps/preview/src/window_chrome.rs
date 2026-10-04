@@ -61,7 +61,8 @@ impl Preview {
                         |d| d.child(div().size(px(5.)).rounded_full().bg(rgb(theme.muted))),
                     ),
             )
-            .child(self.editor_tabs(cx))
+            .child(crate::header_workflow::view(self, cx))
+            .child(crate::master_monitor::view(self))
             .child(self.header_tools(cx));
         title
     }

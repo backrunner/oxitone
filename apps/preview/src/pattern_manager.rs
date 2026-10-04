@@ -19,7 +19,7 @@ pub fn view(this: &mut Preview, cx: &mut Context<Preview>) -> impl IntoElement {
     let Some(project) = this.project.as_ref().cloned() else {
         return list;
     };
-    let selected = this.document.patterns_selected.as_ref();
+    let selected = this.active_pattern().map(|pattern| &pattern.id);
     for (kind, label) in [
         (ResourceKind::Pattern, "Patterns"),
         (ResourceKind::Sample, "Samples"),
@@ -156,7 +156,7 @@ pub fn view(this: &mut Preview, cx: &mut Context<Preview>) -> impl IntoElement {
                         cx.listener(move |this, event: &MouseDownEvent, window, cx| {
                             this.workspace_focus.focus(window);
                             if kind == ResourceKind::Pattern {
-                                this.document.patterns_selected = Some(id.clone());
+                                this.select_pattern(&id);
                                 if event.click_count == 2 {
                                     this.selected_clip = this.project.as_ref().and_then(|p| {
                                         p.snapshot

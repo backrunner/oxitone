@@ -186,6 +186,7 @@ pub struct Diagnostic {
 }
 
 pub enum UiEvent {
+    Metronome(bool),
     Document(crate::document_wire::DocumentMessage),
     Accepted(Arc<ViewProject>),
     Diagnostic(Diagnostic),

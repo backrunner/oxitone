@@ -520,6 +520,12 @@ impl RealtimeSession {
         self.shared.send(WorkerMsg::Param(event))
     }
 
+    /// Toggle the graph's preallocated click at the ring horizon; no transport seek.
+    /// Graphs must be compiled with `metronome_level: Some(...)` to provide a click.
+    pub fn set_metronome_enabled(&self, enabled: bool) -> Result<(), OxitoneError> {
+        self.shared.send(WorkerMsg::Metronome(enabled))
+    }
+
     /// Swap the compiled graph at the next block boundary.
     pub fn replace_graph(&self, graph: Box<RenderGraph>) -> Result<(), OxitoneError> {
         if graph.requires_isolation()

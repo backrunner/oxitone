@@ -4,13 +4,18 @@ use gpui::{prelude::*, *};
 
 impl Render for Preview {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        if self.close.open || self.show_shortcuts {
+        if self.close.open || self.show_shortcuts || self.show_about {
+            self.view_menu.selected = None;
+            self.pattern_picker.selected = None;
             crate::pointer_capture::cancel(self);
         }
         let theme = self.theme;
         let mut root = div()
             .id("preview-workspace")
             .track_focus(&self.workspace_focus)
+            .on_action(cx.listener(Self::about_action))
+            .on_action(cx.listener(Self::help_action))
+            .on_action(cx.listener(Self::quit_action))
             .capture_key_down(cx.listener(Self::modal_key))
             .on_key_down(cx.listener(Self::workspace_key))
             .relative()
@@ -41,21 +46,38 @@ impl Render for Preview {
         }
         if self.project.is_some() {
             let desktop = self.document.windows.desktop.clone();
+            let mut row = div().flex_1().min_h_0().flex().overflow_hidden();
+            if self.document.browser_open && self.workspace.browser_docked {
+                row = row.child(crate::browser_sidebar::view(self, cx)).child(
+                    crate::workspace_resize::divider(
+                        "browser-width-divider",
+                        crate::workspace::Axis::Horizontal,
+                        crate::workspace_resize::Resize::Browser {
+                            width: self.workspace.browser_width,
+                        },
+                        self,
+                        cx,
+                    ),
+                );
+            }
             root = root.child(
-                div()
-                    .relative()
-                    .flex_1()
-                    .min_h_0()
-                    .flex()
-                    .flex_col()
-                    .overflow_hidden()
-                    .child(
-                        canvas(move |area, _, _| desktop.set(area), |_, _, _, _| {})
-                            .absolute()
-                            .size_full(),
-                    )
-                    .child(crate::workspace::panels(self, window, cx))
-                    .child(crate::internal_windows::overlay(self, cx)),
+                row.child(
+                    div()
+                        .relative()
+                        .flex_1()
+                        .min_w_0()
+                        .min_h_0()
+                        .flex()
+                        .flex_col()
+                        .overflow_hidden()
+                        .child(
+                            canvas(move |area, _, _| desktop.set(area), |_, _, _, _| {})
+                                .absolute()
+                                .size_full(),
+                        )
+                        .child(crate::workspace::panels(self, window, cx))
+                        .child(crate::internal_windows::overlay(self, cx)),
+                ),
             );
         } else {
             root = root.child(
@@ -84,6 +106,13 @@ impl Render for Preview {
                     && !self.document.automation.open,
                 |d| d.child(crate::piano_snap::menu(self, cx)),
             )
+            .when(self.view_menu.selected.is_some(), |d| {
+                d.child(crate::view_menu::menu(self, cx))
+            })
+            .when(self.pattern_picker.selected.is_some(), |d| {
+                d.child(crate::pattern_picker::menu(self, cx))
+            })
+            .when(self.show_about, |d| d.child(crate::about::view(self, cx)))
             .when(self.show_shortcuts, |d| {
                 d.child(crate::shortcut_help::view(self, cx))
             })
