@@ -7,6 +7,8 @@ pub fn cancel(this: &mut Preview) {
     this.document.gesture = None;
     this.document.notes.marquee = None;
     this.document.playlist.drag = None;
+    this.document.browser.drag = None;
+    this.document.playlist.brush = None;
     this.document.mixer.gesture = None;
     this.document.automation.gesture = None;
     if let Some(crate::workspace::Gesture::Resize { region, .. }) = this.workspace.gesture.take() {
@@ -26,6 +28,14 @@ pub fn view(cx: &Context<Preview>) -> impl IntoElement {
                     return;
                 }
                 let _ = focused.update(cx, |this, cx| {
+                    this.document.browser.focused = false;
+                    this.document.playlist.focused = this
+                        .document
+                        .playlist
+                        .viewport
+                        .get()
+                        .contains(&event.position)
+                        && this.document.windows.hit(event.position).is_none();
                     if this.view_menu.selected.is_some()
                         || this.pattern_picker.selected.is_some()
                         || this.show_about
@@ -64,6 +74,8 @@ pub fn view(cx: &Context<Preview>) -> impl IntoElement {
                         return;
                     }
                     let active = this.workspace.gesture.is_some()
+                        || this.document.playlist.brush.is_some()
+                        || this.document.browser.drag.is_some()
                         || this.document.plugin.gesture.is_some()
                         || this.document.windows.drag.is_some()
                         || this.document.playlist.drag.is_some()
@@ -77,6 +89,8 @@ pub fn view(cx: &Context<Preview>) -> impl IntoElement {
                     if event.pressed_button.is_some() {
                         this.document.windows.move_drag(event.position);
                         this.move_playlist(event);
+                        this.move_playlist_tool(event);
+                        this.move_sample(event, cx);
                         this.move_mix(event);
                         if event.pressed_button == Some(MouseButton::Left) {
                             this.move_plugin_parameter(event);
@@ -116,6 +130,8 @@ pub fn view(cx: &Context<Preview>) -> impl IntoElement {
                         return;
                     }
                     if this.workspace.gesture.is_some()
+                        || this.document.playlist.brush.is_some()
+                        || this.document.browser.drag.is_some()
                         || this.document.plugin.gesture.is_some()
                         || this.document.windows.drag.is_some()
                         || this.document.playlist.drag.is_some()
@@ -141,6 +157,21 @@ pub fn view(cx: &Context<Preview>) -> impl IntoElement {
                             ..Default::default()
                         });
                         this.finish_playlist();
+                        this.move_playlist_tool(&MouseMoveEvent {
+                            position: event.position,
+                            modifiers: event.modifiers,
+                            ..Default::default()
+                        });
+                        this.finish_playlist_tool();
+                        this.move_sample(
+                            &MouseMoveEvent {
+                                position: event.position,
+                                modifiers: event.modifiers,
+                                ..Default::default()
+                            },
+                            cx,
+                        );
+                        this.finish_sample();
                         this.move_mix(&MouseMoveEvent {
                             position: event.position,
                             modifiers: event.modifiers,

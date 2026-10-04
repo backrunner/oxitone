@@ -181,6 +181,7 @@ export * from "./plugins/vst3-edits.js";
 export * from "./plugins/vst3-instance-control.js";
 export * from "./document/vst3-workbench.js";
 export * from "./document/audio-import.js";
+export * from "./document/sample-use.js";
 export * from "./plugins/vst3-preset.js";
 export { multisamplerStateSchema, multisamplerOptionsSchema } from "./authoring/multisampler.js";
 export type { MultisamplerState, MultisamplerOptions } from "./authoring/multisampler.js";

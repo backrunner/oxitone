@@ -87,6 +87,7 @@ pub struct MaterializationReview {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DocumentView {
+    pub project_root: String,
     pub arrangement_order: Option<crate::playlist_edit::Order>,
     pub session_id: String,
     pub revision: u64,
@@ -174,6 +175,9 @@ impl DocumentMessage {
     rename_all_fields = "camelCase"
 )]
 pub enum DocumentOperation {
+    SampleDrop {
+        drop: crate::sample_drop::SampleDrop,
+    },
     Vst3 {
         command: crate::vst3_model::Command,
     },

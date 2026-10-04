@@ -108,6 +108,7 @@ pub fn view(this: &mut Preview, window_width: f32, cx: &mut Context<Preview>) ->
                         .font_weight(FontWeight::SEMIBOLD)
                         .child("Arrangement"),
                 )
+                .child(crate::playlist_tools::view(this, cx))
                 .child(markers)
                 .child(crate::workspace_panels::dock_tabs(this, cx))
                 .child(this.playlist_zoom(cx)),
@@ -187,7 +188,15 @@ pub fn view(this: &mut Preview, window_width: f32, cx: &mut Context<Preview>) ->
                                     MouseButton::Left,
                                     cx.listener(|this, event, window, cx| {
                                         this.workspace_focus.focus(window);
-                                        this.press_playlist(event);
+                                        this.start_playlist_tool(event);
+                                        cx.notify();
+                                    }),
+                                )
+                                .on_mouse_down(
+                                    MouseButton::Right,
+                                    cx.listener(|this, event, window, cx| {
+                                        this.workspace_focus.focus(window);
+                                        this.start_playlist_tool(event);
                                         cx.notify();
                                     }),
                                 )

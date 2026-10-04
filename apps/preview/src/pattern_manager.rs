@@ -7,12 +7,10 @@ use gpui::{prelude::*, *};
 
 pub fn view(this: &mut Preview, cx: &mut Context<Preview>) -> impl IntoElement {
     let t = this.theme;
+    this.document.browser.resource_bounds.borrow_mut().clear();
     let mut list = div()
         .id("pattern-manager")
-        .flex_1()
         .min_w_0()
-        .min_h_0()
-        .overflow_y_scroll()
         .flex()
         .flex_col()
         .py_1();
@@ -59,7 +57,7 @@ pub fn view(this: &mut Preview, cx: &mut Context<Preview>) -> impl IntoElement {
                         std::path::Path::new(&s.asset_uri)
                             .file_name()
                             .map_or_else(|| "Sample".into(), |n| n.to_string_lossy().into_owned()),
-                        s.musical_length_beats.map_or(4., |b| b.to_f64()),
+                        s.frames as f64 / f64::from(s.sample_rate),
                     )
                 })
                 .collect(),
@@ -94,6 +92,8 @@ pub fn view(this: &mut Preview, cx: &mut Context<Preview>) -> impl IntoElement {
                 .child(label),
         );
         for (index, (id, name, length)) in entries.into_iter().enumerate() {
+            let bounds = this.document.browser.resource_bounds.clone();
+            let measured = format!("{kind:?}/{id}");
             let automation = (kind == ResourceKind::Automation)
                 .then(|| {
                     project
@@ -113,6 +113,17 @@ pub fn view(this: &mut Preview, cx: &mut Context<Preview>) -> impl IntoElement {
             list = list.child(
                 div()
                     .id(SharedString::from(format!("resource-{kind:?}-{index}")))
+                    .relative()
+                    .child(
+                        canvas(
+                            move |area, _, _| {
+                                bounds.borrow_mut().insert(measured.clone(), area);
+                            },
+                            |_, _, _, _| {},
+                        )
+                        .absolute()
+                        .size_full(),
+                    )
                     .h(px(if automation.is_some() { 42. } else { 28. }))
                     .flex_shrink_0()
                     .px_3()
@@ -145,12 +156,13 @@ pub fn view(this: &mut Preview, cx: &mut Context<Preview>) -> impl IntoElement {
                                 )
                             }),
                     )
-                    .child(
-                        div()
-                            .text_size(px(9.))
-                            .text_color(rgb(t.muted))
-                            .child(format!("{length}")),
-                    )
+                    .child(div().text_size(px(9.)).text_color(rgb(t.muted)).child(
+                        if kind == ResourceKind::Sample {
+                            format!("{length:.2}s")
+                        } else {
+                            format!("{length}")
+                        },
+                    ))
                     .on_mouse_down(
                         MouseButton::Left,
                         cx.listener(move |this, event: &MouseDownEvent, window, cx| {
@@ -179,6 +191,24 @@ pub fn view(this: &mut Preview, cx: &mut Context<Preview>) -> impl IntoElement {
                                 return;
                             }
                             if this.document_ready() {
+                                if kind == ResourceKind::Sample {
+                                    if let Some(index) = this
+                                        .document
+                                        .view
+                                        .as_ref()
+                                        .and_then(|v| v.arrangement_order.as_ref())
+                                        .and_then(|o| o.samples.iter().position(|s| s == &id))
+                                    {
+                                        this.document.browser.drag =
+                                            Some(crate::sample_drop::SampleDrag::new(
+                                                crate::sample_drop::SampleSource::Project { index },
+                                                "Sample".into(),
+                                                event.position,
+                                            ));
+                                    }
+                                    cx.notify();
+                                    return;
+                                }
                                 this.document.playlist.drag = Some(Drag {
                                     mode: Default::default(),
                                     kind,

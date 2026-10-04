@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-05",
+  "cpu": "Apple M5 Max",
+  "os": "macOS 27.0.1 (26A434)",
+  "command": "cargo bench -p oxitone-bench --bench playlist -- --sample-size 10 --measurement-time 1 --warm-up-time 1",
+  "sink": "offline",
+  "sampleRate": 48000,
+  "blockFrames": 128,
+  "physicalDevice": null,
+  "xruns": null,
+  "cpuUtilization": null,
+  "cases": [
+    { "placements": 32, "p95Ns": 121459, "p99Ns": 134625, "criterionEstimateUs": [105.75, 105.99, 106.3] },
+    { "placements": 1024, "p95Ns": 120125, "p99Ns": 125916, "criterionEstimateUs": [107.42, 107.76, 108.37] }
+  ],
+  "notes": "Process-block wall time from 2048 offline blocks per case, not HAL callback timing or CPU utilization. No realtime DSP changes. Earlier concurrent-build measurements were noisy; this record was taken after UI and build tasks finished. Criterion's cached historical comparison is not a controlled before/after baseline."
+}

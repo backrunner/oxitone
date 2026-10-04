@@ -86,6 +86,9 @@ export class DocumentDispatcher {
     const operation = request.operation,
       revision = request.baseRevision;
     switch (operation.kind) {
+      case "sampleDrop":
+        await this.document.sampleDrop(revision, operation.drop);
+        break;
       case "vst3":
         await this.document.vst3Command(revision, operation.command);
         break;

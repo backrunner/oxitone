@@ -24,13 +24,14 @@ pub fn view(
             .filter(|_| this.presentation_active())
     });
     for clip in clips.iter().filter(|c| c.track == track.id).cloned() {
-        let selected = this
-            .document
-            .playlist
-            .selected
-            .as_ref()
-            .is_some_and(|s| s.1 == clip.id)
-            || this.selected_clip.as_ref() == Some(&clip.id)
+        let selected = this.document.playlist.selection.contains(&clip.id)
+            || this
+                .document
+                .playlist
+                .selected
+                .as_ref()
+                .is_some_and(|s| s.1 == clip.id)
+            || (!this.document.playlist.focused && this.selected_clip.as_ref() == Some(&clip.id))
             || drag.is_some_and(|d| {
                 d.moved
                     && d.resource == clip.resource
@@ -136,6 +137,15 @@ pub fn view(
         }
         lane = lane.child(
             item.child(crate::playlist_actions::edge(this, clip.clone(), cx))
+                .on_mouse_down(
+                    MouseButton::Right,
+                    cx.listener(|this, event, window, cx| {
+                        this.workspace_focus.focus(window);
+                        this.start_playlist_tool(event);
+                        cx.stop_propagation();
+                        cx.notify();
+                    }),
+                )
                 .on_mouse_down(
                     MouseButton::Left,
                     cx.listener(move |this, event: &MouseDownEvent, window, cx| {

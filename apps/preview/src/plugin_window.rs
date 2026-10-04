@@ -53,6 +53,8 @@ pub struct PluginWindow {
     pub width: f32,
     pub request_focus: bool,
     pub source_button: std::rc::Rc<std::cell::Cell<Bounds<Pixels>>>,
+    pub sample_slots:
+        std::rc::Rc<std::cell::RefCell<std::collections::HashMap<String, Bounds<Pixels>>>>,
     pub(super) focus: FocusHandle,
     _subscriptions: Vec<Subscription>,
 }
@@ -143,6 +145,7 @@ impl PluginWindow {
             width: 820.,
             request_focus: true,
             source_button: Default::default(),
+            sample_slots: Default::default(),
             tab: DetailTab::Panel,
             filter: ParameterFilter::All,
             scroll: ScrollHandle::new(),

@@ -194,6 +194,8 @@ impl Preview {
             && (self.document.gesture.is_some()
                 || self.document.notes.marquee.is_some()
                 || self.document.automation.gesture.is_some()
+                || self.document.browser.drag.is_some()
+                || self.document.playlist.brush.is_some()
                 || self.document.playlist.drag.is_some())
             || key.key == "escape" && self.document.mixer.gesture.is_some()
         {
@@ -201,6 +203,8 @@ impl Preview {
             self.document.notes.marquee = None;
             self.document.automation.gesture = None;
             self.document.playlist.drag = None;
+            self.document.browser.drag = None;
+            self.document.playlist.brush = None;
             self.document.mixer.gesture = None;
             cx.stop_propagation();
             cx.notify();
@@ -216,6 +220,11 @@ impl Preview {
         }
         let plain = !key.modifiers.platform && !key.modifiers.control && !key.modifiers.alt;
         if self.workspace_focus.is_focused(window) && self.playlist_key(event) {
+            cx.stop_propagation();
+            cx.notify();
+            return;
+        }
+        if self.workspace_focus.is_focused(window) && self.browser_key(event, cx) {
             cx.stop_propagation();
             cx.notify();
             return;

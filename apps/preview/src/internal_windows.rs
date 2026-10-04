@@ -51,7 +51,7 @@ pub fn overlay(this: &mut Preview, cx: &mut Context<Preview>) -> Div {
             ),
             WindowId::Browser => (
                 "Browser".into(),
-                crate::pattern_manager::view(this, cx).into_any_element(),
+                crate::browser_tree_view::body(this, cx).into_any_element(),
             ),
             WindowId::Automation => (
                 "Automation".into(),

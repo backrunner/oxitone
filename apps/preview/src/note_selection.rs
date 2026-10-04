@@ -13,6 +13,8 @@ pub struct NoteSelection {
     pub site: Option<String>,
     pub indices: BTreeSet<usize>,
     pub marquee: Option<Marquee>,
+    pub clipboard: Vec<crate::document_wire::SourceNote>,
+    pub cursor: f64,
 }
 #[derive(Clone)]
 pub struct Marquee {
@@ -97,6 +99,9 @@ impl Preview {
             return false;
         }
         let command = key.modifiers.platform || key.modifiers.control;
+        if self.note_clipboard_key(key) {
+            return true;
+        }
         if key.key == "escape" {
             if self.piano.snap_menu.take().is_some() {
                 return true;

@@ -1,7 +1,6 @@
-//! Shared selection, duplication, deletion and edge gestures for Playlist placements.
+//! Selection and edge gestures for Playlist placements.
 use crate::{
-    document_wire::DocumentOperation,
-    playlist_edit::{ArrangementEdit, Drag, DragMode, ResourceKind},
+    playlist_edit::{Drag, DragMode, ResourceKind},
     ui::Preview,
 };
 use gpui::{prelude::*, *};
@@ -16,8 +15,24 @@ pub struct Clip {
     pub length: f64,
     pub enabled: bool,
 }
-
 impl Preview {
+    pub fn selected_placements(&self) -> Vec<Clip> {
+        self.project.as_ref().map_or_else(Vec::new, |p| {
+            crate::playlist_projection::placements(p)
+                .into_iter()
+                .filter(|c| {
+                    self.document.playlist.selection.contains(&c.id)
+                        || (self.document.playlist.selection.is_empty()
+                            && self
+                                .document
+                                .playlist
+                                .selected
+                                .as_ref()
+                                .is_some_and(|s| s.1 == c.id))
+                })
+                .collect()
+        })
+    }
     pub fn begin_clip(
         &mut self,
         clip: &Clip,
@@ -27,13 +42,32 @@ impl Preview {
     ) {
         self.workspace_focus.focus(window);
         self.document.playlist.focused = true;
-        self.document.playlist.selected = Some((clip.kind, clip.id.clone()));
+        let playlist = &mut self.document.playlist;
+        if event.modifiers.platform || event.modifiers.control {
+            if !playlist.selection.remove(&clip.id) {
+                playlist.selection.insert(clip.id.clone());
+            }
+            playlist.selected = playlist
+                .selection
+                .contains(&clip.id)
+                .then(|| (clip.kind, clip.id.clone()));
+            return;
+        }
+        if !playlist.selection.contains(&clip.id) {
+            playlist.selection.clear();
+            playlist.selection.insert(clip.id.clone());
+        }
+        playlist.selected = Some((clip.kind, clip.id.clone()));
+        playlist.brush_clip = Some(clip.clone());
+        playlist.cursor = clip.start;
+        playlist.cursor_track = Some(clip.track.clone());
         if clip.kind == ResourceKind::Pattern {
             self.selected_clip = Some(clip.id.clone());
         }
         if !self.document_ready() {
             return;
         }
+        self.document.playlist.drag_group = self.selected_placements();
         self.document.playlist.drag = Some(Drag {
             mode,
             kind: clip.kind,
@@ -46,123 +80,33 @@ impl Preview {
             moved: false,
         });
     }
-    fn selected_placement(&self) -> Option<Clip> {
-        let (kind, id) = self.document.playlist.selected.as_ref()?;
-        let p = self.project.as_ref()?;
-        let (resource, track, start, length, enabled) = match kind {
-            ResourceKind::Pattern => {
-                let c = p.snapshot.pattern_clips.iter().find(|c| &c.id == id)?;
-                let (start, end) = p.clip_bounds(c);
-                (
-                    c.pattern_id.clone(),
-                    c.track_id.clone(),
-                    start,
-                    end - start,
-                    c.enabled != Some(false),
-                )
-            }
-            ResourceKind::Sample => {
-                let c = p.snapshot.sample_clips.iter().find(|c| &c.id == id)?;
-                let (_, start, end) = p.plan.samples.iter().find(|c| &c.0 == id)?;
-                (
-                    c.sample_id.clone(),
-                    c.track_id.clone(),
-                    p.beat(*start),
-                    p.beat(*end) - p.beat(*start),
-                    c.enabled != Some(false),
-                )
-            }
-            ResourceKind::Automation => {
-                let c = p
-                    .snapshot
-                    .automation_clips
-                    .as_ref()?
-                    .iter()
-                    .find(|c| &c.id == id)?;
-                (
-                    c.lane_id.clone(),
-                    c.track_id.clone(),
-                    c.start_beat.to_f64(),
-                    c.duration_beats?.to_f64(),
-                    c.enabled != Some(false),
-                )
-            }
-        };
-        Some(Clip {
-            kind: *kind,
-            id: id.clone(),
-            resource,
-            track,
-            start,
-            length,
-            enabled,
-        })
-    }
-    pub fn playlist_key(&mut self, event: &KeyDownEvent) -> bool {
-        if !self.document.playlist.focused {
-            return false;
+    pub fn restore_playlist_selection(&mut self) {
+        let expected = std::mem::take(&mut self.document.playlist.pending_selection);
+        if expected.is_empty() {
+            return;
         }
-        let k = &event.keystroke;
-        let command = k.modifiers.platform || k.modifiers.control;
-        let action = match k.key.as_str() {
-            "d" if command && !k.modifiers.alt && !k.modifiers.shift => "copy",
-            "backspace" | "delete" if !command && !k.modifiers.alt && !k.modifiers.shift => {
-                "remove"
+        let Some(project) = &self.project else {
+            return;
+        };
+        let mut available = crate::playlist_projection::placements(project);
+        let mut ids = std::collections::BTreeSet::new();
+        for clip in expected {
+            if let Some(index) = available.iter().rposition(|c| {
+                c.kind == clip.kind
+                    && c.resource == clip.resource
+                    && c.track == clip.track
+                    && (c.start - clip.start).abs() < 1e-7
+                    && (c.length - clip.length).abs() < 1e-7
+            }) {
+                let c = available.remove(index);
+                self.document.playlist.selected = Some((c.kind, c.id.clone()));
+                if c.kind == ResourceKind::Pattern {
+                    self.selected_clip = Some(c.id.clone());
+                }
+                ids.insert(c.id);
             }
-            "m" if !command && !k.modifiers.alt && !k.modifiers.shift => "enable",
-            _ => return false,
-        };
-        if self.document.windows.front().is_some() {
-            return false;
         }
-        let Some(c) = self.selected_placement() else {
-            return false;
-        };
-        if event.is_held || !self.document_ready() {
-            return true;
-        }
-        let Some(o) = self
-            .document
-            .view
-            .as_ref()
-            .and_then(|v| v.arrangement_order.as_ref())
-        else {
-            return true;
-        };
-        let clips = match c.kind {
-            ResourceKind::Pattern => &o.pattern_clips,
-            ResourceKind::Sample => &o.sample_clips,
-            ResourceKind::Automation => &o.automation_clips,
-        };
-        let (Some(clip), Some(resource), Some(track)) = (
-            clips.iter().position(|id| id == &c.id),
-            o.resource(c.kind, &c.resource),
-            o.tracks.iter().position(|id| id == &c.track),
-        ) else {
-            return true;
-        };
-        let edit = match action {
-            "copy" => ArrangementEdit::Duplicate {
-                kind: c.kind,
-                resource,
-                clip,
-                track,
-                start_beat: c.start + c.length,
-            },
-            "enable" => ArrangementEdit::Enable {
-                kind: c.kind,
-                resource,
-                clip,
-                enabled: !c.enabled,
-            },
-            _ => ArrangementEdit::Remove {
-                kind: c.kind,
-                resource,
-                clip,
-            },
-        };
-        self.document_request(DocumentOperation::Arrangement { edit });
-        true
+        self.document.playlist.selection = ids;
     }
 }
 pub fn edge(this: &Preview, clip: Clip, cx: &Context<Preview>) -> impl IntoElement {

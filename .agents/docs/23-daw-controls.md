@@ -75,8 +75,35 @@ Sample 边缘使用独立 `fitSample` operation，沿用当前 tempoSync：off �
 带局部 Track tempo 的移动、复制和长度调整暂时拒绝，避免把 project beat 当作 Track beat。
 相邻同片段的 resize/fit/enable 调用合并，无变化不落事务。全局显示留有尾部编排空间。
 
-此处未提供左边缘源偏移、保持相位的 split、多片段框选／剪贴板或跨 clip automation 绘制；
+P/B/E 对应绘制、连续刷子、选择工具；⌘ click 切换多选，E 或 ⌘ drag 框选，⌘A 全选。
+刷子使用当前片段的长度作重复间距，快速横向移动补齐中间位置，一笔最多 512 个片段；
+右键拖动擦除经过的片段。整个笔划、成组拖动、复制、删除均是一条 `arrange({action:'batch', edits})`
+源码事务，所有 clip index 指向操作前的 builder 顺序；后续移动或移除不会改变剩余目标。
+任一子操作失败时整批不变。方向键横移 1/4 beat、纵移轨道；Shift 左右改时长，Alt 临时使用细网格。
+⌘D 按选择整体末尾复制，Shift 拖动保留成组相对轨道和时间。⌘C/X/V 使用应用内剪贴板，
+粘贴到最后点击的编辑光标，⌘ShiftV 保留原位置。剪贴板保存完整 placement 设置和 Channel 归属，
+通过 `paste` 操作生成新身份，即使原片段已剪切也可粘贴；资源不存在时拒绝。
+快捷键只作用于实际获得点击焦点的编辑区域，其他位置存在浮窗不阻挡编排操作。
+
+此处未提供左边缘源偏移、保持相位的 split 或跨 clip automation 绘制；
 它们不能通过复制后裁切冒充，仍依赖 musical origin／source window 的后续执行语义。
+
+## Sample Browser
+
+左侧 Browser 标题栏采用 36 px 高度、24 px 右侧按钮、4 px 间隔；浮动/关闭与内容分离。
+Sample Folders 是惰性目录树，默认列出工程根目录，可用 + 添加本机文件夹。目录扫描在后台完成，
+不跟随符号链接，排除隐藏目录、node_modules、target 和 dist。展示 Rust 支持的 WAV/AIFF/FLAC/MP3/MP4/M4A。
+每目录扫描最多 8192 项、可见树最多 4096 项、深度最多 24 层；读取失败直接显示错误。
+上下/Home/End 选择，左右展开/收起，⌘R 刷新选择的目录。外部目录仅在本次窗口会话保存。
+
+文件及工程内 sample 均可拖到 Arrangement lane 或插件面板的明确采样槽；空白轨道区域新建音频轨。
+Node Document 以 `sampleDrop` 接受文件地址，Rust 负责解码，资源复制为 `assets/samples/<hash>.wav`，
+源码只写 `.useSample({sample, destination})`，不写原文件绝对路径、执行 ID 或 GUI 请求信息。
+导入文件上限 256 MiB，拒绝文件/资源目录符号链接，文件变化、无效目标或 compile 失败不提交草稿。
+Undo 保留不可变缓存文件，保证恢复和共享引用。项目内拖放复用原 sample，不重复复制。
+Sampler 的 sample、Convolver 的 impulse、Slicer 的 state.sampleId 及其他插件已有命名资源槽可替换；
+保持原插件实例、参数和自动化。Slicer 显式切片标记需要在源码更新，不能默默套用旧音频边界。
+VST3 当前没有通用 host sample resource 契约，因此不显示采样槽，也不宣称可以注入任意第三方采样器。
 
 ## 钢琴窗与内部窗口
 
@@ -99,6 +126,10 @@ End 到达 Pattern 尾部。全部 128 个 MIDI 音高通过纵向滚动到达�
 本地 literal。没有强制四拍小节假设。自然长度／loopCount placements 使用新周期；显式
 duration／lastBeat 仍裁切在用户设置的片段边界。共享和单引用编辑沿用当前选择范围；
 npm 输出改动仍在当前项目，materialize 同时保存长度，不修改依赖文件。
+
+钢琴窗的 ⌘C/X/V 应用内音符剪贴板跨 Pattern 保留；普通粘贴以最后点击的音符区网格位置
+为起点，⌘ShiftV 保持原位置。每次剪切/粘贴也是一次 Notes 事务，接受后选中新插入音符。
+⌘D、Shift 拖动、P/B/E、Q、方向键及 Shift 方向键与既有绘制、时长和力度逻辑共用。
 
 Velocity 区左键直接按绝对高度设值；横向拖动在鼠标事件间插值，扫过的同起点音符
 一起改变。有选择时只绘制选中的音符，接受后保持选择；无选择时后续笔画仍可覆盖全部。

@@ -14,6 +14,7 @@ pub struct DocumentUi {
     pub show_code: bool,
     pub patterns_open: bool,
     pub browser_open: bool,
+    pub browser: crate::browser_tree::BrowserTree,
     pub patterns_selected: Option<String>,
     pub playlist: crate::playlist_edit::PlaylistUi,
     pub mixer: crate::mixer_edit::MixerUi,
@@ -52,6 +53,8 @@ impl Preview {
                     self.document.manager.vst3 = Default::default();
                 }
                 if changed {
+                    self.document.playlist.brush = None;
+                    self.document.browser.drag = None;
                     self.document.plugin.cancel();
                     self.document.error = None;
                     self.document.playlist.drag = None;
@@ -130,6 +133,7 @@ impl Preview {
             .is_some_and(|p| Some(p.snapshot.revision) == self.document.presentation_revision)
     }
     pub fn clear_presentation(&mut self) {
+        self.document.playlist.pending_selection.clear();
         self.document.plugin.clear_pending();
         self.document.playlist.pending = None;
         self.document.pending_notes = None;
@@ -139,6 +143,7 @@ impl Preview {
     }
     pub fn settle_presentation(&mut self) {
         if self.document_ready() && !self.presentation_active() {
+            self.restore_playlist_selection();
             if let Some(gesture) = self.document.pending_notes.take() {
                 self.restore_note_selection(&gesture);
             }

@@ -75,10 +75,12 @@ pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
                 .pt_2()
                 .border_t_1()
                 .border_color(rgb(t.border))
-                .child(t.label("PIANO & AUTOMATION")),
+                .child(t.label("PIANO, ARRANGEMENT & AUTOMATION")),
         );
         for (key, action) in [
-            ("P / B / E", "Draw / paint / select notes"),
+            ("P / B / E", "Draw / paint / select notes or clips"),
+            ("⌘ C / X / V", "Copy / cut / paste at the editor cursor"),
+            ("⌘ Shift V", "Paste at the original position"),
             (
                 "Draw drag / Shift draw drag",
                 "Place note / draw note length",
@@ -86,7 +88,7 @@ pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
             ("F5 / F7 / F9", "Arrange / full piano roll / full mixer"),
             (
                 "⌘ click / drag · ⌘ A",
-                "Toggle note / box selection · select all",
+                "Toggle item / box selection · select all",
             ),
             (
                 "Shift drag · ⌘ D",
@@ -111,11 +113,19 @@ pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
             ("Escape · ⌘ Z / Shift Z", "Cancel gesture · undo / redo"),
             (
                 "Playlist: Shift drag / ⌘ D",
-                "Copy clip / repeat at its end",
+                "Copy clips / repeat selection after its end",
             ),
             (
                 "Playlist: edge / M / Delete",
                 "Change duration / toggle / remove",
+            ),
+            (
+                "Playlist: arrows / Shift ← →",
+                "Move selection / change duration",
+            ),
+            (
+                "Browser: drag audio",
+                "Drop onto a lane or a plugin sample slot",
             ),
             (
                 "Mixer: drag / Shift drag",

@@ -27,6 +27,10 @@ impl Preview {
             return false;
         }
         // Busy source edits must never fall through into transport actions.
+        self.document.notes.cursor = self
+            .piano
+            .effective_snap(event.modifiers.alt)
+            .round(layout.beat(x));
         if !self.document_ready() {
             return true;
         }

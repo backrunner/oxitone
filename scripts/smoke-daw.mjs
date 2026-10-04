@@ -6,6 +6,7 @@ import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import { ProjectDocument } from "../packages/cli/dist/source/index.js";
 import { dawPluginFixture } from "./daw-plugin-fixture.mjs";
+import { dawSampleFixture } from "./daw-sample-fixture.mjs";
 
 const root = await mkdtemp(join(tmpdir(), "oxitone-daw-smoke-"));
 const automation = !!process.env.OXITONE_PREVIEW_CAPTURE_AUTOMATION;
@@ -53,13 +54,18 @@ try {
         ),
     );
   const checkPluginFiles = configuration ? await dawPluginFixture(root, entry) : undefined;
+  if (process.env.OXITONE_PREVIEW_CAPTURE_SAMPLES) await dawSampleFixture(root, entry);
   const result = await promisify(execFile)(
     process.execPath,
     ["packages/cli/dist/index.js", "daw", entry, "--viewer", resolve("target/debug/Oxitone Preview.app")],
     {
       env: { ...process.env, OXITONE_PREVIEW_CAPTURE: output, OXITONE_PREVIEW_CAPTURE_DAW: "1" },
       timeout:
-        process.env.OXITONE_PREVIEW_CAPTURE_EDITING || process.env.OXITONE_PREVIEW_CAPTURE_UI_REVIEW ? 150_000 : 45_000,
+        process.env.OXITONE_PREVIEW_CAPTURE_EDITING ||
+        process.env.OXITONE_PREVIEW_CAPTURE_UI_REVIEW ||
+        process.env.OXITONE_PREVIEW_CAPTURE_SAMPLES
+          ? 150_000
+          : 45_000,
       maxBuffer: 1024 * 1024,
     },
   );
@@ -99,6 +105,8 @@ try {
   if (process.env.OXITONE_PREVIEW_CAPTURE_STUDIO && !result.stderr.includes("Studio chrome smoke passed:"))
     throw new Error(result.stderr);
   await checkPluginFiles?.();
+  if (process.env.OXITONE_PREVIEW_CAPTURE_SAMPLES && !result.stderr.includes("Sample browser smoke passed:"))
+    throw new Error(result.stderr);
   const saved = await readFile(entry, "utf8");
   if (process.env.OXITONE_PREVIEW_CAPTURE_UI_REVIEW && !saved.includes("// UI close review"))
     throw new Error("Save & close did not publish the latest draft");

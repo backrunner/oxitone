@@ -43,7 +43,7 @@ export function restoreProject(before: ProjectEvaluation): Project {
 export function appendProjectEdit(
   before: ProjectEvaluation,
   files: ReadonlyMap<string, string>,
-  method: "arrange" | "configure" | "importAudio",
+  method: "arrange" | "configure" | "importAudio" | "useSample",
   edit: unknown,
   registration?: RegisterPluginOptions | RegisterVst3Options,
 ): { files: Map<string, string>; registration?: RegisterPluginOptions; vst3Registration?: RegisterVst3Options } {
@@ -82,7 +82,7 @@ export function appendProjectEdit(
         let merged =
           "values" in previous && "values" in next
             ? { ...next, values: { ...previous.values, ...next.values } }
-            : previous.kind === "track" && next.kind === "track"
+            : "kind" in previous && "kind" in next && previous.kind === "track" && next.kind === "track"
               ? {
                   ...next,
                   enabled: next.enabled ?? previous.enabled,
@@ -90,7 +90,7 @@ export function appendProjectEdit(
                   solo: next.solo ?? previous.solo,
                 }
               : next;
-        if (previous.kind === "effectOrder" && next.kind === "effectOrder") {
+        if ("kind" in previous && "kind" in next && previous.kind === "effectOrder" && next.kind === "effectOrder") {
           if (previous.order.length !== next.order.length) throw new Error("chain size changed");
           merged = { ...next, order: next.order.map((index) => previous.order[index]!) };
         }

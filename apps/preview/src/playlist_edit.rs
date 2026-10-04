@@ -23,6 +23,17 @@ pub enum ResourceKind {
     rename_all_fields = "camelCase"
 )]
 pub enum ArrangementEdit {
+    Batch {
+        edits: Vec<ArrangementEdit>,
+    },
+    Paste {
+        kind: ResourceKind,
+        resource: usize,
+        track: usize,
+        start_beat: f64,
+        settings: serde_json::Value,
+        channels: Vec<usize>,
+    },
     Place {
         kind: ResourceKind,
         resource: usize,
@@ -116,7 +127,16 @@ pub enum DragMode {
 pub struct PlaylistUi {
     pub focused: bool,
     pub selected: Option<(ResourceKind, String)>,
+    pub selection: std::collections::BTreeSet<String>,
+    pub pending_selection: Vec<crate::playlist_actions::Clip>,
+    pub clipboard: Vec<crate::playlist_clipboard::CopiedClip>,
+    pub tool: crate::piano_state::NoteTool,
+    pub brush: Option<crate::playlist_brush::Stroke>,
+    pub brush_clip: Option<crate::playlist_actions::Clip>,
+    pub cursor: f64,
+    pub cursor_track: Option<String>,
     pub drag: Option<Drag>,
+    pub drag_group: Vec<crate::playlist_actions::Clip>,
     pub pending: Option<Drag>,
     pub controls: Rc<RefCell<HashMap<String, Bounds<Pixels>>>>,
     pub rows: Rc<RefCell<HashMap<String, Bounds<Pixels>>>>,
@@ -180,6 +200,9 @@ impl Preview {
             return;
         };
         if !drag.moved {
+            return;
+        }
+        if self.finish_playlist_group(&drag) {
             return;
         }
         let Some((track, beat)) = &drag.target else {

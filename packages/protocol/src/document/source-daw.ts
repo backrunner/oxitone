@@ -3,6 +3,7 @@ import { vst3WorkbenchCommandSchema } from "./vst3-workbench.js";
 import { vst3DocumentRecordingSchema } from "./vst3-recording.js";
 import { arrangementEditSchema } from "./arrangement.js";
 import { projectEditSchema } from "./project-edit.js";
+import { sampleDropSchema } from "./sample-use.js";
 import { noteEditSchema, noteSelectorSchema, sourceNoteSchema } from "../authoring/pattern-source.js";
 import { pluginCatalogEntrySchema } from "../plugins/plugin-catalog.js";
 import { automationSourceSchema } from "../authoring/automation-source.js";
@@ -138,6 +139,7 @@ export const documentRequestSchema = z.object({
       instance: z.string().optional(),
     }),
     z.object({ kind: z.literal("arrangement"), edit: arrangementEditSchema }),
+    z.object({ kind: z.literal("sampleDrop"), drop: sampleDropSchema }),
     z.object({
       kind: z.literal("notes"),
       site: handle,

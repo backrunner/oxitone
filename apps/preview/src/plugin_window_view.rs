@@ -97,6 +97,7 @@ pub fn view(this: &PluginWindow, width: f32, cx: &mut Context<PluginWindow>) -> 
         })
         .child(crate::plugin_host_controls::view(this, cx))
         .child(tabs)
+        .child(crate::plugin_sample_slots::view(this))
         .child(
             div()
                 .flex_1()

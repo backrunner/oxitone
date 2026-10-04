@@ -60,6 +60,8 @@ pub fn schedule(window: &Window, cx: &mut Context<Preview>) {
         let mut daw_smoke = crate::capture_daw::Smoke::default();
         let mut view_menu_smoke = crate::capture_view_menu::Smoke::default();
         let mut studio_smoke = crate::capture_studio::Smoke::default();
+        let mut sample_smoke = crate::capture_samples::Smoke::default();
+        let mut clipboard_smoke = crate::capture_note_clipboard::Smoke::default();
         let mut builtin_smoke = crate::capture_builtin::Smoke::default();
         let mut watch_state = String::new();
         let mut settled_frames = 0;
@@ -203,11 +205,23 @@ pub fn schedule(window: &Window, cx: &mut Context<Preview>) {
                     if let Some(view) = this.upgrade() { studio_smoke.step(&view, window, cx); }
                 }).unwrap();
             }
+            if daw && daw_smoke.complete() && !sample_smoke.complete() {
+                cx.update_window(window_handle, |_, window, cx| {
+                    if let Some(view) = this.upgrade() { sample_smoke.step(&view, window, cx); }
+                }).unwrap();
+            }
+            if daw && daw_smoke.complete() && sample_smoke.complete() && !clipboard_smoke.complete() {
+                cx.update_window(window_handle, |_, window, cx| {
+                    if let Some(view) = this.upgrade() { clipboard_smoke.step(&view, window, cx); }
+                }).unwrap();
+            }
             if ready_frames >= if transport { 36 } else { 14 }
                 && current.is_some_and(|v| v >= revision)
                 && (!daw || daw_smoke.complete())
                 && view_menu_smoke.complete()
                 && studio_smoke.complete()
+                && sample_smoke.complete()
+                && clipboard_smoke.complete()
                 && (builtin.is_empty() || builtin_smoke.complete())
             {
                 // Let the final workspace transition reach the native surface before capture.

@@ -6,7 +6,7 @@ use serde_json::json;
 
 fn view() -> DocumentView {
     serde_json::from_value(json!({
-        "sessionId":"session", "revision":3, "acceptedRevision":3, "savedRevision":2,
+        "projectRoot":"/project", "sessionId":"session", "revision":3, "acceptedRevision":3, "savedRevision":2,
         "status":"ready", "modified":true, "saving":false, "sites":[], "automationSites":[],
         "configurationSites":[], "rackSites":[], "files":[], "conflicts":[], "plugins":[]
     }))

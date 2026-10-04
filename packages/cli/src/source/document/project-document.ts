@@ -3,6 +3,7 @@ import { writeArrangement, assertArrangement } from "../editing/arrangement-writ
 import { writeProjectEdit } from "../editing/project-edit-writer.js";
 import { preparePluginAssignment, type PluginAssignment } from "../plugins/plugin-assignment.js";
 import { prepareVst3AudioImport } from "../plugins/vst3-audio-import.js";
+import { prepareSampleDrop } from "../editing/sample-drop-writer.js";
 import { controlVst3Instance } from "../plugins/vst3-instance-control.js";
 import type { Vst3Runtime } from "../../preview/vst3-client.js";
 import { writeVst3Configuration } from "../editing/vst3-configuration-writer.js";
@@ -545,6 +546,17 @@ export class ProjectDocument {
     const before = this.ready(revision),
       candidate = writeArrangement(before, this.files, edit);
     if (!candidate) return this.view;
+    return this.transact(before, candidate.files, (evaluated) =>
+      assertArrangement(before.frame.snapshot, candidate.expected, evaluated.frame.snapshot),
+    );
+  }
+  async sampleDrop(revision: number, drop: import("@oxitone/protocol").SampleDrop): Promise<DocumentView> {
+    const before = this.ready(revision),
+      generation = this.generation;
+    const candidate = await prepareSampleDrop(before, this.files, this.options.projectRoot!, drop, () => {
+      this.check(generation);
+      this.ready(revision);
+    });
     return this.transact(before, candidate.files, (evaluated) =>
       assertArrangement(before.frame.snapshot, candidate.expected, evaluated.frame.snapshot),
     );

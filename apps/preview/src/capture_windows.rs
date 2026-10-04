@@ -147,8 +147,17 @@ impl Smoke {
             }
             13 => {
                 let s = view.read(cx);
-                self.at = s.document.windows.desktop.get().origin
-                    + point(px(90.), px(12. + 28. + 4. + 26. + 14.));
+                self.at = s
+                    .document
+                    .browser
+                    .resource_bounds
+                    .borrow()
+                    .iter()
+                    .filter(|(key, _)| key.starts_with("Pattern/"))
+                    .map(|(_, bounds)| bounds)
+                    .min_by(|a, b| a.top().partial_cmp(&b.top()).unwrap())
+                    .unwrap()
+                    .center();
                 down(window, self.at, cx);
             }
             14 => {

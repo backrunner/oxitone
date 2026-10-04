@@ -97,7 +97,9 @@ impl Render for Preview {
                     ),
             );
         }
-        root.child(self.document_review(cx))
+        root.child(crate::playlist_brush::marquee(self))
+            .child(crate::sample_drop::ghost(self))
+            .child(self.document_review(cx))
             .when(self.document.show_code, |d| d.child(self.source_panel(cx)))
             .child(self.footer(cx))
             .when(

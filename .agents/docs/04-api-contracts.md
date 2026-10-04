@@ -320,6 +320,20 @@ clip.fitBars(2);
 `Sample` 的 getter 和 `SampleClip.toSpec()` 返回副本；`fitBeats`、`fitBars`、`fitToContent`
 仅更新 beat 长度并增加项目 revision。资源不存在或 hash 不匹配由 Rust 返回 `AssetUnavailable`。
 
+`Project.useSample({ sample, destination })` 是可序列化的资源放置/替换操作：`sample` 为当前
+builder 顺序的 sample index 或不带 id 的 `SampleRef`。`destination` 为 `{kind:'arrangement',
+track?, name?, startBeat}` 或 `{kind:'plugin', owner:'channel'|'bus', index, slot?, resource}`。
+省略 track 时创建新音频轨；省略 slot 指 Channel instrument。插件资源替换保留 instance 身份、
+参数、host mix/bypass 和 automation。整个操作在隔离快照中预检后才改变原工程，不做文件 I/O。
+无目标为 `EditTargetMissing`；不支持的插件资源、VST3 host resource、显式 Slicer 切片替换或
+局部 Track tempo 为 `EditNotRepresentable`。文件拖入由 Document Service 解码、复制并构造此操作。
+
+`Project.arrange({action:'batch', edits})` 一次应用 1..4096 个非嵌套操作；所有 clip index
+指向批次开始前的 builder 顺序，任一子操作失败则原工程、revision 和 ID 分配不变。
+`paste` 以 resource/track builder index、目标 startBeat、去掉身份/归属字段的 clip `settings`
+和可选 Channel indices 创建新 placement；保留全部原设置，Pattern lastBeat 随位置平移。
+这些事务及对应 Browser/快捷键行为详见 `23-daw-controls.md`。
+
 `addSample` 接受可选稳定 `id`，并拒绝已占用 ID。`frames` 可传正 safe-integer number
 或正 u64 bigint；越界、不精确数字、非法 trim 范围和非正音乐长度报 `InvalidProject`。
 添加失败不注册实体或改变 revision，SampleClip draft 可在放置失败后重试。

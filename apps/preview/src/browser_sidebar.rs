@@ -31,8 +31,11 @@ pub fn view(this: &mut Preview, cx: &mut Context<Preview>) -> impl IntoElement {
         .bg(rgb(t.panel))
         .child(
             div()
-                .h(px(34.))
+                .h(px(36.))
                 .px_2()
+                .gap(px(4.))
+                .border_b_1()
+                .border_color(rgb(t.border))
                 .flex_shrink_0()
                 .flex()
                 .items_center()
@@ -45,6 +48,8 @@ pub fn view(this: &mut Preview, cx: &mut Context<Preview>) -> impl IntoElement {
                 )
                 .child(
                     t.icon_button("browser-float", Icon::Restore, "Float Browser")
+                        .size(px(24.))
+                        .rounded(px(5.))
                         .on_click(cx.listener(|this, _, _, cx| {
                             this.float_browser();
                             cx.notify();
@@ -52,11 +57,13 @@ pub fn view(this: &mut Preview, cx: &mut Context<Preview>) -> impl IntoElement {
                 )
                 .child(
                     t.icon_button("browser-hide", Icon::Close, "Hide Browser")
+                        .size(px(24.))
+                        .rounded(px(5.))
                         .on_click(cx.listener(|this, _, _, cx| {
                             this.document.browser_open = false;
                             cx.notify();
                         })),
                 ),
         )
-        .child(crate::pattern_manager::view(this, cx))
+        .child(crate::browser_tree_view::body(this, cx))
 }

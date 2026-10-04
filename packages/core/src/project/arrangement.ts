@@ -1,11 +1,29 @@
 //! Playlist edits mutate authoring builders only; native compilation remains authoritative.
-import { arrangementEditSchema, ErrorCode, OxitoneError, type ArrangementEdit } from "@oxitone/protocol";
+import {
+  arrangementEditSchema,
+  ErrorCode,
+  OxitoneError,
+  type ArrangementEdit,
+  type ArrangementSingleEdit,
+} from "@oxitone/protocol";
+import { arrangeBatch } from "./arrangement-batch.js";
+import { applyPaste, pasteArrangement } from "./arrangement-paste.js";
 import type { Project } from "./project.js";
 import { copyClip } from "../arrangement/copy.js";
 import { parseAuthoring } from "../authoring-validation.js";
 
 export function arrange(project: Project, input: ArrangementEdit): void {
   const edit = parseAuthoring(arrangementEditSchema, input, "project.arrange");
+  if (edit.action === "batch") arrangeBatch(project, edit.edits, applyArrangement);
+  else if (edit.action === "paste") pasteArrangement(project, edit);
+  else applyArrangement(project, edit);
+}
+
+function applyArrangement(project: Project, edit: ArrangementSingleEdit): void {
+  if (edit.action === "paste") {
+    applyPaste(project, edit);
+    return;
+  }
   const require = <T>(value: T | undefined): T => {
     if (value === undefined)
       throw new OxitoneError(ErrorCode.EditTargetMissing, "Playlist resource or Track no longer exists");

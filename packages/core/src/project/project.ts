@@ -30,6 +30,7 @@ import { restoreEntities } from "./hydrate.js";
 import { arrange } from "./arrangement.js";
 import { configure } from "./edit.js";
 import { importAudio } from "./audio-import.js";
+import { useSample } from "./sample-use.js";
 
 export type { Marker } from "./timeline.js";
 
@@ -125,6 +126,11 @@ export class Project extends ProjectTimeline {
   /** Add a frozen audio resource on a new Playlist track; runtime decoding remains native. */
   importAudio(edit: import("@oxitone/protocol").ProjectAudioImport): this {
     importAudio(this, edit);
+    return this;
+  }
+  /** Place audio or attach it to one plugin resource; preserve existing instance identity. */
+  useSample(edit: import("@oxitone/protocol").SampleUse): this {
+    useSample(this, edit);
     return this;
   }
 

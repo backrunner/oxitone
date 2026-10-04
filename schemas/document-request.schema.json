@@ -1045,291 +1045,1305 @@
               "const": "arrangement"
             },
             "edit": {
-              "oneOf": [
+              "anyOf": [
+                {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "action": {
+                          "type": "string",
+                          "const": "paste"
+                        },
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "pattern",
+                            "sample",
+                            "automation"
+                          ]
+                        },
+                        "resource": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "track": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "startBeat": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "settings": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "startBeat": {
+                                  "type": "object",
+                                  "properties": {
+                                    "numerator": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "denominator": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 4294967295
+                                    }
+                                  },
+                                  "required": [
+                                    "numerator",
+                                    "denominator"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "durationBeats": {
+                                  "type": "object",
+                                  "properties": {
+                                    "numerator": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "denominator": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 4294967295
+                                    }
+                                  },
+                                  "required": [
+                                    "numerator",
+                                    "denominator"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "loopCount": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 9007199254740991
+                                },
+                                "lastBeat": {
+                                  "type": "object",
+                                  "properties": {
+                                    "numerator": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "denominator": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 4294967295
+                                    }
+                                  },
+                                  "required": [
+                                    "numerator",
+                                    "denominator"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "transpose": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "velocityScale": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 2
+                                },
+                                "probability": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1
+                                },
+                                "enabled": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "required": [
+                                "startBeat"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "startBeat": {
+                                  "type": "object",
+                                  "properties": {
+                                    "numerator": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "denominator": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 4294967295
+                                    }
+                                  },
+                                  "required": [
+                                    "numerator",
+                                    "denominator"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "durationBeats": {
+                                  "type": "object",
+                                  "properties": {
+                                    "numerator": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "denominator": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 4294967295
+                                    }
+                                  },
+                                  "required": [
+                                    "numerator",
+                                    "denominator"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "gain": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 2
+                                },
+                                "pan": {
+                                  "type": "number",
+                                  "minimum": -1,
+                                  "maximum": 1
+                                },
+                                "rate": {
+                                  "type": "number",
+                                  "minimum": 0.25,
+                                  "maximum": 4
+                                },
+                                "loop": {
+                                  "type": "object",
+                                  "properties": {
+                                    "startBeat": {
+                                      "type": "object",
+                                      "properties": {
+                                        "numerator": {
+                                          "type": "integer",
+                                          "minimum": 0,
+                                          "maximum": 9007199254740991
+                                        },
+                                        "denominator": {
+                                          "type": "integer",
+                                          "minimum": 1,
+                                          "maximum": 4294967295
+                                        }
+                                      },
+                                      "required": [
+                                        "numerator",
+                                        "denominator"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    "lengthBeats": {
+                                      "type": "object",
+                                      "properties": {
+                                        "numerator": {
+                                          "type": "integer",
+                                          "minimum": 0,
+                                          "maximum": 9007199254740991
+                                        },
+                                        "denominator": {
+                                          "type": "integer",
+                                          "minimum": 1,
+                                          "maximum": 4294967295
+                                        }
+                                      },
+                                      "required": [
+                                        "numerator",
+                                        "denominator"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    "count": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "lastBeat": {
+                                      "type": "object",
+                                      "properties": {
+                                        "numerator": {
+                                          "type": "integer",
+                                          "minimum": 0,
+                                          "maximum": 9007199254740991
+                                        },
+                                        "denominator": {
+                                          "type": "integer",
+                                          "minimum": 1,
+                                          "maximum": 4294967295
+                                        }
+                                      },
+                                      "required": [
+                                        "numerator",
+                                        "denominator"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "required": [
+                                    "lengthBeats"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "tempoSync": {
+                                  "type": "string",
+                                  "enum": [
+                                    "off",
+                                    "stretch",
+                                    "repitch"
+                                  ]
+                                },
+                                "stretchAlgorithm": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "enabled": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "required": [
+                                "startBeat"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "startBeat": {
+                                  "type": "object",
+                                  "properties": {
+                                    "numerator": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "denominator": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 4294967295
+                                    }
+                                  },
+                                  "required": [
+                                    "numerator",
+                                    "denominator"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "durationBeats": {
+                                  "type": "object",
+                                  "properties": {
+                                    "numerator": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "denominator": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 4294967295
+                                    }
+                                  },
+                                  "required": [
+                                    "numerator",
+                                    "denominator"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "enabled": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "required": [
+                                "startBeat"
+                              ],
+                              "additionalProperties": false
+                            }
+                          ]
+                        },
+                        "channels": {
+                          "maxItems": 256,
+                          "type": "array",
+                          "items": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          }
+                        }
+                      },
+                      "required": [
+                        "action",
+                        "kind",
+                        "resource",
+                        "track",
+                        "startBeat",
+                        "settings"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "action": {
+                          "type": "string",
+                          "const": "place"
+                        },
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "pattern",
+                            "sample",
+                            "automation"
+                          ]
+                        },
+                        "resource": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "track": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "startBeat": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "durationBeats": {
+                          "type": "number",
+                          "exclusiveMinimum": 0
+                        },
+                        "channels": {
+                          "maxItems": 256,
+                          "type": "array",
+                          "items": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          }
+                        }
+                      },
+                      "required": [
+                        "action",
+                        "kind",
+                        "resource",
+                        "track",
+                        "startBeat"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "action": {
+                          "type": "string",
+                          "const": "move"
+                        },
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "pattern",
+                            "sample",
+                            "automation"
+                          ]
+                        },
+                        "resource": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "clip": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "track": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "startBeat": {
+                          "type": "number",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "action",
+                        "kind",
+                        "resource",
+                        "clip",
+                        "track",
+                        "startBeat"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "action": {
+                          "type": "string",
+                          "const": "remove"
+                        },
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "pattern",
+                            "sample",
+                            "automation"
+                          ]
+                        },
+                        "resource": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "clip": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "action",
+                        "kind",
+                        "resource",
+                        "clip"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "action": {
+                          "type": "string",
+                          "const": "duplicate"
+                        },
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "pattern",
+                            "sample",
+                            "automation"
+                          ]
+                        },
+                        "resource": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "clip": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "track": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "startBeat": {
+                          "type": "number",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "action",
+                        "kind",
+                        "resource",
+                        "clip",
+                        "track",
+                        "startBeat"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "action": {
+                          "type": "string",
+                          "const": "resize"
+                        },
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "pattern",
+                            "automation"
+                          ]
+                        },
+                        "resource": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "clip": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "durationBeats": {
+                          "type": "number",
+                          "exclusiveMinimum": 0
+                        }
+                      },
+                      "required": [
+                        "action",
+                        "kind",
+                        "resource",
+                        "clip",
+                        "durationBeats"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "action": {
+                          "type": "string",
+                          "const": "fitSample"
+                        },
+                        "kind": {
+                          "type": "string",
+                          "const": "sample"
+                        },
+                        "resource": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "clip": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "durationBeats": {
+                          "type": "number",
+                          "exclusiveMinimum": 0
+                        }
+                      },
+                      "required": [
+                        "action",
+                        "kind",
+                        "resource",
+                        "clip",
+                        "durationBeats"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "action": {
+                          "type": "string",
+                          "const": "enable"
+                        },
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "pattern",
+                            "sample",
+                            "automation"
+                          ]
+                        },
+                        "resource": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "clip": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "action",
+                        "kind",
+                        "resource",
+                        "clip",
+                        "enabled"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                },
                 {
                   "type": "object",
                   "properties": {
                     "action": {
                       "type": "string",
-                      "const": "place"
+                      "const": "batch"
                     },
-                    "kind": {
-                      "type": "string",
-                      "enum": [
-                        "pattern",
-                        "sample",
-                        "automation"
-                      ]
-                    },
-                    "resource": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991
-                    },
-                    "track": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991
-                    },
-                    "startBeat": {
-                      "type": "number",
-                      "minimum": 0
-                    },
-                    "durationBeats": {
-                      "type": "number",
-                      "exclusiveMinimum": 0
-                    },
-                    "channels": {
-                      "maxItems": 256,
+                    "edits": {
+                      "minItems": 1,
+                      "maxItems": 4096,
                       "type": "array",
                       "items": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "action": {
+                                "type": "string",
+                                "const": "paste"
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "pattern",
+                                  "sample",
+                                  "automation"
+                                ]
+                              },
+                              "resource": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "track": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "startBeat": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "settings": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "startBeat": {
+                                        "type": "object",
+                                        "properties": {
+                                          "numerator": {
+                                            "type": "integer",
+                                            "minimum": 0,
+                                            "maximum": 9007199254740991
+                                          },
+                                          "denominator": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "maximum": 4294967295
+                                          }
+                                        },
+                                        "required": [
+                                          "numerator",
+                                          "denominator"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "durationBeats": {
+                                        "type": "object",
+                                        "properties": {
+                                          "numerator": {
+                                            "type": "integer",
+                                            "minimum": 0,
+                                            "maximum": 9007199254740991
+                                          },
+                                          "denominator": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "maximum": 4294967295
+                                          }
+                                        },
+                                        "required": [
+                                          "numerator",
+                                          "denominator"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "loopCount": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "lastBeat": {
+                                        "type": "object",
+                                        "properties": {
+                                          "numerator": {
+                                            "type": "integer",
+                                            "minimum": 0,
+                                            "maximum": 9007199254740991
+                                          },
+                                          "denominator": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "maximum": 4294967295
+                                          }
+                                        },
+                                        "required": [
+                                          "numerator",
+                                          "denominator"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "transpose": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "velocityScale": {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "maximum": 2
+                                      },
+                                      "probability": {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "maximum": 1
+                                      },
+                                      "enabled": {
+                                        "type": "boolean"
+                                      }
+                                    },
+                                    "required": [
+                                      "startBeat"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "startBeat": {
+                                        "type": "object",
+                                        "properties": {
+                                          "numerator": {
+                                            "type": "integer",
+                                            "minimum": 0,
+                                            "maximum": 9007199254740991
+                                          },
+                                          "denominator": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "maximum": 4294967295
+                                          }
+                                        },
+                                        "required": [
+                                          "numerator",
+                                          "denominator"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "durationBeats": {
+                                        "type": "object",
+                                        "properties": {
+                                          "numerator": {
+                                            "type": "integer",
+                                            "minimum": 0,
+                                            "maximum": 9007199254740991
+                                          },
+                                          "denominator": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "maximum": 4294967295
+                                          }
+                                        },
+                                        "required": [
+                                          "numerator",
+                                          "denominator"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "gain": {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "maximum": 2
+                                      },
+                                      "pan": {
+                                        "type": "number",
+                                        "minimum": -1,
+                                        "maximum": 1
+                                      },
+                                      "rate": {
+                                        "type": "number",
+                                        "minimum": 0.25,
+                                        "maximum": 4
+                                      },
+                                      "loop": {
+                                        "type": "object",
+                                        "properties": {
+                                          "startBeat": {
+                                            "type": "object",
+                                            "properties": {
+                                              "numerator": {
+                                                "type": "integer",
+                                                "minimum": 0,
+                                                "maximum": 9007199254740991
+                                              },
+                                              "denominator": {
+                                                "type": "integer",
+                                                "minimum": 1,
+                                                "maximum": 4294967295
+                                              }
+                                            },
+                                            "required": [
+                                              "numerator",
+                                              "denominator"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          "lengthBeats": {
+                                            "type": "object",
+                                            "properties": {
+                                              "numerator": {
+                                                "type": "integer",
+                                                "minimum": 0,
+                                                "maximum": 9007199254740991
+                                              },
+                                              "denominator": {
+                                                "type": "integer",
+                                                "minimum": 1,
+                                                "maximum": 4294967295
+                                              }
+                                            },
+                                            "required": [
+                                              "numerator",
+                                              "denominator"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          "count": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "maximum": 9007199254740991
+                                          },
+                                          "lastBeat": {
+                                            "type": "object",
+                                            "properties": {
+                                              "numerator": {
+                                                "type": "integer",
+                                                "minimum": 0,
+                                                "maximum": 9007199254740991
+                                              },
+                                              "denominator": {
+                                                "type": "integer",
+                                                "minimum": 1,
+                                                "maximum": 4294967295
+                                              }
+                                            },
+                                            "required": [
+                                              "numerator",
+                                              "denominator"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "required": [
+                                          "lengthBeats"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "tempoSync": {
+                                        "type": "string",
+                                        "enum": [
+                                          "off",
+                                          "stretch",
+                                          "repitch"
+                                        ]
+                                      },
+                                      "stretchAlgorithm": {
+                                        "type": "string",
+                                        "minLength": 1
+                                      },
+                                      "enabled": {
+                                        "type": "boolean"
+                                      }
+                                    },
+                                    "required": [
+                                      "startBeat"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "startBeat": {
+                                        "type": "object",
+                                        "properties": {
+                                          "numerator": {
+                                            "type": "integer",
+                                            "minimum": 0,
+                                            "maximum": 9007199254740991
+                                          },
+                                          "denominator": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "maximum": 4294967295
+                                          }
+                                        },
+                                        "required": [
+                                          "numerator",
+                                          "denominator"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "durationBeats": {
+                                        "type": "object",
+                                        "properties": {
+                                          "numerator": {
+                                            "type": "integer",
+                                            "minimum": 0,
+                                            "maximum": 9007199254740991
+                                          },
+                                          "denominator": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "maximum": 4294967295
+                                          }
+                                        },
+                                        "required": [
+                                          "numerator",
+                                          "denominator"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "enabled": {
+                                        "type": "boolean"
+                                      }
+                                    },
+                                    "required": [
+                                      "startBeat"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                ]
+                              },
+                              "channels": {
+                                "maxItems": 256,
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                }
+                              }
+                            },
+                            "required": [
+                              "action",
+                              "kind",
+                              "resource",
+                              "track",
+                              "startBeat",
+                              "settings"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "action": {
+                                "type": "string",
+                                "const": "place"
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "pattern",
+                                  "sample",
+                                  "automation"
+                                ]
+                              },
+                              "resource": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "track": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "startBeat": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "durationBeats": {
+                                "type": "number",
+                                "exclusiveMinimum": 0
+                              },
+                              "channels": {
+                                "maxItems": 256,
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                }
+                              }
+                            },
+                            "required": [
+                              "action",
+                              "kind",
+                              "resource",
+                              "track",
+                              "startBeat"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "action": {
+                                "type": "string",
+                                "const": "move"
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "pattern",
+                                  "sample",
+                                  "automation"
+                                ]
+                              },
+                              "resource": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "clip": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "track": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "startBeat": {
+                                "type": "number",
+                                "minimum": 0
+                              }
+                            },
+                            "required": [
+                              "action",
+                              "kind",
+                              "resource",
+                              "clip",
+                              "track",
+                              "startBeat"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "action": {
+                                "type": "string",
+                                "const": "remove"
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "pattern",
+                                  "sample",
+                                  "automation"
+                                ]
+                              },
+                              "resource": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "clip": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "required": [
+                              "action",
+                              "kind",
+                              "resource",
+                              "clip"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "action": {
+                                "type": "string",
+                                "const": "duplicate"
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "pattern",
+                                  "sample",
+                                  "automation"
+                                ]
+                              },
+                              "resource": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "clip": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "track": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "startBeat": {
+                                "type": "number",
+                                "minimum": 0
+                              }
+                            },
+                            "required": [
+                              "action",
+                              "kind",
+                              "resource",
+                              "clip",
+                              "track",
+                              "startBeat"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "action": {
+                                "type": "string",
+                                "const": "resize"
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "pattern",
+                                  "automation"
+                                ]
+                              },
+                              "resource": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "clip": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "durationBeats": {
+                                "type": "number",
+                                "exclusiveMinimum": 0
+                              }
+                            },
+                            "required": [
+                              "action",
+                              "kind",
+                              "resource",
+                              "clip",
+                              "durationBeats"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "action": {
+                                "type": "string",
+                                "const": "fitSample"
+                              },
+                              "kind": {
+                                "type": "string",
+                                "const": "sample"
+                              },
+                              "resource": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "clip": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "durationBeats": {
+                                "type": "number",
+                                "exclusiveMinimum": 0
+                              }
+                            },
+                            "required": [
+                              "action",
+                              "kind",
+                              "resource",
+                              "clip",
+                              "durationBeats"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "action": {
+                                "type": "string",
+                                "const": "enable"
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "pattern",
+                                  "sample",
+                                  "automation"
+                                ]
+                              },
+                              "resource": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "clip": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "enabled": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "action",
+                              "kind",
+                              "resource",
+                              "clip",
+                              "enabled"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
                       }
                     }
                   },
                   "required": [
                     "action",
-                    "kind",
-                    "resource",
-                    "track",
-                    "startBeat"
-                  ],
-                  "additionalProperties": false
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "action": {
-                      "type": "string",
-                      "const": "move"
-                    },
-                    "kind": {
-                      "type": "string",
-                      "enum": [
-                        "pattern",
-                        "sample",
-                        "automation"
-                      ]
-                    },
-                    "resource": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991
-                    },
-                    "clip": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991
-                    },
-                    "track": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991
-                    },
-                    "startBeat": {
-                      "type": "number",
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "action",
-                    "kind",
-                    "resource",
-                    "clip",
-                    "track",
-                    "startBeat"
-                  ],
-                  "additionalProperties": false
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "action": {
-                      "type": "string",
-                      "const": "remove"
-                    },
-                    "kind": {
-                      "type": "string",
-                      "enum": [
-                        "pattern",
-                        "sample",
-                        "automation"
-                      ]
-                    },
-                    "resource": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991
-                    },
-                    "clip": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991
-                    }
-                  },
-                  "required": [
-                    "action",
-                    "kind",
-                    "resource",
-                    "clip"
-                  ],
-                  "additionalProperties": false
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "action": {
-                      "type": "string",
-                      "const": "duplicate"
-                    },
-                    "kind": {
-                      "type": "string",
-                      "enum": [
-                        "pattern",
-                        "sample",
-                        "automation"
-                      ]
-                    },
-                    "resource": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991
-                    },
-                    "clip": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991
-                    },
-                    "track": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991
-                    },
-                    "startBeat": {
-                      "type": "number",
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "action",
-                    "kind",
-                    "resource",
-                    "clip",
-                    "track",
-                    "startBeat"
-                  ],
-                  "additionalProperties": false
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "action": {
-                      "type": "string",
-                      "const": "resize"
-                    },
-                    "kind": {
-                      "type": "string",
-                      "enum": [
-                        "pattern",
-                        "automation"
-                      ]
-                    },
-                    "resource": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991
-                    },
-                    "clip": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991
-                    },
-                    "durationBeats": {
-                      "type": "number",
-                      "exclusiveMinimum": 0
-                    }
-                  },
-                  "required": [
-                    "action",
-                    "kind",
-                    "resource",
-                    "clip",
-                    "durationBeats"
-                  ],
-                  "additionalProperties": false
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "action": {
-                      "type": "string",
-                      "const": "fitSample"
-                    },
-                    "kind": {
-                      "type": "string",
-                      "const": "sample"
-                    },
-                    "resource": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991
-                    },
-                    "clip": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991
-                    },
-                    "durationBeats": {
-                      "type": "number",
-                      "exclusiveMinimum": 0
-                    }
-                  },
-                  "required": [
-                    "action",
-                    "kind",
-                    "resource",
-                    "clip",
-                    "durationBeats"
-                  ],
-                  "additionalProperties": false
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "action": {
-                      "type": "string",
-                      "const": "enable"
-                    },
-                    "kind": {
-                      "type": "string",
-                      "enum": [
-                        "pattern",
-                        "sample",
-                        "automation"
-                      ]
-                    },
-                    "resource": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991
-                    },
-                    "clip": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991
-                    },
-                    "enabled": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "action",
-                    "kind",
-                    "resource",
-                    "clip",
-                    "enabled"
+                    "edits"
                   ],
                   "additionalProperties": false
                 }
@@ -1339,6 +2353,143 @@
           "required": [
             "kind",
             "edit"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "sampleDrop"
+            },
+            "drop": {
+              "type": "object",
+              "properties": {
+                "source": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "file"
+                        },
+                        "path": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 4096
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "path"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "project"
+                        },
+                        "index": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "index"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "destination": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "arrangement"
+                        },
+                        "track": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 256
+                        },
+                        "startBeat": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1000000000
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "startBeat"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "plugin"
+                        },
+                        "owner": {
+                          "type": "string",
+                          "enum": [
+                            "channel",
+                            "bus"
+                          ]
+                        },
+                        "index": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "slot": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "resource": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 128
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "owner",
+                        "index",
+                        "resource"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "source",
+                "destination"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "kind",
+            "drop"
           ],
           "additionalProperties": false
         },

@@ -24,8 +24,13 @@ pub fn rows(
             .as_ref()
             .filter(|_| this.presentation_active())
     });
-    let clips =
-        crate::playlist_projection::project(crate::playlist_projection::placements(project), drag);
+    let original = crate::playlist_projection::placements(project);
+    let clips = crate::playlist_brush::project(
+        this,
+        drag.filter(|d| d.moved)
+            .and_then(|d| crate::playlist_group::project(this, original.clone(), d))
+            .unwrap_or_else(|| crate::playlist_projection::project(original, drag)),
+    );
     let mut lanes = div().w(px(width)).flex().flex_col();
     let mut headers = div().absolute().top(offset.y).w_full().flex().flex_col();
     for (index, track) in project.snapshot.tracks.iter().enumerate() {
