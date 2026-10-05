@@ -95,9 +95,14 @@ impl Preview {
 
     pub(crate) fn playlist_zoom(&self, cx: &mut Context<Self>) -> Div {
         let t = self.theme;
-        t.tool_group()
+        div()
+            .flex()
+            .items_center()
+            .gap_1()
+            .flex_shrink_0()
             .child(
                 t.icon_button("playlist-fit", Icon::Fit, "Fit arrangement")
+                    .size(px(24.))
                     .on_click(cx.listener(|this, _, window, cx| {
                         if let Some(project) = &this.project {
                             this.zoom = ((f32::from(window.viewport_size().width) - 190.)
@@ -110,6 +115,7 @@ impl Preview {
             )
             .child(
                 t.icon_button("zoom-out", Icon::Minus, "Zoom out")
+                    .size(px(24.))
                     .on_click(cx.listener(|this, _, _, cx| {
                         this.zoom = (this.zoom / 1.25).max(0.01);
                         cx.notify();
@@ -117,6 +123,7 @@ impl Preview {
             )
             .child(
                 t.icon_button("zoom-in", Icon::Plus, "Zoom in")
+                    .size(px(24.))
                     .on_click(cx.listener(|this, _, _, cx| {
                         this.zoom = (this.zoom * 1.25).min(120.);
                         cx.notify();

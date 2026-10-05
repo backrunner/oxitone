@@ -174,7 +174,7 @@ pub fn panels(this: &mut Preview, window: &Window, cx: &mut Context<Preview>) ->
 
 pub fn dock_tabs(this: &Preview, cx: &mut Context<Preview>) -> Div {
     let t = this.theme;
-    let mut tabs = t.tool_group();
+    let mut tabs = div().flex().items_center().gap_1().flex_shrink_0();
     for (id, icon, tip, mode) in [
         (
             "dock-piano",
@@ -202,6 +202,7 @@ pub fn dock_tabs(this: &Preview, cx: &mut Context<Preview>) -> Div {
                 tip,
                 this.workspace.dock_open && this.workspace.dock == mode,
             )
+            .size(px(24.))
             .on_click(cx.listener(move |this, _, _, cx| {
                 this.workspace.dock_open = !this.workspace.dock_open || this.workspace.dock != mode;
                 this.workspace.dock = mode;
