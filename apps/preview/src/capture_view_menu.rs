@@ -47,7 +47,7 @@ impl Smoke {
                         px(19.
                             + self.item as f32 * 30.
                             + if self.item >= 4 { 9. } else { 0. }
-                            + if self.item == 7 { 9. } else { 0. }),
+                            + if self.item == VIEWS.len() - 1 { 9. } else { 0. }),
                     );
                 pointer(window, self.at, false, cx);
             }
@@ -80,7 +80,7 @@ impl Smoke {
                 assert!(view.read(cx).document.pending.is_none());
                 press("home", window, cx);
                 press("up", window, cx);
-                assert_eq!(view.read(cx).view_menu.selected, Some(7));
+                assert_eq!(view.read(cx).view_menu.selected, Some(VIEWS.len() - 1));
                 press("down", window, cx);
                 press("down", window, cx);
                 press("enter", window, cx);
@@ -145,7 +145,7 @@ impl Smoke {
                 assert!(s.view_menu.selected.is_some());
                 assert_eq!(s.document.view.as_ref().unwrap().revision, self.revision);
                 assert_eq!(cx.windows().len(), 1);
-                eprintln!("View menu smoke passed: eight native menu targets, current-view selection, keyboard navigation, Escape/Tab/trigger dismissal, outside dismissal without editing or seeking, F5/F7/F9, unchanged source, one native window");
+                eprintln!("View menu smoke passed: nine native menu targets including Source, current-view selection, keyboard navigation, Escape/Tab/trigger dismissal, outside dismissal without editing or seeking, F5/F7/F9, unchanged source, one native window");
             }
             _ => unreachable!(),
         }

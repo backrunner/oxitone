@@ -39,6 +39,7 @@ mod capture_studio;
 #[cfg(target_os = "macos")]
 mod capture_surface;
 mod capture_synth;
+mod capture_title_transport;
 mod capture_track_drag;
 mod capture_transport;
 mod capture_ui_review;
@@ -82,6 +83,7 @@ mod mixer_routes_tests;
 mod mixer_routing_view;
 mod mixer_strip;
 mod model;
+mod native_menu;
 mod note_brush;
 mod note_clipboard;
 mod note_commit;
@@ -292,7 +294,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 |window, cx| cx.new(|cx| ui::Preview::new(backend, window, cx)),
             )
             .expect("open preview window");
-            about::install_menu(cx);
+            native_menu::install(cx);
             cx.on_window_closed(|cx| {
                 if cx.windows().is_empty() {
                     cx.quit();

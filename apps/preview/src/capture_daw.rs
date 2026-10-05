@@ -150,11 +150,11 @@ impl Smoke {
                         .any(|output| output.note.pitch == self.pitch + 1
                             && output.note.start == 0.25)
                 );
-                window.dispatch_keystroke(Keystroke::parse("cmd-s").unwrap(), cx);
+                window.dispatch_action(Box::new(crate::native_menu::SaveProject), cx);
                 self.stage = 2;
             }
             2 if !view.read(cx).document.view.as_ref().unwrap().modified => {
-                window.dispatch_keystroke(Keystroke::parse("cmd-z").unwrap(), cx);
+                window.dispatch_action(Box::new(crate::native_menu::UndoEdit), cx);
                 self.stage = 3;
             }
             3 if view.read(cx).document_ready()
@@ -164,7 +164,7 @@ impl Smoke {
                     view.read(cx).pattern_site().unwrap().outputs[0].note.pitch,
                     self.pitch
                 );
-                window.dispatch_keystroke(Keystroke::parse("cmd-shift-z").unwrap(), cx);
+                window.dispatch_action(Box::new(crate::native_menu::RedoEdit), cx);
                 self.stage = 4;
             }
             4 if view.read(cx).document_ready()

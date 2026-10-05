@@ -16,6 +16,10 @@ impl Render for Preview {
             .on_action(cx.listener(Self::about_action))
             .on_action(cx.listener(Self::help_action))
             .on_action(cx.listener(Self::quit_action))
+            .on_action(cx.listener(Self::save_project_action))
+            .on_action(cx.listener(Self::undo_edit_action))
+            .on_action(cx.listener(Self::redo_edit_action))
+            .on_action(cx.listener(Self::loop_action))
             .capture_key_down(cx.listener(Self::modal_key))
             .on_key_down(cx.listener(Self::workspace_key))
             .relative()
@@ -26,8 +30,7 @@ impl Render for Preview {
             .text_color(rgb(theme.text))
             .font_family("Helvetica Neue")
             .child(crate::pointer_capture::view(cx))
-            .child(self.header(window, cx))
-            .child(self.transport_bar(cx));
+            .child(self.header(window, cx));
         if let Some(diagnostic) = self.active_diagnostic() {
             root = root.child(
                 div()

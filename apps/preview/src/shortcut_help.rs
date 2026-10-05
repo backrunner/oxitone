@@ -111,6 +111,7 @@ pub fn view(this: &Preview, cx: &mut Context<Preview>) -> impl IntoElement {
                 "Bend a curve · Shift for fine point movement",
             ),
             ("Escape · ⌘ Z / Shift Z", "Cancel gesture · undo / redo"),
+            ("⌘ S · Views → Source code", "Save project · inspect source"),
             (
                 "Playlist: Shift drag / ⌘ D",
                 "Copy clips / repeat selection after its end",

@@ -16,9 +16,10 @@ pub enum View {
     Automation,
     Plugins,
     Browser,
+    Source,
     About,
 }
-pub const VIEWS: [View; 8] = [
+pub const VIEWS: [View; 9] = [
     View::Arrange,
     View::Piano,
     View::Mixer,
@@ -26,6 +27,7 @@ pub const VIEWS: [View; 8] = [
     View::Automation,
     View::Plugins,
     View::Browser,
+    View::Source,
     View::About,
 ];
 impl View {
@@ -38,6 +40,7 @@ impl View {
             Self::Automation => "Automation",
             Self::Plugins => "Plugins",
             Self::Browser => "Browser",
+            Self::Source => "Source code",
             Self::About => "About Oxitone",
         }
     }
@@ -50,6 +53,7 @@ impl View {
             Self::Automation => Icon::Curve,
             Self::Plugins => Icon::Wave,
             Self::Browser => Icon::Library,
+            Self::Source => Icon::Code,
             Self::About => Icon::Info,
         }
     }
@@ -73,6 +77,7 @@ impl View {
                     || (this.document.browser_open && this.workspace.browser_docked)
             }
             Self::About => this.show_about,
+            Self::Source => this.document.show_code,
         }
     }
 }
@@ -81,7 +86,8 @@ impl Preview {
         VIEWS
             .into_iter()
             .filter(|view| {
-                self.document.view.is_some() || !matches!(view, View::Automation | View::Plugins)
+                self.document.view.is_some()
+                    || !matches!(view, View::Automation | View::Plugins | View::Source)
             })
             .collect()
     }
@@ -103,6 +109,7 @@ impl Preview {
                 self.document.windows.focus(WindowId::Patterns);
             }
             View::About => self.show_about = true,
+            View::Source => self.document.show_code = !self.document.show_code,
             View::Automation => {
                 self.document.automation.open = true;
                 self.document.windows.focus(WindowId::Automation);

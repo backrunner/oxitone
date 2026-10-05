@@ -102,7 +102,7 @@ Engine 1.4 的乐器辅助输出也进入 Mixer 的 Routing/Signal Flow 和目�
 - **插件详情窗口**：Mixer 的音源入口、Channel/Mixer/Master 的每个效果器实例均可独立打开。窗口按稳定实例身份复用；不同实例可并排查看。插件参数绑定使用 EffectRef.instanceId；重排后详情仍跟随原实例，替换或删除后显示未挂载状态，不自动控制新占位插件。无实例身份的只读投影保留槽位寻址。
 - 详情来自已接受快照与控制线程复制的权威 descriptor，包含参数显式值/默认值、物理范围/单位、平滑/rate/mapping、自动化绑定、效果器 mix/bypass、音源资源/structured state、布局/复音/capabilities、内置或动态库来源及已验证 hash。参数是 source 初始配置，不能冒充自动化/平滑后的实时有效值；不创建第二个 DSP 实例、不调用插件 process/getter、不持有动态库或 DSP 指针。
 - **Scopes**：波形（各 bus 峰值 ring）、频谱（FFT）、相位空间 XY/vectorscope（M/S 分解）。
-- **Transport 条**：play/pause/stop/seek（bar/beat/marker/点击时间轴）、loop region、当前 bar.beat.tick 与 timecode、tempo 显示（含 tempo lane 烘焙结果）。
+- **Transport**：标题栏提供 play/pause/stop、当前 bar.beat.tick 和 tempo（含 tempo lane 烘焙结果）；seek 使用时间轴和快捷键，循环开关位于 Playback 菜单与 L 快捷键。
 
 ## 分析数据路径（实时纪律）
 
@@ -113,9 +113,11 @@ Engine 1.4 的乐器辅助输出也进入 Mixer 的 Routing/Signal Flow 和目�
 
 ## 交互与延迟
 
-- 窗口内容延伸到顶部，系统标题文字/独立标题栏隐藏；44 px 标题区放工程名与编辑器导航，
+- 窗口内容延伸到顶部，系统标题文字/独立标题栏隐藏；44 px 标题区放工程名、播放/停止、时间码与编辑器导航，
   标题只使用真实工程名（未命名为 Untitled）及修改标记，不放 slogan 或重复品牌。
-  48 px 传输栏集中播放、位置与 Undo/Redo/Save。保留原生 macOS 交通灯按钮。
+  不另占传输栏。Undo/Redo/Save 收入原生 Edit/File 菜单并保留快捷键，循环保留 Playback 菜单和 L。
+  菜单命令遵守弹窗与输入框隔离、文档 ready/pending 校验，仍通过原有文档事务和 transport 命令执行。
+  保留原生 macOS 交通灯按钮，窄窗口优先截断工程名，播放和时间码保持可见。
   非交互标题区可拖动，双击遵循系统标题栏偏好；全屏时收回交通灯预留空间。
 - 标题栏包含 Pattern 选择器与前后切换、静态 BPM 编辑、运行时节拍器开关，以及
   Master 波形和 Peak/RMS 电平。Master 固定读取最终 limiter 后的原生遥测，复用 UI
@@ -123,7 +125,7 @@ Engine 1.4 的乐器辅助输出也进入 Mixer 的 Routing/Signal Flow 和目�
   节拍器默认关闭，控制线程经有界原生命令队列在 block boundary 生效，不修改工程源码；
   曲速沿用文档事务，支持 Undo/Save，复杂 tempo map/automation 仍只读。
 - 标题区右上角使用单个 Views 图标下拉入口，不常驻帮助按钮。菜单提供
-  Arrange / Piano / Mixer / Patterns、Browser、DAW 的 Automation / Plugins 和 About Oxitone，勾选当前视图；
+  Arrange / Piano / Mixer / Patterns、Browser、DAW 的 Automation / Plugins / Source code 和 About Oxitone，勾选当前视图；
   点击恢复或聚焦已有视图，Arrange 隐藏内部窗口。方向键选择、Enter 确认，Escape、Tab
   或点击菜单外关闭；菜单打开时隔离底层编辑与播放操作，F5/F7/F9 保留原有快捷键语义。
   Pattern 下拉及前后按钮仅切换选中资源、对应 placement 和编辑视图，不启动播放或改写源码。
@@ -170,7 +172,7 @@ Engine 1.4 的乐器辅助输出也进入 Mixer 的 Routing/Signal Flow 和目�
   保存/加载独立预设，并把最近渲染冻结为可 Undo/Save 的 Playlist 音轨。所有操作经过
   Document Service；能力与测试边界见 [24-vst3-sdk.md](24-vst3-sdk.md)。
   点击置前、标题拖动/双击最大化、八方向缩放、恢复/关闭和 Piano/Mixer 停靠均在同一 GPUI
-  主窗口内处理，浮层占用实测 desktop，保持主传输栏可用。Arrange 隐藏浮层，再次打开
+  主窗口内处理，浮层占用实测 desktop，保持标题栏播放控件可用。Arrange 隐藏浮层，再次打开
   编辑器恢复其状态；⌘/Ctrl+W 关闭当前内部窗口。手势命中不穿透窗口；Playlist 拖放还验证
   滚动视口边界，并在释放时重新计算目标。`OXITONE_PREVIEW_CAPTURE_WINDOWS=1` 配合
   `scripts/smoke-daw.mjs` 验证六个内部视图共存、真实标题/边角/最大化按钮与 Browser 拖放保存，
@@ -198,7 +200,7 @@ Engine 1.4 的乐器辅助输出也进入 Mixer 的 Routing/Signal Flow 和目�
   库详情与使用位置列表提供可拖动的垂直滚动条；内容不压缩，窄窗仍可访问全部详情和操作。
   控件分普通、主操作、无背景和图标按钮，工具用分组容器。图标有原生悬停名称/快捷键；
   钢琴/曲线底部仅显示音乐数据，不常驻操作教程，所有快捷操作集中于 ? 面板。
-  Pattern 作用范围和 Detach 位于钢琴工具栏，传输栏只保留全局文档操作。
+  Pattern 作用范围和 Detach 位于钢琴工具栏，全局文档操作位于菜单和快捷键。
   编排/钢琴标题不重复统计数量；插件面板仅在非同步状态显示诊断标签，Copy JSON 归入 Info。
   Mixer 隐藏 0 FX 与静止的负无穷 peak；Automation 移除内嵌卡片边框和重复插值标签。
   28 px 底栏显示保存状态、CPU 和必要引擎告警，采样率/延迟/revision/xrun/fault 点击展开。
@@ -260,6 +262,9 @@ Mixer、Track/BPM、片段复制/长度/启停/删除和插件实例选择的当
 - `node scripts/smoke-ui.mjs` 串行运行两套主题、1440×920 与 1060×720 的真实窗口场景，
   PNG、日志及结果写入 `target/ui-review/`。包括钢琴/曲线编辑、内部窗口、插件配置及关闭保存，
   每次在临时工程编辑后重新打开验证源码。DAW 始终使用 simulated sink。
+  Studio 场景还检查标题栏播放/暂停/停止的真实命中、停止回 cue、最小窗口的控件边界、
+  循环菜单与 About/输入框隔离；DAW 基线通过 native action 分发验证菜单 Save/Undo/Redo，
+  Views 场景包含 Source code 入口。菜单分发不替代物理鼠标操作系统菜单的验收。
 - `OXITONE_PREVIEW_CAPTURE_UI_REVIEW=1` 配合 `scripts/smoke-daw.mjs` 验证弹层输入隔离、
   插件 Edit configuration 的真实按钮命中、错误代码恢复、AppKit 关闭拦截、保存锁失败后保留草稿，
   最后保存关闭并重开核对。`OXITONE_PREVIEW_CAPTURE_OUTPUT` 可指定该脚本的 PNG 路径与相邻 `.log`。

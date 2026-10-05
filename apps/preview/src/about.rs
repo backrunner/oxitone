@@ -1,4 +1,4 @@
-//! Branded About dialog and native application-menu entries.
+//! Branded About dialog and application/help actions.
 use crate::{ui::Preview, ui_icons::Icon};
 use gpui::{prelude::*, *};
 use std::borrow::Cow;
@@ -17,23 +17,6 @@ impl AssetSource for BrandAssets {
     fn list(&self, _: &str) -> Result<Vec<SharedString>> {
         Ok(vec!["oxitone-mark.svg".into()])
     }
-}
-
-pub fn install_menu(cx: &mut App) {
-    cx.set_menus(vec![
-        Menu {
-            name: "Oxitone".into(),
-            items: vec![
-                MenuItem::action("About Oxitone", ShowAbout),
-                MenuItem::separator(),
-                MenuItem::action("Quit Oxitone", Quit),
-            ],
-        },
-        Menu {
-            name: "Help".into(),
-            items: vec![MenuItem::action("Keyboard shortcuts", ShowShortcuts)],
-        },
-    ]);
 }
 
 impl Preview {

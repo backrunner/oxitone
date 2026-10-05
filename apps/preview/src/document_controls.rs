@@ -1,61 +1,7 @@
-//! Document toolbar and source inspector; requests are routed by DocumentUi.
+//! Pattern edit scope and source inspector; requests are routed by DocumentUi.
 use crate::{document_wire::DocumentOperation, ui::Preview};
 use gpui::{prelude::*, *};
 impl Preview {
-    pub fn document_controls(&self, cx: &mut Context<Self>) -> impl IntoElement {
-        let theme = self.theme;
-        let mut row = div().flex().gap_1().items_center().flex_shrink_0();
-        if self.document.view.is_none() {
-            return row;
-        }
-        for (id, icon, label, operation) in [
-            (
-                "source-undo",
-                crate::ui_icons::Icon::Undo,
-                "Undo · ⌘ Z",
-                DocumentOperation::Undo,
-            ),
-            (
-                "source-redo",
-                crate::ui_icons::Icon::Redo,
-                "Redo · ⌘ Shift Z",
-                DocumentOperation::Redo,
-            ),
-            (
-                "source-save",
-                crate::ui_icons::Icon::Save,
-                "Save · ⌘ S",
-                DocumentOperation::Save,
-            ),
-        ] {
-            row = row.child(
-                theme
-                    .icon_button(id, icon, label)
-                    .opacity(if self.document_operation_ready(&operation) {
-                        1.
-                    } else {
-                        0.4
-                    })
-                    .on_click(cx.listener(move |this, _, _, cx| {
-                        this.document_request(operation.clone());
-                        cx.notify();
-                    })),
-            );
-        }
-        row.child(
-            theme
-                .icon_tool(
-                    "source-code",
-                    crate::ui_icons::Icon::Code,
-                    "Source code",
-                    self.document.show_code,
-                )
-                .on_click(cx.listener(|this, _, _, cx| {
-                    this.document.show_code = !this.document.show_code;
-                    cx.notify();
-                })),
-        )
-    }
     pub fn pattern_controls(&self, cx: &mut Context<Self>) -> Div {
         let theme = self.theme;
         div()

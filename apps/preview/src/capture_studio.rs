@@ -9,6 +9,7 @@ pub struct Smoke {
     pattern: String,
     at: Point<Pixels>,
     cursor: u64,
+    title_transport: crate::capture_title_transport::Smoke,
 }
 impl Smoke {
     pub fn complete(&self) -> bool {
@@ -16,6 +17,10 @@ impl Smoke {
     }
     pub fn step(&mut self, view: &Entity<Preview>, window: &mut Window, cx: &mut App) {
         if self.complete() {
+            return;
+        }
+        if !self.title_transport.complete() {
+            self.title_transport.step(view, window, cx);
             return;
         }
         match self.stage {

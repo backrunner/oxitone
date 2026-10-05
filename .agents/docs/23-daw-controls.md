@@ -31,7 +31,7 @@ GPUI 重排通过当前 builder 顺序调用工程事务，也覆盖在最终 Pr
 身份可建立别名；已有身份、自动化绑定、其他轨道和工程设置必须一致。Save、Undo/Redo、外部
 编辑器未保存同步沿用同一文档，不直接设置音频线程或另存工程状态。
 
-## Mixer 与传输栏
+## Mixer 与标题栏
 
 Mixer 音量推子／声像可拖动，Shift 精调，双击恢复 0 dB／中央；M/S 为可操作按钮。
 拖动期间仅显示本地值，释放后提交一条事务；Escape 或外部 revision 变化取消活动手势。
@@ -46,7 +46,7 @@ M/S 不缩短时间线或改变 tempo 烘焙范围。GPUI/N-API 播放尊重 Tra
 WAV 导出通过现有 respectSolo 决定是否尊重，默认忽略；MIDI 忽略 Solo、排除 muted Track。
 修改仍经 Document 事务接受、撤销和保存，连续 Track configure 合并各字段，不互相覆盖。
 
-传输栏移除 Locate 输入及 G 快捷键，使用时间轴点击、marker、Home、方向键设置 cue。
+定位使用时间轴点击、marker、Home、方向键设置 cue，不设 Locate 输入及 G 快捷键。
 标题栏 BPM 数字可直接输入，Enter 提交，Escape 或点其他区域取消；
 存在 tempo map 多段或 tempo automation 时保持读数，必须编辑已有 tempo 定义，不能静默覆盖。
 输入期间数字／Space／字母不会触发播放或编排快捷键。独立 Preview 没有文档连接时保持只读。
