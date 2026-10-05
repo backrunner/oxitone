@@ -3,6 +3,7 @@ use gpui::{prelude::*, *};
 #[derive(Clone, Copy)]
 pub enum Icon {
     Wave,
+    Folder,
     Effect,
     Route,
     Output,
@@ -46,6 +47,18 @@ pub fn icon(kind: Icon, color: u32) -> impl IntoElement {
         |_, _, _| {},
         move |at, _, window, _| {
             let lines: &[&[(f32, f32)]] = match kind {
+                Icon::Folder => &[
+                    &[
+                        (1., 13.),
+                        (1., 3.),
+                        (6., 3.),
+                        (8., 5.),
+                        (15., 5.),
+                        (15., 13.),
+                        (1., 13.),
+                    ],
+                    &[(1., 6.), (15., 6.)],
+                ],
                 Icon::Metronome => &[
                     &[(5., 2.), (10., 2.), (13., 14.), (2., 14.), (5., 2.)],
                     &[(7., 11.), (13., 3.)],

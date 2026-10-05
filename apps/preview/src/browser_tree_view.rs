@@ -7,6 +7,19 @@ use crate::{
 use gpui::{prelude::*, *};
 use std::path::PathBuf;
 
+const TREE_INSET: f32 = 8.;
+const TREE_INDENT: f32 = 16.;
+const ICON_SIZE: f32 = 16.;
+const ICON_GAP: f32 = 4.;
+
+fn row_inset(depth: usize) -> Pixels {
+    px(TREE_INSET + depth as f32 * TREE_INDENT)
+}
+
+fn child_label_inset(depth: usize) -> Pixels {
+    row_inset(depth + 1) + px(2. * (ICON_SIZE + ICON_GAP))
+}
+
 pub fn flatten(tree: &BrowserTree, entry: Entry, depth: usize, rows: &mut Vec<(Entry, usize)>) {
     if depth > 24 || rows.len() >= 4096 {
         return;
@@ -48,7 +61,8 @@ pub fn view(this: &mut Preview, cx: &mut Context<Preview>) -> Div {
     let mut list = div().flex().flex_col().pb_2().child(
         div()
             .h(px(32.))
-            .px_3()
+            .pl_3()
+            .pr_2()
             .flex()
             .items_center()
             .gap_1()
@@ -62,6 +76,7 @@ pub fn view(this: &mut Preview, cx: &mut Context<Preview>) -> Div {
             .child(
                 t.icon_button("sample-folder-add", Icon::Plus, "Add sample folder")
                     .size(px(24.))
+                    .rounded(px(5.))
                     .on_click(cx.listener(|this, _, _, cx| {
                         this.add_sample_folder(cx);
                     })),
@@ -101,23 +116,34 @@ pub fn view(this: &mut Preview, cx: &mut Context<Preview>) -> Div {
                     .absolute()
                     .size_full(),
                 )
-                .h(px(27.))
+                .h(px(28.))
                 .flex_shrink_0()
-                .pl(px(8. + depth as f32 * 13.))
+                .pl(row_inset(depth))
                 .pr_2()
                 .flex()
                 .items_center()
-                .gap_1()
+                .gap(px(ICON_GAP))
                 .cursor_pointer()
                 .bg(rgb(if selected { t.selected } else { t.panel }))
                 .hover(move |s| s.bg(rgb(t.button)))
+                .child(
+                    div()
+                        .size(px(ICON_SIZE))
+                        .flex_shrink_0()
+                        .when(entry.directory, |d| {
+                            d.child(icon(
+                                if expanded {
+                                    Icon::ChevronDown
+                                } else {
+                                    Icon::Right
+                                },
+                                t.muted,
+                            ))
+                        }),
+                )
                 .child(icon(
                     if entry.directory {
-                        if expanded {
-                            Icon::ChevronDown
-                        } else {
-                            Icon::Right
-                        }
+                        Icon::Folder
                     } else {
                         Icon::Wave
                     },
@@ -158,7 +184,8 @@ pub fn view(this: &mut Preview, cx: &mut Context<Preview>) -> Div {
             if let Some(error) = error {
                 list = list.child(
                     div()
-                        .px_3()
+                        .pl(child_label_inset(depth))
+                        .pr_2()
                         .text_size(px(10.))
                         .text_color(rgb(t.muted))
                         .child(error),
@@ -170,7 +197,8 @@ pub fn view(this: &mut Preview, cx: &mut Context<Preview>) -> Div {
             {
                 list = list.child(
                     div()
-                        .pl(px(24. + depth as f32 * 13.))
+                        .pl(child_label_inset(depth))
+                        .pr_2()
                         .text_size(px(10.))
                         .text_color(rgb(t.muted))
                         .child("No audio files"),
