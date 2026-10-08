@@ -34,6 +34,7 @@ mod capture_note_clipboard;
 mod capture_piano;
 mod capture_plugin_install;
 mod capture_pointer;
+mod capture_presentation;
 mod capture_samples;
 mod capture_studio;
 #[cfg(target_os = "macos")]

@@ -17,6 +17,10 @@ Engine 1.6 insertRoutes 投影为 Mixer 的输入/输出连接，标签包含当
 
 ## 定位与边界
 
+README 原生截图可通过 `OXITONE_PREVIEW_CAPTURE_LAYOUT=readme` 选择第二个 Pattern、
+关闭 Patterns 浮窗并打开 Piano/Mixer dock。该 opt-in capture 只改变视图偏好，使用
+模拟 sink、保持停止状态，不提交文档事务或修改源码/音频数据。
+
 Preview app 是 Oxitone 工程的可视化呈现器：**代码是音乐的唯一事实来源，viewer 只读**。用户可以 play/pause/stop/seek/loop，可以调整 viewer 自身的显示偏好（缩放、主题、scope 开关），但任何操作都不会反向修改代码或 authoring 数据。viewer 内不提供任何编辑能力（无拖拽音符、无画 automation、无推子写回）。
 
 与代码的同步是单向数据流：

@@ -78,7 +78,7 @@ and effect panels, source automation, a pattern browser and live audio scopes.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/preview-dark.png">
-  <img src="assets/screenshots/preview-light.png" alt="Oxitone native preview showing the Midnight Circuit arrangement and piano roll" width="1440">
+    <img src="assets/screenshots/preview-light.png" alt="Oxitone native preview showing titlebar transport, the Midnight Circuit arrangement, chord piano roll and mixer" width="1440">
 </picture>
 
 _Midnight Circuit in the native preview. [Screenshot details](assets/screenshots/README.md)._

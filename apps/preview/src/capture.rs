@@ -90,6 +90,9 @@ pub fn schedule(window: &Window, cx: &mut Context<Preview>) {
             if current.is_some() {
                 ready_frames += 1;
             }
+            if ready_frames == 1 {
+                this.update(cx, crate::capture_presentation::prepare).unwrap();
+            }
             if ready_frames == 1 && (daw || navigation || transport) {
                 this.update(cx, |this, cx| {
                     assert!(!this.workspace.dock_open && this.document.patterns_open);

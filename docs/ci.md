@@ -50,6 +50,14 @@ results and example snapshot/report JSON. Large WAVs and native binaries are not
 published as release artifacts. Hosted-runner timing is diagnostic: the jobs do not
 compare noisy virtualized measurements with the Apple M4 physical baseline.
 
+VST3 simulated-session conformance keeps worker `deadlineMisses`, load and block-time
+histograms in its reports as timing diagnostics. These graphs require background
+execution even when the caller requests direct mode. A block taking longer than its
+nominal period does not imply an underrun: the render-ahead ring can absorb it, and
+shared runners can preempt the worker. Functional gates still require zero `xruns`,
+`nanBlocks`, `queueDrops` and plugin faults, alongside exact offline PCM/routing and
+source-transaction checks. Physical performance acceptance remains a separate gate.
+
 These files establish the automation but are not evidence of a successful remote
 run. Record the first successful runs in the milestone audit after CI executes.
 Physical-device switching/unplugging, 10/60-minute sustained load, minimum macOS
